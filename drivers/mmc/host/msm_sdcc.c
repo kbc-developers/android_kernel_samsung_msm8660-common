@@ -3386,17 +3386,12 @@ msmsdcc_check_status(unsigned long data)
 	unsigned int status;
 
 	if (host->plat->status || host->plat->status_gpio) {
-		if (host->plat->status) {
+		if (host->plat->status)
 			status = host->plat->status(mmc_dev(host->mmc));
-			host->eject = !status;
-		} else {
+		else
 			status = msmsdcc_slot_status(host);
 
-			if (host->plat->is_status_gpio_active_low)
-				host->eject = status;
-			else
-				host->eject = !status;
-		}
+		host->eject = !status;
 
 		if (status ^ host->oldstat) {
 			if (host->plat->status)
@@ -4563,17 +4558,12 @@ msmsdcc_probe(struct platform_device *pdev)
 	 */
 
 	if (plat->status || plat->status_gpio) {
-		if (plat->status) {
+		if (plat->status)
 			host->oldstat = plat->status(mmc_dev(host->mmc));
-			host->eject = !host->oldstat;
-		} else {
+		else
 			host->oldstat = msmsdcc_slot_status(host);
 
-			if (host->plat->is_status_gpio_active_low)
-				host->eject = host->oldstat;
-			else
-				host->eject = !host->oldstat;
-		}
+		host->eject = !host->oldstat;
 	}
 
 	if (plat->status_irq) {
