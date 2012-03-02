@@ -36,6 +36,7 @@ u32 res_trk_get_disable_fullhd(void);
 u32 res_trk_get_enable_sec_metadata(void);
 struct ion_client *res_trk_get_ion_client(void);
 u32 res_trk_get_disable_dmx(void);
+u32 res_trk_get_min_dpb_count(void);
 void res_trk_set_mem_type(enum ddl_mem_area mem_type);
 int res_trk_enable_iommu_clocks(void);
 int res_trk_disable_iommu_clocks(void);
