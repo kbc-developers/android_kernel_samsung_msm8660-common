@@ -1260,7 +1260,7 @@ u32 vcd_validate_driver_handle(
 	s32 driver_id = driver_handle - 1;
 
 	if ((0 <= driver_id) &&
-		(VCD_DRIVER_INSTANCE_MAX > driver_id) &&
+		(VCD_DRIVER_CLIENTS_MAX > driver_id) &&
 		(dev_ctxt->driver_ids[driver_id]))
 		result = true;
 
