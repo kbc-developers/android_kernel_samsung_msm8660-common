@@ -656,7 +656,6 @@ static void mxt224_ta_probe(int ta_status)
 	}
 	
 	if (copy_data->family_id==0x81) {
-
 		#if !defined (CONFIG_USA_MODEL_SGH_I727) || !defined (CONFIG_USA_MODEL_SGH_T989) ||  !defined (CONFIG_JPN_MODEL_SC_03D)
 		#ifdef CLEAR_MEDIAN_FILTER_ERROR
 		if(!ta_status)
@@ -1883,7 +1882,7 @@ static int median_err_setting(void)
 	   }
 	   noise_median.mferr_setting = true;
 	  }
-	 }	
+	 }
 #if !defined (CONFIG_USA_MODEL_SGH_I577) || !defined(CONFIG_CAN_MODEL_SGH_I577R) || !defined (CONFIG_USA_MODEL_SGH_I727) || !defined (CONFIG_USA_MODEL_SGH_T989) \
 	|| !defined (CONFIG_JPN_MODEL_SC_03D)
 	return 0;
