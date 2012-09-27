@@ -60,7 +60,7 @@ enum tsens_trip_type {
 #define TSENS_LOWER_STATUS_CLR				BIT(9)
 #define TSENS_UPPER_STATUS_CLR				BIT(10)
 #define TSENS_MAX_STATUS_MASK				BIT(11)
-#define TSENS_MEASURE_PERIOD				4 /* 1 sec. default */
+#define TSENS_MEASURE_PERIOD				1 /* 0.25 sec. default */
 #define TSENS_8960_SLP_CLK_ENA				BIT(26)
 
 #define TSENS_THRESHOLD_ADDR		(MSM_CLK_CTL_BASE + 0x00003624)
