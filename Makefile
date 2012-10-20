@@ -381,6 +381,10 @@ KBUILD_AFLAGS_MODULE  := -DMODULE
 KBUILD_CFLAGS_MODULE  := -DMODULE
 KBUILD_LDFLAGS_MODULE := -T $(srctree)/scripts/module-common.lds
 
+ifeq ($(HAVE_NO_UNALIGNED_ACCESS),y)
+KBUILD_CFLAGS += -mno-unaligned-access
+endif
+
 #[ latin_scm Set up kernel feature for Latin
 ifeq ($(LTN_BUILD_LOCALE),LTN)
 

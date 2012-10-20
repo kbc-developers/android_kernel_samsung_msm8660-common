@@ -1,5 +1,6 @@
 
 # replace board-msm8x60.o and gpiomux-8x60.o with own model's ones
+CFLAGS_scm.o :=$(call as-instr,.arch_extension sec,-DREQUIRES_SEC=1)
 
 BOARD_OBJ_NAME:=board-msm8x60.o # default name
 GPIOMUX_OBJ_NAME:=gpiomux-8x60.o # default name
