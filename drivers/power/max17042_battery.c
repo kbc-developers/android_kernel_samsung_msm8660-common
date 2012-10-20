@@ -379,10 +379,14 @@ static int fg_read_soc(void)
 
 	soc = data[1];
 
-#if defined(CONFIG_KOR_OPERATOR_SKT) || defined(CONFIG_KOR_OPERATOR_KT) || defined(CONFIG_KOR_OPERATOR_LGU)  || defined(CONFIG_JPN_OPERATOR_NTT)
+#if defined(CONFIG_KOR_OPERATOR_SKT) || defined(CONFIG_KOR_OPERATOR_KT) || defined(CONFIG_KOR_OPERATOR_LGU) || defined(CONFIG_JPN_OPERATOR_NTT)
 	soc_lsb = (data[0] * 100) / 256;
 	chip->info.psoc = (soc * 100) + soc_lsb;
+#if defined(CONFIG_TARGET_SERIES_P5LTE)
+	soc = chip->info.psoc / 99;
 #endif
+#endif
+
 //	if (!(chip->info.pr_cnt % PRINT_COUNT))
 		pr_info("%s : SOC(%d), data(0x%04x)\n", __func__, soc, (data[1]<<8) | data[0]);
 
@@ -739,7 +743,10 @@ void fg_periodic_read(void)
 	pr_info("[MAX17042] %d/%d/%d %02d:%02d,",
 		tm.tm_mday, tm.tm_mon + 1, tm.tm_year + 1900, tm.tm_hour, tm.tm_min);
 
-#if defined (CONFIG_TARGET_SERIES_P8LTE) && (defined (CONFIG_KOR_OPERATOR_SKT) || defined(CONFIG_JPN_OPERATOR_NTT))
+#if (defined(CONFIG_TARGET_SERIES_P8LTE) && \
+		(defined(CONFIG_KOR_OPERATOR_SKT) || defined(CONFIG_JPN_OPERATOR_NTT))) || \
+	(defined(CONFIG_TARGET_SERIES_P5LTE) && \
+		(defined(CONFIG_KOR_OPERATOR_SKT) || defined(CONFIG_KOR_OPERATOR_KT) || defined(CONFIG_KOR_OPERATOR_LGU)))
 	/* Do nothing for Resolving BT Mute*/
 #else
 	for (i = 0; i < 16; i++) {

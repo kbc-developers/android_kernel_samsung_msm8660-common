@@ -372,7 +372,7 @@
 #define HIGH_RECOVER_TEMP_ADC_SETTHERM		365
 #define LOW_BLOCK_TEMP_ADC_SETTHERM		226
 #define LOW_RECOVER_TEMP_ADC_SETTHERM		241
-#elif defined(CONFIG_KOR_MODEL_SHV_E160S) || defined (CONFIG_JPN_MODEL_SC_05D)
+#elif defined(CONFIG_KOR_MODEL_SHV_E160S)
 #define HIGH_BLOCK_TEMP_ADC_SETTHERM		390
 #define HIGH_RECOVER_TEMP_ADC_SETTHERM		369
 #define LOW_BLOCK_TEMP_ADC_SETTHERM		232
@@ -387,6 +387,11 @@
 #define HIGH_RECOVER_TEMP_ADC_SETTHERM		365
 #define LOW_BLOCK_TEMP_ADC_SETTHERM		227
 #define LOW_RECOVER_TEMP_ADC_SETTHERM		242
+#elif defined (CONFIG_JPN_MODEL_SC_05D)
+#define HIGH_BLOCK_TEMP_ADC_SETTHERM		378
+#define HIGH_RECOVER_TEMP_ADC_SETTHERM	    350
+#define LOW_BLOCK_TEMP_ADC_SETTHERM		    205
+#define LOW_RECOVER_TEMP_ADC_SETTHERM	    223
 
 #else
 #define HIGH_BLOCK_TEMP_ADC_SETTHERM		389
@@ -1031,6 +1036,9 @@ static int sec_bat_get_property(struct power_supply *ps,
 		if( info->batt_soc == 100 &&
 		    info->charging_status == POWER_SUPPLY_STATUS_CHARGING) {
 			val->intval = 99;
+#if defined(CONFIG_USA_MODEL_SGH_I757)
+			val->intval = 100;
+#endif
 			break;
 		}
 #endif
@@ -3364,7 +3372,11 @@ static struct device_attribute sec_battery_attrs[] = {
 	SEC_BATTERY_ATTR(batt_temp_adc),
 	SEC_BATTERY_ATTR(batt_temp_radc),
 	SEC_BATTERY_ATTR(batt_temp_radc_sub),
+#if defined(CONFIG_JPN_MODEL_SC_03D)
+	SEC_BATTERY_ATTR(batt_charging_source),
+#else
 	SEC_BATTERY_ATTR(charging_source),
+#endif
 	SEC_BATTERY_ATTR(batt_lp_charging),
 	SEC_BATTERY_ATTR(batt_type),
 	SEC_BATTERY_ATTR(batt_full_check),

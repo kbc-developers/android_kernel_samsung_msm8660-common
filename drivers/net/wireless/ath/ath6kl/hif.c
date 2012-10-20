@@ -403,7 +403,12 @@ static int proc_pending_irqs(struct ath6kl_device *dev, bool *done)
 	 * sleep or call any API that can block or switch thread/task
 	 * contexts. This is a fully schedulable context.
 	 */
-
+#ifdef CONFIG_MACH_PX
+	if (vif->sdio_remove == true) {
+		*done = true;
+		goto out;
+	}
+#endif
 	/*
 	 * Process pending intr only when int_status_en is clear, it may
 	 * result in unnecessary bus transaction otherwise. Target may be
@@ -451,9 +456,18 @@ static int proc_pending_irqs(struct ath6kl_device *dev, bool *done)
 			    htc_mbox) {
 				rg = &dev->irq_proc_reg;
 				lk_ahd = le32_to_cpu(rg->rx_lkahd[HTC_MAILBOX]);
+				
+				if (vif->force_reload == true) {
+					lk_ahd = 0;
+				}
 				if (!lk_ahd) {
-					ath6kl_err("lookAhead is zero!\n");
+					ath6kl_err("lookAhead is zero! force_reload = %d\n", vif->force_reload);
+#ifdef CONFIG_MACH_PX
 					cfg80211_priv_event(vif->ndev, "HANG", GFP_ATOMIC);
+					ath6kl_hif_rx_control(dev, false);
+					ssleep(3);
+					status = -ENOMEM;
+#endif
 				}
 			}
 		}
@@ -479,9 +493,17 @@ static int proc_pending_irqs(struct ath6kl_device *dev, bool *done)
 		 */
 		status = ath6kl_htc_rxmsg_pending_handler(dev->htc_cnxt,
 							  lk_ahd, &fetched);
+#ifdef CONFIG_MACH_PX
+		if (status) {
+			cfg80211_priv_event(vif->ndev, "HANG", GFP_ATOMIC);
+			ath6kl_hif_rx_control(dev, false);
+			ssleep(3);
+			goto out;
+		}
+#else
 		if (status)
 			goto out;
-
+#endif
 		if (!fetched)
 			/*
 			 * HTC could not pull any messages out due to lack

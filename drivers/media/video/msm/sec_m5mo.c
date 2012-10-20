@@ -1542,8 +1542,7 @@ static int m5mo_set_touch_auto_focus(int val)
 				M5MO_LENS_AF_TOUCH_POSY, m5mo_ctrl->focus.pos_y);
 		CHECK_ERR(err);
 	}
-	else {
-	
+	else {	
 		if (m5mo_ctrl->focus.center) {
 			CAM_DEBUG("center: focus_mode = %d", m5mo_ctrl->focus.mode);
 			if (m5mo_ctrl->focus.mode == FOCUS_MODE_TOUCH_MACRO) {

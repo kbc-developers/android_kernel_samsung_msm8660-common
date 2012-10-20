@@ -1054,7 +1054,10 @@ int p5lte_cmc623_normal_mode(void)
 		ret = gpio_get_value(CMC623_SLEEP);
 		pr_debug("%s, CMC623_SLEEP : %d\n",__func__,ret);
 		udelay(20);
-
+		gpio_set_value(CMC623_nRST, 1);
+		ret = gpio_get_value(CMC623_nRST);
+		pr_debug("%s, CMC623_nRST : %d\n",__func__,ret);
+		udelay(100);
 		gpio_set_value(CMC623_nRST, 0);
 		ret = gpio_get_value(CMC623_nRST);
 		pr_debug("%s, CMC623_nRST : %d\n",__func__,ret);
@@ -1062,7 +1065,7 @@ int p5lte_cmc623_normal_mode(void)
 		gpio_set_value(CMC623_nRST, 1);
 		ret = gpio_get_value(CMC623_nRST);
 		pr_debug("%s, CMC623_nRST : %d\n",__func__,ret);
-
+		udelay(300);
 		return ret;
 
 }
@@ -1391,7 +1394,7 @@ int p5lte_cmc623_init(void)
 	}
 	#endif
 
-	gpio_direction_output(CMC623_nRST, 1);
+	gpio_direction_output(CMC623_nRST, 0);
 	gpio_direction_output(CMC623_SLEEP, 0);
 	gpio_direction_output(CMC623_BYPASS, 0);
 	gpio_direction_output(CMC623_FAILSAFE, 0);

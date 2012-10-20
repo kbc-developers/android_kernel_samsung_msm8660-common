@@ -105,6 +105,7 @@ static int isdbt_open(struct inode *inode, struct file *filp)
 	
 	memset(pdev, 0x00, sizeof(ISDBT_OPEN_INFO_T));
 	pdev->irq_status = DTV_IRQ_DEINIT;
+	g_bCatchIrq = 0;
 
 	filp->private_data = pdev;
 
@@ -126,6 +127,8 @@ static int isdbt_release(struct inode *inode, struct file *filp)
 	ISDBT_OPEN_INFO_T *pdev = (ISDBT_OPEN_INFO_T*)(filp->private_data);
 
 	NM_KMSG("<isdbt> isdbt release \n");
+	pdev->irq_status = DTV_IRQ_DEINIT;
+	g_bCatchIrq = 0;
 
 	kfree(pdev->rwBuf);
 	kfree((void*)pdev);	
@@ -223,6 +226,7 @@ static int isdbt_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
 
 			if(pdev->irq_status == DTV_IRQ_DEINIT)
 			{
+				g_bCatchIrq = 0;
 				irq_set_irq_type(gpio_cfg.irq, IRQ_TYPE_LEVEL_LOW);
 				retval = request_irq(gpio_cfg.irq, isdbt_irq_handler, /*IRQF_DISABLED|*/IRQF_TRIGGER_LOW, ISDBT_DEV_NAME, (void*)pdev);
 				if(retval < 0) {
@@ -246,6 +250,7 @@ static int isdbt_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
 
 			if(pdev->irq_status == DTV_IRQ_INIT)
 			{
+				g_bCatchIrq = 0;
 				free_irq(gpio_cfg.irq, pdev);
 				pdev->irq_status = DTV_IRQ_DEINIT;
 			}
@@ -281,6 +286,7 @@ static int isdbt_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
 
 			if(pdev->irq_status == DTV_IRQ_SET)
 			{
+				g_bCatchIrq = 0;
 				disable_irq_nosync(gpio_cfg.irq);
 				pdev->irq_status = DTV_IRQ_INIT;
 			}

@@ -619,7 +619,7 @@ static void dbs_check_cpu(struct cpu_dbs_info_s *this_dbs_info)
 
 	/* Check for frequency increase */
 	if (max_load_freq > dbs_tuners_ins.up_threshold * policy->cur) {
-#if defined (CONFIG_TARGET_LOCALE_USA)
+#if defined (CONFIG_TARGET_LOCALE_USA) || (CONFIG_TARGET_LOCALE_JPN)
 		/* If switching to max speed, apply sampling_down_factor */
 		if (policy->cur < policy->max) {
 			if (policy->cur < 540000) dbs_freq_increase(policy, 810000);

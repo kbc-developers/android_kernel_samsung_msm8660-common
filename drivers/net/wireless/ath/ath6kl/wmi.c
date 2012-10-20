@@ -1855,7 +1855,11 @@ int ath6kl_wmi_beginscan_cmd(struct wmi *wmi, u8 if_idx,
 {
 	struct sk_buff *skb;
 	struct wmi_begin_scan_cmd *sc;
+#ifdef CONFIG_MACH_PX
+	unsigned int size;
+#else
 	s8 size;
+#endif
 	int i, band, ret;
 	struct ath6kl *ar = wmi->parent_dev;
 	int num_rates;

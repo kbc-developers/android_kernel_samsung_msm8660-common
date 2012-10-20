@@ -22,7 +22,7 @@
 ********************************************************************************************/
 
 #if defined(CONFIG_TARGET_LOCALE_KOR_SKT) || defined(CONFIG_TARGET_LOCALE_KOR_KT) || defined(CONFIG_TARGET_LOCALE_KOR_LGU) || defined (CONFIG_TARGET_LOCALE_USA) \
-	|| defined(CONFIG_TARGET_LOCALE_JPN_NTT)
+	|| defined(CONFIG_JPN_MODEL_SC_01E)
 #define	S5K5CCAF_DEBUG	0
 #else
 #define	S5K5CCAF_DEBUG	1

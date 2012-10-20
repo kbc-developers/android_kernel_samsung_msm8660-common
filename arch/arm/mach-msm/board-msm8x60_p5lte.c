@@ -3029,7 +3029,7 @@ static void __init msm8x60_init_dsps(void)
 
 #ifdef CONFIG_FB_MSM_HDMI_MSM_PANEL
 
-#define MSM_FB_EXT_BUF_SIZE  (1920 * 1080 * 2 * 1) /* 2 bpp x 1 page */
+#define MSM_FB_EXT_BUF_SIZE  (1920 * 1080 * 4 * 1) /* 32 bpp x 1 page */
 #elif defined(CONFIG_FB_MSM_TVOUT)
 #define MSM_FB_EXT_BUF_SIZE  (720 * 576 * 2 * 2) /* 2 bpp x 2 pages */
 #else
@@ -4229,11 +4229,13 @@ static struct platform_device amp_i2c_gpio_device = {
 };
 
 #ifdef CONFIG_OPTICAL_BH1721_P5LTE
+
+#define ALC_RST	PM8058_GPIO(14)
 static int __init opt_device_init(void)
 {
 	static struct regulator *pm8058_l2;
 	int ret = 0;
-	
+
 	gpio_tlmm_config(GPIO_CFG(SENSOR_ALS_SCL,  0, GPIO_CFG_OUTPUT, GPIO_CFG_PULL_UP, GPIO_CFG_2MA), 1);
 	gpio_tlmm_config(GPIO_CFG(SENSOR_ALS_SDA,  0, GPIO_CFG_OUTPUT, GPIO_CFG_PULL_UP, GPIO_CFG_2MA), 1);
 
@@ -4256,7 +4258,11 @@ static int __init opt_device_init(void)
 				"pm8058_l2\n", __func__);
 		regulator_put(pm8058_l2);
 	}
-
+#if !defined (CONFIG_JPN_MODEL_SC_01D)
+	ret = gpio_request(PM8058_GPIO_PM_TO_SYS(ALC_RST), "alc_rst");
+	if (ret)
+		pr_err("%s: gpio_request is error", __func__);
+#endif
 	return 0;
 }
 
@@ -4273,8 +4279,6 @@ static struct platform_device opt_i2c_gpio_device = {
 		.platform_data  = &opt_i2c_gpio_data,
 	},
 };
-
-#define ALC_RST	PM8058_GPIO(14)
 
 static void ambient_light_sensor_reset(void)
 {
@@ -5948,6 +5952,8 @@ static int sec_jack_get_adc_value(void)
 	if(system_rev < 0x7) 
 #endif
 	{
+		pr_info("%s: system_rev=%d, It is not supported HW Version\n", __func__, system_rev);
+		#if 0
 		init_completion(&sec_adc_wait);	
 		rc = adc_channel_request_conv(adc_handle, &sec_adc_wait);
 		if (rc) {
@@ -5973,6 +5979,7 @@ static int sec_jack_get_adc_value(void)
 		res = adc_result.physical;
 		
 		mdelay(10);
+		#endif
 	} else {
 #ifdef CONFIG_STMPE811_ADC
 		res = stmpe811_adc_get_value(6);

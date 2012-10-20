@@ -63,7 +63,7 @@
 #define TS_READ_REGS_LEN 		66
 #define MELFAS_MAX_TOUCH		11
 
-#define DEBUG_PRINT 			1
+#define DEBUG_PRINT 			0
 
 
 #define SET_DOWNLOAD_BY_GPIO	1
@@ -398,6 +398,10 @@ static void melfas_ts_get_data(struct work_struct *work)
 #if DEBUG_PRINT
 		printk(KERN_ERR "[TSP] ID: %d, State : %d, x: %d, y: %d, z: %d w: %d\n", 
 			i, (g_Mtouch_info[i].strength>0), g_Mtouch_info[i].posX, g_Mtouch_info[i].posY, g_Mtouch_info[i].strength, g_Mtouch_info[i].width);
+
+#else
+		printk(KERN_ERR "[TSP] ID: %d, State : %d\n", 
+			i, (g_Mtouch_info[i].strength>0));
 #endif
 
 		if(g_Mtouch_info[i].strength == 0)

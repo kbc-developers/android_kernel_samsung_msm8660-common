@@ -313,7 +313,25 @@ void FSA9480_CheckAndHookAudioDock(int value, int onoff)
 //			else
 //				printk("%s: Earjack exist..\n", __func__);
 #endif
-
+#ifdef CONFIG_HKTW_MODEL_GT_N7005    //add for N7005 desktop dock cann't charge issue
+			if (!get_sec_det_jack_state()) {
+				if (HWversion ==VERSION_FSA9480)
+				{
+					ret = i2c_smbus_write_byte_data(client,FSA9480_REG_MANSW1,SW_AUDIO);
+				}
+				else
+				{
+					ret = i2c_smbus_write_byte_data(client,FSA9480_REG_MANSW1,AUDIO_9485);
+				}
+			
+				if (ret < 0)
+					dev_err(&client->dev,"%s: err %d\n", __func__, ret);
+			}
+			else
+			{
+				printk("%s: Earjack exist..\n", __func__);
+			}
+#endif
 			ret = i2c_smbus_read_byte_data(client,FSA9480_REG_CTRL);
 			if (ret < 0)
 				dev_err(&client->dev,"%s: err %d\n", __func__, ret);
@@ -405,6 +423,25 @@ void FSA9480_CheckAndHookAudioDock(int value, int onoff)
 //			}
 //			else
 //				printk("%s: Earjack exist..\n", __func__);
+#endif
+#ifdef CONFIG_HKTW_MODEL_GT_N7005    //add for N7005 desktop dock cann't charge issue
+			if (!get_sec_det_jack_state()) {
+				if (HWversion ==VERSION_FSA9480)
+				{
+					ret = i2c_smbus_write_byte_data(client,FSA9480_REG_MANSW1,SW_AUDIO);
+				}
+				else
+				{
+					ret = i2c_smbus_write_byte_data(client,FSA9480_REG_MANSW1,AUDIO_9485);
+				}
+			
+				if (ret < 0)
+					dev_err(&client->dev,"%s: err %d\n", __func__, ret);
+			}
+			else
+			{
+				printk("%s: Earjack exist..\n", __func__);
+			}
 #endif
 
 			ret = i2c_smbus_read_byte_data(client,FSA9480_REG_CTRL);

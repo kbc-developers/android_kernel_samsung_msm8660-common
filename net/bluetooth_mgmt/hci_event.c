@@ -364,6 +364,7 @@ static void hci_cc_read_class_of_dev(struct hci_dev *hdev, struct sk_buff *skb)
 
 	BT_DBG("%s class 0x%.2x%.2x%.2x", hdev->name,
 		hdev->dev_class[2], hdev->dev_class[1], hdev->dev_class[0]);
+	BT_INFO("Enter hci_cc_read_class_of_dev ");
 }
 
 static void hci_cc_write_class_of_dev(struct hci_dev *hdev, struct sk_buff *skb)
@@ -632,6 +633,7 @@ static void hci_cc_read_local_version(struct hci_dev *hdev, struct sk_buff *skb)
 	BT_DBG("%s manufacturer %d hci ver %d:%d", hdev->name,
 					hdev->manufacturer,
 					hdev->hci_ver, hdev->hci_rev);
+	BT_INFO("Enter hci_cc_read_local_version ");
 
 	if (test_bit(HCI_INIT, &hdev->flags))
 		hci_setup(hdev);
@@ -726,6 +728,8 @@ static void hci_cc_read_local_features(struct hci_dev *hdev, struct sk_buff *skb
 					hdev->features[2], hdev->features[3],
 					hdev->features[4], hdev->features[5],
 					hdev->features[6], hdev->features[7]);
+
+	BT_INFO("Enter hci_cc_read_local_features ");
 }
 
 static void hci_cc_read_local_ext_features(struct hci_dev *hdev,

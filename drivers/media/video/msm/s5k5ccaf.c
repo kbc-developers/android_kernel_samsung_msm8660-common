@@ -1221,32 +1221,23 @@ static void s5k5ccaf_get_exif_exposure(void)
 	CAM_DEBUG("read_value_lsb = %x, read_value_msb = %x\n", read_value_lsb, read_value_msb); 
 }
 
-
-/* temp -kidggang
-#define S5K5CCGX_PREVIEW_VGA            0       // 640x480
-#define S5K5CCGX_PREVIEW_D1             1       // 720x480
-#define S5K5CCGX_PREVIEW_SVGA           2       // 800x600
-#define S5K5CCGX_PREVIEW_XGA            3       // 1024x768
-#define S5K5CCGX_PREVIEW_PVGA           4       // 1280*720
-#define S5K5CCGX_PREVIEW_528x432        5       // 528*432 
-*/
 int s5k5ccaf_set_preview_index(int width, int height) {
 	int rc = 0;
 
 	if (width == 528 && height == 432) {
-		printk("[kidggang][%s:%d] S5K5CCGX_PREVIEW_528x432 !!!\n", __func__, __LINE__);
+		//printk("[%s:%d] S5K5CCGX_PREVIEW_528x432 !!!\n", __func__, __LINE__);	//debug
 		s5k5ccaf_ctrl->settings.preview_size_idx = S5K5CCGX_PREVIEW_528x432; 
 	} else if (width == 720 && height == 480) {
-		printk("[kidggang][%s:%d] S5K5CCGX_PREVIEW_D1 !!!\n", __func__, __LINE__);
+		//printk("[%s:%d] S5K5CCGX_PREVIEW_D1 !!!\n", __func__, __LINE__);	//debug
 		s5k5ccaf_ctrl->settings.preview_size_idx = S5K5CCGX_PREVIEW_D1; 
 	} else if (width == 640 && height == 480) {
-		printk("[kidggang][%s:%d] S5K5CCGX_PREVIEW_VGA !!!\n", __func__, __LINE__);
+		//printk("[%s:%d] S5K5CCGX_PREVIEW_VGA !!!\n", __func__, __LINE__);	//debug
 		s5k5ccaf_ctrl->settings.preview_size_idx = S5K5CCGX_PREVIEW_VGA; 
 	} else if (width == 1024 && height == 768) {
-		printk("[kidggang][%s:%d] S5K5CCGX_PREVIEW_XGA !!!\n", __func__, __LINE__);
+		//printk("[%s:%d] S5K5CCGX_PREVIEW_XGA !!!\n", __func__, __LINE__);	//debug
 		s5k5ccaf_ctrl->settings.preview_size_idx = S5K5CCGX_PREVIEW_XGA; 
 	} else if (width == 1280 && height == 720) {
-		printk("[kidggang][%s:%d] S5K5CCGX_PREVIEW_PVGA !!!\n", __func__, __LINE__);
+		//printk("[%s:%d] S5K5CCGX_PREVIEW_PVGA !!!\n", __func__, __LINE__);	//debug
 		s5k5ccaf_ctrl->settings.preview_size_idx = S5K5CCGX_PREVIEW_PVGA; 
 	} else {
 		printk("Invalid preview size (%dx%d) !!!\n", width, height);
@@ -1362,6 +1353,8 @@ int wait_sensor_mode(int mode, int interval, int cnt)
 		s5k5ccaf_sensor_write(0x002C, 0x7000);
 		s5k5ccaf_sensor_write(0x002E, 0x1E86);
 		s5k5ccaf_sensor_read(0x0F12, &sensor_mode);
+		if (sensor_mode == mode) 
+			break;
 		msleep(interval);
 	} while((--cnt) > 0 && !(sensor_mode == mode));
 
@@ -1392,7 +1385,7 @@ void s5k5ccaf_set_preview(void)
 #endif
 			s5k5ccaf_ctrl->op_mode = S5K5CCGX_MODE_PREVIEW;
 			s5k5ccaf_set_preview_size(s5k5ccaf_ctrl->settings.preview_size_idx);
-			wait_sensor_mode(S5K5CCGX_PREVIEW_MODE, 10, 50);	//20 -> 50 : recommended by SEM
+			wait_sensor_mode(S5K5CCGX_PREVIEW_MODE, 10, 50);
 			s5k5ccaf_ctrl->hd_enabled = 0;
 			s5k5ccaf_set_ae_awb(0); //AE/AWB Unlock
 		} else {
@@ -1492,33 +1485,28 @@ void s5k5ccaf_set_capture(void)
 		S5K5CCAF_WRITE_LIST(s5k5ccaf_highlight_snapshot);
 		if(af_low_lux) {
 			cam_info("additional delay for Low Lux AF");
-			//remove duplicated delay	msleep(200);
 		}	
 	} else if(cur_lux < LOW_LIGHT_LEVEL) {
 		if((s5k5ccaf_ctrl->settings.scene == SCENE_MODE_NIGHTSHOT) ||(s5k5ccaf_ctrl->settings.scene == SCENE_MODE_FIREWORKS)) {
 			cam_info("Night or Firework  Snapshot!");
 			S5K5CCAF_WRITE_LIST(s5k5ccaf_night_snapshot);
-			//remove duplicated delay	msleep(300);	
 		} else {
 			cam_info("LowLight Snapshot delay!");
 			S5K5CCAF_WRITE_LIST(s5k5ccaf_lowlight_snapshot);
-			//remove duplicated delay	msleep(250);	
 		}
 	} else {
 		cam_info("Normal Snapshot !");
 		S5K5CCAF_WRITE_LIST(s5k5ccaf_snapshot);
 		if(af_low_lux) {
 			cam_info("additional delay for Low Lux AF");
-			//remove duplicated delay	msleep(200);
 		}	
 	}	
 
-	wait_sensor_mode(S5K5CCGX_CAPTURE_MODE, 10, 40);	//remove duplicated delay : 20 -> 40
+	wait_sensor_mode(S5K5CCGX_CAPTURE_MODE, 10, 80);
 
 	s5k5ccaf_get_exif_exposure();
 
 	if(s5k5ccaf_ctrl->settings.flash_state == 1) {
-		//CAM_DEBUG("CAPTURE FLASH OFF - after 700ms delay");
 		S5K5CCAF_WRITE_LIST(s5k5ccaf_mainflash_end);
 		S5K5CCAF_WRITE_LIST(s5k5ccaf_flash_ae_clear);
 		s5k5ccaf_ctrl->settings.flash_state = 0;

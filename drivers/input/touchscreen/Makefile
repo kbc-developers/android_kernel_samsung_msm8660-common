@@ -44,7 +44,7 @@ obj-$(CONFIG_TOUCHSCREEN_USB_COMPOSITE)	+= usbtouchscreen.o
 obj-$(CONFIG_TOUCHSCREEN_PCAP)		+= pcap_ts.o
 obj-$(CONFIG_TOUCHSCREEN_PENMOUNT)	+= penmount.o
 
-ifdef CONFIG_TARGET_LOCALE_JPN
+ifdef CONFIG_JPN_MODEL_SC_01D
 obj-$(CONFIG_TOUCHSCREEN_QT602240)	+= atmel_mxt1386.o atmel_mxt1386_cfg.o
 else
 obj-$(CONFIG_TOUCHSCREEN_QT602240)	+= qt602240_ts.o

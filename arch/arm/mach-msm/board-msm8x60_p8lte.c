@@ -2380,13 +2380,68 @@ static struct msm_i2c_platform_data msm_gsbi12_qup_i2c_pdata = {
 #endif
 
 #if defined(CONFIG_SPI_QUP) || defined(CONFIG_SPI_QUP_MODULE)
+
+#ifdef CONFIG_ISDBTMM
+#define SPI_DMA_BASE_PHYS		0x16000000
+static int msm_qsd_spi_dma_config(void)
+{
+	void __iomem *tmm_base = 0;
+
+	tmm_base = ioremap(SPI_DMA_BASE_PHYS, PAGE_SIZE);
+	if (!tmm_base) {
+		pr_err("%s: Could not remap %x\n", __func__, SPI_DMA_BASE_PHYS);
+		printk("spi tmm remap filed\n");
+		return -ENOMEM;
+	}
+	iounmap(tmm_base);
+	
+	return 0;
+}
+
+static struct msm_spi_platform_data msm_gsbi1_qup_spi_pdata = {
+	.max_clock_speed = 27000000,
+	.dma_config      = msm_qsd_spi_dma_config,
+};
+#else
 static struct msm_spi_platform_data msm_gsbi1_qup_spi_pdata = {
 	.max_clock_speed = 24000000,
 };
+#endif
+
 
 static struct msm_spi_platform_data msm_gsbi10_qup_spi_pdata = {
 	.max_clock_speed = 24000000,
 };
+#endif
+
+#ifdef CONFIG_ISDBTMM
+static struct platform_device tmm_device = {
+	.name			= "mb86a35s",
+	.id 			= -1,
+};
+
+static struct spi_board_info tmm_spi_info[] __initdata = {	
+    {	
+        .modalias       = "tmmspi",
+        .mode           = SPI_MODE_0,
+        .bus_num        = 0,
+        .chip_select    = 0,
+        .max_speed_hz   = 27000000,
+    }
+};
+
+void __init tmm_dev_init(void)
+{
+	platform_device_register(&tmm_device);
+	
+	if (spi_register_board_info(tmm_spi_info, ARRAY_SIZE(tmm_spi_info))
+		!= 0)
+		{
+		pr_err("%s: spi_register_board_info returned error\n",
+			__func__);
+	}
+	return;
+}
 #endif
 
 #if defined(CONFIG_TDMB) || defined(CONFIG_TDMB_MODULE)
@@ -3005,7 +3060,7 @@ static void __init msm8x60_init_dsps(void)
 
 #ifdef CONFIG_FB_MSM_HDMI_MSM_PANEL
 
-#define MSM_FB_EXT_BUF_SIZE  (1920 * 1080 * 2 * 1) /* 2 bpp x 1 page */
+#define MSM_FB_EXT_BUF_SIZE  (1920 * 1080 * 4 * 1) /* 32 bpp x 1 page */
 #elif defined(CONFIG_FB_MSM_TVOUT)
 #define MSM_FB_EXT_BUF_SIZE  (720 * 576 * 2 * 2) /* 2 bpp x 2 pages */
 #else
@@ -3774,18 +3829,18 @@ static const u8 *mxt224_config[] = {
 #define MXT768E_ACTACQINT_BATT			255
 #define MXT768E_ACTACQINT_CHRG			255
 
-#define MXT768E_XLOCLIP_BATT		0
-#define MXT768E_XLOCLIP_CHRG		12
-#define MXT768E_XHICLIP_BATT		0
-#define MXT768E_XHICLIP_CHRG		12
+#define MXT768E_XLOCLIP_BATT		245
+#define MXT768E_XLOCLIP_CHRG		245
+#define MXT768E_XHICLIP_BATT		245
+#define MXT768E_XHICLIP_CHRG		245
 #define MXT768E_YLOCLIP_BATT		0
 #define MXT768E_YLOCLIP_CHRG		5
 #define MXT768E_YHICLIP_BATT		0
 #define MXT768E_YHICLIP_CHRG		5
-#define MXT768E_XEDGECTRL_BATT		136
-#define MXT768E_XEDGECTRL_CHRG		128
-#define MXT768E_XEDGEDIST_BATT		50
-#define MXT768E_XEDGEDIST_CHRG		0
+#define MXT768E_XEDGECTRL_BATT		143
+#define MXT768E_XEDGECTRL_CHRG		143
+#define MXT768E_XEDGEDIST_BATT		45
+#define MXT768E_XEDGEDIST_CHRG		45
 #define MXT768E_YEDGECTRL_BATT		136
 #define MXT768E_YEDGECTRL_CHRG		136
 #define MXT768E_YEDGEDIST_BATT		40
@@ -3857,7 +3912,7 @@ static u8 t48_config_e[] = {PROCG_NOISESUPPRESSION_T48,
 	112, 15, 0, 6, 6, 0, 0, 48, 4, 64,
 	0, 0, 9, 0, 0, 0, 0, 5, 0, 0,
 	0, 0, 0, 0, 112, MXT768E_THRESHOLD_BATT, 2, 16, 2, 81,
-	MXT768E_MAX_MT_FINGERS, 20, 40, 250, 250, 5, 5, 143, 50, 136,
+	MXT768E_MAX_MT_FINGERS, 20, 40, 245, 245, 5, 5, 143, 45, 136,
 	30, 12, MXT768E_TCHHYST_CHRG, 0, 0, 0, 0, 0, 0, 0,
 	0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 	0, 0, 0, 0
@@ -3868,7 +3923,7 @@ static u8 t48_config_chrg_e[] = {PROCG_NOISESUPPRESSION_T48,
 	96, 20, 0, 6, 6, 0, 0, 48, 4, 64,
 	0, 0, 20, 0, 0, 0, 0, 15, 0, 0,
 	0, 0, 0, 0, 96, MXT768E_THRESHOLD_CHRG, 2, 10, 5, 81,
-	MXT768E_MAX_MT_FINGERS, 20, 40, 251, 251, 6, 6, 144, 50, 136,
+	MXT768E_MAX_MT_FINGERS, 20, 40, 245, 245, 6, 6, 143, 45, 136,
 	30, 12, MXT768E_TCHHYST_CHRG, 0, 0, 0, 0, 0, 0, 0,
 	0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 	0, 0, 0, 0
@@ -11682,6 +11737,10 @@ static void __init msm8x60_init(struct msm_board_data *board_data)
 
 #if defined(CONFIG_TDMB) || defined(CONFIG_TDMB_MODULE)
 	tdmb_dev_init();
+#endif
+
+#ifdef CONFIG_ISDBTMM
+    	tmm_dev_init();
 #endif
 
 	msm_pm_set_platform_data(msm_pm_data, ARRAY_SIZE(msm_pm_data));

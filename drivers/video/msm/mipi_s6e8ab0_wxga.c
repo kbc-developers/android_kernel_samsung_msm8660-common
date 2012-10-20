@@ -1921,7 +1921,7 @@ if(p8lte_has_cmc624())
 	s6e8ab0_lcd.enabled_acl= 1;
 	s6e8ab0_lcd.stored_acl= default_gamma_value;
 	s6e8ab0_lcd.goal_brightness = default_gamma_value;
-	s6e8ab0_lcd.lcd_acl = 40;
+	s6e8ab0_lcd.lcd_acl = -1;
 	s6e8ab0_lcd.lcd_state.display_on = state_lcd_on = false;
 	s6e8ab0_lcd.lcd_state.initialized= false;
 	s6e8ab0_lcd.lcd_state.powered_up= false;

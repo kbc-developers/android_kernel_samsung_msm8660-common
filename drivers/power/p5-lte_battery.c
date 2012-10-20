@@ -317,6 +317,23 @@ static void p5_program_alarm(struct battery_data *battery, int seconds, int init
 	alarm_start_range(&battery->alarm, next, ktime_add(next, slack));
 }
 
+#if defined(CONFIG_KOR_OPERATOR_SKT) || defined(CONFIG_KOR_OPERATOR_KT) || defined(CONFIG_KOR_OPERATOR_LGU)
+/* keep 100% level incase of cable out and full charged. */
+static void p5_check_full_charged(struct battery_data *battery)
+{
+	int fullcap = get_fuelgauge_value(FG_FULLCAP);
+	int remcap = get_fuelgauge_value(FG_REMCAP_REP);
+
+	if (battery->info.batt_is_full) {
+		if (fullcap > remcap) {
+			pr_info("%s: forcely, adjust full_cap!\n",
+				__func__);
+			fg_set_full_charged();
+		}
+	}
+}
+#endif
+
 static void p5_get_cable_status(struct battery_data *battery)
 {
 	if (check_ta_conn(battery)) {
@@ -338,12 +355,7 @@ static void p5_get_cable_status(struct battery_data *battery)
 			battery->pdata->inform_charger_connection(false);
 #if defined(CONFIG_KOR_OPERATOR_SKT) || defined(CONFIG_KOR_OPERATOR_KT) || defined(CONFIG_KOR_OPERATOR_LGU)
 		/* keep 100% level incase of cable out and full charged. */
-		if (battery->info.batt_is_full &&
-			battery->info.batt_soc == 99) {
-			pr_info("%s: forcely, adjust full_cap!\n",
-				__func__);
-			fg_set_full_charged();
-		}
+		p5_check_full_charged(battery);
 #endif
 		battery->info.batt_improper_ta = 0;  // clear flag
 	}
@@ -609,20 +621,6 @@ static int p5_get_bat_level(struct power_supply *bat_ps)
 	} else
 		battery->recharging_cnt = 0;
 
-#if defined(CONFIG_KOR_OPERATOR_SKT) || defined(CONFIG_KOR_OPERATOR_KT) || defined(CONFIG_KOR_OPERATOR_LGU)
-	if (fg_vcell > battery->pdata->recharge_voltage) {
-		if (battery->info.batt_is_full &&
-			!battery->info.charging_enabled &&
-			!battery->fg_skip &&
-			//fg_soc < 99
-			max17042_chip_data->info.psoc < 9950) {
-			pr_info("%s: forcely, adjust full_cap! (%d)", __func__, fg_soc);
-			fg_set_full_charged();
-			fg_soc = get_fuelgauge_value(FG_LEVEL);
-			pr_info("%s: new soc = %d", __func__, fg_soc);
-		}
-	}
-#endif
 	if (fg_soc > 100)
 		fg_soc = 100;
 
@@ -907,10 +905,8 @@ static int p5_bat_get_charging_status(struct battery_data *battery)
 			if (battery->info.batt_is_full ||
 				battery->info.level == 100)
 				return POWER_SUPPLY_STATUS_FULL;
-#if !defined(CONFIG_KOR_OPERATOR_SKT) && !defined(CONFIG_KOR_OPERATOR_KT) && !defined(CONFIG_KOR_OPERATOR_LGU)
 			else if(battery->info.batt_improper_ta)
 				return POWER_SUPPLY_STATUS_DISCHARGING;
-#endif
 			else
 				return POWER_SUPPLY_STATUS_CHARGING;
 #endif
@@ -1801,7 +1797,7 @@ static irqreturn_t low_battery_isr(int irq, void *arg)
 {
 	struct battery_data *battery = (struct battery_data *)arg;
 	pr_debug("low battery isr");
-	cancel_delayed_work(&battery->fuelgauge_work);
+	__cancel_delayed_work(&battery->fuelgauge_work);
 	schedule_delayed_work(&battery->fuelgauge_work, 0);
 
 	return IRQ_HANDLED;

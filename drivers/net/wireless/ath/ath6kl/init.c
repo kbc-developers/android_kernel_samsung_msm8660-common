@@ -1857,6 +1857,9 @@ int ath6kl_init_hw_start(struct ath6kl *ar)
 	}
 
 	ar->state = ATH6KL_STATE_ON;
+#ifdef CONFIG_MACH_PX
+	wake_up(&ar->event_wq);
+#endif
 
 	return 0;
 

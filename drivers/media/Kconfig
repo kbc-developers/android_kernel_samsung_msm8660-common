@@ -120,6 +120,9 @@ source "drivers/media/dvb/Kconfig"
 
 source "drivers/media/tdmb/Kconfig"
 
+#ISDB-TMM
+source "drivers/media/isdbtmm/Kconfig"
+
 source "drivers/media/nmi326/Kconfig"
 
 config ISDBT_NMI

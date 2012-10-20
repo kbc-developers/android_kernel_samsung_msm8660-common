@@ -247,14 +247,14 @@ proximity_enable_store(struct device *dev, struct device_attribute *attr, const 
 		input_report_abs(data->input_dev, ABS_DISTANCE,  input);
 		input_sync(data->input_dev);
 		gprintk("[PROX] Start proximity = %d\n",input); //Temp
-#ifndef defined(CONFIG_JPN_MODEL_SC_05D)
+#ifndef CONFIG_JPN_MODEL_SC_05D
 		spin_lock_irqsave(&prox_lock, flags);
 #endif
 		input = 0x03;
 		opt_i2c_write((u8)(REGS_OPMOD),&input);
 
                 enable_irq(IRQ_GP2A_INT);
-#ifndef defined(CONFIG_JPN_MODEL_SC_05D)
+#ifndef CONFIG_JPN_MODEL_SC_05D
 		spin_unlock_irqrestore(&prox_lock, flags);
 #endif
     }

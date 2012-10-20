@@ -3574,6 +3574,8 @@ struct net_device *ath6kl_interface_add(struct ath6kl *ar, char *name,
 
 	vif->pspoll_num = WLAN_CONFIG_PSPOLL_NUM;
 	vif->mcastrate = WLAN_CONFIG_MCAST_RATE;
+    vif->force_reload = false;
+	vif->sdio_remove = false;
 	
 	memcpy(ndev->dev_addr, ar->mac_addr, ETH_ALEN);
 	if (fw_vif_idx != 0)

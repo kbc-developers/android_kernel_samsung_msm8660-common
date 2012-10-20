@@ -4093,8 +4093,10 @@ static struct sec_bat_platform_data sec_bat_pdata = {
 	.fuel_gauge_name	= "fuelgauge",
 	.charger_name 		= "sec-charger",
 	.get_lpcharging_state	= sec_bat_get_lpcharging_state,
-#if defined (CONFIG_KOR_MODEL_SHV_E160S) || defined (CONFIG_KOR_MODEL_SHV_E160K) || defined (CONFIG_KOR_MODEL_SHV_E160L) || defined (CONFIG_JPN_MODEL_SC_05D)
+#if defined (CONFIG_KOR_MODEL_SHV_E160S) || defined (CONFIG_KOR_MODEL_SHV_E160K) || defined (CONFIG_KOR_MODEL_SHV_E160L)
 	.hwrev_has_2nd_therm	= 0x7,
+#elif defined(CONFIG_JPN_MODEL_SC_05D)
+       .hwrev_has_2nd_therm	= 0,
 #else
 	.hwrev_has_2nd_therm	= -1,
 #endif
@@ -4244,7 +4246,7 @@ static void __init msm8x60_init_dsps(void)
 #endif
 
 #ifdef CONFIG_FB_MSM_HDMI_MSM_PANEL
-#define MSM_FB_EXT_BUF_SIZE  (1920 * 1080 * 2 * 1) /* 2 bpp x 1 page */
+#define MSM_FB_EXT_BUF_SIZE  (1920 * 1080 * 4 * 1) /* 32 bpp x 1 page */
 #elif defined(CONFIG_FB_MSM_TVOUT)
 #define MSM_FB_EXT_BUF_SIZE  (720 * 576 * 2 * 2) /* 2 bpp x 2 pages */
 #else
@@ -4305,8 +4307,8 @@ unsigned char hdmi_is_primary;
 #define MSM_ION_SF_BASE		0x7a000000
 #endif
 #if defined(CONFIG_JPN_MODEL_SC_05D)
-#define MSM_ION_SF_BASE 0x7a800000
-#define MSM_ION_SF_SIZE 0x05800000 
+#define MSM_ION_SF_BASE 0x7b000000
+#define MSM_ION_SF_SIZE 0x05000000 
 #else
 #define MSM_ION_SF_SIZE		0x06000000 /* 64MB -> 96MB same as Gingerbread of ATT Quincy */
 #endif
@@ -5982,7 +5984,11 @@ static struct sec_jack_zone jack_zones[] = {
         },
         [2] = {
 #if defined(JACK_WATERPROOF)
+#if defined (CONFIG_JPN_MODEL_SC_05D)
+		.adc_high       = 2780,	
+#else
                 .adc_high       = 1900,
+#endif
                 .delay_ms       = 10,
                 .check_count    = 10,
                 .jack_type      = SEC_HEADSET_4POLE,

@@ -235,6 +235,13 @@ struct genlock *genlock_attach_lock(struct genlock_handle *handle, int fd)
 		spin_unlock(&genlock_file_lock);
 		return ERR_PTR(-EINVAL);
 	}
+
+	if (lock->alloc_magic != GENLOCK_ALLOC_MAGIC) {
+		GENLOCK_LOG_ERR("Lock already freed!\n");	 
+		spin_unlock(&genlock_file_lock);			 
+		dump_stack();								 
+		return ERR_PTR(-EINVAL);					 
+	}											   
 	
 	handle->lock = lock;
 	

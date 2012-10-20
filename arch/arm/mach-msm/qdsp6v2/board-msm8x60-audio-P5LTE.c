@@ -69,7 +69,7 @@
 #elif defined(CONFIG_USA_MODEL_SGH_I957)  //P5LTE-ATT
 #include "timpani_profile_p5lte_att.h"
 #elif defined(CONFIG_JPN_MODEL_SC_01D)  //P4LTE-NTT
-#include "timpani_profile_p5lte_att.h"
+#include "timpani_profile_p4lte_ntt.h"
 #elif defined(CONFIG_EUR_MODEL_GT_P7320)  //P5LTE-EUR //SHOULD BE CHECKED
 #include "timpani_profile_p5lte_att.h"
 #elif defined(CONFIG_KOR_MODEL_SHV_E140S)  //P5LTE-SKT
@@ -3410,8 +3410,13 @@ static struct snddev_icodec_data deskdock_voip_tx_data = {
 	.profile = &speaker_voip_tx_profile,
 	.channel_mode = 1,
 	.default_sample_rate = 48000,
+#if defined(CONFIG_TARGET_SERIES_P5LTE) && defined(CONFIG_TARGET_LOCALE_KOR)
+	.pamp_on = msm_snddev_enable_amic_power, //msm_snddev_enable_submic_power,
+	.pamp_off = msm_snddev_disable_amic_power, //msm_snddev_disable_submic_power,
+#else
 	.pamp_on = msm_snddev_enable_submic_power,
 	.pamp_off = msm_snddev_disable_submic_power,
+#endif
 };
 
 
@@ -4152,8 +4157,14 @@ static struct snddev_icodec_data speaker_voip2_tx_data = {
 	.pamp_on = msm_snddev_enable_amic_power,
 	.pamp_off = msm_snddev_disable_amic_power,
 #else
+#if defined(CONFIG_TARGET_SERIES_P5LTE) && defined(CONFIG_TARGET_LOCALE_KOR)
+	.pamp_on = msm_snddev_enable_amic_power, //msm_snddev_enable_submic_power,
+	.pamp_off = msm_snddev_disable_amic_power, //msm_snddev_disable_submic_power,
+#else
+
 	.pamp_on = msm_snddev_enable_submic_power,
 	.pamp_off = msm_snddev_disable_submic_power,
+#endif	
 #endif
 };
 
@@ -4271,8 +4282,13 @@ static struct snddev_icodec_data deskdock_voip2_tx_data = {
 	.pamp_on = msm_snddev_enable_amic_power,
 	.pamp_off = msm_snddev_disable_amic_power,
 #else
+#if defined(CONFIG_TARGET_SERIES_P5LTE) && defined(CONFIG_TARGET_LOCALE_KOR)
+	.pamp_on = msm_snddev_enable_amic_power, //msm_snddev_enable_submic_power,
+	.pamp_off = msm_snddev_disable_amic_power, //msm_snddev_disable_submic_power,
+#else
 	.pamp_on = msm_snddev_enable_submic_power,
 	.pamp_off = msm_snddev_disable_submic_power,
+#endif	
 #endif
 };
 

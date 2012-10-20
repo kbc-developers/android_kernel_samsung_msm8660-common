@@ -553,6 +553,7 @@ static ssize_t k3dh_calibration_store(struct device *dev,
 	return count;
 }
 
+#if !(defined(CONFIG_TARGET_LOCALE_KOR) && defined(CONFIG_TARGET_SERIES_P5LTE))
 static ssize_t k3dh_acc_raw_data_show(struct device *dev,
 					struct device_attribute *attr,
 					char *buf)
@@ -576,6 +577,29 @@ static ssize_t k3dh_acc_raw_data_show(struct device *dev,
 			-1 * acc_raw_data.x,
 			-1 * acc_raw_data.z );
 }
+#else
+static ssize_t k3dh_acc_raw_data_show(struct device *dev,
+					struct device_attribute *attr,
+					char *buf)
+{
+	int err;
+	struct k3dh_acc acc_raw_data;
+	struct k3dh_data *k3dh = dev_get_drvdata(dev);
+
+	mutex_lock(&k3dh->read_lock);
+	err = k3dh_read_accel_raw_xyz(k3dh, &acc_raw_data);
+	mutex_unlock(&k3dh->read_lock);
+	if (err < 0) {
+		pr_err("%s: k3dh_read_accel_raw_xyz() failed\n", __func__);
+		return err;
+	}
+
+	printk("[K3DH] x=%d, y=%d, z=%d\n", acc_raw_data.x, acc_raw_data.y, acc_raw_data.z );
+
+	return sprintf(buf, "%d,%d,%d\n",
+		acc_raw_data.x, acc_raw_data.y, acc_raw_data.z );
+}
+#endif
 
 static DEVICE_ATTR(calibration, 0664,
 		   k3dh_calibration_show, k3dh_calibration_store);

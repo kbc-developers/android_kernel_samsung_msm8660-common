@@ -1476,7 +1476,7 @@ static ssize_t touchkey_menu_show(struct device *dev, struct device_attribute *a
 
     ret = i2c_touchkey_read(KEYCODE_REG, data, 18);
 
-    #if defined(CONFIG_KOR_MODEL_SHV_E160L)
+    #if defined(CONFIG_KOR_MODEL_SHV_E160L)||defined(CONFIG_JPN_MODEL_SC_05D)
     printk("[TKEY] %s data[12] =%d,data[13] = %d\n",__func__,data[12],data[13]);
     menu_sensitivity = ((0x00FF&data[12])<<8)|data[13];
     #else 
@@ -1513,7 +1513,8 @@ static ssize_t touchkey_back_show(struct device *dev, struct device_attribute *a
 		printk("called %s data[14] =%d,data[15] = %d\n",__func__,data[14],data[15]);
 		back_sensitivity = ((0x00FF&data[14])<<8)|data[15];		
 	}
-#elif defined(CONFIG_KOR_MODEL_SHV_E160L)
+
+#elif defined(CONFIG_KOR_MODEL_SHV_E160L) || defined(CONFIG_JPN_MODEL_SC_05D)
     {
         printk("[TKEY] %s data[10] =%d,data[11] = %d\n",__func__,data[10],data[11]);
         back_sensitivity = ((0x00FF&data[10])<<8)|data[11];	

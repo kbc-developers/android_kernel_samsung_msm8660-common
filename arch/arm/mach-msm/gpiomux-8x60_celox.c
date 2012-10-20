@@ -181,7 +181,7 @@ static struct gpiomux_setting sdcc1_suspend_config = {
 };
 
 #if defined(CONFIG_KOR_MODEL_SHV_E110S) || defined(CONFIG_KOR_MODEL_SHV_E120L) \
- || defined(CONFIG_KOR_MODEL_SHV_E120S) || defined(CONFIG_KOR_MODEL_SHV_E120K)
+ || defined(CONFIG_KOR_MODEL_SHV_E120S) || defined(CONFIG_KOR_MODEL_SHV_E120K) || defined(CONFIG_JPN_MODEL_SC_03D)
 static struct gpiomux_setting sdcc2_dat_0_3_cmd_actv_cfg = {
 	.func = GPIOMUX_FUNC_2,
 	.drv = GPIOMUX_DRV_6MA,
@@ -269,7 +269,7 @@ static struct gpiomux_setting sdcc2_suspend_config = {
 	.pull = GPIOMUX_PULL_UP,
 };
 
-#if defined(CONFIG_KOR_MODEL_SHV_E110S) 
+#if defined(CONFIG_KOR_MODEL_SHV_E110S) || defined(CONFIG_JPN_MODEL_SC_03D)
 static struct gpiomux_setting sdcc5_dat_0_3_cmd_actv_cfg = {
 	.func = GPIOMUX_FUNC_2,
 	.drv = GPIOMUX_DRV_6MA,
@@ -564,7 +564,7 @@ static struct gpiomux_setting gyro_suspend_cfg = {
 	.drv = GPIOMUX_DRV_8MA,
 	.pull = GPIOMUX_PULL_DOWN,
 };
-#if defined(CONFIG_KOR_MODEL_SHV_E110S) \
+#if defined(CONFIG_KOR_MODEL_SHV_E110S) || defined(CONFIG_JPN_MODEL_SC_03D)\
 	||defined(CONFIG_KOR_MODEL_SHV_E120S)||defined(CONFIG_KOR_MODEL_SHV_E120K)||defined(CONFIG_KOR_MODEL_SHV_E120L)
 static struct gpiomux_setting gyro_fifo_int_active_cfg = {
 	.func = GPIOMUX_FUNC_GPIO,
@@ -580,7 +580,7 @@ static struct gpiomux_setting gyro_fifo_int_suspend_cfg = {
 #endif
 #endif //CONFIG_TARGET_LOCALE_US_ATT_REV01
 
-#ifdef CONFIG_OPTICAL_GP2A
+#if defined(CONFIG_OPTICAL_GP2A) || defined(CONFIG_OPTICAL_TAOS)
 static struct gpiomux_setting opt_active_cfg = {
 	.func = GPIOMUX_FUNC_GPIO,
 	.drv = GPIOMUX_DRV_8MA,
@@ -674,8 +674,8 @@ static struct gpiomux_setting wlan_en_active_cfg = {
 static struct gpiomux_setting wlan_en_suspend_cfg = {
 	.func = GPIOMUX_FUNC_GPIO,
 	.drv = GPIOMUX_DRV_2MA,
-	.pull = GPIOMUX_PULL_NONE,
-	.dir = GPIOMUX_OUT_LOW,
+	.pull = GPIOMUX_PULL_UP,
+	.dir = GPIOMUX_OUT_HIGH,
 };
 
 
@@ -1107,7 +1107,7 @@ static struct msm_gpiomux_config msm8x60_gyro_configs[] __initdata = {
 			[GPIOMUX_SUSPENDED] = &gyro_suspend_cfg,
 		},
 	},
-#if defined(CONFIG_KOR_MODEL_SHV_E110S) \
+#if defined(CONFIG_KOR_MODEL_SHV_E110S) || defined(CONFIG_JPN_MODEL_SC_03D) \
 	||defined(CONFIG_KOR_MODEL_SHV_E120S)||defined(CONFIG_KOR_MODEL_SHV_E120K)||defined(CONFIG_KOR_MODEL_SHV_E120L)
 	{
 		.gpio	   = 102,
@@ -1122,7 +1122,7 @@ static struct msm_gpiomux_config msm8x60_gyro_configs[] __initdata = {
 #endif
 #endif //CONFIG_TARGET_LOCALE_US_ATT_REV01
 
-#ifdef CONFIG_OPTICAL_GP2A
+#if defined(CONFIG_OPTICAL_GP2A) || defined(CONFIG_OPTICAL_TAOS)
 static struct msm_gpiomux_config msm8x60_opt_configs[] __initdata = {
 	{
 		.gpio      = 138,

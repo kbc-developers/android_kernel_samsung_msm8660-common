@@ -1803,6 +1803,9 @@ choice
 		config JPN_MODEL_SC_01D
 			bool "JPN NTT SC-01D"
 
+		config JPN_MODEL_SC_03D
+			bool "JPN NTT SC-03D"
+
 		config JPN_MODEL_SC_05D
 			bool "JPN NTT SC-05D"
 			
@@ -1825,7 +1828,6 @@ config USA_MODEL_SGH_T879
 
 config HKTW_MODEL_GT_N7005
 			bool "HKTW OPEN GT-N7005"
-			depends on TARGET_LOCALE_ATT
 	    default n		
 			
 config EUR_MODEL_GT_I9210

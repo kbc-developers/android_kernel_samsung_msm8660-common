@@ -632,7 +632,7 @@ static int msm_snddev_amp_on_normal_headset(void)
 
 #ifdef CONFIG_WM8994_AMP
 	 msleep(50);
-//	 wm8994_set_normal_headset(1);
+	 wm8994_set_normal_headset(1);
 #endif	
 	msleep(30); // mute con
 #if defined(CONFIG_TARGET_SERIES_P5LTE) || defined(CONFIG_TARGET_SERIES_P8LTE) || defined(CONFIG_TARGET_SERIES_P4LTE)
@@ -714,7 +714,7 @@ static void msm_snddev_amp_off_normal_headset(void)
 #endif         
 		msleep(30);
 #ifdef CONFIG_WM8994_AMP
-//		 wm8994_set_normal_headset(0);
+		wm8994_set_normal_headset(0);
 #endif	
 
 	return;
@@ -1237,7 +1237,12 @@ int msm_snddev_poweramp_on_lineout(void)
 	int rc;
 	pr_debug("%s\n", __func__);
 
-
+#if defined(CONFIG_TARGET_SERIES_P8LTE) //kks_120710
+#ifdef CONFIG_WM8994_AMP
+	msleep(50);
+	wm8994_set_cradle(1);
+#endif	 
+#else
 	/* PMIC8058 L1 Setting (L1 must be set the default voltage 1.0V because L1 is internally used for NCP level shifter supply) */
 #if defined (CONFIG_KOR_MODEL_SHV_E110S)
 	if(get_hw_rev()>=0x8)
@@ -1271,12 +1276,19 @@ int msm_snddev_poweramp_on_lineout(void)
 	yda165_headset_onoff(1);
 #endif
 #endif
+#endif
 	return 0;
 
 }
 void msm_snddev_poweramp_off_lineout(void)
 {
 	int rc;
+
+#if defined(CONFIG_TARGET_SERIES_P8LTE) //kks_120710
+#ifdef CONFIG_WM8994_AMP
+	wm8994_set_cradle(0);
+#endif	
+#else
 
 #if defined (CONFIG_KOR_MODEL_SHV_E110S)
 	if(get_hw_rev()>=0x8)
@@ -1301,6 +1313,7 @@ void msm_snddev_poweramp_off_lineout(void)
 	yda165_lineout_onoff(0);
 #else
 	yda165_headset_onoff(0);
+#endif
 #endif
 #endif
 
@@ -2998,8 +3011,13 @@ static struct snddev_icodec_data speaker_rx_data = {
 	//#else
 	.default_sample_rate = 48000,
 	//#endif	
+#if defined(CONFIG_TARGET_SERIES_P8LTE) //kks_110915_1 (hcomb merge)
+	.pamp_on = msm_snddev_amp_on_normal_speaker,
+	.pamp_off = msm_snddev_amp_off_normal_speaker,
+#else
 	.pamp_on = msm_snddev_amp_on_speaker,
 	.pamp_off = msm_snddev_amp_off_speaker,
+#endif
 };
 
 static struct snddev_icodec_data speaker_tx_data = {
@@ -3022,8 +3040,13 @@ static struct snddev_icodec_data headset_rx_data = {
 	//	.profile = &headset_ab_cpls_profile,
 	.channel_mode = 2,
 	.default_sample_rate = 48000,
+#if defined(CONFIG_TARGET_SERIES_P8LTE) //kks_110916_1 (hcomb merge)
+	.pamp_on = msm_snddev_amp_on_normal_headset,
+	.pamp_off = msm_snddev_amp_off_normal_headset,
+#else
 	.pamp_on = msm_snddev_amp_on_headset,
 	.pamp_off = msm_snddev_amp_off_headset,
+#endif
 	.voltage_on = msm_snddev_voltage_on,
 	.voltage_off = msm_snddev_voltage_off,
 };

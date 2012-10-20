@@ -137,7 +137,7 @@ extern VibeStatus ImmVibeGetDeviceKernelParameter(VibeInt32 nDeviceIndex, VibeIn
 #define PWM_PLLDIV_DEFAULT              0x02
 #define PWM_FREQ_DEFAULT               	0x01	//0x01	,0x00
 #define PWM_PERIOD_DEFAULT				0x82	//0x80	,0x74
-#define PWM_DUTY_DEFAULT				0x37	//0x40	,0x3a
+#define PWM_DUTY_DEFAULT				0x41	//0x40	,0x3a
 /* modify for P5 LTE SKT/LGT */
 #else
 #define PWM_PLLDIV_DEFAULT              0x02

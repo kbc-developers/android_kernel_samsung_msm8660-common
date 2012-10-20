@@ -42,9 +42,11 @@ static struct device *light_sensor_device;
 
 #define MAX_LEVEL 	8
 #define MAX_LUX		65528
-
+#if defined(CONFIG_USA_MODEL_SGH_I957)
+#define ALS_BUFFER_NUM	0
+#else
 #define ALS_BUFFER_NUM	10
-
+#endif
 const unsigned char POWER_DOWN = 0x00;
 const unsigned char POWER_ON = 0x01;
 const unsigned char AUTO_RESOLUTION_1 = 0x10;
@@ -85,8 +87,10 @@ struct bh1721_data {
 	struct workqueue_struct *wq;
 	unsigned char illuminance_data[2];
 	bool als_buf_initialized;
+#if !defined(CONFIG_USA_MODEL_SGH_I957)
 	int als_value_buf[ALS_BUFFER_NUM];
 	int als_index_count;
+#endif
 };
 
 static int bh1721_write_command(struct i2c_client *client, const char *command)
@@ -306,27 +310,28 @@ static struct attribute_group light_attribute_group = {
 static int bh1721_get_luxvalue(struct bh1721_data *bh1721, u16 *value)
 {
 	int retry;
+#if !defined(CONFIG_USA_MODEL_SGH_I957)
 	int i = 0;
 	int j = 0;
 	unsigned int als_total = 0;
 	unsigned int als_index = 0;
 	unsigned int als_max = 0;
 	unsigned int als_min = 0;
-	
+#endif
 	for (retry = 0; retry < 10; retry++)
 	{
 		if  (i2c_master_recv( bh1721->i2c_client, (u8 *)value, 2) == 2) {
 			be16_to_cpus(value);
 			break;
-		}			
+		}
 	}
-	
+
 	if(retry == 10)
 	{
 		printk("I2C read failed.. retry %d\n", retry);
 		return -EIO;
 	}
-		
+#if !defined(CONFIG_USA_MODEL_SGH_I957)
 	als_index = (bh1721->als_index_count++) % ALS_BUFFER_NUM;
 
 	/*ALS buffer initialize (light sensor off ---> light sensor on) */
@@ -353,7 +358,7 @@ static int bh1721_get_luxvalue(struct bh1721_data *bh1721, u16 *value)
 
 	if (bh1721->als_index_count >= ALS_BUFFER_NUM)
 		bh1721->als_index_count = 0;
-	
+#endif
 	return 0;
 }
 
@@ -374,9 +379,13 @@ static void bh1721_work_func_light(struct work_struct *work)
 		result = (lux * 10) / 12;
 		result = result * 139 / 13;
 		if(result > 89999) result = 89999;
-			
+
 		//printk("[Light sensor] lux 0x%0X (%d)\n", result, result);
+#if	defined(CONFIG_USA_MODEL_SGH_I957)
+		input_report_rel(bh1721->light_input_dev, REL_MISC, result + 1);
+#else
 		input_report_abs(bh1721->light_input_dev, ABS_MISC, result);
+#endif
 		input_sync(bh1721->light_input_dev);
 	} else {
 		pr_err("%s: read word failed! (errno=%d)\n", __func__, err);
@@ -478,9 +487,13 @@ static int bh1721_i2c_probe(struct i2c_client *client,
 	}
 	input_set_drvdata(input_dev, bh1721);
 	input_dev->name = "light_sensor";
+#if	defined(CONFIG_USA_MODEL_SGH_I957)
+	set_bit(EV_REL, input_dev->evbit);
+	input_set_capability(input_dev, EV_REL, REL_MISC);
+#else
 	input_set_capability(input_dev, EV_ABS, ABS_MISC);
 	input_set_abs_params(input_dev, ABS_MISC, 0, 1, 0, 0);
-
+#endif
 	ret = input_register_device(input_dev);
 	if (ret < 0) {
 		pr_err("%s: could not register input device\n", __func__);

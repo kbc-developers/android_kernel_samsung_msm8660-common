@@ -1972,7 +1972,7 @@ static struct i2c_driver melfas_ts_driver = {
 static int __devinit melfas_ts_init(void)
 {
 #ifdef CONFIG_SAMSUNG_LPM_MODE
-#if defined(CONFIG_TARGET_LOCALE_KOR_SKT) || defined(CONFIG_TARGET_LOCALE_KOR_KT) || defined(CONFIG_TARGET_LOCALE_KOR_LGU) || defined(CONFIG_TARGET_LOCALE_JPN_NTT)
+#if defined(CONFIG_TARGET_LOCALE_KOR_SKT) || defined(CONFIG_TARGET_LOCALE_KOR_KT) || defined(CONFIG_TARGET_LOCALE_KOR_LGU) || defined(CONFIG_JPN_MODEL_SC_01E)
 	extern int charging_mode_from_boot;
 	if (charging_mode_from_boot == 1) {
 		pr_info("%s : LPM Charging Mode! returen ENODEV!\n", __func__);

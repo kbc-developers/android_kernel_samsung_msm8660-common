@@ -1246,6 +1246,12 @@ void taos_on(struct taos_data *taos, int type)
        {
             taos_chip_on();
        }
+#if IRQ_WAKE    
+                err = enable_irq_wake(taos ->irq);
+                pr_err("%s: register wakeup source = %d\n", __func__, err);
+                if (err)
+                        pr_err("%s: register wakeup source failed\n", __func__);
+#endif
 
 	if(type == TAOS_PROXIMITY || type == TAOS_ALL)
 	{

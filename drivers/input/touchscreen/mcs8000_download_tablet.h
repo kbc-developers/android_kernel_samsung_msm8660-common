@@ -20,10 +20,10 @@
 #define ILJIN_BASE_FW_VER	0x57
 
 #define MELFAS_FW_VER	0x43
-#define ILJIN_FW_VER	0x62
+#define ILJIN_FW_VER	0x63
 #define CORE_FW_VER	0x43
-#define PRIVATE_FW_VER	0x22
-#define PUBLIC_FW_VER	0x15
+#define PRIVATE_FW_VER	0x23
+#define PUBLIC_FW_VER	0x16
 
 //=====================================================================
 //
