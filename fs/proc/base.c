@@ -812,6 +812,9 @@ static ssize_t mem_rw(struct file *file, char __user *buf,
 		return -ENOMEM;
 
 	copied = 0;
+	if (!atomic_inc_not_zero(&mm->mm_users))
+		goto free;
+
 	while (count > 0) {
 		int this_len = min_t(int, count, PAGE_SIZE);
 
@@ -822,7 +825,6 @@ static ssize_t mem_rw(struct file *file, char __user *buf,
 
 		this_len = access_remote_vm(mm, addr, page, this_len, write);
 		if (!this_len) {
-		if (!retval) {
 			if (!copied)
 				copied = -EIO;
 			break;
@@ -836,7 +838,7 @@ static ssize_t mem_rw(struct file *file, char __user *buf,
 		buf += this_len;
 		addr += this_len;
 		copied += this_len;
-		count -= this_len;			
+		count -= this_len;
 	}
 	*ppos = addr;
 
@@ -882,7 +884,6 @@ loff_t mem_lseek(struct file *file, loff_t offset, int orig)
 static int mem_release(struct inode *inode, struct file *file)
 {
 	struct mm_struct *mm = file->private_data;
-
 	if (mm)
 		mmdrop(mm);
 	return 0;
