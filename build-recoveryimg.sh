@@ -28,7 +28,7 @@ rm -rf $INITRAMFS_TMP_DIR/.git
 find $INITRAMFS_TMP_DIR -name .gitignore | xargs rm
 
 # copy zImage
-cp ./release-tools/stock-img/kernel.img.gz $BIN_DIR/kernel
+cp ./release-tools/prebuild/kernel $BIN_DIR/kernel
 echo "----- Making uncompressed $IMAGE_NAME ramdisk ------"
 ./release-tools/mkbootfs $INITRAMFS_TMP_DIR > $BIN_DIR/ramdisk-$IMAGE_NAME.cpio
 echo "----- Making $IMAGE_NAME ramdisk ------"
