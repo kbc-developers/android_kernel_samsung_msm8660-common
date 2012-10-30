@@ -24,6 +24,7 @@ BUILD_TARGET=$1
 case "$BUILD_TARGET" in
   "AOSP" ) BUILD_DEFCONFIG=kbc_sc05d_aosp_defconfig ;;
   "SAM" ) BUILD_DEFCONFIG=kbc_sc05d_samsung_defconfig ;;
+  "RECO" ) BUILD_DEFCONFIG=kbc_sc05d_recovery_defconfig ;;
   "MULTI" ) BUILD_DEFCONFIG=kbc_sc05d_multi_defconfig ;;
   * ) echo "error: not found BUILD_TARGET" && exit -1 ;;
 esac
