@@ -29,8 +29,12 @@
 
 //#define _DEBUG
 
-#define IMAGE_WIDTH	(720)
-#define IMAGE_HEIGHT	(1280)
+#define SC05D_IMAGE_WIDTH     (800)
+#define SC05D_IMAGE_HEIGHT    (1280)
+
+#define SC03D_IMAGE_WIDTH     (600)
+#define SC03D_IMAGE_HEIGHT    (800)
+
 
 #ifdef _DEBUG
 #define PRINT_VAL(val) printf(#val " = %d(0x%08x)\n", (unsigned int)val, (unsigned int)val)
@@ -169,10 +173,10 @@ int main(int argc, char** argv)
     PRINT_VAL(bmpInfoHeader.biClrImporant);
 
 
-    if (bmpInfoHeader.biWidth != IMAGE_WIDTH
-    ||  bmpInfoHeader.biHeight != IMAGE_HEIGHT
+    if ((!(bmpInfoHeader.biWidth == SC05D_IMAGE_WIDTH && bmpInfoHeader.biHeight == SC05D_IMAGE_HEIGHT) &&
+         !(bmpInfoHeader.biWidth == SC03D_IMAGE_WIDTH && bmpInfoHeader.biHeight == SC03D_IMAGE_HEIGHT))
     ||  bmpInfoHeader.biBitCount != 24) {
-        fprintf(stderr, "error: bitmap format is not %dx%d 24bit.\n", IMAGE_WIDTH, IMAGE_HEIGHT);
+        fprintf(stderr, "error: bitmap format is not %dx%d or %dx%d 24bit.\n", SC05D_IMAGE_WIDTH, SC05D_IMAGE_HEIGHT, SC03D_IMAGE_WIDTH, SC03D_IMAGE_HEIGHT);
         ret = -1;
         goto exit;
     }
