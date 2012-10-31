@@ -651,20 +651,26 @@ int __init socinfo_init(void)
 
 	switch (socinfo->v1.format) {
 	case 1:
+		#if !defined(CONFIG_USA_MODEL_SGH_I757)
 		pr_info("%s: v%u, id=%u, ver=%u.%u\n",
 			__func__, socinfo->v1.format, socinfo->v1.id,
+		
 			SOCINFO_VERSION_MAJOR(socinfo->v1.version),
 			SOCINFO_VERSION_MINOR(socinfo->v1.version));
+		#endif
 		break;
 	case 2:
+		#if !defined(CONFIG_USA_MODEL_SGH_I757)
 		pr_info("%s: v%u, id=%u, ver=%u.%u, "
 			 "raw_id=%u, raw_ver=%u\n",
 			__func__, socinfo->v1.format, socinfo->v1.id,
 			SOCINFO_VERSION_MAJOR(socinfo->v1.version),
 			SOCINFO_VERSION_MINOR(socinfo->v1.version),
 			socinfo->v2.raw_id, socinfo->v2.raw_version);
+		#endif
 		break;
 	case 3:
+		#if  !defined(CONFIG_USA_MODEL_SGH_I757)
 		pr_info("%s: v%u, id=%u, ver=%u.%u, "
 			 "raw_id=%u, raw_ver=%u, hw_plat=%u\n",
 			__func__, socinfo->v1.format, socinfo->v1.id,
@@ -672,8 +678,10 @@ int __init socinfo_init(void)
 			SOCINFO_VERSION_MINOR(socinfo->v1.version),
 			socinfo->v2.raw_id, socinfo->v2.raw_version,
 			socinfo->v3.hw_platform);
+		#endif
 		break;
 	case 4:
+		#if !defined(CONFIG_USA_MODEL_SGH_I757)
 		pr_info("%s: v%u, id=%u, ver=%u.%u, "
 			 "raw_id=%u, raw_ver=%u, hw_plat=%u, hw_plat_ver=%u\n",
 			__func__, socinfo->v1.format, socinfo->v1.id,
@@ -681,8 +689,10 @@ int __init socinfo_init(void)
 			SOCINFO_VERSION_MINOR(socinfo->v1.version),
 			socinfo->v2.raw_id, socinfo->v2.raw_version,
 			socinfo->v3.hw_platform, socinfo->v4.platform_version);
+		#endif
 		break;
 	case 5:
+		#if !defined(CONFIG_USA_MODEL_SGH_I757)
 		pr_info("%s: v%u, id=%u, ver=%u.%u, "
 			 "raw_id=%u, raw_ver=%u, hw_plat=%u,  hw_plat_ver=%u\n"
 			" accessory_chip=%u\n", __func__, socinfo->v1.format,
@@ -692,8 +702,10 @@ int __init socinfo_init(void)
 			socinfo->v2.raw_id, socinfo->v2.raw_version,
 			socinfo->v3.hw_platform, socinfo->v4.platform_version,
 			socinfo->v5.accessory_chip);
+		#endif
 		break;
 	case 6:
+		#if !defined(CONFIG_USA_MODEL_SGH_I757) && !defined(CONFIG_USA_MODEL_SGH_I957)
 		pr_info("%s: v%u, id=%u, ver=%u.%u, "
 			 "raw_id=%u, raw_ver=%u, hw_plat=%u,  hw_plat_ver=%u\n"
 			" accessory_chip=%u hw_plat_subtype=%u\n", __func__,
@@ -705,6 +717,7 @@ int __init socinfo_init(void)
 			socinfo->v3.hw_platform, socinfo->v4.platform_version,
 			socinfo->v5.accessory_chip,
 			socinfo->v6.hw_platform_subtype);
+		#endif
 		break;
 	default:
 		pr_err("%s: Unknown format found\n", __func__);

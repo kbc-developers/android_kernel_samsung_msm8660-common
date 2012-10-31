@@ -25,8 +25,9 @@
 
 #include <linux/gpio.h>
 
+#if 0
 #define LCDC_DEBUG
-
+#endif
 //#define MIPI_SINGLE_WRITE
 
 #ifdef LCDC_DEBUG

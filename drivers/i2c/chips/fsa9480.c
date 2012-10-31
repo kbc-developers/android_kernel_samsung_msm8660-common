@@ -85,7 +85,7 @@
 
 #define DEV_T1_USB_MASK		(DEV_USB_OTG | DEV_USB)
 #define DEV_T1_UART_MASK	(DEV_UART)
-#define DEV_T1_CHARGER_MASK	(DEV_DEDICATED_CHG | DEV_USB_CHG | DEV_CAR_KIT)
+#define DEV_T1_CHARGER_MASK	(DEV_DEDICATED_CHG | DEV_CAR_KIT)
 
 /* Device Type 2 */
 #define DEV_AV			(1 << 6)
@@ -296,7 +296,7 @@ void FSA9480_CheckAndHookAudioDock(int value, int onoff)
 			if (pdata->deskdock_cb)
 				pdata->deskdock_cb(FSA9480_ATTACHED);
 
-#if !defined(CONFIG_USA_MODEL_SGH_I717) && !defined (CONFIG_USA_MODEL_SGH_T769)
+#if !defined(CONFIG_USA_MODEL_SGH_I717) && !defined (CONFIG_USA_MODEL_SGH_T769) && !defined (CONFIG_USA_MODEL_SGH_I757)
 //			if (!get_sec_det_jack_state()) {
 				if (HWversion ==VERSION_FSA9480)
 				{
@@ -407,7 +407,7 @@ void FSA9480_CheckAndHookAudioDock(int value, int onoff)
 			dev_info(&client->dev, "FSA9480_CheckAndHookAudioDock On ctrl reg: 0x%x\n", ret);
 
 
-#if !defined(CONFIG_USA_MODEL_SGH_I717) && !defined (CONFIG_USA_MODEL_SGH_T769)
+#if !defined(CONFIG_USA_MODEL_SGH_I717) && !defined (CONFIG_USA_MODEL_SGH_T769) && !defined (CONFIG_USA_MODEL_SGH_I757)
 //			if (!get_sec_det_jack_state()) {
 				if (HWversion ==VERSION_FSA9480)
 				{
@@ -785,7 +785,7 @@ void fsa9480_audiopath_control(int enable)
 {
 	struct i2c_client *client = local_usbsw->client;
 	dev_info(&client->dev, "%s(%d)\n", __func__, enable);
-#if defined(CONFIG_USA_MODEL_SGH_I717) || defined (CONFIG_USA_MODEL_SGH_T769)
+#if defined(CONFIG_USA_MODEL_SGH_I717) || defined (CONFIG_USA_MODEL_SGH_T769) || defined (CONFIG_USA_MODEL_SGH_I757)
 	if(enable) {
 		if(Dockconnected && !get_sec_det_jack_state()) {
 			fsa9480_manual_switching(SWITCH_PORT_AUDIO); /* dock audio path On */
@@ -828,7 +828,7 @@ void fsa9480_manual_switching(int path)
 	value = i2c_smbus_read_byte_data(client, FSA9480_REG_CTRL);
 	if (value < 0)
 		dev_err(&client->dev, "%s: err %d\n", __func__, value);
-#if defined(CONFIG_USA_MODEL_SGH_I717) || defined (CONFIG_USA_MODEL_SGH_T769)
+#if defined(CONFIG_USA_MODEL_SGH_I717) || defined (CONFIG_USA_MODEL_SGH_T769) || defined (CONFIG_USA_MODEL_SGH_I757)
 	if (Dockconnected) {
 		if ((value & ~CON_MANUAL_SW & ~CON_RAW_DATA) !=
 				(CON_SWITCH_OPEN |  CON_WAIT)) {
@@ -976,6 +976,10 @@ static void fsa9480_detect_dev(struct fsa9480_usbsw *usbsw)
 					dev_err(&client->dev,
 						"%s: err %d\n", __func__, ret);
 			}
+		} else if (val1 & DEV_USB_CHG) {
+			dev_info(&client->dev, "usb_cdp connected\n");
+			if (pdata->usb_cdp_cb)
+				pdata->usb_cdp_cb(FSA9480_ATTACHED);
 		/* UART */
 		} else if (val1 & DEV_T1_UART_MASK || val2 & DEV_T2_UART_MASK) {
 		
@@ -1053,9 +1057,25 @@ static void fsa9480_detect_dev(struct fsa9480_usbsw *usbsw)
 			}
 #ifndef CONFIG_MHL_D3_SUPPORT
 			if (mhl_ret != MHL_DEVICE) {
+
+#if defined(CONFIG_USA_MODEL_SGH_I757)
+                        if ((adc & 0x1F) == 0x1A) {
+                                pr_info("FSA Deskdock Attach\n");
 				FSA9480_CheckAndHookAudioDock(USE_DESK_DOCK, 1);
 				isDeskdockconnected = 1;
 				Dockconnected = 1;
+			}
+#else
+
+                                pr_info("FSA Deskdock Attach\n");
+				FSA9480_CheckAndHookAudioDock(USE_DESK_DOCK, 1);
+				isDeskdockconnected = 1;
+				Dockconnected = 1;
+
+
+
+
+#endif
 			}
 #endif
 			EnableFSA9480Interrupts();
@@ -1130,6 +1150,9 @@ static void fsa9480_detect_dev(struct fsa9480_usbsw *usbsw)
 				usbsw->dev2 & DEV_T2_USB_MASK) {
 			if (pdata->usb_cb)
 				pdata->usb_cb(FSA9480_DETACHED);
+		} else if (usbsw->dev1 & DEV_USB_CHG) {
+			if (pdata->usb_cdp_cb)
+				pdata->usb_cdp_cb(FSA9480_DETACHED);
 		/* UART */
 		} else if (usbsw->dev1 & DEV_T1_UART_MASK ||
 				usbsw->dev2 & DEV_T2_UART_MASK) {

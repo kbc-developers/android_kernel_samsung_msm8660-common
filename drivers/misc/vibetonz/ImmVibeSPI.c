@@ -298,7 +298,9 @@ IMMVIBESPIAPI VibeStatus ImmVibeSPI_ForceOut_AmpDisable(VibeUInt8 nActuatorIndex
 		vibtonz_pwm(0);
 		vibtonz_en(false);
 
+#if !defined(CONFIG_USA_MODEL_SGH_I757)
 		printk("[VIBETONZ] %s \n",__func__);
+#endif
 #if defined (CONFIG_KOR_MODEL_SHV_E110S)		
 		if (get_hw_rev() > 0x00){
 			vibrator_write_register(0x30, 0x09);			
@@ -351,8 +353,9 @@ IMMVIBESPIAPI VibeStatus ImmVibeSPI_ForceOut_AmpEnable(VibeUInt8 nActuatorIndex)
 
     if (!g_bAmpEnabled)
     {
+#if !defined(CONFIG_USA_MODEL_SGH_I757)
     	printk("[VIBETONZ] %s \n",__func__);
-		
+#endif		
 		vibtonz_en(true);
 		g_bAmpEnabled = true;
 

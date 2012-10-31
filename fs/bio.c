@@ -110,8 +110,9 @@ static struct kmem_cache *bio_find_or_create_slab(unsigned int extra_size)
 	slab = kmem_cache_create(bslab->name, sz, 0, SLAB_HWCACHE_ALIGN, NULL);
 	if (!slab)
 		goto out_unlock;
-
+#if !defined(CONFIG_USA_MODEL_SGH_I757)
 	printk(KERN_INFO "bio: create slab <%s> at %d\n", bslab->name, entry);
+#endif
 	bslab->slab = slab;
 	bslab->slab_ref = 1;
 	bslab->slab_size = sz;

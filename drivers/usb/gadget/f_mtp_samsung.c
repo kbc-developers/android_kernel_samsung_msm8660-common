@@ -820,8 +820,10 @@ static long  mtpg_ioctl(struct file *fd, unsigned int code, unsigned long arg)
 							 __func__, __LINE__);
 			status = -EIO;
 		} else {
+#if !defined(CONFIG_USA_MODEL_SGH_I757)
 			printk(KERN_DEBUG "[%s]\t%d intruptFD suces\n",
 							 __func__, __LINE__);
+#endif
 			status = MTP_MAX_PACKET_LEN_FROM_APP;
 		}
 		break;
@@ -1281,10 +1283,10 @@ static int mtp_ctrlrequest(struct usb_composite_dev *cdev,
 	u16			w_value = le16_to_cpu(ctrl->wValue);
 	u16			w_length = le16_to_cpu(ctrl->wLength);
 
-	printk(KERN_DEBUG "mtp_ctrlrequest "
+	/* printk(KERN_DEBUG "mtp_ctrlrequest "
 			"%02x.%02x v%04x i%04x l%u\n",
 			ctrl->bRequestType, ctrl->bRequest,
-			w_value, w_index, w_length);
+			w_value, w_index, w_length);*/
 
 	if (ctrl->bRequestType ==
 			(USB_DIR_IN | USB_TYPE_STANDARD | USB_RECIP_DEVICE)

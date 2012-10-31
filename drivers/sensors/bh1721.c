@@ -42,7 +42,7 @@ static struct device *light_sensor_device;
 
 #define MAX_LEVEL 	8
 #define MAX_LUX		65528
-#if defined(CONFIG_USA_MODEL_SGH_I957)
+#if defined(CONFIG_USA_MODEL_SGH_I957) || defined(CONFIG_EUR_MODEL_GT_P7320) || defined (CONFIG_JPN_MODEL_SC_01D)
 #define ALS_BUFFER_NUM	0
 #else
 #define ALS_BUFFER_NUM	10
@@ -87,7 +87,7 @@ struct bh1721_data {
 	struct workqueue_struct *wq;
 	unsigned char illuminance_data[2];
 	bool als_buf_initialized;
-#if !defined(CONFIG_USA_MODEL_SGH_I957)
+#if !(defined(CONFIG_USA_MODEL_SGH_I957) || defined(CONFIG_EUR_MODEL_GT_P7320) || defined(CONFIG_JPN_MODEL_SC_01D))
 	int als_value_buf[ALS_BUFFER_NUM];
 	int als_index_count;
 #endif
@@ -310,7 +310,7 @@ static struct attribute_group light_attribute_group = {
 static int bh1721_get_luxvalue(struct bh1721_data *bh1721, u16 *value)
 {
 	int retry;
-#if !defined(CONFIG_USA_MODEL_SGH_I957)
+#if !(defined(CONFIG_USA_MODEL_SGH_I957) || defined(CONFIG_EUR_MODEL_GT_P7320) || defined(CONFIG_JPN_MODEL_SC_01D))
 	int i = 0;
 	int j = 0;
 	unsigned int als_total = 0;
@@ -331,7 +331,7 @@ static int bh1721_get_luxvalue(struct bh1721_data *bh1721, u16 *value)
 		printk("I2C read failed.. retry %d\n", retry);
 		return -EIO;
 	}
-#if !defined(CONFIG_USA_MODEL_SGH_I957)
+#if !(defined(CONFIG_USA_MODEL_SGH_I957) || defined(CONFIG_EUR_MODEL_GT_P7320) || defined(CONFIG_JPN_MODEL_SC_01D))
 	als_index = (bh1721->als_index_count++) % ALS_BUFFER_NUM;
 
 	/*ALS buffer initialize (light sensor off ---> light sensor on) */
@@ -381,7 +381,7 @@ static void bh1721_work_func_light(struct work_struct *work)
 		if(result > 89999) result = 89999;
 
 		//printk("[Light sensor] lux 0x%0X (%d)\n", result, result);
-#if	defined(CONFIG_USA_MODEL_SGH_I957)
+#if	defined(CONFIG_USA_MODEL_SGH_I957) || defined(CONFIG_EUR_MODEL_GT_P7320) || defined(CONFIG_JPN_MODEL_SC_01D)
 		input_report_rel(bh1721->light_input_dev, REL_MISC, result + 1);
 #else
 		input_report_abs(bh1721->light_input_dev, ABS_MISC, result);
@@ -487,7 +487,7 @@ static int bh1721_i2c_probe(struct i2c_client *client,
 	}
 	input_set_drvdata(input_dev, bh1721);
 	input_dev->name = "light_sensor";
-#if	defined(CONFIG_USA_MODEL_SGH_I957)
+#if	defined(CONFIG_USA_MODEL_SGH_I957) || defined(CONFIG_EUR_MODEL_GT_P7320) || defined(CONFIG_JPN_MODEL_SC_01D)
 	set_bit(EV_REL, input_dev->evbit);
 	input_set_capability(input_dev, EV_REL, REL_MISC);
 #else

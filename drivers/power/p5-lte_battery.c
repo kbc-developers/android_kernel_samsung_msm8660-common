@@ -242,23 +242,10 @@ static void lpm_mode_check(struct battery_data *battery)
 	if (!charging_mode_from_boot)
 		return;
 
-#if !defined(CONFIG_KOR_OPERATOR_SKT) && !defined(CONFIG_KOR_OPERATOR_KT) && !defined(CONFIG_KOR_OPERATOR_LGU)
-	if (check_ta_conn(battery)) {
-		battery->charging_mode_booting = 1;
-		lpm_mode_flag = 1;
-		pr_info("%s: charging_mode_booting(%d)\n", __func__,
-			battery->charging_mode_booting);
-	} else {
-		pr_info("%s: ta no longer connected, powering off\n", __func__);
-		if (pm_power_off)
-			pm_power_off();
-	}
-#else
 	battery->charging_mode_booting = 1;
 	lpm_mode_flag = 1;
 	pr_info("%s: charging_mode_booting(%d)\n", __func__,
 		battery->charging_mode_booting);
-#endif
 }
 #endif
 

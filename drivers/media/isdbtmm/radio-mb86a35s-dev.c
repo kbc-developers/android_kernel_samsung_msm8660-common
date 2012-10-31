@@ -1,9 +1,22 @@
-/**
-	@file	radio-mb86a35.c \n
-	multimedia tuner module device driver header file. \n
-	This file is a header file for multimedia tuner module device driver users.
+/*
+*
+* drivers/media/isdbtmm/radio-mb86a35s-dev.c
+*
+* isdbtmm driver
+*
+* Copyright (C) (2012, Samsung Electronics)
+*
+* This program is free software; you can redistribute it and/or modify
+* it under the terms of the GNU General Public License as published by
+* the Free Software Foundation version 2.
+*
+* This program is distributed "as is" WITHOUT ANY WARRANTY of any
+* kind, whether express or implied; without even the implied warranty
+* of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+* GNU General Public License for more details.
+*
 */
-/* COPYRIGHT FUJITSU SEMICONDUCTOR LIMITED 2011 */
+
 #ifndef	__KERNEL__
 #define	__KERNEL__
 #endif
@@ -15,51 +28,65 @@ static struct spi_device *mb86a35s_spi_device;
 
 static char *devname = NODE_PATHNAME;
 
+static int irq = 0;
 static u16 read_size = 0;
-/* matsumaru mod */
 static u8  *irq_bufp = NULL;
 static u8  *read_bufp = NULL;
 static u16 read_counter = 0;
 static u16 read_packet_cnt = 0;
+static u16 read_remain = 0;
 static u32 read_max_size = 0;
 static u32 needless_buf_size = 0;
-/* matsumaru mod */
-
 static int handler_enable_flag = 0;
+static int read_enable_flag = 0;
+/* matsumaru_mod */
+#if 0
 static void mb86a35s_irq_work(struct work_struct *);
 static DECLARE_WORK(mb86a35s_work, mb86a35s_irq_work);
 static DECLARE_WAIT_QUEUE_HEAD(mb86a35s_wq);
 static struct workqueue_struct *wq = 0;
+#else
+static void mb86a35s_irq_work(void);
+static int mb86a35s_work_thread(void *arg);
+#endif
+/* matsumaru_mod */
+static u8 open_cnt = 0;
+static u8 monitorapp_cnt = 0;
 
-static int irq = 0;
 DEFINE_MUTEX(mb86a35s_spi_device_lock);
-/* ogawa_mod */
 DEFINE_MUTEX(buffer_lock);
-/* ogawa_mod */
+
 static unsigned long map_physicaladdr;
 
 static struct wake_lock mb86a35s_wake_lock;
 
 static u8 stream_data[MB86A35S_STREAM_SIZE] __cacheline_aligned;
 
+/* matsumaru_mod */
+typedef struct mb86a35s_thread {
+	struct task_struct *mb86a5s_thread;
+	wait_queue_head_t mb86a35s_thread_wait;
+	u8 mb86a35s_status;
+#if 0
+	u8 mb86a35s_cnt;
+#endif
+	spinlock_t tmm_lock;
+}mb86a5s_thread_t;
+
+mb86a5s_thread_t *work_thread;
+/* matsumaru_mod */
+
+#if 0
 static u8 null_data[] = {0x47, 0x1F, 0xFF, 0x10};
+#endif
 
-static int read_enable_flag = 0;
-
-#define		LICENSE			"GPL v2"
-#define		AUTHOR			"FUJITSU SEMICONDUCTOR LIMITED"
-#define		DESCRIPTION		"FUJITSU SEMICONDUCTOR LIMITED"
-#define		VERSION			"1.3"
-
-MODULE_LICENSE(LICENSE);
-MODULE_AUTHOR(AUTHOR);
-MODULE_DESCRIPTION(DESCRIPTION);
-MODULE_VERSION(VERSION);
+#define		DESCRIPTION		"ISDBTMM Driver"
 
 /* insmod() Parameter */
 static int MB86A35_DEBUG = 0;
 static char *mode = NULL;
-module_param(mode, charp, S_IRUGO);	/* Executed mode : DEBUG "mb86a35_DEBUG" */
+/* Executed mode : DEBUG "mb86a35_DEBUG" */
+module_param(mode, charp, S_IRUGO);
 
 #define	MB86A35_DEF_REG2B		0x08
 #define	MB86A35_DEF_REG2E		0x16
@@ -81,7 +108,10 @@ static u8 REG30 = MB86A35_DEF_REG30;
 #define	MB86A35_CALB_DCOFF_WAIT		10
 
 
-static int mb86a35s_spi_rf_recv(unsigned char reg, unsigned char *data, unsigned int size);
+static int mb86a35s_spi_rf_recv(unsigned char reg, unsigned char *data,
+							unsigned int size);
+
+static int mycopy_to_user(char* dst, char* data, size_t read_count);
 
 /************************************************************************/
 /**
@@ -149,7 +179,7 @@ static int mb86a35s_spi_send(unsigned char reg, unsigned int data, unsigned int 
 	}
 
 	mutex_unlock(&mb86a35s_spi_device_lock);
-
+	
 	return rtn;
 }
 
@@ -175,6 +205,8 @@ static int mb86a35s_spi_recv(unsigned char reg, unsigned char *data, unsigned in
 	u8 addr   = 0;
 	u8 _data[4];
 
+	DBGPRINT(PRINT_LHEADERFMT "** reg[%02x], *data[%02x] size[%02x]\n", PRINT_LHEADER, (int)reg, (int)data[0], (int)size);
+	
 	spi_message_init(&m);
 	memset(t, 0, sizeof(t));
 	memset(_data, 0, sizeof(_data));
@@ -206,8 +238,6 @@ static int mb86a35s_spi_recv(unsigned char reg, unsigned char *data, unsigned in
 	}
 
 	memcpy(data, (_data+1), size);	/* read header skip	*/
-
-	DBGPRINT(PRINT_LHEADERFMT "** reg[%02x], *data[%02x] size[%02x]\n", PRINT_LHEADER, (int)reg, (int)data[0], (int)size);
 
 end:
 	mutex_unlock(&mb86a35s_spi_device_lock);
@@ -241,6 +271,8 @@ static int mb86a35s_spi_stream_recv(unsigned char reg, unsigned char *data, unsi
 	u8 mode = MB86A35S_SPI_READ_HEADER_3BYTE;
 	static u8 tx_buf[6] __cacheline_aligned;
 
+	DBGPRINT(PRINT_LHEADERFMT "** reg[%02x], data [%02x] [%02x] [%02x]\n", PRINT_LHEADER, (int)reg, (int)data[0], (int)data[1], (int)data[2]);
+	
 	spi_message_init(&m);
 	memset(t, 0, sizeof(t));
 	memset(tx_buf, 0, sizeof(tx_buf));
@@ -248,8 +280,8 @@ static int mb86a35s_spi_stream_recv(unsigned char reg, unsigned char *data, unsi
 	mutex_lock(&mb86a35s_spi_device_lock);
 
 	tx_buf[0] = mode;
-	tx_buf[1] = (u8)((size >> 8) & 0x000000ff);	/* size hi	*/
-	tx_buf[2] = (u8)(size & 0x000000ff);		/* size lo	*/
+	tx_buf[1] = (u8)((size >> 8) & 0x000000ff);	/* size hi */
+	tx_buf[2] = (u8)(size & 0x000000ff);		/* size lo */
 	tx_buf[5] = (unsigned char)reg;
 	t[0].tx_buf = tx_buf;
 	t[0].rx_buf = NULL;
@@ -266,8 +298,6 @@ static int mb86a35s_spi_stream_recv(unsigned char reg, unsigned char *data, unsi
 		ERRPRINT("spi_sync error.[ %d ]\n", rtn);
 		goto end;
 	}
-
-	DBGPRINT(PRINT_LHEADERFMT "** reg[%02x], data [%02x] [%02x] [%02x]\n", PRINT_LHEADER, (int)reg, (int)data[0], (int)data[1], (int)data[2]);
 
 end:
 	mutex_unlock(&mb86a35s_spi_device_lock);
@@ -296,6 +326,7 @@ static int mb86a35s_spi_sub_send(unsigned char suba, unsigned char reg,
 	DBGPRINT(PRINT_LHEADERFMT "** suba[%02x], subd[%02x], reg[%02x], data[%04x], size[%02x]\n", PRINT_LHEADER, (int)suba, (int)subd, (int)reg, (int)data, (int)size);
 
 	rtn = mb86a35s_spi_send(suba, (data << 8) | reg, MB86A35S_SPI_WRITE_2BYTE);
+	
 	if (rtn != 0) {
 		ERRPRINT("spi send error.[ %d ]\n", rtn);
 		goto end;
@@ -323,6 +354,8 @@ static int mb86a35s_spi_sub_recv(unsigned char suba, unsigned char reg,
 {
 	int rtn = 0;
 
+	DBGPRINT(PRINT_LHEADERFMT "** suba[%02x], subd[%02x], reg[%02x], data[%04x]\n", PRINT_LHEADER, (int)suba, (int)subd, (int)reg, (int)data);
+	
 	disable_irq(irq);
 
 	/* send SUBA 	*/
@@ -338,8 +371,6 @@ static int mb86a35s_spi_sub_recv(unsigned char suba, unsigned char reg,
 		ERRPRINT("spi receive error.[ %d ]\n", rtn);
 		goto end;
 	}
-
-	DBGPRINT(PRINT_LHEADERFMT "** suba[%02x], subd[%02x], reg[%02x], data[%04x]\n", PRINT_LHEADER, (int)suba, (int)subd, (int)reg, (int)data);
 
 end:
 	enable_irq(irq);
@@ -478,6 +509,8 @@ static int mb86a35s_spi_rf_recv(unsigned char reg, unsigned char *data, unsigned
 	u8 suba = MB86A35S_REG_ADDR_RFA;
 	u8 subd = MB86A35S_REG_ADDR_RFD;
 
+	DBGPRINT(PRINT_LHEADERFMT "** reg[%02x], data[%02x]\n", PRINT_LHEADER, (int)reg, (int)data[0]);
+	
 	disable_irq(irq);
 
 	/* SPIEN RF ON	*/
@@ -516,8 +549,6 @@ static int mb86a35s_spi_rf_recv(unsigned char reg, unsigned char *data, unsigned
 		ERRPRINT("spi send error.[ %d ]\n", rtn);
 		goto end;
 	}
-
-	DBGPRINT(PRINT_LHEADERFMT "** reg[%02x], data[%02x]\n", PRINT_LHEADER, (int)reg, (int)data[0]);
 
 end:
 	enable_irq(irq);
@@ -567,6 +598,8 @@ static int mb86a35_i2c_master_recv(unsigned char reg, unsigned char *rbuf,
 	int err = 0;
 	u8 _data = 0;
 
+	DBGPRINT(PRINT_LHEADERFMT "** reg[%02x], rbuf[%02x] count[%d]\n", PRINT_LHEADER, (int)reg, (int)rbuf[0], (int)count);
+	
 	switch (count) {
 	case 1:
 		err = mb86a35s_spi_recv(reg, rbuf, MB86A35S_SPI_WRITE_1BYTE);
@@ -659,6 +692,11 @@ static int mb86a35_i2c_slave_recv(unsigned char suba, unsigned char reg,
 	unsigned char adrreg = reg;
 	int err = 0;
 
+	DBGPRINT(PRINT_LHEADERFMT
+		 "** SUBA[%02x], sreg[%02x], SUBD[%02x], *rbuf[%08x], count[%d], rbuf[%02x]\n",
+		 PRINT_LHEADER, (int)suba, (int)reg, (int)subd, (int)rbuf,
+		 (int)count, (int)rbuf[0]);
+	
 	memset(data, 0, sizeof(data));
 	for (indx = 0; indx < count; indx++) {
 		err = mb86a35s_spi_sub_recv(suba, adrreg, subd, data, MB86A35S_SPI_WRITE_1BYTE);
@@ -669,11 +707,6 @@ static int mb86a35_i2c_slave_recv(unsigned char suba, unsigned char reg,
 		rbuf[indx] = data[0];
 		adrreg += 1;
 	}
-
-	DBGPRINT(PRINT_LHEADERFMT
-		 "** SUBA[%02x], sreg[%02x], SUBD[%02x], *rbuf[%08x], count[%d], rbuf[%02x]\n",
-		 PRINT_LHEADER, (int)suba, (int)reg, (int)subd, (int)rbuf,
-		 (int)count, (int)rbuf[0]);
 
 i2c_slave_recv_return:
 	return err;
@@ -746,6 +779,11 @@ static int mb86a35_i2c_sub_recv(unsigned char suba, unsigned char reg,
 {
 	int err = 0;
 
+	DBGPRINT(PRINT_LHEADERFMT
+		 "** SUBA[%02x], sreg[%02x], SUBD[%02x], *data[%08x], mode[%02x] : data[%02x:%02x:%02x]\n",
+		 PRINT_LHEADER, (int)suba, (int)reg, (int)subd, (int)data, mode,
+		 data[0], data[1], data[2]);
+	
 	/* 1msec wait	*/
 	switch (mode) {
 	case PARAM_SPI_MODE_RECV:
@@ -785,11 +823,6 @@ static int mb86a35_i2c_sub_recv(unsigned char suba, unsigned char reg,
 		}
 		break;
 	}
-
-	DBGPRINT(PRINT_LHEADERFMT
-		 "** SUBA[%02x], sreg[%02x], SUBD[%02x], *data[%08x], mode[%02x] : data[%02x:%02x:%02x]\n",
-		 PRINT_LHEADER, (int)suba, (int)reg, (int)subd, (int)data, mode,
-		 data[0], data[1], data[2]);
 
 i2c_sub_recv_return:
 	return err;
@@ -848,13 +881,19 @@ static int mb86a35_i2c_master_send_mask(unsigned int reg, unsigned int value,
 
 	rtncode = mb86a35_i2c_master_recv(reg, &I2C_DATA, 1);
 	if (rtncode != 0) {
+		ERRPRINT("register master recv error [ %d ].\n", rtncode);
 		rtncode = -EFAULT;
 		goto i2c_master_send_mask_return;
 	}
 	svalue = I2C_DATA & I2C_MASK;
 
 	svalue |= (value & PARAM_MASK);
-	mb86a35_i2c_master_send(reg, svalue);
+	rtncode = mb86a35_i2c_master_send(reg, svalue);
+	if (rtncode != 0) {
+		ERRPRINT("register master send error [ %d ].\n", rtncode);
+		rtncode = -EFAULT;
+		goto i2c_master_send_mask_return;
+	}
 
 i2c_master_send_mask_return:
         enable_irq(irq);
@@ -892,6 +931,7 @@ static int mb86a35_i2c_slave_send_mask(unsigned char suba, unsigned char reg,
 
 	rtncode = mb86a35_i2c_slave_recv(suba, reg, subd, &I2C_DATA, 1);
 	if (rtncode != 0) {
+		ERRPRINT("register slave recv error [ %d ].\n", rtncode);
 		rtncode = -EFAULT;
 		goto i2c_slave_send_mask_return;
 	}
@@ -923,6 +963,10 @@ static int mb86a35_i2c_rf_recv(unsigned char reg, unsigned char *rbuf,
 	int err  = 0;
 	int indx = 0;
 
+	DBGPRINT(PRINT_LHEADERFMT
+		 " : RFreg[%02x], *rbuf[%08x], count[%d], rbuf[%02x]\n",
+		 PRINT_LHEADER, (int)reg, (int)rbuf, (int)count, (int)rbuf[0]);
+	
 	for (indx = 0; indx < count; indx++) {
 		err = mb86a35s_spi_rf_recv(reg+indx, &rbuf[indx], MB86A35S_SPI_WRITE_1BYTE);
 		if (err < 0) {
@@ -930,11 +974,7 @@ static int mb86a35_i2c_rf_recv(unsigned char reg, unsigned char *rbuf,
 			err = -EIO;
 		}
 	}
-
-	DBGPRINT(PRINT_LHEADERFMT
-		 " : RFreg[%02x], *rbuf[%08x], count[%d], rbuf[%02x]\n",
-		 PRINT_LHEADER, (int)reg, (int)rbuf, (int)count, (int)rbuf[0]);
-
+	
 	return err;
 }
 
@@ -958,6 +998,9 @@ void mb86a35_RF_channel_calbvoscr(mb86a35_cmdcontrol_t * cmdctrl, u8 REG2B,
 	unsigned int reg;
 	unsigned int value;
 
+	DBGPRINT(PRINT_LHEADERFMT " : REG2B[%d], REG61[%d]\n",
+		 PRINT_LHEADER, (int)REG2B, (int)REG61);
+	
 	/* CALBVCOSR */
 	reg = 0x2B;
 	value = REG2B;
@@ -1001,10 +1044,12 @@ void mb86a35_RF_channel_calbvoscr(mb86a35_cmdcontrol_t * cmdctrl, u8 REG2B,
 static
 mb86a35_freq_t *mb86a35_RF_channel_tblcheck(u8 mode, u8 chno)
 {
-  
-  /* ES2.0 */
-  mb86a35_freq_t *freq = NULL;
-  int indx = 0;
+	/* ES2.0 */
+	mb86a35_freq_t *freq = NULL;
+	int indx = 0;
+	
+	DBGPRINT(PRINT_LHEADERFMT " : mode[%d], chno[%d]\n",
+		 PRINT_LHEADER, (int)mode, (int)chno);
 
 	switch (mode) {
 		/* UHF */
@@ -1046,9 +1091,12 @@ channel_tblcheck_return:
 static
 mb86a35_freq1_t *mb86a35_RF_channel_tblcheck1(u8 mode, u8 chno)
 {
-  /* ES3.0 */
-  mb86a35_freq1_t *freq = NULL;
-  int indx = 0;
+	/* ES3.0 */
+	mb86a35_freq1_t *freq = NULL;
+	int indx = 0;
+	
+	DBGPRINT(PRINT_LHEADERFMT " : mode[%d], chno[%d]\n",
+		 PRINT_LHEADER, (int)mode, (int)chno);
 
 	switch (mode) {
 		/* UHF */
@@ -1104,24 +1152,25 @@ channel_tblcheck1_return:
 static
 int mb86a35_RF_channel(mb86a35_cmdcontrol_t * cmdctrl, u8 mode, u8 chno)
 {
-  int rtncode_rf = 0;
-  unsigned char reg_rf = 0;
-  u8 chipid0_rf = 0;
-  int rtncode = 0;
-  unsigned int reg;
-  unsigned int value;
-  
-  
-   rtncode_rf = mb86a35_i2c_rf_recv(reg_rf, &chipid0_rf, 1);
-   if (rtncode_rf != 0) {
-    		rtncode = -EFAULT;
-    		goto rf_channel_errreturn;
-    }
+	int rtncode_rf = 0;
+	unsigned char reg_rf = 0;
+	u8 chipid0_rf = 0;
+	int rtncode = 0;
+	unsigned int reg;
+	unsigned int value;
 
-   if (chipid0_rf == 0x03) {    /* ES2.0 start */
+	DBGPRINT(PRINT_LHEADERFMT " : mode[%d], chno[%d]\n",
+		 PRINT_LHEADER, (int)mode, (int)chno);
+	
+	rtncode_rf = mb86a35_i2c_rf_recv(reg_rf, &chipid0_rf, 1);
+	if (rtncode_rf != 0) {
+		ERRPRINT("register RF receive error [%d]\n", rtncode_rf);
+		rtncode = -EFAULT;
+		goto rf_channel_errreturn;
+	}
 
+	if (chipid0_rf == 0x03) {    /* ES2.0 start */
 	int loopcnt = 0;
-
 	int swUHF = -1;
 	int chselect = -1;
 	int varconsel = 0;
@@ -1137,7 +1186,6 @@ int mb86a35_RF_channel(mb86a35_cmdcontrol_t * cmdctrl, u8 mode, u8 chno)
 	u8 REG60 = 0;
 	u8 REG61 = 0;
 	u8 REG62 = 0;
-
 	mb86a35_freq_t *freq;
 
 #define	PLLN_UHF_13		0x1D
@@ -1457,8 +1505,8 @@ int mb86a35_RF_channel(mb86a35_cmdcontrol_t * cmdctrl, u8 mode, u8 chno)
 
 	rtncode = -ETIMEDOUT;
 
-   }          /* ES2.0 end */
-   else {     /* ES3.0 start */
+	}          /* ES2.0 end */
+	else {     /* ES3.0 start */
 	u32 ui32localOscFreq,ui32RadioFreq ;
 	u32 ui32pllFreq,ui32RefereceFreq;
 	u8 pui8plls = 1;   
@@ -1685,18 +1733,17 @@ int mb86a35_RF_channel(mb86a35_cmdcontrol_t * cmdctrl, u8 mode, u8 chno)
 		}
 
 		if ((ui32localOscFreq < 928000)&&(ui32localOscFreq >= 464000))  /*928~464*/
-		  pui8plls=1;
+			pui8plls=1;
 		else if ((ui32localOscFreq < 464000)&&(ui32localOscFreq>=232000)) /*464~232*/
-		  pui8plls=4;
+			pui8plls=4;
 		else if ((ui32localOscFreq < 232000)&&(ui32localOscFreq>=116000)) /*232~116*/
-          pui8plls=8;
-		else if (ui32localOscFreq<116000) 
-		 pui8plls=16;
+			pui8plls=8;
+		else if (ui32localOscFreq<116000)
+			pui8plls=16;
 	
 		ui32pllFreq = ui32localOscFreq * pui8plls;
-	    
-	    
-	    if ((ui32localOscFreq < 928000)&&(ui32localOscFreq >= 464000))  /*928~464*/
+
+		if ((ui32localOscFreq < 928000)&&(ui32localOscFreq >= 464000))  /*928~464*/
 			VCOBAND = 7;
 			else if ((ui32localOscFreq < 464000)&&(ui32localOscFreq>=232000)) /*464~232*/
 				VCOBAND = 6;
@@ -1738,10 +1785,10 @@ int mb86a35_RF_channel(mb86a35_cmdcontrol_t * cmdctrl, u8 mode, u8 chno)
 		reg = 0x06;
 		rtncode = mb86a35_i2c_rf_recv(reg, &REG06, 1);
 		if (rtncode != 0) {
-    		rtncode = -EFAULT;
-    		goto rf_channel_errreturn;
-    	}
-    	VCORG = REG06;
+		rtncode = -EFAULT;
+		goto rf_channel_errreturn;
+	}
+	VCORG = REG06;
 
 
 		
@@ -1768,7 +1815,7 @@ int mb86a35_RF_channel(mb86a35_cmdcontrol_t * cmdctrl, u8 mode, u8 chno)
 		value = WR51 | (MAXVCOOUT << 3);
 		mb86a35_i2c_rf_send(reg, value);
 
-   }
+	}
 
 rf_channel_errreturn:
 	DBGPRINT(PRINT_LHEADERFMT "**** return[ %d ].\n", PRINT_LHEADER,
@@ -1805,790 +1852,795 @@ static
 int mb86a35_IOCTL_RF_CALIB_CTUNE_do(mb86a35_cmdcontrol_t * cmdctrl,
 				    unsigned int cmd, ioctl_rf_t * RF)
 {
-  int rtncode_rf = 0;
-  unsigned char reg_rf = 0;
-  u8 chipid0_rf = 0;
-  int rtncode = 0;
-   rtncode_rf = mb86a35_i2c_rf_recv(reg_rf, &chipid0_rf, 1);
-   if (rtncode_rf != 0) {
-    		rtncode = -EFAULT;
-    		goto ch_ctune_do_return;
-    }
-
-   if (chipid0_rf == 0x03) {
-
-	unsigned char reg;
-	unsigned int value = 0;
-	int ctuneid = 0;
-	int ctune = 0;
-	int normal_cnt = 0x04BACA;
-	int rcvar = 0;
-	u8 REG08 = 0;
-	u8 REG09 = 0;
-	u8 REG24 = 0;
-	u8 REG3D = 0;
-	u8 REG3E = 0;
-	u8 REG40 = 0;
-
-	struct mb86a35_ctune {
-		u8 BQC;
-		u8 STG1_C3_GV0_DEF;
-		u8 STG1_C3_GV6_DEF;
-		u8 STG1_C3_GV12_DEF;
-		u8 STG1_C3_GV18_DEF;
-		u8 STG2_C3_GV0_DEF;
-		u8 STG2_C3_GV6_DEF;
-		u8 STG2_C3_GV12_DEF;
-		u8 STG2_C3_GV18_DEF;
-		u8 STG3_C3_GV0_DEF;
-		u8 STG3_C3_GV6_DEF;
-		u8 STG3_C3_GV12_DEF;
-		u8 STG3_C3_GV18_DEF;
-		u8 STG2_Q_CAL;
-		u8 STG3_Q_CAL;
-		u8 vBQC_OFFSET;
-		u8 LPF_MODE;
-	} mb86a35_ctune_regdata[3] = {
-		{
-		31, 1, 3, 6, 12, 12, 24, 48, 88, 10, 20, 39, 78, 4, 3, 3, 8},
-		{
-		105, 5, 10, 21, 42, 29, 60, 120, 240, 16, 32, 64, 128,
-			    0, 0, 0, 2}, {
-	26, 1, 3, 6, 12, 10, 20, 40, 80, 10, 20, 40, 80, 0, 0,
-			    0, 2},};
-	int vSTG1_C3_GV0 = 0;
-	int vSTG1_C3_GV6 = 0;
-	int vSTG1_C3_GV12 = 0;
-	int vSTG1_C3_GV18 = 0;
-	int vSTG2_C3_GV0 = 0;
-	int vSTG2_C3_GV6 = 0;
-	int vSTG2_C3_GV12 = 0;
-	int vSTG2_C3_GV18 = 0;
-	int vSTG3_C3_GV0 = 0;
-	int vSTG3_C3_GV6 = 0;
-	int vSTG3_C3_GV12 = 0;
-	int vSTG3_C3_GV18 = 0;
-	int vBQC = 0;
-	int vBQC_ACR = 0;
-
+	int rtncode_rf = 0;
+	unsigned char reg_rf = 0;
+	u8 chipid0_rf = 0;
+	int rtncode = 0;
+	
 	DBGPRINT(PRINT_LHEADERFMT
-		 " : (cmdctrl:0x%08x,cmd:0x%08x,arg:0x%08x)  called.\n",
+		" : (cmdctrl:0x%08x,cmd:0x%08x,arg:0x%08x)  called.\n",
 		 PRINT_LHEADER, (int)cmdctrl, (int)cmd, (int)RF);
-
-	switch (RF->mode) {
-		/* 13 seg */
-	case PARAM_MODE_ISDBT_13UHF:
-	case PARAM_MODE_ISDBTMM_13VHF:
-		ctuneid = 0;
-		break;
-
-		/* 1 seg */
-	case PARAM_MODE_ISDBT_1UHF:
-	case PARAM_MODE_ISDBTMM_1VHF:
-	case PARAM_MODE_ISDBTSB_1VHF:
-		ctuneid = 1;
-		break;
-
-		/* 3 seg */
-	case PARAM_MODE_ISDBTSB_3VHF:
-		ctuneid = 2;
-		break;
-
-	default:
-		rtncode = -EINVAL;
-		goto ch_ctune_do_return;
-		break;
-	}
-
-	reg = 0x30;
-	value = REG30;
-	mb86a35_i2c_rf_send(reg, value);
-
-	/* WAIT */
-	mdelay(1);
-	/********/
-
-	reg = 0x09;
-	rtncode = mb86a35_i2c_rf_recv(reg, &REG09, 1);
-	if (rtncode != 0) {
+	
+	rtncode_rf = mb86a35_i2c_rf_recv(reg_rf, &chipid0_rf, 1);
+	if (rtncode_rf != 0) {
+		ERRPRINT("register RF receive error : %d\n", rtncode_rf);
 		rtncode = -EFAULT;
 		goto ch_ctune_do_return;
 	}
 
-	reg = 0x08;
-	rtncode = mb86a35_i2c_rf_recv(reg, &REG08, 1);
-	if (rtncode != 0) {
-		rtncode = -EFAULT;
-		goto ch_ctune_do_return;
-	}
+	if (chipid0_rf == 0x03) {
+		unsigned char reg;
+		unsigned int value = 0;
+		int ctuneid = 0;
+		int ctune = 0;
+		int normal_cnt = 0x04BACA;
+		int rcvar = 0;
+		u8 REG08 = 0;
+		u8 REG09 = 0;
+		u8 REG24 = 0;
+		u8 REG3D = 0;
+		u8 REG3E = 0;
+		u8 REG40 = 0;
 
-	ctune = (REG09 & 0xff) + ((REG08 & 0x01) << 8);
+		struct mb86a35_ctune {
+			u8 BQC;
+			u8 STG1_C3_GV0_DEF;
+			u8 STG1_C3_GV6_DEF;
+			u8 STG1_C3_GV12_DEF;
+			u8 STG1_C3_GV18_DEF;
+			u8 STG2_C3_GV0_DEF;
+			u8 STG2_C3_GV6_DEF;
+			u8 STG2_C3_GV12_DEF;
+			u8 STG2_C3_GV18_DEF;
+			u8 STG3_C3_GV0_DEF;
+			u8 STG3_C3_GV6_DEF;
+			u8 STG3_C3_GV12_DEF;
+			u8 STG3_C3_GV18_DEF;
+			u8 STG2_Q_CAL;
+			u8 STG3_Q_CAL;
+			u8 vBQC_OFFSET;
+			u8 LPF_MODE;
+		} mb86a35_ctune_regdata[3] = {
+			{
+			31, 1, 3, 6, 12, 12, 24, 48, 88, 10, 20, 39, 78, 4, 3, 3, 8},
+			{
+			105, 5, 10, 21, 42, 29, 60, 120, 240, 16, 32, 64, 128,
+				    0, 0, 0, 2}, {
+		26, 1, 3, 6, 12, 10, 20, 40, 80, 10, 20, 40, 80, 0, 0,
+				    0, 2},};
+		int vSTG1_C3_GV0 = 0;
+		int vSTG1_C3_GV6 = 0;
+		int vSTG1_C3_GV12 = 0;
+		int vSTG1_C3_GV18 = 0;
+		int vSTG2_C3_GV0 = 0;
+		int vSTG2_C3_GV6 = 0;
+		int vSTG2_C3_GV12 = 0;
+		int vSTG2_C3_GV18 = 0;
+		int vSTG3_C3_GV0 = 0;
+		int vSTG3_C3_GV6 = 0;
+		int vSTG3_C3_GV12 = 0;
+		int vSTG3_C3_GV18 = 0;
+		int vBQC = 0;
+		int vBQC_ACR = 0;
 
-	rcvar = normal_cnt / ctune;
-	REG3D = 0x30 + ((8 + 18) * rcvar / 1000) - 18;
-	reg = 0x3D;
-	value = REG3D;
-	mb86a35_i2c_rf_send(reg, value);
+		DBGPRINT(PRINT_LHEADERFMT
+			 " : (cmdctrl:0x%08x,cmd:0x%08x,arg:0x%08x)  called.\n",
+			 PRINT_LHEADER, (int)cmdctrl, (int)cmd, (int)RF);
 
-	REG24 = 0x80 + mb86a35_ctune_regdata[ctuneid].LPF_MODE;
-	reg = 0x24;
-	value = REG24;
-	mb86a35_i2c_rf_send(reg, value);
+		switch (RF->mode) {
+			/* 13 seg */
+		case PARAM_MODE_ISDBT_13UHF:
+		case PARAM_MODE_ISDBTMM_13VHF:
+			ctuneid = 0;
+			break;
 
-	vSTG1_C3_GV0 =
-	    (mb86a35_ctune_regdata[ctuneid].STG1_C3_GV0_DEF * rcvar) / 1000;
-	if (vSTG1_C3_GV0 > 0x0F) {
-		vSTG1_C3_GV0 = 0x0F;
-	}
-	reg = 0x3F;
-	value = (0x40 + vSTG1_C3_GV0);
-	mb86a35_i2c_rf_send(reg, value);
+			/* 1 seg */
+		case PARAM_MODE_ISDBT_1UHF:
+		case PARAM_MODE_ISDBTMM_1VHF:
+		case PARAM_MODE_ISDBTSB_1VHF:
+			ctuneid = 1;
+			break;
 
-	vSTG1_C3_GV6 =
-	    (mb86a35_ctune_regdata[ctuneid].STG1_C3_GV6_DEF * rcvar) / 1000;
-	if (vSTG1_C3_GV6 > 0x1F) {
-		vSTG1_C3_GV6 = 0x1F;
-	}
+			/* 3 seg */
+		case PARAM_MODE_ISDBTSB_3VHF:
+			ctuneid = 2;
+			break;
 
-	vSTG2_C3_GV12 =
-	    (mb86a35_ctune_regdata[ctuneid].STG2_C3_GV12_DEF * rcvar) / 1000;
-	if (vSTG2_C3_GV12 > 0x1FF) {
-		vSTG2_C3_GV12 = 0x1FF;
-	}
+		default:
+			rtncode = -EINVAL;
+			goto ch_ctune_do_return;
+			break;
+		}
 
-	vSTG2_C3_GV18 =
-	    (mb86a35_ctune_regdata[ctuneid].STG2_C3_GV18_DEF * rcvar) / 1000;
-	if (vSTG2_C3_GV18 > 0x1FF) {
-		vSTG2_C3_GV18 = 0x1FF;
-	}
+		reg = 0x30;
+		value = REG30;
+		mb86a35_i2c_rf_send(reg, value);
 
-	vSTG3_C3_GV18 =
-	    (mb86a35_ctune_regdata[ctuneid].STG3_C3_GV18_DEF * rcvar) / 1000;
-	if (vSTG3_C3_GV18 > 0x1FF) {
-		vSTG3_C3_GV18 = 0x1FF;
-	}
+		/* WAIT */
+		mdelay(1);
+		/********/
 
-	REG40 = ((vSTG1_C3_GV6 & 0x1F) << 3)
-	    + ((vSTG2_C3_GV12 & 0x01) << 2)
-	    + ((vSTG2_C3_GV18 & 0x01) << 1)
-	    + (vSTG3_C3_GV18 & 0x01);
-	reg = 0x40;
-	value = REG40;
-	mb86a35_i2c_rf_send(reg, value);
+		reg = 0x09;
+		rtncode = mb86a35_i2c_rf_recv(reg, &REG09, 1);
+		if (rtncode != 0) {
+			rtncode = -EFAULT;
+			goto ch_ctune_do_return;
+		}
 
-	vSTG1_C3_GV12 =
-	    (mb86a35_ctune_regdata[ctuneid].STG1_C3_GV12_DEF * rcvar) / 1000;
-	if (vSTG1_C3_GV12 > 0x3F) {
-		vSTG1_C3_GV12 = 0x3F;
-	}
-	reg = 0x41;
-	value = vSTG1_C3_GV12;
-	mb86a35_i2c_rf_send(reg, value);
+		reg = 0x08;
+		rtncode = mb86a35_i2c_rf_recv(reg, &REG08, 1);
+		if (rtncode != 0) {
+			rtncode = -EFAULT;
+			goto ch_ctune_do_return;
+		}
 
-	vSTG1_C3_GV18 =
-	    (mb86a35_ctune_regdata[ctuneid].STG1_C3_GV18_DEF * rcvar) / 1000;
-	if (vSTG1_C3_GV18 > 0x7F) {
-		vSTG1_C3_GV18 = 0x7F;
-	}
-	reg = 0x42;
-	value = vSTG1_C3_GV18;
-	mb86a35_i2c_rf_send(reg, value);
+		ctune = (REG09 & 0xff) + ((REG08 & 0x01) << 8);
 
-	vSTG2_C3_GV0 =
-	    (mb86a35_ctune_regdata[ctuneid].STG2_C3_GV0_DEF * rcvar) / 1000;
-	if (vSTG2_C3_GV0 > 0x7F) {
-		vSTG2_C3_GV0 = 0x7F;
-	}
-	reg = 0x43;
-	value = vSTG2_C3_GV0;
-	mb86a35_i2c_rf_send(reg, value);
+		rcvar = normal_cnt / ctune;
+		REG3D = 0x30 + ((8 + 18) * rcvar / 1000) - 18;
+		reg = 0x3D;
+		value = REG3D;
+		mb86a35_i2c_rf_send(reg, value);
 
-	vSTG2_C3_GV6 =
-	    (mb86a35_ctune_regdata[ctuneid].STG2_C3_GV6_DEF * rcvar) / 1000;
-	if (vSTG2_C3_GV6 > 0xFF) {
-		vSTG2_C3_GV6 = 0xFF;
-	}
-	reg = 0x44;
-	value = vSTG2_C3_GV6;
-	mb86a35_i2c_rf_send(reg, value);
+		REG24 = 0x80 + mb86a35_ctune_regdata[ctuneid].LPF_MODE;
+		reg = 0x24;
+		value = REG24;
+		mb86a35_i2c_rf_send(reg, value);
 
-	vSTG3_C3_GV0 =
-	    (mb86a35_ctune_regdata[ctuneid].STG3_C3_GV0_DEF * rcvar) / 1000;
-	if (vSTG3_C3_GV0 > 0x3F) {
-		vSTG3_C3_GV0 = 0x3F;
-	}
-	reg = 0x45;
-	value = vSTG3_C3_GV0;
-	mb86a35_i2c_rf_send(reg, value);
+		vSTG1_C3_GV0 =
+		    (mb86a35_ctune_regdata[ctuneid].STG1_C3_GV0_DEF * rcvar) / 1000;
+		if (vSTG1_C3_GV0 > 0x0F) {
+			vSTG1_C3_GV0 = 0x0F;
+		}
+		reg = 0x3F;
+		value = (0x40 + vSTG1_C3_GV0);
+		mb86a35_i2c_rf_send(reg, value);
 
-	vSTG3_C3_GV6 =
-	    (mb86a35_ctune_regdata[ctuneid].STG3_C3_GV6_DEF * rcvar) / 1000;
-	if (vSTG3_C3_GV6 > 0x7F) {
-		vSTG3_C3_GV6 = 0x7F;
-	}
-	reg = 0x46;
-	value = vSTG3_C3_GV6;
-	mb86a35_i2c_rf_send(reg, value);
+		vSTG1_C3_GV6 =
+		    (mb86a35_ctune_regdata[ctuneid].STG1_C3_GV6_DEF * rcvar) / 1000;
+		if (vSTG1_C3_GV6 > 0x1F) {
+			vSTG1_C3_GV6 = 0x1F;
+		}
 
-	vSTG3_C3_GV12 =
-	    (mb86a35_ctune_regdata[ctuneid].STG3_C3_GV12_DEF * rcvar) / 1000;
-	if (vSTG3_C3_GV12 > 0xFF) {
-		vSTG3_C3_GV12 = 0xFF;
-	}
-	reg = 0x47;
-	value = vSTG3_C3_GV12;
-	mb86a35_i2c_rf_send(reg, value);
+		vSTG2_C3_GV12 =
+		    (mb86a35_ctune_regdata[ctuneid].STG2_C3_GV12_DEF * rcvar) / 1000;
+		if (vSTG2_C3_GV12 > 0x1FF) {
+			vSTG2_C3_GV12 = 0x1FF;
+		}
 
-	reg = 0x48;
-	value = (vSTG2_C3_GV12 >> 1) & 0xFF;
-	mb86a35_i2c_rf_send(reg, value);
+		vSTG2_C3_GV18 =
+		    (mb86a35_ctune_regdata[ctuneid].STG2_C3_GV18_DEF * rcvar) / 1000;
+		if (vSTG2_C3_GV18 > 0x1FF) {
+			vSTG2_C3_GV18 = 0x1FF;
+		}
 
-	reg = 0x49;
-	value = (vSTG2_C3_GV18 >> 1) & 0xFF;
-	mb86a35_i2c_rf_send(reg, value);
+		vSTG3_C3_GV18 =
+		    (mb86a35_ctune_regdata[ctuneid].STG3_C3_GV18_DEF * rcvar) / 1000;
+		if (vSTG3_C3_GV18 > 0x1FF) {
+			vSTG3_C3_GV18 = 0x1FF;
+		}
 
-	reg = 0x4A;
-	value = (vSTG3_C3_GV18 >> 1) & 0xFF;
-	mb86a35_i2c_rf_send(reg, value);
+		REG40 = ((vSTG1_C3_GV6 & 0x1F) << 3)
+		    + ((vSTG2_C3_GV12 & 0x01) << 2)
+		    + ((vSTG2_C3_GV18 & 0x01) << 1)
+		    + (vSTG3_C3_GV18 & 0x01);
+		reg = 0x40;
+		value = REG40;
+		mb86a35_i2c_rf_send(reg, value);
 
-	reg = 0x3E;
-	REG3E = (mb86a35_ctune_regdata[ctuneid].STG2_Q_CAL << 3)
-	    + (mb86a35_ctune_regdata[ctuneid].STG3_Q_CAL);
-	value = REG3E;
-	mb86a35_i2c_rf_send(reg, value);
+		vSTG1_C3_GV12 =
+		    (mb86a35_ctune_regdata[ctuneid].STG1_C3_GV12_DEF * rcvar) / 1000;
+		if (vSTG1_C3_GV12 > 0x3F) {
+			vSTG1_C3_GV12 = 0x3F;
+		}
+		reg = 0x41;
+		value = vSTG1_C3_GV12;
+		mb86a35_i2c_rf_send(reg, value);
 
-	vBQC = ((mb86a35_ctune_regdata[ctuneid].BQC + 18) * rcvar) / 1000 - 18;
-	if (vBQC > 0xFF) {
-		vBQC = 0xFF;
-	}
-	reg = 0x4B;
-	value = vBQC;
-	mb86a35_i2c_rf_send(reg, value);
+		vSTG1_C3_GV18 =
+		    (mb86a35_ctune_regdata[ctuneid].STG1_C3_GV18_DEF * rcvar) / 1000;
+		if (vSTG1_C3_GV18 > 0x7F) {
+			vSTG1_C3_GV18 = 0x7F;
+		}
+		reg = 0x42;
+		value = vSTG1_C3_GV18;
+		mb86a35_i2c_rf_send(reg, value);
 
-	vBQC_ACR = vBQC + mb86a35_ctune_regdata[ctuneid].vBQC_OFFSET;
-	if (vBQC_ACR > 0xFF) {
-		vBQC_ACR = 0xFF;
-	}
-	reg = 0x91;
-	value = vBQC_ACR;
-	mb86a35_i2c_rf_send(reg, value);
+		vSTG2_C3_GV0 =
+		    (mb86a35_ctune_regdata[ctuneid].STG2_C3_GV0_DEF * rcvar) / 1000;
+		if (vSTG2_C3_GV0 > 0x7F) {
+			vSTG2_C3_GV0 = 0x7F;
+		}
+		reg = 0x43;
+		value = vSTG2_C3_GV0;
+		mb86a35_i2c_rf_send(reg, value);
 
-	reg = 0x30;
-	value = (REG30 | 0x08);
-	mb86a35_i2c_rf_send(reg, value);
+		vSTG2_C3_GV6 =
+		    (mb86a35_ctune_regdata[ctuneid].STG2_C3_GV6_DEF * rcvar) / 1000;
+		if (vSTG2_C3_GV6 > 0xFF) {
+			vSTG2_C3_GV6 = 0xFF;
+		}
+		reg = 0x44;
+		value = vSTG2_C3_GV6;
+		mb86a35_i2c_rf_send(reg, value);
 
-   }          /* ES2.0 end */
-   else {     /* ES3.0 start */
+		vSTG3_C3_GV0 =
+		    (mb86a35_ctune_regdata[ctuneid].STG3_C3_GV0_DEF * rcvar) / 1000;
+		if (vSTG3_C3_GV0 > 0x3F) {
+			vSTG3_C3_GV0 = 0x3F;
+		}
+		reg = 0x45;
+		value = vSTG3_C3_GV0;
+		mb86a35_i2c_rf_send(reg, value);
 
-	unsigned char reg;
-	unsigned int value = 0;
+		vSTG3_C3_GV6 =
+		    (mb86a35_ctune_regdata[ctuneid].STG3_C3_GV6_DEF * rcvar) / 1000;
+		if (vSTG3_C3_GV6 > 0x7F) {
+			vSTG3_C3_GV6 = 0x7F;
+		}
+		reg = 0x46;
+		value = vSTG3_C3_GV6;
+		mb86a35_i2c_rf_send(reg, value);
 
-	u8 ctune = 0;
-	u8 REG12 = 0;
-	signed char twos_ctune = 0;
-	int rcvar = 0;
+		vSTG3_C3_GV12 =
+		    (mb86a35_ctune_regdata[ctuneid].STG3_C3_GV12_DEF * rcvar) / 1000;
+		if (vSTG3_C3_GV12 > 0xFF) {
+			vSTG3_C3_GV12 = 0xFF;
+		}
+		reg = 0x47;
+		value = vSTG3_C3_GV12;
+		mb86a35_i2c_rf_send(reg, value);
 
-    /* 1seg init */
-	u32 CBT_ISDBT1SEG_CBI_3_I2C = 103;
-	u32 CBT_ISDBT1SEG_CBII_3_I2C = 98;
-	u32 CBT_ISDBT1SEG_CBIII_3_I2C = 98;
-	u32 CBT_ISDBT1SEG_CBI_5_I2C = 170;
-	u32 CBT_ISDBT1SEG_CBII_5_I2C = 64;
-	u32 CBT_ISDBT1SEG_CBIII_5_I2C = 196;
-	u32 CBT_ISDBT1SEG_CBIV_5_I2C = 75;
-	u32 CBT_ISDBT1SEG_CBV_5_I2C = 154;
-	u32 CBT_ISDBT1SEG_CB3M_5_I2C = 267;
-	u32 CBT_ISDBT1SEG_CB3D_5_I2C = 66;
-	u32 CBT_ISDBT1SEG_CB5M_5_I2C = 90;
-	u32 CBT_ISDBT1SEG_CB5D_5_I2C = 22;
+		reg = 0x48;
+		value = (vSTG2_C3_GV12 >> 1) & 0xFF;
+		mb86a35_i2c_rf_send(reg, value);
 
-    /* 13seg init */
-	u32 CBT_ISDBTFULL_CBI_3_I2C = 65;
-	u32 CBT_ISDBTFULL_CBII_3_I2C = 65;
-	u32 CBT_ISDBTFULL_CBIII_3_I2C = 65;
-	u32 CBT_ISDBTFULL_CBI_5_I2C = 120;
-	u32 CBT_ISDBTFULL_CBII_5_I2C = 62;
-	u32 CBT_ISDBTFULL_CBIII_5_I2C = 120;
-	u32 CBT_ISDBTFULL_CBIV_5_I2C = 60;
-	u32 CBT_ISDBTFULL_CBV_5_I2C = 117;
-	u32 CBT_ISDBTFULL_CB3M_5_I2C = 109;
-	u32 CBT_ISDBTFULL_CB3D_5_I2C = 26;
-	u32 CBT_ISDBTFULL_CB5M_5_I2C = 39;
-	u32 CBT_ISDBTFULL_CB5D_5_I2C = 9;
+		reg = 0x49;
+		value = (vSTG2_C3_GV18 >> 1) & 0xFF;
+		mb86a35_i2c_rf_send(reg, value);
 
-    /* 3seg init */
-	u32 CBT_ISDBT3SEG_CBI_3_I2C = 65;
-	u32 CBT_ISDBT3SEG_CBII_3_I2C = 65;
-	u32 CBT_ISDBT3SEG_CBIII_3_I2C = 65;
-	u32 CBT_ISDBT3SEG_CBI_5_I2C = 124;
-	u32 CBT_ISDBT3SEG_CBII_5_I2C = 47;
-	u32 CBT_ISDBT3SEG_CBIII_5_I2C = 126;
-	u32 CBT_ISDBT3SEG_CBIV_5_I2C = 51;
-	u32 CBT_ISDBT3SEG_CBV_5_I2C = 113;
-	u32 CBT_ISDBT3SEG_CB3M_5_I2C = 195;
-	u32 CBT_ISDBT3SEG_CB3D_5_I2C = 48;
-	u32 CBT_ISDBT3SEG_CB5M_5_I2C = 66;
-	u32 CBT_ISDBT3SEG_CB5D_5_I2C = 16;
+		reg = 0x4A;
+		value = (vSTG3_C3_GV18 >> 1) & 0xFF;
+		mb86a35_i2c_rf_send(reg, value);
 
-    /* 1seg tune */
-	u32 CBT_TUNE_ISDBT1SEG_RSB_3_I2C = 0;
-	u32 CBT_TUNE_ISDBT1SEG_RSB_5_I2C = 0;
-	u32 CBT_TUNE_ISDBT1SEG_CBI_3_I2C = 0;
-	u32 CBT_TUNE_ISDBT1SEG_CBII_3_I2C = 0;
-	u32 CBT_TUNE_ISDBT1SEG_CBIII_3_I2C = 0;
-	u32 CBT_TUNE_ISDBT1SEG_CBI_5_I2C = 0;
-	u32 CBT_TUNE_ISDBT1SEG_CBII_5_I2C = 0;
-	u32 CBT_TUNE_ISDBT1SEG_CBIII_5_I2C = 0;
-	u32 CBT_TUNE_ISDBT1SEG_CBIV_5_I2C = 0;
-	u32 CBT_TUNE_ISDBT1SEG_CBV_5_I2C = 0;
-	u32 CBT_TUNE_ISDBT1SEG_CB3M_5_I2C = 0;
-	u32 CBT_TUNE_ISDBT1SEG_CB3D_5_I2C = 0;
-	u32 CBT_TUNE_ISDBT1SEG_CB5M_5_I2C = 0;
-	u32 CBT_TUNE_ISDBT1SEG_CB5D_5_I2C = 0;
+		reg = 0x3E;
+		REG3E = (mb86a35_ctune_regdata[ctuneid].STG2_Q_CAL << 3)
+		    + (mb86a35_ctune_regdata[ctuneid].STG3_Q_CAL);
+		value = REG3E;
+		mb86a35_i2c_rf_send(reg, value);
 
-    /* 13seg tune */
-	u32 CBT_TUNE_ISDBTFULL_RSB_3_I2C = 0;
-	u32 CBT_TUNE_ISDBTFULL_RSB_5_I2C = 0;
-	u32 CBT_TUNE_ISDBTFULL_CBI_3_I2C = 0;
-	u32 CBT_TUNE_ISDBTFULL_CBII_3_I2C = 0;
-	u32 CBT_TUNE_ISDBTFULL_CBIII_3_I2C = 0;
-	u32 CBT_TUNE_ISDBTFULL_CBI_5_I2C = 0;
-	u32 CBT_TUNE_ISDBTFULL_CBII_5_I2C = 0;
-	u32 CBT_TUNE_ISDBTFULL_CBIII_5_I2C = 0;
-	u32 CBT_TUNE_ISDBTFULL_CBIV_5_I2C = 0;
-	u32 CBT_TUNE_ISDBTFULL_CBV_5_I2C = 0;
-	u32 CBT_TUNE_ISDBTFULL_CB3M_5_I2C = 0;
-	u32 CBT_TUNE_ISDBTFULL_CB3D_5_I2C = 0;
-	u32 CBT_TUNE_ISDBTFULL_CB5M_5_I2C = 0;
-	u32 CBT_TUNE_ISDBTFULL_CB5D_5_I2C = 0;
+		vBQC = ((mb86a35_ctune_regdata[ctuneid].BQC + 18) * rcvar) / 1000 - 18;
+		if (vBQC > 0xFF) {
+			vBQC = 0xFF;
+		}
+		reg = 0x4B;
+		value = vBQC;
+		mb86a35_i2c_rf_send(reg, value);
 
-    /* 3seg tune */
-	u32 CBT_TUNE_ISDBT3SEG_RSB_3_I2C = 0;
-	u32 CBT_TUNE_ISDBT3SEG_RSB_5_I2C = 0;
-	u32 CBT_TUNE_ISDBT3SEG_CBI_3_I2C = 0;
-	u32 CBT_TUNE_ISDBT3SEG_CBII_3_I2C = 0;
-	u32 CBT_TUNE_ISDBT3SEG_CBIII_3_I2C = 0;
-	u32 CBT_TUNE_ISDBT3SEG_CBI_5_I2C = 0;
-	u32 CBT_TUNE_ISDBT3SEG_CBII_5_I2C = 0;
-	u32 CBT_TUNE_ISDBT3SEG_CBIII_5_I2C = 0;
-	u32 CBT_TUNE_ISDBT3SEG_CBIV_5_I2C = 0;
-	u32 CBT_TUNE_ISDBT3SEG_CBV_5_I2C = 0;
-	u32 CBT_TUNE_ISDBT3SEG_CB3M_5_I2C = 0;
-	u32 CBT_TUNE_ISDBT3SEG_CB3D_5_I2C = 0;
-	u32 CBT_TUNE_ISDBT3SEG_CB5M_5_I2C = 0;
-	u32 CBT_TUNE_ISDBT3SEG_CB5D_5_I2C = 0;
+		vBQC_ACR = vBQC + mb86a35_ctune_regdata[ctuneid].vBQC_OFFSET;
+		if (vBQC_ACR > 0xFF) {
+			vBQC_ACR = 0xFF;
+		}
+		reg = 0x91;
+		value = vBQC_ACR;
+		mb86a35_i2c_rf_send(reg, value);
 
-    /* write */
-	u32 vRSB_3_I2C;
-	u32 vRSB_5_I2C;
-	u32 vCBI_3_I2C;
-	u32 vCBII_3_I2C;
-	u32 vCBIII_3_I2C;
-	u32 vCBI_5_I2C;
-	u32 vCBII_5_I2C;
-	u32 vCBIII_5_I2C;
-	u32 vCBIV_5_I2C;
-	u32 vCBV_5_I2C;
-	u32 vCB3M_5_I2C;
-	u32 vCB3D_5_I2C;
-	u32 vCB5M_5_I2C;
-	u32 vCB5D_5_I2C;
+		reg = 0x30;
+		value = (REG30 | 0x08);
+		mb86a35_i2c_rf_send(reg, value);
 
-	u32 REG3D;
-	u32 REG3F;
-	u32 REG40;
-	u32 REG41;
-	u32 REG42;
-	u32 REG43;
-	u32 REG44;
-	u32 REG45;
-	u32 REG46;
-	u32 REG47;
-	u32 REG48;
-	u32 REG49;
-	u32 REG4A;
+	}          /* ES2.0 end */
+	else {     /* ES3.0 start */
 
-	reg = 0x12;
-	rtncode = mb86a35_i2c_rf_recv(reg, &REG12, 1);
-	if (rtncode != 0) {
-		rtncode = -EFAULT;
-		goto ch_ctune_do_return;
-	}
+		unsigned char reg;
+		unsigned int value = 0;
 
-	ctune = REG12 & 0x1F;
+		u8 ctune = 0;
+		u8 REG12 = 0;
+		signed char twos_ctune = 0;
+		int rcvar = 0;
 
-    if(ctune & 0x10)
+		/* 1seg init */
+		u32 CBT_ISDBT1SEG_CBI_3_I2C = 103;
+		u32 CBT_ISDBT1SEG_CBII_3_I2C = 98;
+		u32 CBT_ISDBT1SEG_CBIII_3_I2C = 98;
+		u32 CBT_ISDBT1SEG_CBI_5_I2C = 170;
+		u32 CBT_ISDBT1SEG_CBII_5_I2C = 64;
+		u32 CBT_ISDBT1SEG_CBIII_5_I2C = 196;
+		u32 CBT_ISDBT1SEG_CBIV_5_I2C = 75;
+		u32 CBT_ISDBT1SEG_CBV_5_I2C = 154;
+		u32 CBT_ISDBT1SEG_CB3M_5_I2C = 267;
+		u32 CBT_ISDBT1SEG_CB3D_5_I2C = 66;
+		u32 CBT_ISDBT1SEG_CB5M_5_I2C = 90;
+		u32 CBT_ISDBT1SEG_CB5D_5_I2C = 22;
+
+	    /* 13seg init */
+		u32 CBT_ISDBTFULL_CBI_3_I2C = 65;
+		u32 CBT_ISDBTFULL_CBII_3_I2C = 65;
+		u32 CBT_ISDBTFULL_CBIII_3_I2C = 65;
+		u32 CBT_ISDBTFULL_CBI_5_I2C = 120;
+		u32 CBT_ISDBTFULL_CBII_5_I2C = 62;
+		u32 CBT_ISDBTFULL_CBIII_5_I2C = 120;
+		u32 CBT_ISDBTFULL_CBIV_5_I2C = 60;
+		u32 CBT_ISDBTFULL_CBV_5_I2C = 117;
+		u32 CBT_ISDBTFULL_CB3M_5_I2C = 109;
+		u32 CBT_ISDBTFULL_CB3D_5_I2C = 26;
+		u32 CBT_ISDBTFULL_CB5M_5_I2C = 39;
+		u32 CBT_ISDBTFULL_CB5D_5_I2C = 9;
+
+	    /* 3seg init */
+		u32 CBT_ISDBT3SEG_CBI_3_I2C = 65;
+		u32 CBT_ISDBT3SEG_CBII_3_I2C = 65;
+		u32 CBT_ISDBT3SEG_CBIII_3_I2C = 65;
+		u32 CBT_ISDBT3SEG_CBI_5_I2C = 124;
+		u32 CBT_ISDBT3SEG_CBII_5_I2C = 47;
+		u32 CBT_ISDBT3SEG_CBIII_5_I2C = 126;
+		u32 CBT_ISDBT3SEG_CBIV_5_I2C = 51;
+		u32 CBT_ISDBT3SEG_CBV_5_I2C = 113;
+		u32 CBT_ISDBT3SEG_CB3M_5_I2C = 195;
+		u32 CBT_ISDBT3SEG_CB3D_5_I2C = 48;
+		u32 CBT_ISDBT3SEG_CB5M_5_I2C = 66;
+		u32 CBT_ISDBT3SEG_CB5D_5_I2C = 16;
+
+	    /* 1seg tune */
+		u32 CBT_TUNE_ISDBT1SEG_RSB_3_I2C = 0;
+		u32 CBT_TUNE_ISDBT1SEG_RSB_5_I2C = 0;
+		u32 CBT_TUNE_ISDBT1SEG_CBI_3_I2C = 0;
+		u32 CBT_TUNE_ISDBT1SEG_CBII_3_I2C = 0;
+		u32 CBT_TUNE_ISDBT1SEG_CBIII_3_I2C = 0;
+		u32 CBT_TUNE_ISDBT1SEG_CBI_5_I2C = 0;
+		u32 CBT_TUNE_ISDBT1SEG_CBII_5_I2C = 0;
+		u32 CBT_TUNE_ISDBT1SEG_CBIII_5_I2C = 0;
+		u32 CBT_TUNE_ISDBT1SEG_CBIV_5_I2C = 0;
+		u32 CBT_TUNE_ISDBT1SEG_CBV_5_I2C = 0;
+		u32 CBT_TUNE_ISDBT1SEG_CB3M_5_I2C = 0;
+		u32 CBT_TUNE_ISDBT1SEG_CB3D_5_I2C = 0;
+		u32 CBT_TUNE_ISDBT1SEG_CB5M_5_I2C = 0;
+		u32 CBT_TUNE_ISDBT1SEG_CB5D_5_I2C = 0;
+
+	    /* 13seg tune */
+		u32 CBT_TUNE_ISDBTFULL_RSB_3_I2C = 0;
+		u32 CBT_TUNE_ISDBTFULL_RSB_5_I2C = 0;
+		u32 CBT_TUNE_ISDBTFULL_CBI_3_I2C = 0;
+		u32 CBT_TUNE_ISDBTFULL_CBII_3_I2C = 0;
+		u32 CBT_TUNE_ISDBTFULL_CBIII_3_I2C = 0;
+		u32 CBT_TUNE_ISDBTFULL_CBI_5_I2C = 0;
+		u32 CBT_TUNE_ISDBTFULL_CBII_5_I2C = 0;
+		u32 CBT_TUNE_ISDBTFULL_CBIII_5_I2C = 0;
+		u32 CBT_TUNE_ISDBTFULL_CBIV_5_I2C = 0;
+		u32 CBT_TUNE_ISDBTFULL_CBV_5_I2C = 0;
+		u32 CBT_TUNE_ISDBTFULL_CB3M_5_I2C = 0;
+		u32 CBT_TUNE_ISDBTFULL_CB3D_5_I2C = 0;
+		u32 CBT_TUNE_ISDBTFULL_CB5M_5_I2C = 0;
+		u32 CBT_TUNE_ISDBTFULL_CB5D_5_I2C = 0;
+
+	    /* 3seg tune */
+		u32 CBT_TUNE_ISDBT3SEG_RSB_3_I2C = 0;
+		u32 CBT_TUNE_ISDBT3SEG_RSB_5_I2C = 0;
+		u32 CBT_TUNE_ISDBT3SEG_CBI_3_I2C = 0;
+		u32 CBT_TUNE_ISDBT3SEG_CBII_3_I2C = 0;
+		u32 CBT_TUNE_ISDBT3SEG_CBIII_3_I2C = 0;
+		u32 CBT_TUNE_ISDBT3SEG_CBI_5_I2C = 0;
+		u32 CBT_TUNE_ISDBT3SEG_CBII_5_I2C = 0;
+		u32 CBT_TUNE_ISDBT3SEG_CBIII_5_I2C = 0;
+		u32 CBT_TUNE_ISDBT3SEG_CBIV_5_I2C = 0;
+		u32 CBT_TUNE_ISDBT3SEG_CBV_5_I2C = 0;
+		u32 CBT_TUNE_ISDBT3SEG_CB3M_5_I2C = 0;
+		u32 CBT_TUNE_ISDBT3SEG_CB3D_5_I2C = 0;
+		u32 CBT_TUNE_ISDBT3SEG_CB5M_5_I2C = 0;
+		u32 CBT_TUNE_ISDBT3SEG_CB5D_5_I2C = 0;
+
+	    /* write */
+		u32 vRSB_3_I2C;
+		u32 vRSB_5_I2C;
+		u32 vCBI_3_I2C;
+		u32 vCBII_3_I2C;
+		u32 vCBIII_3_I2C;
+		u32 vCBI_5_I2C;
+		u32 vCBII_5_I2C;
+		u32 vCBIII_5_I2C;
+		u32 vCBIV_5_I2C;
+		u32 vCBV_5_I2C;
+		u32 vCB3M_5_I2C;
+		u32 vCB3D_5_I2C;
+		u32 vCB5M_5_I2C;
+		u32 vCB5D_5_I2C;
+
+		u32 REG3D;
+		u32 REG3F;
+		u32 REG40;
+		u32 REG41;
+		u32 REG42;
+		u32 REG43;
+		u32 REG44;
+		u32 REG45;
+		u32 REG46;
+		u32 REG47;
+		u32 REG48;
+		u32 REG49;
+		u32 REG4A;
+
+		reg = 0x12;
+		rtncode = mb86a35_i2c_rf_recv(reg, &REG12, 1);
+		if (rtncode != 0) {
+			rtncode = -EFAULT;
+			goto ch_ctune_do_return;
+		}
+
+		ctune = REG12 & 0x1F;
+
+	if(ctune & 0x10)
 	{
 		twos_ctune = ctune & 0x0F; 
 		twos_ctune = (~twos_ctune) + 1;
 	}
 	else
 	{
-       twos_ctune = ctune;
+		twos_ctune = ctune;
 	}
 
-	switch (RF->mode) {
-		/* 13 seg */
-	case PARAM_MODE_ISDBT_13UHF:
-	case PARAM_MODE_ISDBTMM_13VHF:
-		
-		CBT_TUNE_ISDBTFULL_RSB_3_I2C = 2;
-		CBT_TUNE_ISDBTFULL_RSB_5_I2C = 2;
-		
-		rcvar = (90 * twos_ctune) >> 5;
-		CBT_TUNE_ISDBTFULL_CBI_3_I2C = (int)(CBT_ISDBTFULL_CBI_3_I2C+rcvar);
-		if (CBT_TUNE_ISDBTFULL_CBI_3_I2C > ((1 << 7)-1)) {
-			CBT_TUNE_ISDBTFULL_CBI_3_I2C = (1 << 7)-1;
-	    }
-		
-		rcvar = (77 * twos_ctune) >> 5;
-		CBT_TUNE_ISDBTFULL_CBII_3_I2C = (int)(CBT_ISDBTFULL_CBII_3_I2C+rcvar);
-		if (CBT_TUNE_ISDBTFULL_CBII_3_I2C > ((1 << 7)-1)) {
-			CBT_TUNE_ISDBTFULL_CBII_3_I2C = (1 << 7)-1;
-	    }
-		
-		rcvar = (77 * twos_ctune) >> 5;
-		CBT_TUNE_ISDBTFULL_CBIII_3_I2C = (int)(CBT_ISDBTFULL_CBIII_3_I2C+rcvar);
-		if (CBT_TUNE_ISDBTFULL_CBIII_3_I2C > ((1 << 7)-1)) {
-			CBT_TUNE_ISDBTFULL_CBIII_3_I2C = (1 << 7)-1;
-		}
-		
-		rcvar = (78 * twos_ctune) >> 5;
-		CBT_TUNE_ISDBTFULL_CBI_5_I2C = (int)(CBT_ISDBTFULL_CBI_5_I2C+rcvar);
-		if (CBT_TUNE_ISDBTFULL_CBI_5_I2C > ((1 << 8)-1)) {
-			CBT_TUNE_ISDBTFULL_CBI_5_I2C = (1 << 8)-1;
-		}
-		
-		rcvar = (40 * twos_ctune) >> 5;
-		CBT_TUNE_ISDBTFULL_CBII_5_I2C = (int)(CBT_ISDBTFULL_CBII_5_I2C+rcvar);
-		if (CBT_TUNE_ISDBTFULL_CBII_5_I2C > ((1 << 7)-1)) {
-			CBT_TUNE_ISDBTFULL_CBII_5_I2C = (1 << 7)-1;
-		}
-		
-		rcvar = (118 * twos_ctune) >> 5;
-		CBT_TUNE_ISDBTFULL_CBIII_5_I2C = (int)(CBT_ISDBTFULL_CBIII_5_I2C+rcvar);
-		if (CBT_TUNE_ISDBTFULL_CBIII_5_I2C > ((1 << 8)-1)) {
-			CBT_TUNE_ISDBTFULL_CBIII_5_I2C = (1 << 8)-1;
-		}
-		
-		rcvar = (48 * twos_ctune) >> 5;
-		CBT_TUNE_ISDBTFULL_CBIV_5_I2C = (int)(CBT_ISDBTFULL_CBIV_5_I2C+rcvar);
-		if (CBT_TUNE_ISDBTFULL_CBIV_5_I2C > ((1 << 7)-1)) {
-			CBT_TUNE_ISDBTFULL_CBIV_5_I2C = (1 << 7)-1;
-		}
-		
-		rcvar = (75 * twos_ctune) >> 5;
-		CBT_TUNE_ISDBTFULL_CBV_5_I2C = (int)(CBT_ISDBTFULL_CBV_5_I2C+rcvar);
-		if (CBT_TUNE_ISDBTFULL_CBV_5_I2C > ((1 << 8)-1)) {
-			CBT_TUNE_ISDBTFULL_CBV_5_I2C = (1 << 8)-1;
-		}
-		
-		rcvar = (70 * twos_ctune) >> 5;
-		CBT_TUNE_ISDBTFULL_CB3M_5_I2C = (int)(CBT_ISDBTFULL_CB3M_5_I2C+rcvar);
-		if (CBT_TUNE_ISDBTFULL_CB3M_5_I2C > ((1 << 9)-1)) {
-			CBT_TUNE_ISDBTFULL_CB3M_5_I2C = (1 << 9)-1;
-		}
-		
-		rcvar = (53 * twos_ctune) >> 5;
-		CBT_TUNE_ISDBTFULL_CB3D_5_I2C = (int)(CBT_ISDBTFULL_CB3D_5_I2C+rcvar);
-		if (CBT_TUNE_ISDBTFULL_CB3D_5_I2C > ((1 << 7)-1)) {
-			CBT_TUNE_ISDBTFULL_CB3D_5_I2C = (1 << 7)-1;
-		}
-		
-		rcvar = (25 * twos_ctune) >> 5;
-		CBT_TUNE_ISDBTFULL_CB5M_5_I2C = (int)(CBT_ISDBTFULL_CB5M_5_I2C+rcvar);
-		if (CBT_TUNE_ISDBTFULL_CB5M_5_I2C > ((1 << 7)-1)) {
-			CBT_TUNE_ISDBTFULL_CB5M_5_I2C = (1 << 7)-1;
-		}
-		
-		rcvar = (6 * twos_ctune) >> 5;
-		CBT_TUNE_ISDBTFULL_CB5D_5_I2C = (int)(CBT_ISDBTFULL_CB5D_5_I2C+rcvar);
-		if (CBT_TUNE_ISDBTFULL_CB5D_5_I2C > ((1 << 5)-1)) {
-			CBT_TUNE_ISDBTFULL_CB5D_5_I2C = (1 << 5)-1;
-		}
-		
-		vRSB_3_I2C = CBT_TUNE_ISDBTFULL_RSB_3_I2C;
-		vRSB_5_I2C = CBT_TUNE_ISDBTFULL_RSB_5_I2C;
-		vCBI_3_I2C = CBT_TUNE_ISDBTFULL_CBI_3_I2C;
-		vCBII_3_I2C = CBT_TUNE_ISDBTFULL_CBII_3_I2C;
-		vCBIII_3_I2C = CBT_TUNE_ISDBTFULL_CBIII_3_I2C;
-		vCBI_5_I2C = CBT_TUNE_ISDBTFULL_CBI_5_I2C;
-		vCBII_5_I2C = CBT_TUNE_ISDBTFULL_CBII_5_I2C;
-		vCBIII_5_I2C = CBT_TUNE_ISDBTFULL_CBIII_5_I2C;
-		vCBIV_5_I2C = CBT_TUNE_ISDBTFULL_CBIV_5_I2C;
-		vCBV_5_I2C = CBT_TUNE_ISDBTFULL_CBV_5_I2C;
-		vCB3M_5_I2C = CBT_TUNE_ISDBTFULL_CB3M_5_I2C;
-		vCB3D_5_I2C = CBT_TUNE_ISDBTFULL_CB3D_5_I2C;
-		vCB5M_5_I2C = CBT_TUNE_ISDBTFULL_CB5M_5_I2C;
-		vCB5D_5_I2C = CBT_TUNE_ISDBTFULL_CB5D_5_I2C;
-		
-		break;
+		switch (RF->mode) {
+			/* 13 seg */
+		case PARAM_MODE_ISDBT_13UHF:
+		case PARAM_MODE_ISDBTMM_13VHF:
+			
+			CBT_TUNE_ISDBTFULL_RSB_3_I2C = 2;
+			CBT_TUNE_ISDBTFULL_RSB_5_I2C = 2;
+			
+			rcvar = (90 * twos_ctune) >> 5;
+			CBT_TUNE_ISDBTFULL_CBI_3_I2C = (int)(CBT_ISDBTFULL_CBI_3_I2C+rcvar);
+			if (CBT_TUNE_ISDBTFULL_CBI_3_I2C > ((1 << 7)-1)) {
+				CBT_TUNE_ISDBTFULL_CBI_3_I2C = (1 << 7)-1;
+		    }
+			
+			rcvar = (77 * twos_ctune) >> 5;
+			CBT_TUNE_ISDBTFULL_CBII_3_I2C = (int)(CBT_ISDBTFULL_CBII_3_I2C+rcvar);
+			if (CBT_TUNE_ISDBTFULL_CBII_3_I2C > ((1 << 7)-1)) {
+				CBT_TUNE_ISDBTFULL_CBII_3_I2C = (1 << 7)-1;
+		    }
+			
+			rcvar = (77 * twos_ctune) >> 5;
+			CBT_TUNE_ISDBTFULL_CBIII_3_I2C = (int)(CBT_ISDBTFULL_CBIII_3_I2C+rcvar);
+			if (CBT_TUNE_ISDBTFULL_CBIII_3_I2C > ((1 << 7)-1)) {
+				CBT_TUNE_ISDBTFULL_CBIII_3_I2C = (1 << 7)-1;
+			}
+			
+			rcvar = (78 * twos_ctune) >> 5;
+			CBT_TUNE_ISDBTFULL_CBI_5_I2C = (int)(CBT_ISDBTFULL_CBI_5_I2C+rcvar);
+			if (CBT_TUNE_ISDBTFULL_CBI_5_I2C > ((1 << 8)-1)) {
+				CBT_TUNE_ISDBTFULL_CBI_5_I2C = (1 << 8)-1;
+			}
+			
+			rcvar = (40 * twos_ctune) >> 5;
+			CBT_TUNE_ISDBTFULL_CBII_5_I2C = (int)(CBT_ISDBTFULL_CBII_5_I2C+rcvar);
+			if (CBT_TUNE_ISDBTFULL_CBII_5_I2C > ((1 << 7)-1)) {
+				CBT_TUNE_ISDBTFULL_CBII_5_I2C = (1 << 7)-1;
+			}
+			
+			rcvar = (118 * twos_ctune) >> 5;
+			CBT_TUNE_ISDBTFULL_CBIII_5_I2C = (int)(CBT_ISDBTFULL_CBIII_5_I2C+rcvar);
+			if (CBT_TUNE_ISDBTFULL_CBIII_5_I2C > ((1 << 8)-1)) {
+				CBT_TUNE_ISDBTFULL_CBIII_5_I2C = (1 << 8)-1;
+			}
+			
+			rcvar = (48 * twos_ctune) >> 5;
+			CBT_TUNE_ISDBTFULL_CBIV_5_I2C = (int)(CBT_ISDBTFULL_CBIV_5_I2C+rcvar);
+			if (CBT_TUNE_ISDBTFULL_CBIV_5_I2C > ((1 << 7)-1)) {
+				CBT_TUNE_ISDBTFULL_CBIV_5_I2C = (1 << 7)-1;
+			}
+			
+			rcvar = (75 * twos_ctune) >> 5;
+			CBT_TUNE_ISDBTFULL_CBV_5_I2C = (int)(CBT_ISDBTFULL_CBV_5_I2C+rcvar);
+			if (CBT_TUNE_ISDBTFULL_CBV_5_I2C > ((1 << 8)-1)) {
+				CBT_TUNE_ISDBTFULL_CBV_5_I2C = (1 << 8)-1;
+			}
+			
+			rcvar = (70 * twos_ctune) >> 5;
+			CBT_TUNE_ISDBTFULL_CB3M_5_I2C = (int)(CBT_ISDBTFULL_CB3M_5_I2C+rcvar);
+			if (CBT_TUNE_ISDBTFULL_CB3M_5_I2C > ((1 << 9)-1)) {
+				CBT_TUNE_ISDBTFULL_CB3M_5_I2C = (1 << 9)-1;
+			}
+			
+			rcvar = (53 * twos_ctune) >> 5;
+			CBT_TUNE_ISDBTFULL_CB3D_5_I2C = (int)(CBT_ISDBTFULL_CB3D_5_I2C+rcvar);
+			if (CBT_TUNE_ISDBTFULL_CB3D_5_I2C > ((1 << 7)-1)) {
+				CBT_TUNE_ISDBTFULL_CB3D_5_I2C = (1 << 7)-1;
+			}
+			
+			rcvar = (25 * twos_ctune) >> 5;
+			CBT_TUNE_ISDBTFULL_CB5M_5_I2C = (int)(CBT_ISDBTFULL_CB5M_5_I2C+rcvar);
+			if (CBT_TUNE_ISDBTFULL_CB5M_5_I2C > ((1 << 7)-1)) {
+				CBT_TUNE_ISDBTFULL_CB5M_5_I2C = (1 << 7)-1;
+			}
+			
+			rcvar = (6 * twos_ctune) >> 5;
+			CBT_TUNE_ISDBTFULL_CB5D_5_I2C = (int)(CBT_ISDBTFULL_CB5D_5_I2C+rcvar);
+			if (CBT_TUNE_ISDBTFULL_CB5D_5_I2C > ((1 << 5)-1)) {
+				CBT_TUNE_ISDBTFULL_CB5D_5_I2C = (1 << 5)-1;
+			}
+			
+			vRSB_3_I2C = CBT_TUNE_ISDBTFULL_RSB_3_I2C;
+			vRSB_5_I2C = CBT_TUNE_ISDBTFULL_RSB_5_I2C;
+			vCBI_3_I2C = CBT_TUNE_ISDBTFULL_CBI_3_I2C;
+			vCBII_3_I2C = CBT_TUNE_ISDBTFULL_CBII_3_I2C;
+			vCBIII_3_I2C = CBT_TUNE_ISDBTFULL_CBIII_3_I2C;
+			vCBI_5_I2C = CBT_TUNE_ISDBTFULL_CBI_5_I2C;
+			vCBII_5_I2C = CBT_TUNE_ISDBTFULL_CBII_5_I2C;
+			vCBIII_5_I2C = CBT_TUNE_ISDBTFULL_CBIII_5_I2C;
+			vCBIV_5_I2C = CBT_TUNE_ISDBTFULL_CBIV_5_I2C;
+			vCBV_5_I2C = CBT_TUNE_ISDBTFULL_CBV_5_I2C;
+			vCB3M_5_I2C = CBT_TUNE_ISDBTFULL_CB3M_5_I2C;
+			vCB3D_5_I2C = CBT_TUNE_ISDBTFULL_CB3D_5_I2C;
+			vCB5M_5_I2C = CBT_TUNE_ISDBTFULL_CB5M_5_I2C;
+			vCB5D_5_I2C = CBT_TUNE_ISDBTFULL_CB5D_5_I2C;
+			
+			break;
 
-		/* 1 seg */
-	case PARAM_MODE_ISDBT_1UHF:
-	case PARAM_MODE_ISDBTMM_1VHF:
-	case PARAM_MODE_ISDBTSB_1VHF:
-		
-		CBT_TUNE_ISDBT1SEG_RSB_3_I2C = 3;
-		CBT_TUNE_ISDBT1SEG_RSB_5_I2C = 3;
-		
-		rcvar = (115 * twos_ctune) >> 5;
-		CBT_TUNE_ISDBT1SEG_CBI_3_I2C = (int)(CBT_ISDBT1SEG_CBI_3_I2C+rcvar);
-		if (CBT_TUNE_ISDBT1SEG_CBI_3_I2C > ((1 << 7)-1)) {
-			CBT_TUNE_ISDBT1SEG_CBI_3_I2C = (1 << 7)-1;
-		}
-		
-		rcvar = (98 * twos_ctune) >> 5;
-		CBT_TUNE_ISDBT1SEG_CBII_3_I2C = (int)(CBT_ISDBT1SEG_CBII_3_I2C+rcvar);
-		if (CBT_TUNE_ISDBT1SEG_CBII_3_I2C > ((1 << 7)-1)) {
-			CBT_TUNE_ISDBT1SEG_CBII_3_I2C = (1 << 7)-1;
-		}
-		
-		rcvar = (98 * twos_ctune) >> 5;
-		CBT_TUNE_ISDBT1SEG_CBIII_3_I2C = (int)(CBT_ISDBT1SEG_CBIII_3_I2C+rcvar);
-		if (CBT_TUNE_ISDBT1SEG_CBIII_3_I2C > ((1 << 7)-1)) {
-			CBT_TUNE_ISDBT1SEG_CBIII_3_I2C = (1 << 7)-1;
-		}
-		
-		rcvar = (109 * twos_ctune) >> 5;
-		CBT_TUNE_ISDBT1SEG_CBI_5_I2C = (int)(CBT_ISDBT1SEG_CBI_5_I2C+rcvar);
-		if (CBT_TUNE_ISDBT1SEG_CBI_5_I2C > ((1 << 8)-1)) {
-			CBT_TUNE_ISDBT1SEG_CBI_5_I2C = (1 << 8)-1;
-		}
-		
-		rcvar = (42 * twos_ctune) >> 5;
-		CBT_TUNE_ISDBT1SEG_CBII_5_I2C = (int)(CBT_ISDBT1SEG_CBII_5_I2C+rcvar);
-		if (CBT_TUNE_ISDBT1SEG_CBII_5_I2C > ((1 << 7)-1)) {
-			CBT_TUNE_ISDBT1SEG_CBII_5_I2C = (1 << 7)-1;
-		}
-		
-		rcvar = (166 * twos_ctune) >> 5;
-		CBT_TUNE_ISDBT1SEG_CBIII_5_I2C = (int)(CBT_ISDBT1SEG_CBIII_5_I2C+rcvar);
-		if (CBT_TUNE_ISDBT1SEG_CBIII_5_I2C > ((1 << 8)-1)) {
-			CBT_TUNE_ISDBT1SEG_CBIII_5_I2C = (1 << 8)-1;
-		}
-		
-		rcvar = (58 * twos_ctune) >> 5;
-		CBT_TUNE_ISDBT1SEG_CBIV_5_I2C = (int)(CBT_ISDBT1SEG_CBIV_5_I2C+rcvar);
-		if (CBT_TUNE_ISDBT1SEG_CBIV_5_I2C > ((1 << 7)-1)) {
-			CBT_TUNE_ISDBT1SEG_CBIV_5_I2C = (1 << 7)-1;
-		}
-		
-		rcvar = (99 * twos_ctune) >> 5;
-		CBT_TUNE_ISDBT1SEG_CBV_5_I2C = (int)(CBT_ISDBT1SEG_CBV_5_I2C+rcvar);
-		if (CBT_TUNE_ISDBT1SEG_CBV_5_I2C > ((1 << 8)-1)) {
-			CBT_TUNE_ISDBT1SEG_CBV_5_I2C = (1 << 8)-1;
-		}
-		
-		rcvar = (171 * twos_ctune) >> 5;
-		CBT_TUNE_ISDBT1SEG_CB3M_5_I2C = (int)(CBT_ISDBT1SEG_CB3M_5_I2C+rcvar);
-		if (CBT_TUNE_ISDBT1SEG_CB3M_5_I2C > ((1 << 9)-1)) {
-			CBT_TUNE_ISDBT1SEG_CB3M_5_I2C = (1 << 9)-1;
-		}
-		
-		rcvar = (43 * twos_ctune) >> 5;
-		CBT_TUNE_ISDBT1SEG_CB3D_5_I2C = (int)(CBT_ISDBT1SEG_CB3D_5_I2C+rcvar);
-		if (CBT_TUNE_ISDBT1SEG_CB3D_5_I2C > ((1 << 7)-1)) {
-			CBT_TUNE_ISDBT1SEG_CB3D_5_I2C = (1 << 7)-1;
-		}
-		
-		rcvar = (58 * twos_ctune) >> 5;
-		CBT_TUNE_ISDBT1SEG_CB5M_5_I2C = (int)(CBT_ISDBT1SEG_CB5M_5_I2C+rcvar);
-		if (CBT_TUNE_ISDBT1SEG_CB5M_5_I2C > ((1 << 7)-1)) {
-			CBT_TUNE_ISDBT1SEG_CB5M_5_I2C = (1 << 7)-1;
-		}
-		
-		rcvar = (15 * twos_ctune) >> 5;
-		CBT_TUNE_ISDBT1SEG_CB5D_5_I2C = (int)(CBT_ISDBT1SEG_CB5D_5_I2C+rcvar);
-		if (CBT_TUNE_ISDBT1SEG_CB5D_5_I2C > ((1 << 5)-1)) {
-			CBT_TUNE_ISDBT1SEG_CB5D_5_I2C = (1 << 5)-1;
-		}
-		
-		vRSB_3_I2C = CBT_TUNE_ISDBT1SEG_RSB_3_I2C;
-		vRSB_5_I2C = CBT_TUNE_ISDBT1SEG_RSB_5_I2C;
-		vCBI_3_I2C = CBT_TUNE_ISDBT1SEG_CBI_3_I2C;
-		vCBII_3_I2C = CBT_TUNE_ISDBT1SEG_CBII_3_I2C;
-		vCBIII_3_I2C = CBT_TUNE_ISDBT1SEG_CBIII_3_I2C;
-		vCBI_5_I2C = CBT_TUNE_ISDBT1SEG_CBI_5_I2C;
-		vCBII_5_I2C = CBT_TUNE_ISDBT1SEG_CBII_5_I2C;
-		vCBIII_5_I2C = CBT_TUNE_ISDBT1SEG_CBIII_5_I2C;
-		vCBIV_5_I2C = CBT_TUNE_ISDBT1SEG_CBIV_5_I2C;
-		vCBV_5_I2C = CBT_TUNE_ISDBT1SEG_CBV_5_I2C;
-		vCB3M_5_I2C = CBT_TUNE_ISDBT1SEG_CB3M_5_I2C;
-		vCB3D_5_I2C = CBT_TUNE_ISDBT1SEG_CB3D_5_I2C;
-		vCB5M_5_I2C = CBT_TUNE_ISDBT1SEG_CB5M_5_I2C;
-		vCB5D_5_I2C = CBT_TUNE_ISDBT1SEG_CB5D_5_I2C;
-		
-		break;
+			/* 1 seg */
+		case PARAM_MODE_ISDBT_1UHF:
+		case PARAM_MODE_ISDBTMM_1VHF:
+		case PARAM_MODE_ISDBTSB_1VHF:
+			
+			CBT_TUNE_ISDBT1SEG_RSB_3_I2C = 3;
+			CBT_TUNE_ISDBT1SEG_RSB_5_I2C = 3;
+			
+			rcvar = (115 * twos_ctune) >> 5;
+			CBT_TUNE_ISDBT1SEG_CBI_3_I2C = (int)(CBT_ISDBT1SEG_CBI_3_I2C+rcvar);
+			if (CBT_TUNE_ISDBT1SEG_CBI_3_I2C > ((1 << 7)-1)) {
+				CBT_TUNE_ISDBT1SEG_CBI_3_I2C = (1 << 7)-1;
+			}
+			
+			rcvar = (98 * twos_ctune) >> 5;
+			CBT_TUNE_ISDBT1SEG_CBII_3_I2C = (int)(CBT_ISDBT1SEG_CBII_3_I2C+rcvar);
+			if (CBT_TUNE_ISDBT1SEG_CBII_3_I2C > ((1 << 7)-1)) {
+				CBT_TUNE_ISDBT1SEG_CBII_3_I2C = (1 << 7)-1;
+			}
+			
+			rcvar = (98 * twos_ctune) >> 5;
+			CBT_TUNE_ISDBT1SEG_CBIII_3_I2C = (int)(CBT_ISDBT1SEG_CBIII_3_I2C+rcvar);
+			if (CBT_TUNE_ISDBT1SEG_CBIII_3_I2C > ((1 << 7)-1)) {
+				CBT_TUNE_ISDBT1SEG_CBIII_3_I2C = (1 << 7)-1;
+			}
+			
+			rcvar = (109 * twos_ctune) >> 5;
+			CBT_TUNE_ISDBT1SEG_CBI_5_I2C = (int)(CBT_ISDBT1SEG_CBI_5_I2C+rcvar);
+			if (CBT_TUNE_ISDBT1SEG_CBI_5_I2C > ((1 << 8)-1)) {
+				CBT_TUNE_ISDBT1SEG_CBI_5_I2C = (1 << 8)-1;
+			}
+			
+			rcvar = (42 * twos_ctune) >> 5;
+			CBT_TUNE_ISDBT1SEG_CBII_5_I2C = (int)(CBT_ISDBT1SEG_CBII_5_I2C+rcvar);
+			if (CBT_TUNE_ISDBT1SEG_CBII_5_I2C > ((1 << 7)-1)) {
+				CBT_TUNE_ISDBT1SEG_CBII_5_I2C = (1 << 7)-1;
+			}
+			
+			rcvar = (166 * twos_ctune) >> 5;
+			CBT_TUNE_ISDBT1SEG_CBIII_5_I2C = (int)(CBT_ISDBT1SEG_CBIII_5_I2C+rcvar);
+			if (CBT_TUNE_ISDBT1SEG_CBIII_5_I2C > ((1 << 8)-1)) {
+				CBT_TUNE_ISDBT1SEG_CBIII_5_I2C = (1 << 8)-1;
+			}
+			
+			rcvar = (58 * twos_ctune) >> 5;
+			CBT_TUNE_ISDBT1SEG_CBIV_5_I2C = (int)(CBT_ISDBT1SEG_CBIV_5_I2C+rcvar);
+			if (CBT_TUNE_ISDBT1SEG_CBIV_5_I2C > ((1 << 7)-1)) {
+				CBT_TUNE_ISDBT1SEG_CBIV_5_I2C = (1 << 7)-1;
+			}
+			
+			rcvar = (99 * twos_ctune) >> 5;
+			CBT_TUNE_ISDBT1SEG_CBV_5_I2C = (int)(CBT_ISDBT1SEG_CBV_5_I2C+rcvar);
+			if (CBT_TUNE_ISDBT1SEG_CBV_5_I2C > ((1 << 8)-1)) {
+				CBT_TUNE_ISDBT1SEG_CBV_5_I2C = (1 << 8)-1;
+			}
+			
+			rcvar = (171 * twos_ctune) >> 5;
+			CBT_TUNE_ISDBT1SEG_CB3M_5_I2C = (int)(CBT_ISDBT1SEG_CB3M_5_I2C+rcvar);
+			if (CBT_TUNE_ISDBT1SEG_CB3M_5_I2C > ((1 << 9)-1)) {
+				CBT_TUNE_ISDBT1SEG_CB3M_5_I2C = (1 << 9)-1;
+			}
+			
+			rcvar = (43 * twos_ctune) >> 5;
+			CBT_TUNE_ISDBT1SEG_CB3D_5_I2C = (int)(CBT_ISDBT1SEG_CB3D_5_I2C+rcvar);
+			if (CBT_TUNE_ISDBT1SEG_CB3D_5_I2C > ((1 << 7)-1)) {
+				CBT_TUNE_ISDBT1SEG_CB3D_5_I2C = (1 << 7)-1;
+			}
+			
+			rcvar = (58 * twos_ctune) >> 5;
+			CBT_TUNE_ISDBT1SEG_CB5M_5_I2C = (int)(CBT_ISDBT1SEG_CB5M_5_I2C+rcvar);
+			if (CBT_TUNE_ISDBT1SEG_CB5M_5_I2C > ((1 << 7)-1)) {
+				CBT_TUNE_ISDBT1SEG_CB5M_5_I2C = (1 << 7)-1;
+			}
+			
+			rcvar = (15 * twos_ctune) >> 5;
+			CBT_TUNE_ISDBT1SEG_CB5D_5_I2C = (int)(CBT_ISDBT1SEG_CB5D_5_I2C+rcvar);
+			if (CBT_TUNE_ISDBT1SEG_CB5D_5_I2C > ((1 << 5)-1)) {
+				CBT_TUNE_ISDBT1SEG_CB5D_5_I2C = (1 << 5)-1;
+			}
+			
+			vRSB_3_I2C = CBT_TUNE_ISDBT1SEG_RSB_3_I2C;
+			vRSB_5_I2C = CBT_TUNE_ISDBT1SEG_RSB_5_I2C;
+			vCBI_3_I2C = CBT_TUNE_ISDBT1SEG_CBI_3_I2C;
+			vCBII_3_I2C = CBT_TUNE_ISDBT1SEG_CBII_3_I2C;
+			vCBIII_3_I2C = CBT_TUNE_ISDBT1SEG_CBIII_3_I2C;
+			vCBI_5_I2C = CBT_TUNE_ISDBT1SEG_CBI_5_I2C;
+			vCBII_5_I2C = CBT_TUNE_ISDBT1SEG_CBII_5_I2C;
+			vCBIII_5_I2C = CBT_TUNE_ISDBT1SEG_CBIII_5_I2C;
+			vCBIV_5_I2C = CBT_TUNE_ISDBT1SEG_CBIV_5_I2C;
+			vCBV_5_I2C = CBT_TUNE_ISDBT1SEG_CBV_5_I2C;
+			vCB3M_5_I2C = CBT_TUNE_ISDBT1SEG_CB3M_5_I2C;
+			vCB3D_5_I2C = CBT_TUNE_ISDBT1SEG_CB3D_5_I2C;
+			vCB5M_5_I2C = CBT_TUNE_ISDBT1SEG_CB5M_5_I2C;
+			vCB5D_5_I2C = CBT_TUNE_ISDBT1SEG_CB5D_5_I2C;
+			
+			break;
 
-		/* 3 seg */
-	case PARAM_MODE_ISDBTSB_3VHF:
-		
-		CBT_TUNE_ISDBT3SEG_RSB_3_I2C = 3;
-		CBT_TUNE_ISDBT3SEG_RSB_5_I2C = 3;
-		
-		rcvar = (90 * twos_ctune) >> 5;
-		CBT_TUNE_ISDBT3SEG_CBI_3_I2C = (int)(CBT_ISDBT3SEG_CBI_3_I2C+rcvar);
-		if (CBT_TUNE_ISDBT3SEG_CBI_3_I2C > ((1 << 7)-1)) {
-			CBT_TUNE_ISDBT3SEG_CBI_3_I2C = ((1 << 7)-1);
-		}
-		
-		rcvar = (77 * twos_ctune) >> 5;
-		CBT_TUNE_ISDBT3SEG_CBII_3_I2C = (int)(CBT_ISDBT3SEG_CBII_3_I2C+rcvar);
-		if (CBT_TUNE_ISDBT3SEG_CBII_3_I2C > ((1 << 7)-1)) {
-			CBT_TUNE_ISDBT3SEG_CBII_3_I2C = ((1 << 7)-1);
-		}
-		
-		rcvar = (77 * twos_ctune) >> 5;
-		CBT_TUNE_ISDBT3SEG_CBIII_3_I2C = (int)(CBT_ISDBT3SEG_CBIII_3_I2C+rcvar);
-		if (CBT_TUNE_ISDBT3SEG_CBIII_3_I2C > ((1 << 7)-1)) {
-			CBT_TUNE_ISDBT3SEG_CBIII_3_I2C = ((1 << 7)-1);
-		}
-		
-		rcvar = (80 * twos_ctune) >> 5;
-		CBT_TUNE_ISDBT3SEG_CBI_5_I2C = (int)(CBT_ISDBT3SEG_CBI_5_I2C+rcvar);
-		if (CBT_TUNE_ISDBT3SEG_CBI_5_I2C > ((1 << 8)-1)) {
-			CBT_TUNE_ISDBT3SEG_CBI_5_I2C = ((1 << 8)-1);
-		}
-		
-		rcvar = (30 * twos_ctune) >> 5;
-		CBT_TUNE_ISDBT3SEG_CBII_5_I2C = (int)(CBT_ISDBT3SEG_CBII_5_I2C+rcvar);
-		if (CBT_TUNE_ISDBT3SEG_CBII_5_I2C > ((1 << 7)-1)) {
-			CBT_TUNE_ISDBT3SEG_CBII_5_I2C = ((1 << 7)-1);
-		}
-		
-		rcvar = (122 * twos_ctune) >> 5;
-		CBT_TUNE_ISDBT3SEG_CBIII_5_I2C = (int)(CBT_ISDBT3SEG_CBIII_5_I2C+rcvar);
-		if (CBT_TUNE_ISDBT3SEG_CBIII_5_I2C > ((1 << 8)-1)) {
-			CBT_TUNE_ISDBT3SEG_CBIII_5_I2C = ((1 << 8)-1);
-		}
-		
-		rcvar = (43 * twos_ctune) >> 5;
-		CBT_TUNE_ISDBT3SEG_CBIV_5_I2C = (int)(CBT_ISDBT3SEG_CBIV_5_I2C+rcvar);
-		if (CBT_TUNE_ISDBT3SEG_CBIV_5_I2C > ((1 << 7)-1)) {
-			CBT_TUNE_ISDBT3SEG_CBIV_5_I2C = ((1 << 7)-1);
-		}
-		
-		rcvar = (73 * twos_ctune) >> 5;
-		CBT_TUNE_ISDBT3SEG_CBV_5_I2C = (int)(CBT_ISDBT3SEG_CBV_5_I2C+rcvar);
-		if (CBT_TUNE_ISDBT3SEG_CBV_5_I2C > ((1 << 8)-1)) {
-			CBT_TUNE_ISDBT3SEG_CBV_5_I2C = ((1 << 8)-1);
-		}
-		
-		rcvar = (126 * twos_ctune) >> 5;
-		CBT_TUNE_ISDBT3SEG_CB3M_5_I2C = (int)(CBT_ISDBT3SEG_CB3M_5_I2C+rcvar);
-		if (CBT_TUNE_ISDBT3SEG_CB3M_5_I2C > ((1 << 9)-1)) {
-			CBT_TUNE_ISDBT3SEG_CB3M_5_I2C = ((1 << 9)-1);
-		}
-		
-		rcvar = (31 * twos_ctune) >> 5;
-		CBT_TUNE_ISDBT3SEG_CB3D_5_I2C = (int)(CBT_ISDBT3SEG_CB3D_5_I2C+rcvar);
-		if (CBT_TUNE_ISDBT3SEG_CB3D_5_I2C > ((1 << 7)-1)) {
-			CBT_TUNE_ISDBT3SEG_CB3D_5_I2C = ((1 << 7)-1);
-		}
-		
-		rcvar = (43 * twos_ctune) >> 5;
-		CBT_TUNE_ISDBT3SEG_CB5M_5_I2C = (int)(CBT_ISDBT3SEG_CB5M_5_I2C+rcvar);
-		if (CBT_TUNE_ISDBT3SEG_CB5M_5_I2C > ((1 << 7)-1)) {
-			CBT_TUNE_ISDBT3SEG_CB5M_5_I2C = ((1 << 7)-1);
-		}
-		
-		rcvar = (11 * twos_ctune) >> 5;
-		CBT_TUNE_ISDBT3SEG_CB5D_5_I2C = (int)(CBT_ISDBT3SEG_CB5D_5_I2C+rcvar);
-		if (CBT_TUNE_ISDBT3SEG_CB5D_5_I2C > ((1 << 5)-1)) {
-			CBT_TUNE_ISDBT3SEG_CB5D_5_I2C = ((1 << 5)-1);
-		}
-		
-		vRSB_3_I2C = CBT_TUNE_ISDBT3SEG_RSB_3_I2C;
-		vRSB_5_I2C = CBT_TUNE_ISDBT3SEG_RSB_5_I2C;
-		vCBI_3_I2C = CBT_TUNE_ISDBT3SEG_CBI_3_I2C;
-		vCBII_3_I2C = CBT_TUNE_ISDBT3SEG_CBII_3_I2C;
-		vCBIII_3_I2C = CBT_TUNE_ISDBT3SEG_CBIII_3_I2C;
-		vCBI_5_I2C = CBT_TUNE_ISDBT3SEG_CBI_5_I2C;
-		vCBII_5_I2C = CBT_TUNE_ISDBT3SEG_CBII_5_I2C;
-		vCBIII_5_I2C = CBT_TUNE_ISDBT3SEG_CBIII_5_I2C;
-		vCBIV_5_I2C = CBT_TUNE_ISDBT3SEG_CBIV_5_I2C;
-		vCBV_5_I2C = CBT_TUNE_ISDBT3SEG_CBV_5_I2C;
-		vCB3M_5_I2C = CBT_TUNE_ISDBT3SEG_CB3M_5_I2C;
-		vCB3D_5_I2C = CBT_TUNE_ISDBT3SEG_CB3D_5_I2C;
-		vCB5M_5_I2C = CBT_TUNE_ISDBT3SEG_CB5M_5_I2C;
-		vCB5D_5_I2C = CBT_TUNE_ISDBT3SEG_CB5D_5_I2C;
-		
-		break;
+			/* 3 seg */
+		case PARAM_MODE_ISDBTSB_3VHF:
+			
+			CBT_TUNE_ISDBT3SEG_RSB_3_I2C = 3;
+			CBT_TUNE_ISDBT3SEG_RSB_5_I2C = 3;
+			
+			rcvar = (90 * twos_ctune) >> 5;
+			CBT_TUNE_ISDBT3SEG_CBI_3_I2C = (int)(CBT_ISDBT3SEG_CBI_3_I2C+rcvar);
+			if (CBT_TUNE_ISDBT3SEG_CBI_3_I2C > ((1 << 7)-1)) {
+				CBT_TUNE_ISDBT3SEG_CBI_3_I2C = ((1 << 7)-1);
+			}
+			
+			rcvar = (77 * twos_ctune) >> 5;
+			CBT_TUNE_ISDBT3SEG_CBII_3_I2C = (int)(CBT_ISDBT3SEG_CBII_3_I2C+rcvar);
+			if (CBT_TUNE_ISDBT3SEG_CBII_3_I2C > ((1 << 7)-1)) {
+				CBT_TUNE_ISDBT3SEG_CBII_3_I2C = ((1 << 7)-1);
+			}
+			
+			rcvar = (77 * twos_ctune) >> 5;
+			CBT_TUNE_ISDBT3SEG_CBIII_3_I2C = (int)(CBT_ISDBT3SEG_CBIII_3_I2C+rcvar);
+			if (CBT_TUNE_ISDBT3SEG_CBIII_3_I2C > ((1 << 7)-1)) {
+				CBT_TUNE_ISDBT3SEG_CBIII_3_I2C = ((1 << 7)-1);
+			}
+			
+			rcvar = (80 * twos_ctune) >> 5;
+			CBT_TUNE_ISDBT3SEG_CBI_5_I2C = (int)(CBT_ISDBT3SEG_CBI_5_I2C+rcvar);
+			if (CBT_TUNE_ISDBT3SEG_CBI_5_I2C > ((1 << 8)-1)) {
+				CBT_TUNE_ISDBT3SEG_CBI_5_I2C = ((1 << 8)-1);
+			}
+			
+			rcvar = (30 * twos_ctune) >> 5;
+			CBT_TUNE_ISDBT3SEG_CBII_5_I2C = (int)(CBT_ISDBT3SEG_CBII_5_I2C+rcvar);
+			if (CBT_TUNE_ISDBT3SEG_CBII_5_I2C > ((1 << 7)-1)) {
+				CBT_TUNE_ISDBT3SEG_CBII_5_I2C = ((1 << 7)-1);
+			}
+			
+			rcvar = (122 * twos_ctune) >> 5;
+			CBT_TUNE_ISDBT3SEG_CBIII_5_I2C = (int)(CBT_ISDBT3SEG_CBIII_5_I2C+rcvar);
+			if (CBT_TUNE_ISDBT3SEG_CBIII_5_I2C > ((1 << 8)-1)) {
+				CBT_TUNE_ISDBT3SEG_CBIII_5_I2C = ((1 << 8)-1);
+			}
+			
+			rcvar = (43 * twos_ctune) >> 5;
+			CBT_TUNE_ISDBT3SEG_CBIV_5_I2C = (int)(CBT_ISDBT3SEG_CBIV_5_I2C+rcvar);
+			if (CBT_TUNE_ISDBT3SEG_CBIV_5_I2C > ((1 << 7)-1)) {
+				CBT_TUNE_ISDBT3SEG_CBIV_5_I2C = ((1 << 7)-1);
+			}
+			
+			rcvar = (73 * twos_ctune) >> 5;
+			CBT_TUNE_ISDBT3SEG_CBV_5_I2C = (int)(CBT_ISDBT3SEG_CBV_5_I2C+rcvar);
+			if (CBT_TUNE_ISDBT3SEG_CBV_5_I2C > ((1 << 8)-1)) {
+				CBT_TUNE_ISDBT3SEG_CBV_5_I2C = ((1 << 8)-1);
+			}
+			
+			rcvar = (126 * twos_ctune) >> 5;
+			CBT_TUNE_ISDBT3SEG_CB3M_5_I2C = (int)(CBT_ISDBT3SEG_CB3M_5_I2C+rcvar);
+			if (CBT_TUNE_ISDBT3SEG_CB3M_5_I2C > ((1 << 9)-1)) {
+				CBT_TUNE_ISDBT3SEG_CB3M_5_I2C = ((1 << 9)-1);
+			}
+			
+			rcvar = (31 * twos_ctune) >> 5;
+			CBT_TUNE_ISDBT3SEG_CB3D_5_I2C = (int)(CBT_ISDBT3SEG_CB3D_5_I2C+rcvar);
+			if (CBT_TUNE_ISDBT3SEG_CB3D_5_I2C > ((1 << 7)-1)) {
+				CBT_TUNE_ISDBT3SEG_CB3D_5_I2C = ((1 << 7)-1);
+			}
+			
+			rcvar = (43 * twos_ctune) >> 5;
+			CBT_TUNE_ISDBT3SEG_CB5M_5_I2C = (int)(CBT_ISDBT3SEG_CB5M_5_I2C+rcvar);
+			if (CBT_TUNE_ISDBT3SEG_CB5M_5_I2C > ((1 << 7)-1)) {
+				CBT_TUNE_ISDBT3SEG_CB5M_5_I2C = ((1 << 7)-1);
+			}
+			
+			rcvar = (11 * twos_ctune) >> 5;
+			CBT_TUNE_ISDBT3SEG_CB5D_5_I2C = (int)(CBT_ISDBT3SEG_CB5D_5_I2C+rcvar);
+			if (CBT_TUNE_ISDBT3SEG_CB5D_5_I2C > ((1 << 5)-1)) {
+				CBT_TUNE_ISDBT3SEG_CB5D_5_I2C = ((1 << 5)-1);
+			}
+			
+			vRSB_3_I2C = CBT_TUNE_ISDBT3SEG_RSB_3_I2C;
+			vRSB_5_I2C = CBT_TUNE_ISDBT3SEG_RSB_5_I2C;
+			vCBI_3_I2C = CBT_TUNE_ISDBT3SEG_CBI_3_I2C;
+			vCBII_3_I2C = CBT_TUNE_ISDBT3SEG_CBII_3_I2C;
+			vCBIII_3_I2C = CBT_TUNE_ISDBT3SEG_CBIII_3_I2C;
+			vCBI_5_I2C = CBT_TUNE_ISDBT3SEG_CBI_5_I2C;
+			vCBII_5_I2C = CBT_TUNE_ISDBT3SEG_CBII_5_I2C;
+			vCBIII_5_I2C = CBT_TUNE_ISDBT3SEG_CBIII_5_I2C;
+			vCBIV_5_I2C = CBT_TUNE_ISDBT3SEG_CBIV_5_I2C;
+			vCBV_5_I2C = CBT_TUNE_ISDBT3SEG_CBV_5_I2C;
+			vCB3M_5_I2C = CBT_TUNE_ISDBT3SEG_CB3M_5_I2C;
+			vCB3D_5_I2C = CBT_TUNE_ISDBT3SEG_CB3D_5_I2C;
+			vCB5M_5_I2C = CBT_TUNE_ISDBT3SEG_CB5M_5_I2C;
+			vCB5D_5_I2C = CBT_TUNE_ISDBT3SEG_CB5D_5_I2C;
+			
+			break;
 
-	default:
-		rtncode = -EINVAL;
-		goto ch_ctune_do_return;
-		break;
-	}
+		default:
+			rtncode = -EINVAL;
+			goto ch_ctune_do_return;
+			break;
+		}
 
-	REG3D = (0x30 | (vRSB_3_I2C << 2 )) + vRSB_5_I2C;
-	REG3F = vCBI_3_I2C;
-	REG40 = vCBII_3_I2C;
-	REG41 = vCBIII_3_I2C;
-	REG42 = vCBI_5_I2C;
-	REG43 = vCBII_5_I2C;
-	REG44 = vCBIII_5_I2C;
-	REG45 = vCBIV_5_I2C;
-	REG46 = vCBV_5_I2C;
-	REG47 = (((vCB3M_5_I2C & 0x100) >> 8)<<7) + vCB3D_5_I2C;
-	REG48 = (vCB3M_5_I2C) & 0xff;
-	REG49 = (vCB5D_5_I2C) & 0x1f;
-	REG4A = vCB5M_5_I2C;
-	
-	reg = 0x3d;
-	value = REG3D;
-	mb86a35_i2c_rf_send(reg, value);
-	
-	reg = 0x3f;
-	value = REG3F;
-	mb86a35_i2c_rf_send(reg, value);
-	
-	reg = 0x40;
-	value = REG40;
-	mb86a35_i2c_rf_send(reg, value);
-	
-	reg = 0x41;
-	value = REG41;
-	mb86a35_i2c_rf_send(reg, value);
-	
-	reg = 0x42;
-	value = REG42;
-	mb86a35_i2c_rf_send(reg, value);
-	
-	reg = 0x43;
-	value = REG43;
-	mb86a35_i2c_rf_send(reg, value);
-	
-	reg = 0x44;
-	value = REG44;
-	mb86a35_i2c_rf_send(reg, value);
-	
-	reg = 0x45;
-	value = REG45;
-	mb86a35_i2c_rf_send(reg, value);
-	
-	reg = 0x46;
-	value = REG46;
-	mb86a35_i2c_rf_send(reg, value);
-	
-	reg = 0x47;
-	value = REG47;
-	mb86a35_i2c_rf_send(reg, value);
-	
-	reg = 0x48;
-	value = REG48;
-	mb86a35_i2c_rf_send(reg, value);
-	
-	reg = 0x49;
-	value = REG49;
-	mb86a35_i2c_rf_send(reg, value);
-	
-	reg = 0x4A;
-	value = REG4A;
-	mb86a35_i2c_rf_send(reg, value);
+		REG3D = (0x30 | (vRSB_3_I2C << 2 )) + vRSB_5_I2C;
+		REG3F = vCBI_3_I2C;
+		REG40 = vCBII_3_I2C;
+		REG41 = vCBIII_3_I2C;
+		REG42 = vCBI_5_I2C;
+		REG43 = vCBII_5_I2C;
+		REG44 = vCBIII_5_I2C;
+		REG45 = vCBIV_5_I2C;
+		REG46 = vCBV_5_I2C;
+		REG47 = (((vCB3M_5_I2C & 0x100) >> 8)<<7) + vCB3D_5_I2C;
+		REG48 = (vCB3M_5_I2C) & 0xff;
+		REG49 = (vCB5D_5_I2C) & 0x1f;
+		REG4A = vCB5M_5_I2C;
+		
+		reg = 0x3d;
+		value = REG3D;
+		mb86a35_i2c_rf_send(reg, value);
+		
+		reg = 0x3f;
+		value = REG3F;
+		mb86a35_i2c_rf_send(reg, value);
+		
+		reg = 0x40;
+		value = REG40;
+		mb86a35_i2c_rf_send(reg, value);
+		
+		reg = 0x41;
+		value = REG41;
+		mb86a35_i2c_rf_send(reg, value);
+		
+		reg = 0x42;
+		value = REG42;
+		mb86a35_i2c_rf_send(reg, value);
+		
+		reg = 0x43;
+		value = REG43;
+		mb86a35_i2c_rf_send(reg, value);
+		
+		reg = 0x44;
+		value = REG44;
+		mb86a35_i2c_rf_send(reg, value);
+		
+		reg = 0x45;
+		value = REG45;
+		mb86a35_i2c_rf_send(reg, value);
+		
+		reg = 0x46;
+		value = REG46;
+		mb86a35_i2c_rf_send(reg, value);
+		
+		reg = 0x47;
+		value = REG47;
+		mb86a35_i2c_rf_send(reg, value);
+		
+		reg = 0x48;
+		value = REG48;
+		mb86a35_i2c_rf_send(reg, value);
+		
+		reg = 0x49;
+		value = REG49;
+		mb86a35_i2c_rf_send(reg, value);
+		
+		reg = 0x4A;
+		value = REG4A;
+		mb86a35_i2c_rf_send(reg, value);
 
-  } /* ES3.0 end */
+	} /* ES3.0 end */
 
 ch_ctune_do_return:
 	DBGPRINT(PRINT_LHEADERFMT "**** return[ %d ].\n", PRINT_LHEADER,
@@ -2624,6 +2676,7 @@ int mb86a35_IOCTL_RST_SOFT(mb86a35_cmdcontrol_t * cmdctrl, unsigned int cmd,
 		 PRINT_LHEADER, (int)cmdctrl, (int)cmd, (int)arg);
 
 	if (RESET_user == NULL) {
+		ERRPRINT("RESET_user = NULL.\n");
 		rtncode = -EINVAL;
 		goto reset_return;
 	}
@@ -2683,6 +2736,7 @@ int mb86a35_IOCTL_RST_SYNC(mb86a35_cmdcontrol_t * cmdctrl, unsigned int cmd,
 		 PRINT_LHEADER, (int)cmdctrl, (int)cmd, (int)arg);
 
 	if (RESET_user == NULL) {
+		ERRPRINT("RESET_user = NULL.\n");
 		rtncode = -EINVAL;
 		goto sync_return;
 	}
@@ -2697,6 +2751,7 @@ int mb86a35_IOCTL_RST_SYNC(mb86a35_cmdcontrol_t * cmdctrl, unsigned int cmd,
 
 	if ((RESET->STATE_INIT != PARAM_STATE_INIT_ON)
 	    && (RESET->STATE_INIT != PARAM_STATE_INIT_OFF)) {
+	    	ERRPRINT("STATE_INIT = ERR.\n");
 		rtncode = -EINVAL;
 		goto sync_return;
 	}
@@ -2745,6 +2800,7 @@ int mb86a35_IOCTL_SET_RECVM(mb86a35_cmdcontrol_t * cmdctrl, unsigned int cmd,
 		 PRINT_LHEADER, (int)cmdctrl, (int)cmd, (int)arg);
 
 	if (INIT_user == NULL) {
+		ERRPRINT("INIT_user = NULL.\n");
 		rtncode = -EINVAL;
 		goto recvm_return;
 	}
@@ -2758,11 +2814,13 @@ int mb86a35_IOCTL_SET_RECVM(mb86a35_cmdcontrol_t * cmdctrl, unsigned int cmd,
 	}
 
 	if ((INIT->SEGMENT & ~RECV_PATTERN1) != 0) {
+		ERRPRINT("SEGMENT = ERROR.\n");
 		rtncode = -EINVAL;
 		goto recvm_return;
 	}
 
 	if ((INIT->LAYERSEL & ~RECV_PATTERN2) != 0) {
+		ERRPRINT("LAYERSEL = ERROR.\n");
 		rtncode = -EINVAL;
 		goto recvm_return;
 	}
@@ -2810,6 +2868,7 @@ int mb86a35_IOCTL_SET_SPECT(mb86a35_cmdcontrol_t * cmdctrl, unsigned int cmd,
 		 PRINT_LHEADER, (int)cmdctrl, (int)cmd, (int)arg);
 
 	if (INIT_user == NULL) {
+		ERRPRINT("INIT_user = NULL.\n");
 		rtncode = -EINVAL;
 		goto spect_return;
 	}
@@ -2823,6 +2882,7 @@ int mb86a35_IOCTL_SET_SPECT(mb86a35_cmdcontrol_t * cmdctrl, unsigned int cmd,
 	}
 
 	if ((INIT->IQINV & ~SET_SPECT_PATTERN1) != 0) {
+		ERRPRINT("IQINV = ERROR.\n");
 		rtncode = -EINVAL;
 		goto spect_return;
 	}
@@ -2833,6 +2893,7 @@ int mb86a35_IOCTL_SET_SPECT(mb86a35_cmdcontrol_t * cmdctrl, unsigned int cmd,
 	    mb86a35_i2c_master_send_mask(reg, value, MB86A35_I2CMASK_IQINV,
 					 MB86A35_MASK_IQINV);
 	if (rtncode != 0) {
+		ERRPRINT("register master send err [%d].\n", rtncode);
 		goto spect_return;
 	}
 
@@ -2872,6 +2933,7 @@ int mb86a35_IOCTL_SET_IQSET(mb86a35_cmdcontrol_t * cmdctrl, unsigned int cmd,
 		 PRINT_LHEADER, (int)cmdctrl, (int)cmd, (int)arg);
 
 	if (INIT_user == NULL) {
+		ERRPRINT("INIT_user = NULL.\n");
 		rtncode = -EINVAL;
 		goto iqset_return;
 	}
@@ -2885,6 +2947,7 @@ int mb86a35_IOCTL_SET_IQSET(mb86a35_cmdcontrol_t * cmdctrl, unsigned int cmd,
 	}
 
 	if ((INIT->CONT_CTRL3 & ~SET_IQSET_PATTERN1) != 0) {
+		ERRPRINT("CONT_CTRL3 = ERROR.\n");
 		rtncode = -EINVAL;
 		goto iqset_return;
 	}
@@ -2895,6 +2958,7 @@ int mb86a35_IOCTL_SET_IQSET(mb86a35_cmdcontrol_t * cmdctrl, unsigned int cmd,
 	    mb86a35_i2c_master_send_mask(reg, value, MB86A35_I2CMASK_CONT_CTRL3,
 					 MB86A35_MASK_CONT_CTRL3);
 	if (rtncode != 0) {
+		ERRPRINT("register master send err [%d].\n", rtncode);
 		goto iqset_return;
 	}
 
@@ -2933,6 +2997,7 @@ int mb86a35_IOCTL_SET_ALOG_PDOWN(mb86a35_cmdcontrol_t * cmdctrl,
 		 PRINT_LHEADER, (int)cmdctrl, (int)cmd, (int)arg);
 
 	if (INIT_user == NULL) {
+		ERRPRINT("INIT_user = NULL\n");
 		rtncode = -EINVAL;
 		goto pdown_return;
 	}
@@ -2946,6 +3011,7 @@ int mb86a35_IOCTL_SET_ALOG_PDOWN(mb86a35_cmdcontrol_t * cmdctrl,
 	}
 
 	if ((INIT->MACRO_PDOWN & ~SET_PDOWN_PATTERN1) != 0) {
+		ERRPRINT("MACRO_PDOWN = ERROR\n");
 		rtncode = -EINVAL;
 		goto pdown_return;
 	}
@@ -2988,6 +3054,7 @@ int mb86a35_IOCTL_SET_SCHANNEL(mb86a35_cmdcontrol_t * cmdctrl, unsigned int cmd,
 		 PRINT_LHEADER, (int)cmdctrl, (int)cmd, (int)arg);
 
 	if (INIT_user == NULL) {
+		ERRPRINT("INIT_user = NULL\n");
 		rtncode = -EINVAL;
 		goto schannel_return;
 	}
@@ -3006,6 +3073,7 @@ int mb86a35_IOCTL_SET_SCHANNEL(mb86a35_cmdcontrol_t * cmdctrl, unsigned int cmd,
 		if (INIT->FTSEGCNT <= 41) {
 			value = PARAM_FTSEGCNT_SEGCNT_ISDB_Tmm(INIT->FTSEGCNT);
 		} else {
+			ERRPRINT("FTSEGCNT = ERROR\n");
 			rtncode = -EINVAL;
 			goto schannel_return;
 		}
@@ -3036,17 +3104,18 @@ static
 int mb86a35_IOCTL_AGC(mb86a35_cmdcontrol_t * cmdctrl, unsigned int cmd,
 		      unsigned long arg)
 {
-  int rtncode_rf = 0;
-  unsigned char reg_rf = 0;
-  u8 chipid0_rf = 0;
-  int rtncode = 0;
-   rtncode_rf = mb86a35_i2c_rf_recv(reg_rf, &chipid0_rf, 1);
-   if (rtncode_rf != 0) {
-    		rtncode = -EFAULT;
-    		goto agc_return;
-    }
+	int rtncode_rf = 0;
+	unsigned char reg_rf = 0;
+	u8 chipid0_rf = 0;
+	int rtncode = 0;
+	rtncode_rf = mb86a35_i2c_rf_recv(reg_rf, &chipid0_rf, 1);
+	if (rtncode_rf != 0) {
+		ERRPRINT("rf recv err [%d]\n", rtncode_rf);
+		rtncode = -EFAULT;
+		goto agc_return;
+	}
 
-   if (chipid0_rf == 0x03) {    /* ES2.0 start */
+	if (chipid0_rf == 0x03) {    /* ES2.0 start */
 
 	ioctl_agc_t *AGC_user = (ioctl_agc_t *) arg;
 	ioctl_agc_t *AGC = &cmdctrl->AGC;
@@ -3068,6 +3137,7 @@ int mb86a35_IOCTL_AGC(mb86a35_cmdcontrol_t * cmdctrl, unsigned int cmd,
 		 PRINT_LHEADER, (int)cmdctrl, (int)cmd, (int)arg);
 
 	if (AGC_user == NULL) {
+		ERRPRINT("AGC_user = NULL\n");
 		rtncode = -EINVAL;
 		goto agc_return;
 	}
@@ -3167,6 +3237,7 @@ int mb86a35_IOCTL_AGC(mb86a35_cmdcontrol_t * cmdctrl, unsigned int cmd,
 	reg = MB86A35_REG_ADDR_IFAGC;
 	rtncode = mb86a35_i2c_master_recv(reg, &AGC->IFAGC, 1);
 	if (rtncode != 0) {
+		ERRPRINT("register master recv err [%d]\n", rtncode);
 		rtncode = -EFAULT;
 		goto agc_return;
 	}
@@ -3174,23 +3245,26 @@ int mb86a35_IOCTL_AGC(mb86a35_cmdcontrol_t * cmdctrl, unsigned int cmd,
 	sreg = MB86A35_REG_SUBR_IFAGCDAC;
 	rtncode = mb86a35_i2c_slave_recv(rega, sreg, regd, &AGC->IFAGCDAC, 1);
 	if (rtncode != 0) {
+		ERRPRINT("register slave recv err [%d]\n", rtncode);
 		rtncode = -EFAULT;
 		goto agc_return;
 	}
 
 	rtncode = put_user(AGC->IFAGC, (char *)&AGC_user->IFAGC);
 	if (rtncode != 0) {
+		ERRPRINT("put user IFAGC err [%d]\n", rtncode);
 		rtncode = -EFAULT;
 		goto agc_return;
 	}
 	rtncode = put_user(AGC->IFAGCDAC, (char *)&AGC_user->IFAGCDAC);
 	if (rtncode != 0) {
+		ERRPRINT("put user IFAGCDAC err [%d]\n", rtncode);
 		rtncode = -EFAULT;
 		goto agc_return;
 	}
 
-   }          /* ES2.0 end */
-   else {     /* ES3.0 start */
+	}          /* ES2.0 end */
+	else {     /* ES3.0 start */
 
 
 	ioctl_agc_t *AGC_user = (ioctl_agc_t *) arg;
@@ -3213,6 +3287,7 @@ int mb86a35_IOCTL_AGC(mb86a35_cmdcontrol_t * cmdctrl, unsigned int cmd,
 		 PRINT_LHEADER, (int)cmdctrl, (int)cmd, (int)arg);
 
 	if (AGC_user == NULL) {
+		ERRPRINT("AGC_user = NULL\n");
 		rtncode = -EINVAL;
 		goto agc_return;
 	}
@@ -3312,6 +3387,7 @@ int mb86a35_IOCTL_AGC(mb86a35_cmdcontrol_t * cmdctrl, unsigned int cmd,
 	reg = MB86A35_REG_ADDR_IFAGC;
 	rtncode = mb86a35_i2c_master_recv(reg, &AGC->IFAGC, 1);
 	if (rtncode != 0) {
+		ERRPRINT("register master recv err [%d]\n", rtncode);
 		rtncode = -EFAULT;
 		goto agc_return;
 	}
@@ -3319,22 +3395,25 @@ int mb86a35_IOCTL_AGC(mb86a35_cmdcontrol_t * cmdctrl, unsigned int cmd,
 	sreg = MB86A35_REG_SUBR_IFAGCDAC;
 	rtncode = mb86a35_i2c_slave_recv(rega, sreg, regd, &AGC->IFAGCDAC, 1);
 	if (rtncode != 0) {
+		ERRPRINT("register slave recv err [%d]\n", rtncode);
 		rtncode = -EFAULT;
 		goto agc_return;
 	}
 
 	rtncode = put_user(AGC->IFAGC, (char *)&AGC_user->IFAGC);
 	if (rtncode != 0) {
+		ERRPRINT("put user IFAGC err [%d]\n", rtncode);
 		rtncode = -EFAULT;
 		goto agc_return;
 	}
 	rtncode = put_user(AGC->IFAGCDAC, (char *)&AGC_user->IFAGCDAC);
 	if (rtncode != 0) {
+		ERRPRINT("put user IFAGCDAC err [%d]\n", rtncode);
 		rtncode = -EFAULT;
 		goto agc_return;
 	}
 
-  } /* ES3.0 end */
+	} /* ES3.0 end */
 
 agc_return:
 	DBGPRINT(PRINT_LHEADERFMT "**** return[ %d ].\n", PRINT_LHEADER,
@@ -3358,18 +3437,20 @@ static
 int mb86a35_IOCTL_SYNC(mb86a35_cmdcontrol_t * cmdctrl, unsigned int cmd,
 		       unsigned long arg)
 {
-  int rtncode_rf = 0;
-  unsigned char reg_rf = 0;
-  u8 chipid0_rf = 0;
-  int rtncode = 0;
-  u8 data[4];
-   rtncode_rf = mb86a35_i2c_rf_recv(reg_rf, &chipid0_rf, 1);
-   if (rtncode_rf != 0) {
-    		rtncode = -EFAULT;
-    		goto sync_return;
-    }
+	int rtncode_rf = 0;
+	unsigned char reg_rf = 0;
+	u8 chipid0_rf = 0;
+	int rtncode = 0;
+	u8 data[4];
+	
+	rtncode_rf = mb86a35_i2c_rf_recv(reg_rf, &chipid0_rf, 1);
+	if (rtncode_rf != 0) {
+		ERRPRINT("rf recv err [%d]\n", rtncode_rf);
+		rtncode = -EFAULT;
+		goto sync_return;
+	}
 
-   if (chipid0_rf == 0x03) {    /* ES2.0 start */
+	if (chipid0_rf == 0x03) {    /* ES2.0 start */
 
 	unsigned char reg;
 	unsigned int value;
@@ -3394,8 +3475,8 @@ int mb86a35_IOCTL_SYNC(mb86a35_cmdcontrol_t * cmdctrl, unsigned int cmd,
 		mb86a35_i2c_master_send(reg, value);
 	}
 
-   }          /* ES2.0 end */
-   else {     /*/ES3.0 start */
+	}          /* ES2.0 end */
+	else {     /*/ES3.0 start */
 
 	ioctl_ofdm_init_t *OFDM_INIT_user = (ioctl_ofdm_init_t *) arg;
 	ioctl_ofdm_init_t *OFDM_INIT = &cmdctrl->OFDM_INIT;
@@ -3445,6 +3526,7 @@ int mb86a35_IOCTL_SYNC(mb86a35_cmdcontrol_t * cmdctrl, unsigned int cmd,
 		 PRINT_LHEADER, (int)cmdctrl, (int)cmd, (int)arg);
 
 	if (OFDM_INIT_user == NULL) {
+		ERRPRINT("OFDM_INIT_user = NULL\n");
 		rtncode = -EINVAL;
 		goto sync_return;
 	}
@@ -3502,6 +3584,16 @@ int mb86a35_IOCTL_SYNC(mb86a35_cmdcontrol_t * cmdctrl, unsigned int cmd,
 	mb86a35_i2c_slave_send(0x3b, 0x3c, 0x3c, 0x90);
 	mb86a35_i2c_slave_send(0x3b, 0x50, 0x3c, 0x90);
 	mb86a35_i2c_slave_send(0x3b, 0xea, 0x3c, 0x19);
+	mb86a35_i2c_slave_send(0x3b, 0x1a, 0x3c, 0x83);
+	mb86a35_i2c_slave_send(0x3b, 0x6c, 0x3c, 0xd2);
+	mb86a35_i2c_slave_send(0x3b, 0x74, 0x3c, 0x14);
+	mb86a35_i2c_slave_send(0x3b, 0xa7, 0x3c, 0x3c);
+	mb86a35_i2c_slave_send(0x3b, 0xbb, 0x3c, 0x19);
+	mb86a35_i2c_slave_send(0x3b, 0xe9, 0x3c, 0x80);
+	mb86a35_i2c_slave_send(0x3b, 0xff, 0x3c, 0x83);
+
+    mb86a35_i2c_slave_send(0x3b, 0xee, 0x3c, 0x0c);
+
 	/* Setting for optimization of multipath threshold -- end */
 
 	/* Setting for optimization of synchronization -- start */
@@ -3525,6 +3617,37 @@ int mb86a35_IOCTL_SYNC(mb86a35_cmdcontrol_t * cmdctrl, unsigned int cmd,
 	data[1] = 0x00;
 	data[2] = 0xb1;
 	mb86a35_i2c_sub_send(0x28, 0x64, 0x29, &data[0], PARAM_I2C_MODE_SEND_24);
+
+	memset(data, 0, sizeof(data));
+	data[0] = 0x10;
+	data[1] = 0x20;
+	data[2] = 0x20;
+	mb86a35_i2c_sub_send(0x28, 0xdf, 0x29, &data[0], PARAM_I2C_MODE_SEND_24);
+        mb86a35_i2c_master_send(0x28, 0xdf);
+        mb86a35_i2c_master_send(0x29, data[0]);
+        mb86a35_i2c_master_send(0x2a, data[1]);
+        mb86a35_i2c_master_send(0x2b, data[2]);
+
+	memset(data, 0, sizeof(data));
+	data[0] = 0x11;
+	data[1] = 0x40;
+	data[2] = 0x10;
+	mb86a35_i2c_sub_send(0x28, 0xec, 0x29, &data[0], PARAM_I2C_MODE_SEND_24);
+        mb86a35_i2c_master_send(0x28, 0xec);
+        mb86a35_i2c_master_send(0x29, data[0]);
+        mb86a35_i2c_master_send(0x2a, data[1]);
+        mb86a35_i2c_master_send(0x2b, data[2]);
+
+        memset(data, 0, sizeof(data));
+        data[0] = 0x21;
+        data[1] = 0x40;
+        data[2] = 0x10;
+        mb86a35_i2c_sub_send(0x28, 0xec, 0x29, &data[0], PARAM_I2C_MODE_SEND_24);
+        mb86a35_i2c_master_send(0x28, 0xec);
+        mb86a35_i2c_master_send(0x29, data[0]);
+        mb86a35_i2c_master_send(0x2a, data[1]);
+        mb86a35_i2c_master_send(0x2b, data[2]);
+
 	/* Setting for optimization of synchronization -- end */
   } /* ES3.0 end */
 
@@ -3602,6 +3725,7 @@ int mb86a35_IOCTL_GPIO_SETUP(mb86a35_cmdcontrol_t * cmdctrl, unsigned int cmd,
 		 PRINT_LHEADER, (int)cmdctrl, (int)cmd, (int)arg);
 
 	if (GPIO_user == NULL) {
+		ERRPRINT("GPIO_user = NULL\n");
 		rtncode = -EINVAL;
 		goto gpio_setup_return;
 	}
@@ -3616,6 +3740,7 @@ int mb86a35_IOCTL_GPIO_SETUP(mb86a35_cmdcontrol_t * cmdctrl, unsigned int cmd,
 
 	if ((GPIO->GPIO_DAT != PARAM_GPIO_DAT_AC_MODE_ACCLK)
 	    && (GPIO->GPIO_DAT != PARAM_GPIO_DAT_AC_MODE_ACCLK)) {
+	    	ERRPRINT("GPIO_DAT = ERROR\n");
 		rtncode = -EINVAL;
 		goto gpio_setup_return;
 	}
@@ -3627,6 +3752,7 @@ int mb86a35_IOCTL_GPIO_SETUP(mb86a35_cmdcontrol_t * cmdctrl, unsigned int cmd,
 					 MB86A35_I2CMASK_GPIO_DAT_ACMODE,
 					 MB86A35_MASK_GPIO_DAT_GPIO_DAT);
 	if (rtncode != 0) {
+		ERRPRINT("register master send err [%d]\n", rtncode);
 		goto gpio_setup_return;
 	}
 
@@ -3666,6 +3792,7 @@ int mb86a35_IOCTL_GPIO_READ(mb86a35_cmdcontrol_t * cmdctrl, unsigned int cmd,
 		 PRINT_LHEADER, (int)cmdctrl, (int)cmd, (int)arg);
 
 	if (GPIO_user == NULL) {
+		ERRPRINT("GPIO_user = NULL\n");
 		rtncode = -EINVAL;
 		goto gpio_read_return;
 	}
@@ -3673,6 +3800,7 @@ int mb86a35_IOCTL_GPIO_READ(mb86a35_cmdcontrol_t * cmdctrl, unsigned int cmd,
 	reg = MB86A35_REG_ADDR_GPIO_DAT;
 	rtncode = mb86a35_i2c_master_recv(reg, &GPIO->GPIO_DAT, 1);
 	if (rtncode != 0) {
+		ERRPRINT("register master recv err [%d]\n", rtncode);
 		rtncode = -EFAULT;
 		goto gpio_read_return;
 	}
@@ -3719,6 +3847,7 @@ int mb86a35_IOCTL_GPIO_WRITE(mb86a35_cmdcontrol_t * cmdctrl, unsigned int cmd,
 		 PRINT_LHEADER, (int)cmdctrl, (int)cmd, (int)arg);
 
 	if (GPIO_user == NULL) {
+		ERRPRINT("GPIO_user = NULL\n");
 		rtncode = -EINVAL;
 		goto gpio_write_return;
 	}
@@ -3740,6 +3869,7 @@ int mb86a35_IOCTL_GPIO_WRITE(mb86a35_cmdcontrol_t * cmdctrl, unsigned int cmd,
 						MB86A35_MASK_GPIO_DAT_AC_MODE),
 					       MB86A35_MASK_GPIO_DAT_GPIO_DAT);
 	if (rtncode != 0) {
+		ERRPRINT("register master send err [%d]\n", rtncode);
 		goto gpio_write_return;
 	}
 
@@ -3777,6 +3907,7 @@ int mb86a35_IOCTL_ANALOG(mb86a35_cmdcontrol_t * cmdctrl, unsigned int cmd,
 		 PRINT_LHEADER, (int)cmdctrl, (int)cmd, (int)arg);
 
 	if (GPIO_user == NULL) {
+		ERRPRINT("GPIO_user = NULL\n");
 		rtncode = -EINVAL;
 		goto analog_return;
 	}
@@ -3826,6 +3957,7 @@ int mb86a35_IOCTL_SEQ_GETSTAT(mb86a35_cmdcontrol_t * cmdctrl, unsigned int cmd,
 		 PRINT_LHEADER, (int)cmdctrl, (int)cmd, (int)arg);
 
 	if (SEQ_user == NULL) {
+		ERRPRINT("SEQ_user = NULL\n");
 		rtncode = -EINVAL;
 		goto seq_getstate_return;
 	}
@@ -3841,12 +3973,14 @@ int mb86a35_IOCTL_SEQ_GETSTAT(mb86a35_cmdcontrol_t * cmdctrl, unsigned int cmd,
 	reg = MB86A35_REG_ADDR_SYNC_STATE;
 	rtncode = mb86a35_i2c_master_recv(reg, &SEQ->SYNC_STATE, 1);
 	if (rtncode != 0) {
+		ERRPRINT("register master recv err [%d]\n", rtncode);
 		rtncode = -EFAULT;
 		goto seq_getstate_return;
 	}
 
 	rtncode = put_user(SEQ->SYNC_STATE, (char *)&SEQ_user->SYNC_STATE);
 	if (rtncode != 0) {
+		ERRPRINT("put user SYNC_STATE err [%d]\n", rtncode);
 		rtncode = -EFAULT;
 		goto seq_getstate_return;
 	}
@@ -3893,6 +4027,7 @@ int mb86a35_IOCTL_SEQ_SETMODE(mb86a35_cmdcontrol_t * cmdctrl, unsigned int cmd,
 		 PRINT_LHEADER, (int)cmdctrl, (int)cmd, (int)arg);
 
 	if (SEQ_user == NULL) {
+		ERRPRINT("SEQ_user = NULL\n");
 		rtncode = -EINVAL;
 		goto seq_setmode_return;
 	}
@@ -3906,11 +4041,13 @@ int mb86a35_IOCTL_SEQ_SETMODE(mb86a35_cmdcontrol_t * cmdctrl, unsigned int cmd,
 	}
 
 	if ((SEQ->MODED_CTRL & ~SEQ_SETMODE_PATTERN1) != 0) {
+		ERRPRINT("MODED_CTRL = ERROR\n");
 		rtncode = -EINVAL;
 		goto seq_setmode_return;
 	}
 
 	if ((SEQ->MODED_CTRL2 & ~SEQ_SETMODE_PATTERN2) != 0) {
+		ERRPRINT("MODED_CTRL2 = ERROR\n");
 		rtncode = -EINVAL;
 		goto seq_setmode_return;
 	}
@@ -3928,6 +4065,7 @@ int mb86a35_IOCTL_SEQ_SETMODE(mb86a35_cmdcontrol_t * cmdctrl, unsigned int cmd,
 	case PARAM_MODE_DETECT_ON:
 		rtncode = mb86a35_i2c_master_recv(reg, &tmpdata, 1);
 		if (rtncode != 0) {
+			ERRPRINT("register master recv err [%d]\n", rtncode);
 			rtncode = -EFAULT;
 			goto seq_setmode_return;
 		}
@@ -3938,6 +4076,7 @@ int mb86a35_IOCTL_SEQ_SETMODE(mb86a35_cmdcontrol_t * cmdctrl, unsigned int cmd,
 	case PARAM_MODE_DETECT_OFF:
 		rtncode = mb86a35_i2c_master_recv(reg, &tmpdata, 1);
 		if (rtncode != 0) {
+			ERRPRINT("register master recv err [%d]\n", rtncode);
 			rtncode = -EFAULT;
 			goto seq_setmode_return;
 		}
@@ -3988,6 +4127,7 @@ int mb86a35_IOCTL_SEQ_GETMODE(mb86a35_cmdcontrol_t * cmdctrl, unsigned int cmd,
 		 PRINT_LHEADER, (int)cmdctrl, (int)cmd, (int)arg);
 
 	if (SEQ_user == NULL) {
+		ERRPRINT("SEQ_user = NULL\n");
 		rtncode = -EINVAL;
 		goto seq_getmode_return;
 	}
@@ -4003,12 +4143,14 @@ int mb86a35_IOCTL_SEQ_GETMODE(mb86a35_cmdcontrol_t * cmdctrl, unsigned int cmd,
 	reg = MB86A35_REG_ADDR_MODED_STAT;
 	rtncode = mb86a35_i2c_master_recv(reg, &tmpdata0, 1);
 	if (rtncode != 0) {
+		ERRPRINT("register master recv err [%d]\n", rtncode);
 		rtncode = -EFAULT;
 		goto seq_getmode_return;
 	}
 	tmpdata1 = tmpdata0 & 0x60;
 	if (copy_to_user
 		((void *)&SEQ_user->MODED_STAT, (void *)&tmpdata1, 1)) {
+		ERRPRINT("copy_to_user MODED_STAT err\n");
 		rtncode = -EFAULT;
 		goto seq_getmode_return;
 	}
@@ -4016,6 +4158,7 @@ int mb86a35_IOCTL_SEQ_GETMODE(mb86a35_cmdcontrol_t * cmdctrl, unsigned int cmd,
         tmpdata1 = tmpdata0 & 0x0c;
         if (copy_to_user
                 ((void *)&SEQ_user->MODE, (void *)&tmpdata1, 1)) {
+                ERRPRINT("copy_to_user MODE err\n");
                 rtncode = -EFAULT;
                 goto seq_getmode_return;
         }
@@ -4023,6 +4166,7 @@ int mb86a35_IOCTL_SEQ_GETMODE(mb86a35_cmdcontrol_t * cmdctrl, unsigned int cmd,
         tmpdata1 = tmpdata0 & 0x03;
         if (copy_to_user
                 ((void *)&SEQ_user->GUARD, (void *)&tmpdata1, 1)) {
+                ERRPRINT("copy_to_user GUARD err\n");
                 rtncode = -EFAULT;
                 goto seq_getmode_return;
         }
@@ -4064,6 +4208,7 @@ int mb86a35_IOCTL_SEQ_GETTMCC(mb86a35_cmdcontrol_t * cmdctrl, unsigned int cmd,
 		 PRINT_LHEADER, (int)cmdctrl, (int)cmd, (int)arg);
 
 	if (SEQ_user == NULL) {
+		ERRPRINT("SEQ_user = NULL\n");
 		rtncode = -EINVAL;
 		goto seq_gettmcc_return;
 	}
@@ -4077,6 +4222,7 @@ int mb86a35_IOCTL_SEQ_GETTMCC(mb86a35_cmdcontrol_t * cmdctrl, unsigned int cmd,
 	}
 
 	if ((SEQ->TMCCREAD & ~SEQ_GETTMCC_PATTERN1) != 0) {
+		ERRPRINT("TMCCREAD = ERROR\n");
 		rtncode = -EINVAL;
 		goto seq_gettmcc_return;
 	}
@@ -4088,6 +4234,7 @@ int mb86a35_IOCTL_SEQ_GETTMCC(mb86a35_cmdcontrol_t * cmdctrl, unsigned int cmd,
 	sreg = MB86A35_REG_SUBR_TMCC0;
 	rtncode = mb86a35_i2c_slave_recv(rega, sreg, regd, &SEQ->TMCC[0], 32);
 	if (rtncode != 0) {
+		ERRPRINT("TMCC0 register slave recv err [%d]\n", rtncode);
 		rtncode = -EFAULT;
 		goto seq_gettmcc_return;
 	}
@@ -4095,6 +4242,7 @@ int mb86a35_IOCTL_SEQ_GETTMCC(mb86a35_cmdcontrol_t * cmdctrl, unsigned int cmd,
 	sreg = MB86A35_REG_SUBR_FEC_IN;
 	rtncode = mb86a35_i2c_slave_recv(rega, sreg, regd, &SEQ->FEC_IN, 1);
 	if (rtncode != 0) {
+		ERRPRINT("FEC_IN register slave recv err [%d]\n", rtncode);
 		rtncode = -EFAULT;
 		goto seq_gettmcc_return;
 	}
@@ -4110,6 +4258,7 @@ int mb86a35_IOCTL_SEQ_GETTMCC(mb86a35_cmdcontrol_t * cmdctrl, unsigned int cmd,
 
 	rtncode = put_user(SEQ->FEC_IN, (char *)&SEQ_user->FEC_IN);
 	if (rtncode != 0) {
+		ERRPRINT("put user FEC_IN err[%d]\n", rtncode);
 		rtncode = -EFAULT;
 		goto seq_gettmcc_return;
 	}
@@ -4151,6 +4300,7 @@ int mb86a35_IOCTL_BER_MONISTAT(mb86a35_cmdcontrol_t * cmdctrl, unsigned int cmd,
 		 PRINT_LHEADER, (int)cmdctrl, (int)cmd, (int)arg);
 
 	if (BER_user == NULL) {
+		ERRPRINT("BER_user = NULL\n");
 		rtncode = -EINVAL;
 		goto ber_monistat_return;
 	}
@@ -4164,6 +4314,7 @@ int mb86a35_IOCTL_BER_MONISTAT(mb86a35_cmdcontrol_t * cmdctrl, unsigned int cmd,
 	}
 
 	if ((BER->S8WAIT & ~BER_MONISTAT_PATTERN1) != 0) {
+		ERRPRINT("S8WAIT = ERROR\n");
 		rtncode = -EINVAL;
 		goto ber_monistat_return;
 	}
@@ -4171,6 +4322,7 @@ int mb86a35_IOCTL_BER_MONISTAT(mb86a35_cmdcontrol_t * cmdctrl, unsigned int cmd,
 	sreg = MB86A35_REG_SUBR_S8WAIT;
 	rtncode = mb86a35_i2c_slave_recv(rega, sreg, regd, &BER->S8WAIT, 1);
 	if (rtncode != 0) {
+		ERRPRINT("S8WAIT register slave recv err [%d]\n", rtncode);
 		rtncode = -EFAULT;
 		goto ber_monistat_return;
 	}
@@ -4178,6 +4330,7 @@ int mb86a35_IOCTL_BER_MONISTAT(mb86a35_cmdcontrol_t * cmdctrl, unsigned int cmd,
 
 	rtncode = put_user(BER->S8WAIT, (char *)&BER_user->S8WAIT);
 	if (rtncode != 0) {
+		ERRPRINT("put user S8WAIT err [%d]\n", rtncode);
 		rtncode = -EFAULT;
 		goto ber_monistat_return;
 	}
@@ -4236,6 +4389,7 @@ int mb86a35_IOCTL_BER_MONICONFIG(mb86a35_cmdcontrol_t * cmdctrl,
 		 PRINT_LHEADER, (int)cmdctrl, (int)cmd, (int)arg);
 
 	if (BER_user == NULL) {
+		ERRPRINT("BER_user = NULL\n");
 		rtncode = -EINVAL;
 		goto ber_moniconfig_return;
 	}
@@ -4249,86 +4403,103 @@ int mb86a35_IOCTL_BER_MONICONFIG(mb86a35_cmdcontrol_t * cmdctrl,
 	}
 
 	if ((BER->S8WAIT & ~BER_MONICONFIG_PATTERN1) != 0) {
+		ERRPRINT("S8WAIT = ERROR\n");
 		rtncode = -EINVAL;
 		goto ber_moniconfig_return;
 	}
 
 	if ((BER->VBERON != PARAM_VBERON_BEFORE) && (BER->VBERON != 0)) {
+		ERRPRINT("VBERON = ERROR\n");
 		rtncode = -EINVAL;
 		goto ber_moniconfig_return;
 	}
 
 	if ((BER->VBERXRST & ~BER_MONICONFIG_PATTERN2) != 0) {
+		ERRPRINT("VBERXRST = ERROR\n");
 		rtncode = -EINVAL;
 		goto ber_moniconfig_return;
 	}
 
 	if (BER->VBERSETA > 16777215) {
+		ERRPRINT("VBERSETA = ERROR\n");
 		rtncode = -EINVAL;
 		goto ber_moniconfig_return;
 	}
 
 	if (BER->VBERSETB > 16777215) {
+		ERRPRINT("VBERSETB = ERROR\n");
 		rtncode = -EINVAL;
 		goto ber_moniconfig_return;
 	}
 
 	if (BER->VBERSETC > 16777215) {
+		ERRPRINT("VBERSETC = ERROR\n");
 		rtncode = -EINVAL;
 		goto ber_moniconfig_return;
 	}
 
 	if ((BER->RSBERON & ~BER_MONICONFIG_PATTERN3) != 0) {
+		ERRPRINT("RSBERON = ERROR\n");
 		rtncode = -EINVAL;
 		goto ber_moniconfig_return;
 	}
 
 	if ((BER->RSBERXRST & ~BER_MONICONFIG_PATTERN4) != 0) {
+		ERRPRINT("RSBERXRST = ERROR\n");
 		rtncode = -EINVAL;
 		goto ber_moniconfig_return;
 	}
 
 	if ((BER->RSBERCEFLG & ~BER_MONICONFIG_PATTERN5) != 0) {
+		ERRPRINT("RSBERCEFLG = ERROR\n");
 		rtncode = -EINVAL;
 		goto ber_moniconfig_return;
 	}
 
 	if ((BER->RSBERTHFLG & ~BER_MONICONFIG_PATTERN6) != 0) {
+		ERRPRINT("RSBERTHFLG = ERROR\n");
 		rtncode = -EINVAL;
 		goto ber_moniconfig_return;
 	}
 
 	if (BER->SBERSETA > 65535) {
+		ERRPRINT("SBERSETA = ERROR\n");
 		rtncode = -EINVAL;
 		goto ber_moniconfig_return;
 	}
 
 	if (BER->SBERSETB > 65535) {
+		ERRPRINT("SBERSETB = ERROR\n");
 		rtncode = -EINVAL;
 		goto ber_moniconfig_return;
 	}
 
 	if (BER->SBERSETC > 65535) {
+		ERRPRINT("SBERSETC = ERROR\n");
 		rtncode = -EINVAL;
 		goto ber_moniconfig_return;
 	}
 
 	if ((BER->PEREN & ~BER_MONICONFIG_PATTERN7) != 0) {
+		ERRPRINT("PEREN = ERROR\n");
 		rtncode = -EINVAL;
 		goto ber_moniconfig_return;
 	}
 
 	if (BER->PERSNUMA > 65535) {
+		ERRPRINT("PERSNUMA = ERROR\n");
 		rtncode = -EINVAL;
 		goto ber_moniconfig_return;
 	}
 
 	if (BER->PERSNUMB > 65535) {
+		ERRPRINT("PERSNUMB = ERROR\n");
 		rtncode = -EINVAL;
 		goto ber_moniconfig_return;
 	}
 
 	if (BER->PERSNUMC > 65535) {
+		ERRPRINT("PERSNUMC = ERROR\n");
 		rtncode = -EINVAL;
 		goto ber_moniconfig_return;
 	}
@@ -4555,6 +4726,7 @@ int mb86a35_IOCTL_BER_MONIGET(mb86a35_cmdcontrol_t * cmdctrl, unsigned int cmd,
 		 PRINT_LHEADER, (int)cmdctrl, (int)cmd, (int)arg);
 
 	if (BER_user == NULL) {
+		ERRPRINT("BER_user = NULL\n");
 		rtncode = -EINVAL;
 		goto ber_moniget_return;
 	}
@@ -4568,11 +4740,13 @@ int mb86a35_IOCTL_BER_MONIGET(mb86a35_cmdcontrol_t * cmdctrl, unsigned int cmd,
 	reg = MB86A35_REG_ADDR_RSBERTHFLG;
 	rtncode = mb86a35_i2c_master_recv(reg, &BER->RSBERTHFLG, 1);
 	if (rtncode != 0) {
+		ERRPRINT("RSBERTHFLG register master recv err [%d]\n", rtncode);
 		rtncode = -EFAULT;
 		goto ber_moniget_return;
 	}
 	rtncode = put_user(BER->RSBERTHFLG, (char *)&BER_user->RSBERTHFLG);
 	if (rtncode != 0) {
+		ERRPRINT("RSBERTHFLG put user err [%d]\n", rtncode);
 		rtncode = -EFAULT;
 		goto ber_moniget_return;
 	}
@@ -4580,11 +4754,13 @@ int mb86a35_IOCTL_BER_MONIGET(mb86a35_cmdcontrol_t * cmdctrl, unsigned int cmd,
 	reg = MB86A35_REG_ADDR_RSBERRST;
 	rtncode = mb86a35_i2c_master_recv(reg, &BER->RSBERXRST, 1);
 	if (rtncode != 0) {
+		ERRPRINT("RSBERRST register master recv err [%d]\n", rtncode);
 		rtncode = -EFAULT;
 		goto ber_moniget_return;
 	}
 	rtncode = put_user(BER->RSBERXRST, (char *)&BER_user->RSBERXRST);
 	if (rtncode != 0) {
+		ERRPRINT("RSBERXRST put user err [%d]\n", rtncode);
 		rtncode = -EFAULT;
 		goto ber_moniget_return;
 	}
@@ -4592,11 +4768,13 @@ int mb86a35_IOCTL_BER_MONIGET(mb86a35_cmdcontrol_t * cmdctrl, unsigned int cmd,
 	sreg = MB86A35_REG_SUBR_PEREN;
 	rtncode = mb86a35_i2c_slave_recv(rega, sreg, regd, &BER->PEREN, 1);
 	if (rtncode != 0) {
+		ERRPRINT("PEREN register slave recv err [%d]\n", rtncode);
 		rtncode = -EFAULT;
 		goto ber_moniget_return;
 	}
 	rtncode = put_user(BER->PEREN, (char *)&BER_user->PEREN);
 	if (rtncode != 0) {
+		ERRPRINT("PEREN put user err [%d]\n", rtncode);
 		rtncode = -EFAULT;
 		goto ber_moniget_return;
 	}
@@ -4604,11 +4782,13 @@ int mb86a35_IOCTL_BER_MONIGET(mb86a35_cmdcontrol_t * cmdctrl, unsigned int cmd,
 	sreg = MB86A35_REG_SUBR_PERRST;
 	rtncode = mb86a35_i2c_slave_recv(rega, sreg, regd, &BER->PERRST, 1);
 	if (rtncode != 0) {
+		ERRPRINT("PERRST register slave recv err [%d]\n", rtncode);
 		rtncode = -EFAULT;
 		goto ber_moniget_return;
 	}
 	rtncode = put_user(BER->PERRST, (char *)&BER_user->PERRST);
 	if (rtncode != 0) {
+		ERRPRINT("PERRST put user err [%d]\n", rtncode);
 		rtncode = -EFAULT;
 		goto ber_moniget_return;
 	}
@@ -4620,12 +4800,14 @@ int mb86a35_IOCTL_BER_MONIGET(mb86a35_cmdcontrol_t * cmdctrl, unsigned int cmd,
 	reg = MB86A35_REG_ADDR_VBERFLG;
 	rtncode = mb86a35_i2c_master_recv(reg, &BER->VBERFLG, 1);
 	if (rtncode != 0) {
+		ERRPRINT("VBERFLG register master recv err [%d]\n", rtncode);
 		rtncode = -EFAULT;
 		goto ber_moniget_return;
 	}
 
 	rtncode = put_user(BER->VBERFLG, (char *)&BER_user->VBERFLG);
 	if (rtncode != 0) {
+		ERRPRINT("VBERFLG put user err [%d]\n", rtncode);
 		rtncode = -EFAULT;
 		goto ber_moniget_return;
 	}
@@ -4635,17 +4817,18 @@ int mb86a35_IOCTL_BER_MONIGET(mb86a35_cmdcontrol_t * cmdctrl, unsigned int cmd,
 	CHECKFLG = BER->RSBERON & (PARAM_RSBERON_RSBERC_B
 				   | PARAM_RSBERON_RSBERB_B
 				   | PARAM_RSBERON_RSBERA_B);
+	
 	reg = MB86A35_REG_ADDR_RSBERCEFLG;
-
-
 	rtncode = mb86a35_i2c_master_recv(reg, &BER->RSBERCEFLG, 1);
 	if (rtncode != 0) {
+		ERRPRINT("RSBERCEFLG register master recv err [%d]\n", rtncode);
 		rtncode = -EFAULT;
 		goto ber_moniget_return;
 	}
 
 	rtncode = put_user(BER->RSBERCEFLG, (char *)&BER_user->RSBERCEFLG);
 	if (rtncode != 0) {
+		ERRPRINT("RSBERCEFLG put user err [%d]\n", rtncode);
 		rtncode = -EFAULT;
 		goto ber_moniget_return;
 	}
@@ -4657,22 +4840,25 @@ moniget_automode:
 	rtncode =
 	    mb86a35_i2c_slave_recv(rega, sreg, regd, &BER->PERFLG, 1);
 	if (rtncode != 0) {
+		ERRPRINT("PERFLG register slave recv err [%d]\n", rtncode);
 		rtncode = -EFAULT;
 		goto ber_moniget_return;
 	}
 
 	rtncode = put_user(BER->PERFLG, (char *)&BER_user->PERFLG);
 	if (rtncode != 0) {
+		ERRPRINT("PERFLG put user err [%d]\n", rtncode);
 		rtncode = -EFAULT;
 		goto ber_moniget_return;
 	}
 
+	BER->VBERDTA = 0;
 	/*********************************************/
 	if (BER->VBERFLG & PARAM_VBERFLG_VBERFLGA) {
-		BER->VBERDTA = 0;
 		reg = MB86A35_REG_ADDR_VBERDTA0;
 		rtncode = mb86a35_i2c_master_recv(reg, &tmpdata, 1);
 		if (rtncode != 0) {
+			ERRPRINT("VBERDTA0 register master recv err [%d]\n", rtncode);
 			rtncode = -EFAULT;
 			goto ber_moniget_return;
 		}
@@ -4681,6 +4867,7 @@ moniget_automode:
 		reg = MB86A35_REG_ADDR_VBERDTA1;
 		rtncode = mb86a35_i2c_master_recv(reg, &tmpdata, 1);
 		if (rtncode != 0) {
+			ERRPRINT("VBERDTA1 register master recv err [%d]\n", rtncode);
 			rtncode = -EFAULT;
 			goto ber_moniget_return;
 		}
@@ -4689,6 +4876,7 @@ moniget_automode:
 		reg = MB86A35_REG_ADDR_VBERDTA2;
 		rtncode = mb86a35_i2c_master_recv(reg, &tmpdata, 1);
 		if (rtncode != 0) {
+			ERRPRINT("VBERDTA2 register master recv err [%d]\n", rtncode);
 			rtncode = -EFAULT;
 			goto ber_moniget_return;
 		}
@@ -4701,6 +4889,7 @@ moniget_automode:
 		reg = MB86A35_REG_ADDR_VBERDTB0;
 		rtncode = mb86a35_i2c_master_recv(reg, &tmpdata, 1);
 		if (rtncode != 0) {
+			ERRPRINT("VBERDTB0 register master recv err [%d]\n", rtncode);
 			rtncode = -EFAULT;
 			goto ber_moniget_return;
 		}
@@ -4709,6 +4898,7 @@ moniget_automode:
 		reg = MB86A35_REG_ADDR_VBERDTB1;
 		rtncode = mb86a35_i2c_master_recv(reg, &tmpdata, 1);
 		if (rtncode != 0) {
+			ERRPRINT("VBERDTB1 register master recv err [%d]\n", rtncode);
 			rtncode = -EFAULT;
 			goto ber_moniget_return;
 		}
@@ -4717,6 +4907,7 @@ moniget_automode:
 		reg = MB86A35_REG_ADDR_VBERDTB2;
 		rtncode = mb86a35_i2c_master_recv(reg, &tmpdata, 1);
 		if (rtncode != 0) {
+			ERRPRINT("VBERDTB2 register master recv err [%d]\n", rtncode);
 			rtncode = -EFAULT;
 			goto ber_moniget_return;
 		}
@@ -4729,6 +4920,7 @@ moniget_automode:
 		reg = MB86A35_REG_ADDR_VBERDTC0;
 		rtncode = mb86a35_i2c_master_recv(reg, &tmpdata, 1);
 		if (rtncode != 0) {
+			ERRPRINT("VBERDTC0 register master recv err [%d]\n", rtncode);
 			rtncode = -EFAULT;
 			goto ber_moniget_return;
 		}
@@ -4737,6 +4929,7 @@ moniget_automode:
 		reg = MB86A35_REG_ADDR_VBERDTC1;
 		rtncode = mb86a35_i2c_master_recv(reg, &tmpdata, 1);
 		if (rtncode != 0) {
+			ERRPRINT("VBERDTC1 register master recv err [%d]\n", rtncode);
 			rtncode = -EFAULT;
 			goto ber_moniget_return;
 		}
@@ -4745,6 +4938,7 @@ moniget_automode:
 		reg = MB86A35_REG_ADDR_VBERDTC2;
 		rtncode = mb86a35_i2c_master_recv(reg, &tmpdata, 1);
 		if (rtncode != 0) {
+			ERRPRINT("VBERDTC2 register master recv err [%d]\n", rtncode);
 			rtncode = -EFAULT;
 			goto ber_moniget_return;
 		}
@@ -4758,6 +4952,7 @@ moniget_automode:
 		reg = MB86A35_REG_ADDR_RSBERDTA0;
 		rtncode = mb86a35_i2c_master_recv(reg, &tmpdata, 1);
 		if (rtncode != 0) {
+			ERRPRINT("RSBERDTA0 register master recv err [%d]\n", rtncode);
 			rtncode = -EFAULT;
 			goto ber_moniget_return;
 		}
@@ -4766,6 +4961,7 @@ moniget_automode:
 		reg = MB86A35_REG_ADDR_RSBERDTA1;
 		rtncode = mb86a35_i2c_master_recv(reg, &tmpdata, 1);
 		if (rtncode != 0) {
+			ERRPRINT("RSBERDTA1 register master recv err [%d]\n", rtncode);
 			rtncode = -EFAULT;
 			goto ber_moniget_return;
 		}
@@ -4774,6 +4970,7 @@ moniget_automode:
 		reg = MB86A35_REG_ADDR_RSBERDTA2;
 		rtncode = mb86a35_i2c_master_recv(reg, &tmpdata, 1);
 		if (rtncode != 0) {
+			ERRPRINT("RSBERDTA2 register master recv err [%d]\n", rtncode);
 			rtncode = -EFAULT;
 			goto ber_moniget_return;
 		}
@@ -4787,6 +4984,7 @@ moniget_automode:
 		reg = MB86A35_REG_ADDR_RSBERDTB0;
 		rtncode = mb86a35_i2c_master_recv(reg, &tmpdata, 1);
 		if (rtncode != 0) {
+			ERRPRINT("RSBERDTB0 register master recv err [%d]\n", rtncode);
 			rtncode = -EFAULT;
 			goto ber_moniget_return;
 		}
@@ -4795,6 +4993,7 @@ moniget_automode:
 		reg = MB86A35_REG_ADDR_RSBERDTB1;
 		rtncode = mb86a35_i2c_master_recv(reg, &tmpdata, 1);
 		if (rtncode != 0) {
+			ERRPRINT("RSBERDTB1 register master recv err [%d]\n", rtncode);
 			rtncode = -EFAULT;
 			goto ber_moniget_return;
 		}
@@ -4803,6 +5002,7 @@ moniget_automode:
 		reg = MB86A35_REG_ADDR_RSBERDTB2;
 		rtncode = mb86a35_i2c_master_recv(reg, &tmpdata, 1);
 		if (rtncode != 0) {
+			ERRPRINT("RSBERDTB2 register master recv err [%d]\n", rtncode);
 			rtncode = -EFAULT;
 			goto ber_moniget_return;
 		}
@@ -4816,6 +5016,7 @@ moniget_automode:
 		reg = MB86A35_REG_ADDR_RSBERDTC0;
 		rtncode = mb86a35_i2c_master_recv(reg, &tmpdata, 1);
 		if (rtncode != 0) {
+			ERRPRINT("RSBERDTC0 register master recv err [%d]\n", rtncode);
 			rtncode = -EFAULT;
 			goto ber_moniget_return;
 		}
@@ -4824,6 +5025,7 @@ moniget_automode:
 		reg = MB86A35_REG_ADDR_RSBERDTC1;
 		rtncode = mb86a35_i2c_master_recv(reg, &tmpdata, 1);
 		if (rtncode != 0) {
+			ERRPRINT("RSBERDTC1 register master recv err [%d]\n", rtncode);
 			rtncode = -EFAULT;
 			goto ber_moniget_return;
 		}
@@ -4832,6 +5034,7 @@ moniget_automode:
 		reg = MB86A35_REG_ADDR_RSBERDTC2;
 		rtncode = mb86a35_i2c_master_recv(reg, &tmpdata, 1);
 		if (rtncode != 0) {
+			ERRPRINT("RSBERDTC2 register master recv err [%d]\n", rtncode);
 			rtncode = -EFAULT;
 			goto ber_moniget_return;
 		}
@@ -4844,6 +5047,7 @@ moniget_automode:
 		sreg = MB86A35_REG_SUBR_PERERRA0;
 		rtncode = mb86a35_i2c_slave_recv(rega, sreg, regd, &tmpdata, 1);
 		if (rtncode != 0) {
+			ERRPRINT("PERERRA0 register slave recv err [%d]\n", rtncode);
 			rtncode = -EFAULT;
 			goto ber_moniget_return;
 		}
@@ -4852,6 +5056,7 @@ moniget_automode:
 		sreg = MB86A35_REG_SUBR_PERERRA1;
 		rtncode = mb86a35_i2c_slave_recv(rega, sreg, regd, &tmpdata, 1);
 		if (rtncode != 0) {
+			ERRPRINT("PERERRA1 register slave recv err [%d]\n", rtncode);
 			rtncode = -EFAULT;
 			goto ber_moniget_return;
 		}
@@ -4864,6 +5069,7 @@ moniget_automode:
 		sreg = MB86A35_REG_SUBR_PERERRB0;
 		rtncode = mb86a35_i2c_slave_recv(rega, sreg, regd, &tmpdata, 1);
 		if (rtncode != 0) {
+			ERRPRINT("PERERRB0 register slave recv err [%d]\n", rtncode);
 			rtncode = -EFAULT;
 			goto ber_moniget_return;
 		}
@@ -4873,6 +5079,7 @@ moniget_automode:
 		sreg = MB86A35_REG_SUBR_PERERRB1;
 		rtncode = mb86a35_i2c_slave_recv(rega, sreg, regd, &tmpdata, 1);
 		if (rtncode != 0) {
+			ERRPRINT("PERERRB1 register slave recv err [%d]\n", rtncode);
 			rtncode = -EFAULT;
 			goto ber_moniget_return;
 		}
@@ -4885,6 +5092,7 @@ moniget_automode:
 		sreg = MB86A35_REG_SUBR_PERERRC0;
 		rtncode = mb86a35_i2c_slave_recv(rega, sreg, regd, &tmpdata, 1);
 		if (rtncode != 0) {
+			ERRPRINT("PERERRC0 register slave recv err [%d]\n", rtncode);
 			rtncode = -EFAULT;
 			goto ber_moniget_return;
 		}
@@ -4894,6 +5102,7 @@ moniget_automode:
 		sreg = MB86A35_REG_SUBR_PERERRC1;
 		rtncode = mb86a35_i2c_slave_recv(rega, sreg, regd, &tmpdata, 1);
 		if (rtncode != 0) {
+			ERRPRINT("PERERRC1 register slave recv err [%d]\n", rtncode);
 			rtncode = -EFAULT;
 			goto ber_moniget_return;
 		}
@@ -4902,8 +5111,9 @@ moniget_automode:
 
 	/*********************************************/
 	if (copy_to_user
-	    ((void *)&BER_user->VBERDTA, (void *)&BER->VBERDTA, cpysize)) {
+		((void *)&BER_user->VBERDTA, (void *)&BER->VBERDTA, cpysize)) {
 		rtncode = -EFAULT;
+		ERRPRINT("copy to user err [%d]\n", rtncode);
 		goto ber_moniget_return;
 	}
 
@@ -4984,6 +5194,7 @@ int mb86a35_IOCTL_BER_MONISTOP(mb86a35_cmdcontrol_t * cmdctrl, unsigned int cmd,
 	reg = MB86A35_REG_ADDR_RSBERON;
 	rtncode = mb86a35_i2c_master_recv(reg, &rdata, 1);
 	if (rtncode != 0) {
+		ERRPRINT("RSBERON register master recv err [%d]\n", rtncode);
 		rtncode = -EFAULT;
 		goto ber_monistop_return;
 	}
@@ -5047,6 +5258,7 @@ int mb86a35_IOCTL_TS_START(mb86a35_cmdcontrol_t * cmdctrl, unsigned int cmd,
 		 PRINT_LHEADER, (int)cmdctrl, (int)cmd, (int)arg);
 
 	if (TS_user == NULL) {
+		ERRPRINT("TS_user = NULL\n");
 		rtncode = -EINVAL;
 		goto ts_start_return;
 	}
@@ -5060,16 +5272,19 @@ int mb86a35_IOCTL_TS_START(mb86a35_cmdcontrol_t * cmdctrl, unsigned int cmd,
 	}
 
 	if ((TS->RS0 & ~TS_START_PATTERN1) != 0) {
+		ERRPRINT("RS0 = ERROR\n");
 		rtncode = -EINVAL;
 		goto ts_start_return;
 	}
 
 	if ((TS->SBER & ~TS_START_PATTERN2) != 0) {
+		ERRPRINT("SBER = ERROR\n");
 		rtncode = -EINVAL;
 		goto ts_start_return;
 	}
 
 	if ((TS->SBER2 & ~TS_START_PATTERN3) != 0) {
+		ERRPRINT("SBER2 = ERROR\n");
 		rtncode = -EINVAL;
 		goto ts_start_return;
 	}
@@ -5081,6 +5296,7 @@ int mb86a35_IOCTL_TS_START(mb86a35_cmdcontrol_t * cmdctrl, unsigned int cmd,
 					MB86A35_I2CMASK_RS0,
 					MB86A35_MASK_RS0_RSEN);
 	if (rtncode != 0) {
+		ERRPRINT("RS0 register slave send err [%d]\n", rtncode);
 		goto ts_start_return;
 	}
 
@@ -5189,6 +5405,7 @@ int mb86a35_IOCTL_TS_CONFIG(mb86a35_cmdcontrol_t * cmdctrl, unsigned int cmd,
 		 PRINT_LHEADER, (int)cmdctrl, (int)cmd, (int)arg);
 
 	if (TS_user == NULL) {
+		ERRPRINT("TS_user = NULL\n");
 		rtncode = -EINVAL;
 		goto ts_config_return;
 	}
@@ -5202,21 +5419,25 @@ int mb86a35_IOCTL_TS_CONFIG(mb86a35_cmdcontrol_t * cmdctrl, unsigned int cmd,
 	}
 
 	if ((TS->TSOUT & ~TS_CONFIG_PATTERN1) != 0) {
+		ERRPRINT("TS->TSOUT = ERROR\n");
 		rtncode = -EINVAL;
 		goto ts_config_return;
 	}
 
 	if ((TS->TSOUT2 & ~TS_CONFIG_PATTERN2) != 0) {
+		ERRPRINT("TS->TSOUT2 = ERROR\n");
 		rtncode = -EINVAL;
 		goto ts_config_return;
 	}
 
 	if ((TS->PBER & ~TS_CONFIG_PATTERN3) != 0) {
+		ERRPRINT("TS->PBER = ERROR\n");
 		rtncode = -EINVAL;
 		goto ts_config_return;
 	}
 
 	if ((TS->SBER & ~TS_CONFIG_PATTERN4) != 0) {
+		ERRPRINT("TS->SBER = ERROR\n");
 		rtncode = -EINVAL;
 		goto ts_config_return;
 	}
@@ -5224,18 +5445,21 @@ int mb86a35_IOCTL_TS_CONFIG(mb86a35_cmdcontrol_t * cmdctrl, unsigned int cmd,
 	TS_CONFIG_PATTERN5 = TS->PBER2 & 0x07;
 	if ((TS_CONFIG_PATTERN5 != PARAM_PBER2_PLAYER_OFF)
 	    && (TS_CONFIG_PATTERN5 != PARAM_PBER2_PLAYER_A)) {
+	    	ERRPRINT("TS_CONFIG_PATTERN5 = ERROR\n");
 		rtncode = -EINVAL;
 		goto ts_config_return;
 	}
 
 	TS_CONFIG_PATTERN6 = TS->SBER2 & 0xF8;
 	if ((TS_CONFIG_PATTERN6 & ~TS_CONFIG_PATTERN7) != 0) {
+		ERRPRINT("TS_CONFIG_PATTERN6 = ERROR\n");
 		rtncode = -EINVAL;
 		goto ts_config_return;
 	} else {
 		TS_CONFIG_PATTERN6 = TS->SBER2 & 0x07;
 		if ((TS_CONFIG_PATTERN6 != PARAM_SBER2_SLAYER_OFF)
 		    && (TS_CONFIG_PATTERN6 != PARAM_SBER2_SLAYER_A)) {
+		    	ERRPRINT("TS_CONFIG_PATTERN6 SLAYER = ERROR\n");
 			rtncode = -EINVAL;
 			goto ts_config_return;
 		}
@@ -5247,6 +5471,7 @@ int mb86a35_IOCTL_TS_CONFIG(mb86a35_cmdcontrol_t * cmdctrl, unsigned int cmd,
 	    mb86a35_i2c_slave_send_mask(rega, sreg, regd, value,
 					MB86A35_I2CMASK_TSOUT, 0xFF);
 	if (rtncode != 0) {
+		ERRPRINT("TSOUT register slave send err [%d]\n", rtncode);
 		goto ts_config_return;
 	}
 
@@ -5260,6 +5485,7 @@ int mb86a35_IOCTL_TS_CONFIG(mb86a35_cmdcontrol_t * cmdctrl, unsigned int cmd,
 	    mb86a35_i2c_slave_send_mask(rega, sreg, regd, value,
 					MB86A35_I2CMASK_PBER, 0xFF);
 	if (rtncode != 0) {
+		ERRPRINT("PBER register slave send err [%d]\n", rtncode);
 		goto ts_config_return;
 	}
 
@@ -5273,6 +5499,7 @@ int mb86a35_IOCTL_TS_CONFIG(mb86a35_cmdcontrol_t * cmdctrl, unsigned int cmd,
 	    mb86a35_i2c_slave_send_mask(rega, sreg, regd, value,
 					MB86A35_I2CMASK_PBER, 0xFF);
 	if (rtncode != 0) {
+		ERRPRINT("PBER2 register slave send err [%d]\n", rtncode);
 		goto ts_config_return;
 	}
 
@@ -5318,6 +5545,7 @@ int mb86a35_IOCTL_TS_PCLOCK(mb86a35_cmdcontrol_t * cmdctrl, unsigned int cmd,
 		 PRINT_LHEADER, (int)cmdctrl, (int)cmd, (int)arg);
 
 	if (TS_user == NULL) {
+		ERRPRINT("TS_user = NULL\n");
 		rtncode = -EINVAL;
 		goto ts_pclock_return;
 	}
@@ -5331,11 +5559,13 @@ int mb86a35_IOCTL_TS_PCLOCK(mb86a35_cmdcontrol_t * cmdctrl, unsigned int cmd,
 	}
 
 	if ((TS->SBER & ~TS_PCLOCK_PATTERN1) != 0) {
+		ERRPRINT("TS->SBER = ERROR\n");
 		rtncode = -EINVAL;
 		goto ts_pclock_return;
 	}
 
 	if ((TS->SBER2 & ~TS_PCLOCK_PATTERN2) != 0) {
+		ERRPRINT("TS->SBER2 = ERROR\n");
 		rtncode = -EINVAL;
 		goto ts_pclock_return;
 	}
@@ -5396,6 +5626,7 @@ int mb86a35_IOCTL_TS_OUTMASK(mb86a35_cmdcontrol_t * cmdctrl, unsigned int cmd,
 		 PRINT_LHEADER, (int)cmdctrl, (int)cmd, (int)arg);
 
 	if (TS_user == NULL) {
+		ERRPRINT("TS_user = NULL\n");
 		rtncode = -EINVAL;
 		goto ts_outmask_return;
 	}
@@ -5409,11 +5640,13 @@ int mb86a35_IOCTL_TS_OUTMASK(mb86a35_cmdcontrol_t * cmdctrl, unsigned int cmd,
 	}
 
 	if ((TS->TSMASK0 & ~TS_OUTMASK_PATTERN1) != 0) {
+		ERRPRINT("TS->TSMASK0 = ERROR\n");
 		rtncode = -EINVAL;
 		goto ts_outmask_return;
 	}
 
 	if ((TS->TSMASK1 & ~TS_OUTMASK_PATTERN2) != 0) {
+		ERRPRINT("TS->TSMASK1 = ERROR\n");
 		rtncode = -EINVAL;
 		goto ts_outmask_return;
 	}
@@ -5424,6 +5657,7 @@ int mb86a35_IOCTL_TS_OUTMASK(mb86a35_cmdcontrol_t * cmdctrl, unsigned int cmd,
 	    mb86a35_i2c_slave_send_mask(rega, sreg, regd, value,
 					MB86A35_I2CMASK_TSMASK0, 0xFF);
 	if (rtncode != 0) {
+		ERRPRINT("TSMASK regsiter slave send err [%d]\n", rtncode);
 		goto ts_outmask_return;
 	}
 
@@ -5433,6 +5667,7 @@ int mb86a35_IOCTL_TS_OUTMASK(mb86a35_cmdcontrol_t * cmdctrl, unsigned int cmd,
 	    mb86a35_i2c_slave_send_mask(rega, sreg, regd, value,
 					MB86A35_I2CMASK_TSMASK1, 0xFF);
 	if (rtncode != 0) {
+		ERRPRINT("TSMASK1 regsiter slave send err [%d]\n", rtncode);
 		goto ts_outmask_return;
 	}
 
@@ -5480,6 +5715,7 @@ int mb86a35_IOCTL_TS_INVERT(mb86a35_cmdcontrol_t * cmdctrl, unsigned int cmd,
 		 PRINT_LHEADER, (int)cmdctrl, (int)cmd, (int)arg);
 
 	if (TS_user == NULL) {
+		ERRPRINT("TS_user = NULL\n");
 		rtncode = -EINVAL;
 		goto ts_invert_return;
 	}
@@ -5493,11 +5729,13 @@ int mb86a35_IOCTL_TS_INVERT(mb86a35_cmdcontrol_t * cmdctrl, unsigned int cmd,
 	}
 
 	if ((TS->TSOUT & ~TS_INVERT_PATTERN1) != 0) {
+		ERRPRINT("TS->TSOUT = ERROR\n");
 		rtncode = -EINVAL;
 		goto ts_invert_return;
 	}
 
 	if ((TS->TSOUT2 & ~TS_INVERT_PATTERN2) != 0) {
+		ERRPRINT("TS->TSOUT2 = ERROR\n");
 		rtncode = -EINVAL;
 		goto ts_invert_return;
 	}
@@ -5508,6 +5746,7 @@ int mb86a35_IOCTL_TS_INVERT(mb86a35_cmdcontrol_t * cmdctrl, unsigned int cmd,
 	    mb86a35_i2c_slave_send_mask(rega, sreg, regd, value,
 					MB86A35_I2CMASK_TSOUT, 0xFF);
 	if (rtncode != 0) {
+		ERRPRINT("TSOUT register slave send err [%d]\n", rtncode);
 		goto ts_invert_return;
 	}
 
@@ -5548,6 +5787,7 @@ int mb86a35_IOCTL_IRQ_GETREASON(mb86a35_cmdcontrol_t * cmdctrl,
 		 PRINT_LHEADER, (int)cmdctrl, (int)cmd, (int)arg);
 
 	if (IRQ_user == NULL) {
+		ERRPRINT("IRQ_user = NULL\n");
 		rtncode = -EINVAL;
 		goto irq_getreason_return;
 	}
@@ -5564,6 +5804,7 @@ int mb86a35_IOCTL_IRQ_GETREASON(mb86a35_cmdcontrol_t * cmdctrl,
 	reg = MB86A35_REG_ADDR_FECIRQ1;
 	rtncode = mb86a35_i2c_master_recv(reg, &IRQ->FECIRQ1, 1);
 	if (rtncode != 0) {
+		ERRPRINT("FECIRQ1 register master recv err [%d]\n", rtncode);
 		rtncode = -EFAULT;
 		goto irq_getreason_return;
 	}
@@ -5576,6 +5817,7 @@ int mb86a35_IOCTL_IRQ_GETREASON(mb86a35_cmdcontrol_t * cmdctrl,
 	reg = MB86A35_REG_ADDR_FECIRQ2;
 	rtncode = mb86a35_i2c_master_recv(reg, &IRQ->FECIRQ2, 1);
 	if (rtncode != 0) {
+		ERRPRINT("FECIRQ2 register master recv err [%d]\n", rtncode);
 		rtncode = -EFAULT;
 		goto irq_getreason_return;
 	}
@@ -5589,6 +5831,7 @@ int mb86a35_IOCTL_IRQ_GETREASON(mb86a35_cmdcontrol_t * cmdctrl,
 	reg = MB86A35_REG_ADDR_TUNER_IRQ;
 	rtncode = mb86a35_i2c_master_recv(reg, &IRQ->TUNER_IRQ, 1);
 	if (rtncode != 0) {
+		ERRPRINT("TUNER IRQ register master recv err [%d]\n", rtncode);
 		rtncode = -EFAULT;
 		goto irq_getreason_return;
 	}
@@ -5599,6 +5842,7 @@ int mb86a35_IOCTL_IRQ_GETREASON(mb86a35_cmdcontrol_t * cmdctrl,
 	}
 
 	if (copy_to_user((void *)IRQ_user, (void *)IRQ, tmpsize)) {
+		ERRPRINT("copy to user err\n");
 		rtncode = -EFAULT;
 		goto irq_getreason_return;
 	}
@@ -5665,6 +5909,7 @@ int mb86a35_IOCTL_IRQ_SETMASK(mb86a35_cmdcontrol_t * cmdctrl,
 		 PRINT_LHEADER, (int)cmdctrl, (int)cmd, (int)arg);
 
 	if (IRQ_user == NULL) {
+		ERRPRINT("IRQ_user = NULL\n");
 		rtncode = -EINVAL;
 		goto irq_setmask_return;
 	}
@@ -5678,56 +5923,67 @@ int mb86a35_IOCTL_IRQ_SETMASK(mb86a35_cmdcontrol_t * cmdctrl,
 	}
 
 	if ((IRQ->TMCC_IRQ_MASK & ~IRQ_SETMASK_PATTERN1) != 0) {
+		ERRPRINT("IRQ->TMCC_IRQ_MASK = ERROR\n");
 		rtncode = -EINVAL;
 		goto irq_setmask_return;
 	}
 
 	if ((IRQ->SBER_IRQ_MASK & ~IRQ_SETMASK_PATTERN2) != 0) {
+		ERRPRINT("IRQ->SBER_IRQ_MASK = ERROR\n");
 		rtncode = -EINVAL;
 		goto irq_setmask_return;
 	}
 
 	if ((IRQ->TSERR_IRQ_MASK & ~IRQ_SETMASK_PATTERN3) != 0) {
+		ERRPRINT("IRQ->TSERR_IRQ_MASK = ERROR\n");
 		rtncode = -EINVAL;
 		goto irq_setmask_return;
 	}
 
 	if ((IRQ->TMCC_IRQ_RST & ~IRQ_SETMASK_PATTERN4) != 0) {
+		ERRPRINT("IRQ->TMCC_IRQ_RST = ERROR\n");
 		rtncode = -EINVAL;
 		goto irq_setmask_return;
 	}
 
 	if ((IRQ->RSBERON & ~IRQ_SETMASK_PATTERN5) != 0) {
+		ERRPRINT("IRQ->RSBERON = ERROR\n");
 		rtncode = -EINVAL;
 		goto irq_setmask_return;
 	}
 
 	if ((IRQ->RSBERRST & ~IRQ_SETMASK_PATTERN6) != 0) {
+		ERRPRINT("IRQ->RSBERRST = ERROR\n");
 		rtncode = -EINVAL;
 		goto irq_setmask_return;
 	}
 
 	if ((IRQ->RSBERCEFLG & ~IRQ_SETMASK_PATTERN7) != 0) {
+		ERRPRINT("IRQ->RSBERCEFLG = ERROR\n");
 		rtncode = -EINVAL;
 		goto irq_setmask_return;
 	}
 
 	if ((IRQ->RSBERTHFLG & ~IRQ_SETMASK_PATTERN8) != 0) {
+		ERRPRINT("IRQ->RSBERTHFLG = ERROR\n");
 		rtncode = -EINVAL;
 		goto irq_setmask_return;
 	}
 
 	if ((IRQ->RSERRFLG & ~IRQ_SETMASK_PATTERN9) != 0) {
+		ERRPRINT("IRQ->RSERRFLG = ERROR\n");
 		rtncode = -EINVAL;
 		goto irq_setmask_return;
 	}
 
 	if ((IRQ->FECIRQ1 & ~IRQ_SETMASK_PATTERN10) != 0) {
+		ERRPRINT("IRQ->FECIRQ1 = ERROR\n");
 		rtncode = -EINVAL;
 		goto irq_setmask_return;
 	}
 
 	if ((IRQ->XIRQINV & ~IRQ_SETMASK_PATTERN11) != 0) {
+		ERRPRINT("IRQ->XIRQINV = ERROR\n");
 		rtncode = -EINVAL;
 		goto irq_setmask_return;
 	}
@@ -5738,6 +5994,7 @@ int mb86a35_IOCTL_IRQ_SETMASK(mb86a35_cmdcontrol_t * cmdctrl,
 	    mb86a35_i2c_slave_send_mask(rega, sreg, regd, value,
 					MB86A35_I2CMASK_TMCC_IRQ_MASK, 0xFF);
 	if (rtncode != 0) {
+		ERRPRINT("TMCC IRQ MASK register slave send err [%d]\n", rtncode);
 		goto irq_setmask_return;
 	}
 
@@ -5747,6 +6004,7 @@ int mb86a35_IOCTL_IRQ_SETMASK(mb86a35_cmdcontrol_t * cmdctrl,
 	    mb86a35_i2c_slave_send_mask(MB86A35_REG_ADDR_FEC_SUBA, sreg, MB86A35_REG_ADDR_FEC_SUBD, value,
 					MB86A35_I2CMASK_SBER_IRQ_MASK, 0xFF);
 	if (rtncode != 0) {
+		ERRPRINT("SBER IRQ MASK register slave send err [%d]\n", rtncode);
 		goto irq_setmask_return;
 	}
 
@@ -5756,6 +6014,7 @@ int mb86a35_IOCTL_IRQ_SETMASK(mb86a35_cmdcontrol_t * cmdctrl,
 	    mb86a35_i2c_slave_send_mask(MB86A35_REG_ADDR_FEC_SUBA, sreg, MB86A35_REG_ADDR_FEC_SUBD, value,
 					MB86A35_I2CMASK_TSERR_IRQ_MASK, 0xFF);
 	if (rtncode != 0) {
+		ERRPRINT("SBER IRQ MASK register slave send err [%d]\n", rtncode);
 		goto irq_setmask_return;
 	}
 
@@ -5765,6 +6024,7 @@ int mb86a35_IOCTL_IRQ_SETMASK(mb86a35_cmdcontrol_t * cmdctrl,
 	    mb86a35_i2c_slave_send_mask(rega, sreg, regd, value,
 					MB86A35_I2CMASK_TMCC_IRQ_RST, 0xFF);
 	if (rtncode != 0) {
+		ERRPRINT("TMCC IRQ RST register slave send err [%d]\n", rtncode);
 		goto irq_setmask_return;
 	}
 
@@ -5831,6 +6091,7 @@ int mb86a35_IOCTL_IRQ_TMCCPARAM_SET(mb86a35_cmdcontrol_t * cmdctrl,
 		 PRINT_LHEADER, (int)cmdctrl, (int)cmd, (int)arg);
 
 	if (IRQ_user == NULL) {
+		ERRPRINT("IRQ_user = NULL\n");
 		rtncode = -EINVAL;
 		goto irq_tmccparam_set_return;
 	}
@@ -5844,16 +6105,19 @@ int mb86a35_IOCTL_IRQ_TMCCPARAM_SET(mb86a35_cmdcontrol_t * cmdctrl,
 	}
 
 	if ((IRQ->TMCCCHK_HI & ~IRQ_TMCCPARAM_PATTERN1) != 0) {
+		ERRPRINT("IRQ->TMCCCHK_HI = ERROR\n");
 		rtncode = -EINVAL;
 		goto irq_tmccparam_set_return;
 	}
 
 	if ((IRQ->TMCCCHK2_HI & ~IRQ_TMCCPARAM_PATTERN1) != 0) {
+		ERRPRINT("IRQ->TMCCCHK2_HI = ERROR\n");
 		rtncode = -EINVAL;
 		goto irq_tmccparam_set_return;
 	}
 
 	if ((IRQ->EMG_INV & ~IRQ_TMCCPARAM_PATTERN2) != 0) {
+		ERRPRINT("IRQ->EMG_INV = ERROR\n");
 		rtncode = -EINVAL;
 		goto irq_tmccparam_set_return;
 	}
@@ -5881,6 +6145,7 @@ int mb86a35_IOCTL_IRQ_TMCCPARAM_SET(mb86a35_cmdcontrol_t * cmdctrl,
 					MB86A35_I2CMASK_EMG_INV,
 					PARAM_EMG_INV_NORECV);
 	if (rtncode != 0) {
+		ERRPRINT("TMCC IRQ EMG INV register slave send err [%d]\n", rtncode);
 		goto irq_tmccparam_set_return;
 	}
 
@@ -5918,6 +6183,7 @@ int mb86a35_IOCTL_IRQ_TMCCPARAM_REASON(mb86a35_cmdcontrol_t * cmdctrl,
 		 PRINT_LHEADER, (int)cmdctrl, (int)cmd, (int)arg);
 
 	if (IRQ_user == NULL) {
+		ERRPRINT("IRQ_user = NULL\n");
 		rtncode = -EINVAL;
 		goto irq_tmccparam_reason_return;
 	}
@@ -5925,6 +6191,7 @@ int mb86a35_IOCTL_IRQ_TMCCPARAM_REASON(mb86a35_cmdcontrol_t * cmdctrl,
 	sreg = MB86A35_REG_SUBR_PCHKOUT0;
 	rtncode = mb86a35_i2c_slave_recv(rega, sreg, regd, &IRQ->PCHKOUT0, 1);
 	if (rtncode != 0) {
+		ERRPRINT("PCHKOUT0 register slave recv err [%d]\n", rtncode);
 		rtncode = -EFAULT;
 		goto irq_tmccparam_reason_return;
 	}
@@ -5933,6 +6200,7 @@ int mb86a35_IOCTL_IRQ_TMCCPARAM_REASON(mb86a35_cmdcontrol_t * cmdctrl,
 	sreg = MB86A35_REG_SUBR_PCHKOUT1;
 	rtncode = mb86a35_i2c_slave_recv(rega, sreg, regd, &IRQ->PCHKOUT1, 1);
 	if (rtncode != 0) {
+		ERRPRINT("PCHKOUT1 register slave recv err [%d]\n", rtncode);
 		rtncode = -EFAULT;
 		goto irq_tmccparam_reason_return;
 	}
@@ -5940,6 +6208,7 @@ int mb86a35_IOCTL_IRQ_TMCCPARAM_REASON(mb86a35_cmdcontrol_t * cmdctrl,
 	sreg = MB86A35_REG_SUBR_TMCC_IRQ_EMG_INV;
 	rtncode = mb86a35_i2c_slave_recv(rega, sreg, regd, &IRQ->EMG_INV, 1);
 	if (rtncode != 0) {
+		ERRPRINT("TMCC IRQ EMG INV register slave recv err [%d]\n", rtncode);
 		rtncode = -EFAULT;
 		goto irq_tmccparam_reason_return;
 	}
@@ -5947,6 +6216,7 @@ int mb86a35_IOCTL_IRQ_TMCCPARAM_REASON(mb86a35_cmdcontrol_t * cmdctrl,
 
 	if (copy_to_user
 	    ((void *)&IRQ_user->PCHKOUT0, (void *)&IRQ->PCHKOUT0, 3)) {
+	    	ERRPRINT("copy to user err\n");
 		rtncode = -EFAULT;
 		goto irq_tmccparam_reason_return;
 	}
@@ -5989,6 +6259,7 @@ int mb86a35_IOCTL_CN_MONI_CONFIG_START(mb86a35_cmdcontrol_t * cmdctrl, unsigned 
 		 PRINT_LHEADER, (int)cmdctrl, (int)cmd, (int)arg);
 
 	if (CN_user == NULL) {
+		ERRPRINT("CN_user = NULL\n");
 		rtncode = -EINVAL;
 		goto cn_moni_return;
 	}
@@ -6002,16 +6273,19 @@ int mb86a35_IOCTL_CN_MONI_CONFIG_START(mb86a35_cmdcontrol_t * cmdctrl, unsigned 
 	}
 
 	if (CN->CNCNT > 15) {
+		ERRPRINT("CN->CNCNT > 15 err\n");
 		rtncode = -EINVAL;
 		goto cn_moni_return;
 	}
 
 	if ((CN->CNCNT2 & ~PARAM_CNCNT2_MODE_MUNL) != 0) {
+		ERRPRINT("CN->CNCNT2 err\n");
 		rtncode = -EINVAL;
 		goto cn_moni_return;
 	}
 
 	if ((CN->CNCNT & ~MB86A35_MASK_CNCNT_SYMCOUNT) != 0) {
+		ERRPRINT("CN->CNCNT err\n");
 		rtncode = -EINVAL;
 		goto cn_moni_return;
 	}
@@ -6041,6 +6315,8 @@ int mb86a35_IOCTL_CN_MONI_CONFIG_START(mb86a35_cmdcontrol_t * cmdctrl, unsigned 
 	value = cncnt;
 	mb86a35_i2c_master_send(reg, value);
 
+	mdelay(100);
+	
 cn_moni_return:
 	DBGPRINT(PRINT_LHEADERFMT "**** return[ %d ].\n", PRINT_LHEADER,
 		 rtncode);
@@ -6083,6 +6359,7 @@ int mb86a35_IOCTL_CN_MONI_GET(mb86a35_cmdcontrol_t * cmdctrl, unsigned int cmd,
 		 PRINT_LHEADER, (int)cmdctrl, (int)cmd, (int)arg);
 
 	if (CN_user == NULL) {
+		ERRPRINT("CN_user = NULL\n");
 		rtncode = -EINVAL;
 		goto cn_moni_return;
 	}
@@ -6096,27 +6373,31 @@ int mb86a35_IOCTL_CN_MONI_GET(mb86a35_cmdcontrol_t * cmdctrl, unsigned int cmd,
 	}
 
 	if (CN->CNCNT > 15) {
+		ERRPRINT("CN->CNCNT > 15 err\n");
 		rtncode = -EINVAL;
 		goto cn_moni_return;
 	}
 
 	if ((CN->CNCNT2 & ~PARAM_CNCNT2_MODE_MUNL) != 0) {
+		ERRPRINT("CN->CNCNT2 err\n");
 		rtncode = -EINVAL;
 		goto cn_moni_return;
 	}
 
 	if ((CN->CNCNT & ~MB86A35_MASK_CNCNT_SYMCOUNT) != 0) {
+		ERRPRINT("CN->CNCNT err\n");
 		rtncode = -EINVAL;
 		goto cn_moni_return;
 	}
 
 	loop = CN->cn_count;
 	mode = CN->CNCNT2 & PARAM_CNCNT2_MODE_MUNL;
-
+	
 	cncnt = (CN->CNCNT & MB86A35_MASK_CNCNT_SYMCOUNT);
 	CN->CNCNT = cncnt;
 	wait_time = MB86A35_CN_MONI_WAITTIME(cncnt);
 
+#if 0
 	/* RST = 1 */
 	reg = MB86A35_REG_ADDR_CNCNT;
 	value = (CN->CNCNT | MB86A35_CNCNT_RST);
@@ -6126,6 +6407,7 @@ int mb86a35_IOCTL_CN_MONI_GET(mb86a35_cmdcontrol_t * cmdctrl, unsigned int cmd,
 	reg = MB86A35_REG_ADDR_CNCNT;
 	value = cncnt;
 	mb86a35_i2c_master_send(reg, value);
+#endif
 
 	for (indx = 0; indx < loop; indx++) {
 		if (mode == PARAM_CNCNT2_MODE_AUTO) {
@@ -6145,11 +6427,13 @@ int mb86a35_IOCTL_CN_MONI_GET(mb86a35_cmdcontrol_t * cmdctrl, unsigned int cmd,
 			rtncode =
 			    mb86a35_i2c_master_recv(reg, &flag, 1);
 			if (rtncode != 0) {
+				ERRPRINT("CNCNT register master recv err [%d]\n", rtncode);
 				rtncode = -EFAULT;
 				goto cn_moni_return;
 			}
 
 			if ((flag & MB86A35_CNCNT_FLG) != MB86A35_CNCNT_FLG) {
+				ERRPRINT("flag err\n");
 				goto cn_moni_return;
 			}
 
@@ -6158,6 +6442,7 @@ int mb86a35_IOCTL_CN_MONI_GET(mb86a35_cmdcontrol_t * cmdctrl, unsigned int cmd,
 		reg = MB86A35_REG_ADDR_CNDATHI;
 		rtncode = mb86a35_i2c_master_recv(reg, &cndata, 1);
 		if (rtncode != 0) {
+			ERRPRINT("CNDATHI register master recv err [%d]\n", rtncode);
 			rtncode = -EFAULT;
 			goto cn_moni_return;
 		}
@@ -6165,6 +6450,7 @@ int mb86a35_IOCTL_CN_MONI_GET(mb86a35_cmdcontrol_t * cmdctrl, unsigned int cmd,
 		reg = MB86A35_REG_ADDR_CNDATLO;
 		rtncode = mb86a35_i2c_master_recv(reg, &cndata, 1);
 		if (rtncode != 0) {
+			ERRPRINT("CNDATLO register master recv err [%d]\n", rtncode);
 			rtncode = -EFAULT;
 			goto cn_moni_return;
 		}
@@ -6177,6 +6463,7 @@ int mb86a35_IOCTL_CN_MONI_GET(mb86a35_cmdcontrol_t * cmdctrl, unsigned int cmd,
 		}
 		if (copy_to_user
 		    ((void *)&CN_user->CNDATA[indx], (void *)&tmpdata, 2)) {
+		    	ERRPRINT("copy to user err\n");
 			rtncode = -EFAULT;
 			goto cn_moni_return;
 		}
@@ -6234,6 +6521,7 @@ int mb86a35_IOCTL_MER_MONI_CONFIG_START(mb86a35_cmdcontrol_t * cmdctrl, unsigned
 		 PRINT_LHEADER, (int)cmdctrl, (int)cmd, (int)arg);
 
 	if (MER_user == NULL) {
+		ERRPRINT("MER_user = NULL\n");
 		rtncode = -EINVAL;
 		goto mer_moni_return;
 	}
@@ -6247,6 +6535,7 @@ int mb86a35_IOCTL_MER_MONI_CONFIG_START(mb86a35_cmdcontrol_t * cmdctrl, unsigned
 	}
 
 	if (MER->MERSTEP > 7) {
+		ERRPRINT("MER->MERSTEP > 7 err\n");
 		rtncode = -EINVAL;
 		goto mer_moni_return;
 	}
@@ -6321,6 +6610,7 @@ int mb86a35_IOCTL_MER_MONI_GET(mb86a35_cmdcontrol_t * cmdctrl, unsigned int cmd,
 		 PRINT_LHEADER, (int)cmdctrl, (int)cmd, (int)arg);
 
 	if (MER_user == NULL) {
+		ERRPRINT("MER_user = NULL\n");
 		rtncode = -EINVAL;
 		goto mer_moni_return;
 	}
@@ -6334,6 +6624,7 @@ int mb86a35_IOCTL_MER_MONI_GET(mb86a35_cmdcontrol_t * cmdctrl, unsigned int cmd,
 	}
 
 	if (MER->MERSTEP > 7) {
+		ERRPRINT("MER->MERSTEP > 7 err\n");
 		rtncode = -EINVAL;
 		goto mer_moni_return;
 	}
@@ -6357,6 +6648,7 @@ int mb86a35_IOCTL_MER_MONI_GET(mb86a35_cmdcontrol_t * cmdctrl, unsigned int cmd,
 	MER->mer_flag = 1;
 
 	if (copy_to_user((void *)MER_user, (void *)MER, tmpsize)) {
+		ERRPRINT("copy to user err\n");
 		rtncode = -EFAULT;
 		goto mer_moni_return;
 	}
@@ -6379,12 +6671,14 @@ int mb86a35_IOCTL_MER_MONI_GET(mb86a35_cmdcontrol_t * cmdctrl, unsigned int cmd,
 			    mb86a35_i2c_slave_recv(rega, sreg, regd,
 							   &flag, 1);
 				if (rtncode != 0) {
+					ERRPRINT("MEREND register slave recv err [%d]\n", rtncode);
 					rtncode = -EFAULT;
 					goto mer_moni_return;
 				}
 			
 
 			if ((flag & MB86A35_MEREND_FLG) != MB86A35_MEREND_FLG) {
+				ERRPRINT("flag err\n");
 				goto mer_moni_return;
 			}
 
@@ -6393,6 +6687,7 @@ int mb86a35_IOCTL_MER_MONI_GET(mb86a35_cmdcontrol_t * cmdctrl, unsigned int cmd,
 		rtncode =
 		    mb86a35_i2c_slave_recv(rega, sreg, regd, &merdataA[1], 1);
 		if (rtncode != 0) {
+			ERRPRINT("MERA0 register slave recv err [%d]\n", rtncode);
 			rtncode = -EFAULT;
 			goto mer_moni_return;
 		}
@@ -6400,6 +6695,7 @@ int mb86a35_IOCTL_MER_MONI_GET(mb86a35_cmdcontrol_t * cmdctrl, unsigned int cmd,
 		rtncode =
 		    mb86a35_i2c_slave_recv(rega, sreg, regd, &merdataA[2], 1);
 		if (rtncode != 0) {
+			ERRPRINT("MERA1 register slave recv err [%d]\n", rtncode);
 			rtncode = -EFAULT;
 			goto mer_moni_return;
 		}
@@ -6407,6 +6703,7 @@ int mb86a35_IOCTL_MER_MONI_GET(mb86a35_cmdcontrol_t * cmdctrl, unsigned int cmd,
 		rtncode =
 		    mb86a35_i2c_slave_recv(rega, sreg, regd, &merdataA[3], 1);
 		if (rtncode != 0) {
+			ERRPRINT("MERA2 register slave recv err [%d]\n", rtncode);
 			rtncode = -EFAULT;
 			goto mer_moni_return;
 		}
@@ -6417,6 +6714,7 @@ int mb86a35_IOCTL_MER_MONI_GET(mb86a35_cmdcontrol_t * cmdctrl, unsigned int cmd,
 		rtncode =
 		    mb86a35_i2c_slave_recv(rega, sreg, regd, &merdataB[1], 1);
 		if (rtncode != 0) {
+			ERRPRINT("MERB0 register slave recv err [%d]\n", rtncode);
 			rtncode = -EFAULT;
 			goto mer_moni_return;
 		}
@@ -6424,6 +6722,7 @@ int mb86a35_IOCTL_MER_MONI_GET(mb86a35_cmdcontrol_t * cmdctrl, unsigned int cmd,
 		rtncode =
 		    mb86a35_i2c_slave_recv(rega, sreg, regd, &merdataB[2], 1);
 		if (rtncode != 0) {
+			ERRPRINT("MERB1 register slave recv err [%d]\n", rtncode);
 			rtncode = -EFAULT;
 			goto mer_moni_return;
 		}
@@ -6431,6 +6730,7 @@ int mb86a35_IOCTL_MER_MONI_GET(mb86a35_cmdcontrol_t * cmdctrl, unsigned int cmd,
 		rtncode =
 		    mb86a35_i2c_slave_recv(rega, sreg, regd, &merdataB[3], 1);
 		if (rtncode != 0) {
+			ERRPRINT("MERB2 register slave recv err [%d]\n", rtncode);
 			rtncode = -EFAULT;
 			goto mer_moni_return;
 		}
@@ -6441,6 +6741,7 @@ int mb86a35_IOCTL_MER_MONI_GET(mb86a35_cmdcontrol_t * cmdctrl, unsigned int cmd,
 		rtncode =
 		    mb86a35_i2c_slave_recv(rega, sreg, regd, &merdataC[1], 1);
 		if (rtncode != 0) {
+			ERRPRINT("MERC0 register slave recv err [%d]\n", rtncode);
 			rtncode = -EFAULT;
 			goto mer_moni_return;
 		}
@@ -6448,6 +6749,7 @@ int mb86a35_IOCTL_MER_MONI_GET(mb86a35_cmdcontrol_t * cmdctrl, unsigned int cmd,
 		rtncode =
 		    mb86a35_i2c_slave_recv(rega, sreg, regd, &merdataC[2], 1);
 		if (rtncode != 0) {
+			ERRPRINT("MERC1 register slave recv err [%d]\n", rtncode);
 			rtncode = -EFAULT;
 			goto mer_moni_return;
 		}
@@ -6455,6 +6757,7 @@ int mb86a35_IOCTL_MER_MONI_GET(mb86a35_cmdcontrol_t * cmdctrl, unsigned int cmd,
 		rtncode =
 		    mb86a35_i2c_slave_recv(rega, sreg, regd, &merdataC[3], 1);
 		if (rtncode != 0) {
+			ERRPRINT("MERC2 register slave recv err [%d]\n", rtncode);
 			rtncode = -EFAULT;
 			goto mer_moni_return;
 		}
@@ -6481,6 +6784,7 @@ int mb86a35_IOCTL_MER_MONI_GET(mb86a35_cmdcontrol_t * cmdctrl, unsigned int cmd,
 		if (copy_to_user
 		    ((void *)&MER_user->MER[indx], (void *)&MERDATA,
 		     sizeof(struct mer_data))) {
+		     	ERRPRINT("copy to user err\n");
 			rtncode = -EFAULT;
 			goto mer_moni_return;
 		}
@@ -6528,6 +6832,7 @@ int mb86a35_IOCTL_CH_SEARCH(mb86a35_cmdcontrol_t * cmdctrl, unsigned int cmd,
 
 	if (CHSRH_user == NULL) {
 		rtncode = -EINVAL;
+		ERRPRINT("CHSRH_user == NULL\n");
 		goto ch_search_return;
 	}
 
@@ -6535,6 +6840,7 @@ int mb86a35_IOCTL_CH_SEARCH(mb86a35_cmdcontrol_t * cmdctrl, unsigned int cmd,
 	if (copy_from_user(CHSRH, (void *)arg, tmpsize)) {
 		DBGPRINT(PRINT_LHEADERFMT "copy_from_user failed. (len:%d)\n",
 			 PRINT_LHEADER, tmpsize);
+		ERRPRINT("copy_from_user == ERROR\n");
 		rtncode = -EFAULT;
 		goto ch_search_return;
 	}
@@ -6542,7 +6848,8 @@ int mb86a35_IOCTL_CH_SEARCH(mb86a35_cmdcontrol_t * cmdctrl, unsigned int cmd,
 	switch (CHSRH->mode) {
 	case PARAM_MODE_ISDBT_13UHF:
 	case PARAM_MODE_ISDBT_1UHF:
-		if ((CHSRH->SEARCH_CHANNEL < 13) || (CHSRH->SEARCH_CHANNEL > 62)) {
+		if ((CHSRH->SEARCH_CHANNEL < 13) || (CHSRH->SEARCH_CHANNEL > 52)) {
+			ERRPRINT("UHF MODE CHANNEL PARAMETER ERR\n");
 			rtncode = -EINVAL;
 			goto ch_search_return;
 		}
@@ -6553,23 +6860,27 @@ int mb86a35_IOCTL_CH_SEARCH(mb86a35_cmdcontrol_t * cmdctrl, unsigned int cmd,
 	case PARAM_MODE_ISDBTSB_1VHF:
 	case PARAM_MODE_ISDBTSB_3VHF:
 		if ((CHSRH->SEARCH_CHANNEL < 1) || (CHSRH->SEARCH_CHANNEL > 33)) {
+			ERRPRINT("VHF MODE CHANNEL PARAMETER ERR\n");
 			rtncode = -EINVAL;
 			goto ch_search_return;
 		}
 		break;
 
 	default:
+		ERRPRINT("MODE PARAMETER ERR\n");
 		rtncode = -EINVAL;
 		goto ch_search_return;
 		break;
 	}
 
 	if ((CHSRH->TUNER_IRQCTL & ~CH_SEARCH_PATTERN1) != 0) {
+		ERRPRINT("CH_SEARCH_PATTERN1 PARAMETER ERR\n");
 		rtncode = -EINVAL;
 		goto ch_search_return;
 	}
 
 	if ((CHSRH->SEARCH_CTRL & ~CH_SEARCH_PATTERN2) != 0) {
+		ERRPRINT("CH_SEARCH_PATTERN2 PARAMETER ERR\n");
 		rtncode = -EINVAL;
 		goto ch_search_return;
 	}
@@ -6580,6 +6891,7 @@ int mb86a35_IOCTL_CH_SEARCH(mb86a35_cmdcontrol_t * cmdctrl, unsigned int cmd,
 	rtncode = mb86a35_i2c_master_recv(reg, &irq, 1);
 	if (rtncode != 0) {
 		rtncode = -EFAULT;
+		ERRPRINT("mb86a35_IOCTL_CH_SEARCH irq failed.\n");
 		goto ch_search_return;
 	}
 
@@ -6592,6 +6904,7 @@ int mb86a35_IOCTL_CH_SEARCH(mb86a35_cmdcontrol_t * cmdctrl, unsigned int cmd,
 					   1);
 		if (rtncode != 0) {
 			rtncode = -EFAULT;
+			ERRPRINT("mb86a35_IOCTL_CH_SEARCH SEARCH CHEND wait 1 failed.\n");
 			goto ch_search_return;
 		}
 		while (SEARCH_END_FLAG != 0) {
@@ -6606,6 +6919,7 @@ int mb86a35_IOCTL_CH_SEARCH(mb86a35_cmdcontrol_t * cmdctrl, unsigned int cmd,
 						   &SEARCH_END_FLAG, 1);
 			if (rtncode != 0) {
 				rtncode = -EFAULT;
+				ERRPRINT("mb86a35_IOCTL_CH_SEARCH STOP search failed.\n");
 				goto ch_search_return;
 			}
 		}
@@ -6630,8 +6944,10 @@ int mb86a35_IOCTL_CH_SEARCH(mb86a35_cmdcontrol_t * cmdctrl, unsigned int cmd,
 		rtncode =
 		    mb86a35_RF_channel(cmdctrl, CHSRH->mode,
 				       CHSRH->SEARCH_CHANNEL);
-		if (rtncode != 0)
+		if (rtncode != 0) {
+			ERRPRINT("mb86a35_IOCTL_CH_SEARCH STOP RF-IC Setting failed.\n");
 			goto ch_search_return;
+		}
 		/*********************/
 
 		reg = MB86A35_REG_ADDR_CONT_CTRL;
@@ -6658,6 +6974,7 @@ int mb86a35_IOCTL_CH_SEARCH(mb86a35_cmdcontrol_t * cmdctrl, unsigned int cmd,
 					   1);
 		if (rtncode != 0) {
 			rtncode = -EFAULT;
+			ERRPRINT("mb86a35_IOCTL_CH_SEARCH SEARCH CHEND wait 2 failed.\n");
 			goto ch_search_return;
 		}
 		CHSRH->SEARCH_END = SEARCH_END_FLAG;
@@ -6687,6 +7004,7 @@ int mb86a35_IOCTL_CH_SEARCH(mb86a35_cmdcontrol_t * cmdctrl, unsigned int cmd,
 					   1);
 		if (rtncode != 0) {
 			rtncode = -EFAULT;
+			ERRPRINT("mb86a35_IOCTL_CH_SEARCH CHANNEL0 failed.\n");
 			goto ch_search_return;
 		}
 		sreg = MB86A35_REG_SUBR_CHANNEL1;
@@ -6695,6 +7013,7 @@ int mb86a35_IOCTL_CH_SEARCH(mb86a35_cmdcontrol_t * cmdctrl, unsigned int cmd,
 					   1);
 		if (rtncode != 0) {
 			rtncode = -EFAULT;
+			ERRPRINT("mb86a35_IOCTL_CH_SEARCH CHANNEL1 failed.\n");
 			goto ch_search_return;
 		}
 		sreg = MB86A35_REG_SUBR_CHANNEL2;
@@ -6703,6 +7022,7 @@ int mb86a35_IOCTL_CH_SEARCH(mb86a35_cmdcontrol_t * cmdctrl, unsigned int cmd,
 					   1);
 		if (rtncode != 0) {
 			rtncode = -EFAULT;
+			ERRPRINT("mb86a35_IOCTL_CH_SEARCH CHANNEL2 failed.\n");
 			goto ch_search_return;
 		}
 		sreg = MB86A35_REG_SUBR_CHANNEL3;
@@ -6711,6 +7031,7 @@ int mb86a35_IOCTL_CH_SEARCH(mb86a35_cmdcontrol_t * cmdctrl, unsigned int cmd,
 					   1);
 		if (rtncode != 0) {
 			rtncode = -EFAULT;
+			ERRPRINT("mb86a35_IOCTL_CH_SEARCH CHANNEL3 failed.\n");
 			goto ch_search_return;
 		}
 		sreg = MB86A35_REG_SUBR_CHANNEL4;
@@ -6719,6 +7040,7 @@ int mb86a35_IOCTL_CH_SEARCH(mb86a35_cmdcontrol_t * cmdctrl, unsigned int cmd,
 					   1);
 		if (rtncode != 0) {
 			rtncode = -EFAULT;
+			ERRPRINT("mb86a35_IOCTL_CH_SEARCH CHANNEL4 failed.\n");
 			goto ch_search_return;
 		}
 		sreg = MB86A35_REG_SUBR_CHANNEL5;
@@ -6727,6 +7049,7 @@ int mb86a35_IOCTL_CH_SEARCH(mb86a35_cmdcontrol_t * cmdctrl, unsigned int cmd,
 					   1);
 		if (rtncode != 0) {
 			rtncode = -EFAULT;
+			ERRPRINT("mb86a35_IOCTL_CH_SEARCH CHANNEL5 failed.\n");
 			goto ch_search_return;
 		}
 		sreg = MB86A35_REG_SUBR_CHANNEL6;
@@ -6735,6 +7058,7 @@ int mb86a35_IOCTL_CH_SEARCH(mb86a35_cmdcontrol_t * cmdctrl, unsigned int cmd,
 					   1);
 		if (rtncode != 0) {
 			rtncode = -EFAULT;
+			ERRPRINT("mb86a35_IOCTL_CH_SEARCH CHANNEL6 failed.\n");
 			goto ch_search_return;
 		}
 		sreg = MB86A35_REG_SUBR_CHANNEL7;
@@ -6743,6 +7067,7 @@ int mb86a35_IOCTL_CH_SEARCH(mb86a35_cmdcontrol_t * cmdctrl, unsigned int cmd,
 					   1);
 		if (rtncode != 0) {
 			rtncode = -EFAULT;
+			ERRPRINT("mb86a35_IOCTL_CH_SEARCH CHANNEL7 failed.\n");
 			goto ch_search_return;
 		}
 		sreg = MB86A35_REG_SUBR_CHANNEL8;
@@ -6751,6 +7076,7 @@ int mb86a35_IOCTL_CH_SEARCH(mb86a35_cmdcontrol_t * cmdctrl, unsigned int cmd,
 					   1);
 		if (rtncode != 0) {
 			rtncode = -EFAULT;
+			ERRPRINT("mb86a35_IOCTL_CH_SEARCH CHANNEL8 failed.\n");
 			goto ch_search_return;
 		}
 		CHSRH->SEARCH_END = SEARCH_END_FLAG;
@@ -6760,9 +7086,10 @@ int mb86a35_IOCTL_CH_SEARCH(mb86a35_cmdcontrol_t * cmdctrl, unsigned int cmd,
 	/* channel information setting */
 	if (copy_to_user((void *)CHSRH_user, (void *)CHSRH, tmpsize)) {
 		rtncode = -EFAULT;
+		ERRPRINT("mb86a35_IOCTL_CH_SEARCH copy_to_user failed.\n");
 		goto ch_search_return;
 	}
-
+	
 ch_search_return:
 	DBGPRINT(PRINT_LHEADERFMT "**** return[ %d ].\n", PRINT_LHEADER,
 		 rtncode);
@@ -7793,7 +8120,7 @@ int mb86a35_IOCTL_POWERCTRL(mb86a35_cmdcontrol_t * cmdctrl, unsigned int cmd,
 		 " : (cmdctrl:0x%08x,cmd:0x%08x,arg:0x%08x)  called.\n",
 		 PRINT_LHEADER, (int)cmdctrl, (int)cmd, (int)arg);
 /* isdbtmm_mod_s_2012.06.01 */
-	mb86a35_com_gpio(cmd);
+	mb86a35_com_gpio(arg);
 /* isdbtmm_mod_e_2012.06.01 */
 
 	DBGPRINT(PRINT_LHEADERFMT "**** return[ %d ].\n", PRINT_LHEADER,
@@ -8732,16 +9059,15 @@ int mb86a35_IOCTL_STREAM_READ_CTRL(mb86a35_cmdcontrol_t * cmdctrl, unsigned int 
 			goto stream_read_ctrl_return;
 		}
 
-		read_size = STREAM_READ_CTRL->READ_SIZE * MB86A35S_PACKET_MULTIPLE;
+		read_size = STREAM_READ_CTRL->READ_SIZE;
 		
-/* matsumaru_mod */
 		needless_buf_size = MB86A35S_READ_SIZE_MAX % read_size;
 		read_max_size = MB86A35S_READ_SIZE_MAX - needless_buf_size;
 		read_packet_cnt = read_size / MB86A35S_PACKET_SIZE;
+		read_remain = read_size % MB86A35S_READ_SIZE;
 		wake_lock(&mb86a35s_wake_lock);
-/* matsumaru_mod */
 
-		/* IRQ Mask read	*/
+		/* IRQ Mask read */
 		value = 0;
 		sreg	= MB86A35S_REG_SUBR_SPIS0_IRQMASK;
 		rtncode = mb86a35s_spi_sub_recv(rega, sreg, regd, &rvalue, MB86A35S_SPI_WRITE_1BYTE);
@@ -8771,7 +9097,6 @@ int mb86a35_IOCTL_STREAM_READ_CTRL(mb86a35_cmdcontrol_t * cmdctrl, unsigned int 
 		/* IRQ handler enable flag on	*/ 
 		handler_enable_flag = 1;
 
-/* matsumaru_mod */
 		/* irq read pointer setup */
 		irq_bufp = stream_data;
 		
@@ -8781,7 +9106,6 @@ int mb86a35_IOCTL_STREAM_READ_CTRL(mb86a35_cmdcontrol_t * cmdctrl, unsigned int 
 		memset(stream_data, 0, sizeof(stream_data));
 		
 		read_counter = 0;
-/* matsumaru_mod */
 		
 		/* IRQ Enable */
 		value = rvalue & ~(PARAM_IRQMASK_STREAMREAD_OFF);
@@ -8791,16 +9115,16 @@ int mb86a35_IOCTL_STREAM_READ_CTRL(mb86a35_cmdcontrol_t * cmdctrl, unsigned int 
 			printk("mb86a35_IOCTL_STREAM_READ_CTRL IRQ Enable err\n");
 			goto stream_read_ctrl_return;
 		}
-/* matsumaru_mod */
 		/* read enable flag on */
 		read_enable_flag = 1;
-/* matsumaru_mod */
 	} 
 	/* Stream Read STOP	*/
 	else {
 		read_size = 0;
 		
-/* matsumaru_mod */
+		/* IRQ handler enable flag off	*/ 
+		handler_enable_flag = 0;
+		
 		reg = 0x93;
 		value = 1;
 		rtncode = mb86a35s_spi_send(reg, value, MB86A35S_SPI_WRITE_1BYTE);
@@ -8808,7 +9132,6 @@ int mb86a35_IOCTL_STREAM_READ_CTRL(mb86a35_cmdcontrol_t * cmdctrl, unsigned int 
 			printk("mb86a35_IOCTL_STREAM_READ_CTRL buf clear? err\n");
 			goto stream_read_ctrl_return;
 		}
-/* matsumaru_mod */
 		
 		/* IRQ Mask read	*/
 		value = 0;
@@ -8827,11 +9150,8 @@ int mb86a35_IOCTL_STREAM_READ_CTRL(mb86a35_cmdcontrol_t * cmdctrl, unsigned int 
 			printk("mb86a35_IOCTL_STREAM_READ_CTRL IRQ Disable err\n");
 			goto stream_read_ctrl_return;
 		}
-/* matsumaru_mod */
 		wake_unlock(&mb86a35s_wake_lock);
-/* matsumaru_mod */
 		
-/* matsumaru_mod */
 		reg = 0x93;
 		value = 0;
 		rtncode = mb86a35s_spi_send(reg, value, MB86A35S_SPI_WRITE_1BYTE);
@@ -8839,14 +9159,11 @@ int mb86a35_IOCTL_STREAM_READ_CTRL(mb86a35_cmdcontrol_t * cmdctrl, unsigned int 
 			printk("mb86a35_IOCTL_STREAM_READ_CTRL buf clear?? err\n");
 			goto stream_read_ctrl_return;
 		}
-/* matsumaru_mod */
-		
-/* matsumaru_mod */
+
 		/* read enable flag on */
 		read_enable_flag = 0;
 		
 		read_counter = 0;
-/* matsumaru_mod */
 	}
 
 stream_read_ctrl_return:
@@ -8925,6 +9242,38 @@ ts_setup_return:
 	return rtncode;
 }
 
+static
+int mb86a35_IOCTL_GET_OPEN_COUNT(mb86a35_cmdcontrol_t * cmdctrl, unsigned int cmd, unsigned long arg)
+{
+	return (open_cnt - monitorapp_cnt);
+}
+
+static
+int mb86a35_IOCTL_SET_MONITORAPP_MODE(mb86a35_cmdcontrol_t * cmdctrl, unsigned int cmd, unsigned long arg)
+{
+	int ret = 0;
+	
+	if ( 1 == arg )
+	{
+		/* Monitor Mode Start */
+		DBGPRINT(PRINT_LHEADERFMT "**** arg[ %d ].\n", PRINT_LHEADER, arg);
+		monitorapp_cnt++;
+	}
+	else
+	{
+		/* Monitor Mode Stop */
+		DBGPRINT(PRINT_LHEADERFMT "**** arg[ %d ].\n", PRINT_LHEADER, arg);
+		monitorapp_cnt--;
+		if ( 0 > monitorapp_cnt )
+		{
+			DBGPRINT(PRINT_LHEADERFMT "**** monitorapp_cnt[ %d ].\n", PRINT_LHEADER, monitorapp_cnt);
+			monitorapp_cnt = 0;
+		}
+	}
+	DBGPRINT(PRINT_LHEADERFMT "**** return[ %d ].\n", PRINT_LHEADER, ret);
+	return ( ret );
+}
+
 /************************************************************************
  * open() system call.
  * [User Interface]
@@ -8993,6 +9342,8 @@ int mb86a35_open(struct inode *inode, struct file *filp)
 		 " : Normal return. file->private_data[ 0x%08x ]\n",
 		 PRINT_LHEADER, (int)filp->private_data);
 
+	open_cnt++;
+	
 	return 0;
 }
 
@@ -9022,6 +9373,10 @@ int mb86a35_close(struct inode *inode, struct file *filp)
 		 PRINT_LHEADER, (int)filp, (int)(filp->f_dentry),
 		 (int)(filp->f_dentry->d_inode));
 
+	
+	open_cnt--;
+	
+	if (!open_cnt) {	
 	devarea = (unsigned char *)filp->private_data;
 	if (devarea == NULL) {
 		DBGPRINT(PRINT_LHEADERFMT
@@ -9036,6 +9391,8 @@ int mb86a35_close(struct inode *inode, struct file *filp)
 	kfree(devarea);
 
 	filp->private_data = NULL;
+	}
+	
 	return 0;
 }
 
@@ -9056,11 +9413,11 @@ int mb86a35_close(struct inode *inode, struct file *filp)
 	@retval	>0	number of bytes read is returned.
 	@retval	<0	The error occurred. The detailed information is set to an errno.
 */
-static int mycopy_to_user(char* dst, char* data);
 
 ssize_t mb86a35_read(struct file *filp, char *buf, size_t count, loff_t * f_pos)
 {
 	int rtncode = 0;
+	int read_packet = 0;
 
 	DBGPRINT(PRINT_LHEADERFMT
 		 " : read(filp:0x%08x,buf:0x%08x,count:%d,f_pos:0x%08x)  called.\n",
@@ -9102,23 +9459,24 @@ ssize_t mb86a35_read(struct file *filp, char *buf, size_t count, loff_t * f_pos)
 	if ((u32)(read_bufp) == (u32)(stream_data + read_max_size)) {
 		read_bufp = stream_data;
 	}
+	
+	read_packet = count / MB86A35S_PACKET_SIZE;
 
 	mutex_lock(&buffer_lock);
 	
-	rtncode = mycopy_to_user(buf, read_bufp);
-	if(rtncode == -1)
-	{
+	rtncode = mycopy_to_user(buf, read_bufp, read_packet);
+	if (rtncode == -1) {
 		rtncode = -EFAULT;
 		printk("read copy err1 = %d\n", rtncode);
 		goto read_return;
 	}
-
-read_return:
-/* ogawa_mod */
+	
 	mutex_unlock(&buffer_lock);
-/* ogawa_mod */
+	
+read_return:
+
 	DBGPRINT(PRINT_LHEADERFMT " : Read Length[ %d ], Return Code[ %d ]\n",
-		 PRINT_LHEADER, buf_read_size, rtncode);
+		 PRINT_LHEADER, count, rtncode);
 	
 	return rtncode;
 }
@@ -9435,8 +9793,6 @@ long mb86a35_ioctl(struct file *filp, unsigned int cmd,
 		break;			
 		
 	case IOCTL_STREAM_READ_CTRL:	/* Stream Read Control */
-		/* IRQ handler enable flag off	*/ 
-		handler_enable_flag = 0;
 		rtn = mb86a35_IOCTL_STREAM_READ_CTRL(cmdctrl, cmd, arg);
 		break;			
 		
@@ -9447,6 +9803,14 @@ long mb86a35_ioctl(struct file *filp, unsigned int cmd,
 	case IOCTL_TS_SETUP:	/* TS control setting */
 		rtn = mb86a35_IOCTL_TS_SETUP(cmdctrl, cmd, arg);
 		break;			
+		
+	case IOCTL_GET_OPEN_COUNT:	/* open count getting */
+		rtn = mb86a35_IOCTL_GET_OPEN_COUNT(cmdctrl, cmd, arg);
+		break;	
+		
+	case IOCTL_SET_MONITORAPP_MODE: /* monitor app */
+		rtn = mb86a35_IOCTL_SET_MONITORAPP_MODE(cmdctrl, cmd, arg);
+		break;
 		
 	default:
 		DBGPRINT(PRINT_LHEADERFMT
@@ -9538,23 +9902,37 @@ static
 irqreturn_t mb86a35s_irq_handler(int irq, void *dev)
 {
 
-	if (handler_enable_flag) 
-		queue_work(wq, &mb86a35s_work);
+/* matsumaru_mod */
+	if (handler_enable_flag) {
+		spin_lock( &work_thread->tmm_lock );
+		work_thread->mb86a35s_status = 1;
+		spin_unlock( &work_thread->tmm_lock );
+		/* wakeup event */
+		wake_up_interruptible(&(work_thread->mb86a35s_thread_wait));
+	}
+/* matsumaru_mod */
 	/* XXX:return IRQ_HANDLED without checking the status of interrupt.  */
 	return IRQ_HANDLED;
 }
 
 /* Because mb86a35s_spi_sub_* might do sleep, workqueue is used. */
 static
+#if 1
+void mb86a35s_irq_work(void)
+#else
 void mb86a35s_irq_work(struct work_struct *work)
+#endif
 {
 	int ret = 0;
 	unsigned char rega	= MB86A35S_REG_ADDR_SPI_SUBA;
 	unsigned char sreg	= 0;
 	unsigned char regd	= MB86A35S_REG_ADDR_SPI_SUBD;
 	unsigned char value	= 0;
-	int loop = 0;
+	u32 read_cnt = 0;
 
+	if (handler_enable_flag == 0)
+		goto irq_work_return;
+	
 	if (irq_bufp == NULL) {
 		printk(KERN_INFO "mb86a35_irq_handler pointer null. \n");
 		goto irq_work_return;
@@ -9562,10 +9940,6 @@ void mb86a35s_irq_work(struct work_struct *work)
 	else if ((u32)(irq_bufp + read_size) > (u32)(stream_data + MB86A35S_READ_SIZE_MAX)) {
 		irq_bufp = stream_data;
 	}
-
-	if (handler_enable_flag == 0)
-		goto irq_work_return;
-
 
 #ifdef PERFORMANCE_TEST
 	/* for TEST	*/
@@ -9587,13 +9961,8 @@ void mb86a35s_irq_work(struct work_struct *work)
 		printk(KERN_INFO "mb86a35_irq_handler spi send error. \n");
 		goto irq_work_return;
 	}
-
-	if (handler_enable_flag == 0)
-		goto irq_work_return;
 	
-	mutex_lock(&buffer_lock);
-	for (loop = 0; loop < MB86A35S_PACKET_MULTIPLE; loop++) {
-
+	for (read_cnt = MB86A35S_READ_SIZE; read_cnt <= read_size; read_cnt += MB86A35S_READ_SIZE) {
 		/* Stream Read	*/
 		ret = mb86a35s_spi_stream_recv(MB86A35S_REG_ADDR_STREAMREAD, irq_bufp, MB86A35S_READ_SIZE);
 		if (ret != 0) {
@@ -9609,11 +9978,31 @@ void mb86a35s_irq_work(struct work_struct *work)
 		}
 		irq_bufp += MB86A35S_READ_SIZE;
 	}
+	if (read_remain) {
+		/* Stream Read	*/
+		ret = mb86a35s_spi_stream_recv(MB86A35S_REG_ADDR_STREAMREAD, irq_bufp, read_remain);
+		if (ret != 0) {
+			printk(KERN_INFO "mb86a35_irq_handler stream recv error. \n");
+			goto irq_work_return;
+		}
+
+		/* Stream Read End command	*/
+	 	ret = mb86a35s_spi_send(0xa0, 0xff, MB86A35S_SPI_WRITE_1BYTE);
+		if (ret != 0) {
+			printk(KERN_INFO "mb86a35_irq_handler stream end command error. \n");
+			goto irq_work_return;
+		}
+		irq_bufp += read_remain;
+	}
+	
+	mutex_lock(&buffer_lock);
+	read_counter += read_packet_cnt;
+	if (read_counter > MB86A35S_PACKET_SIZE_MAX) {
+		read_counter = MB86A35S_PACKET_SIZE_MAX;
+		read_bufp = irq_bufp;
+	}
+	
 	mutex_unlock(&buffer_lock);
-
-
-	if (handler_enable_flag == 0)
-		goto irq_work_return;
 
 	/* XIRQ Enable	*/
 	value = 0xbf;
@@ -9623,30 +10012,44 @@ void mb86a35s_irq_work(struct work_struct *work)
 		printk(KERN_INFO "mb86a35_irq_handler spi send error. \n");
 		goto irq_work_return;
 	}
-
-/* ogawa_mod */
-	mutex_lock(&buffer_lock);
-/* ogawa_mod */
-
-/* matsumaru_mod */
-	read_counter += read_packet_cnt;
-	if (read_counter > MB86A35S_PACKET_SIZE_MAX) {
-		read_counter = MB86A35S_PACKET_SIZE_MAX;
-	}
-/* ogawa_mod */
-	mutex_unlock(&buffer_lock);
-/* ogawa_mod */
-	
-#ifdef PERFORMANCE_TEST
-	/* for TEST	*/
-	gpio_direction_input(GPIO_SPI_TEST1);
-
-#endif /* PERFORMANCE_TEST */
-
 irq_work_return:
-
+	
 	return;
 }
+
+/* matsumaru_mod */
+static int mb86a35s_work_thread(void *arg)
+{
+	int ret = 0;
+	
+	while (!kthread_should_stop()) {
+		/* wait event */
+		ret = wait_event_interruptible(work_thread->mb86a35s_thread_wait, work_thread->mb86a35s_status != 0);
+		
+		spin_lock( &work_thread->tmm_lock );
+		/* Condition NG */
+		if (ret != 0) {
+			work_thread->mb86a35s_status = 0;
+			spin_unlock( &work_thread->tmm_lock );
+			continue;
+		}
+		/* Condition OK */
+		else if ( work_thread->mb86a35s_status == 1 ) {
+			work_thread->mb86a35s_status = 0;
+			spin_unlock( &work_thread->tmm_lock );
+			mb86a35s_irq_work();
+		}
+		/* thread end */
+		else {
+			spin_unlock( &work_thread->tmm_lock );
+			set_current_state( TASK_INTERRUPTIBLE );
+			schedule();
+		}
+	}
+	
+	return 0;
+}
+/* matsumaru_mod */
 
 /************************************************************************/
 static int __devinit mb86a35s_spi_probe(struct spi_device *spi)
@@ -9658,7 +10061,7 @@ static int __devinit mb86a35s_spi_probe(struct spi_device *spi)
 
 	spi->bits_per_word = 8;
 	spi->mode = SPI_MODE_0;
-	spi->max_speed_hz = 27000000;
+	spi->max_speed_hz = 24000000;
 	ret = spi_setup(spi);
 	if (ret < 0) {
 		printk(PRINT_LHEADERFMT " : spi_setup failed. [ \"%s\" ], ret[ %d ]\n", PRINT_LHEADER, devname, ret);
@@ -9666,13 +10069,42 @@ static int __devinit mb86a35s_spi_probe(struct spi_device *spi)
 	}
 
 	mb86a35s_spi_device = spi;
+/* matsumaru_mod */
+#if 1
+{
+	struct sched_param param = { .sched_priority = 99 };
 	
+	work_thread = kmalloc(sizeof(mb86a5s_thread_t), GFP_KERNEL);
+	if ( !work_thread ) {
+		ret = -EFAULT;
+		goto ERROR1;
+	}
+	
+	work_thread->mb86a35s_status = 0;
+	spin_lock_init( &work_thread->tmm_lock );
+	init_waitqueue_head( &work_thread->mb86a35s_thread_wait );
+	
+	work_thread->mb86a5s_thread = kthread_run(mb86a35s_work_thread, NULL, "mb86a35s_Task");
+	if (IS_ERR(work_thread->mb86a5s_thread)) {
+		ERRPRINT("mb86a35s_spi_probe kthread_run error : %p", work_thread->mb86a5s_thread);
+		goto ERROR2;
+	}
+	
+	ret = sched_setscheduler(work_thread->mb86a5s_thread, SCHED_FIFO, &param);
+	if (ret < 0) {
+		ERRPRINT("mb86a35s_spi_probe sched_setscheduler error ret[ %d ]", ret);
+		goto ERROR3;
+	}
+}
+#else
 /* matsumaru_mod */
 	if (!wq) {
 		wq = create_singlethread_workqueue(DESCRIPTION);
 	}
 /* matsumaru_mod */
-	
+#endif
+/* matsumaru_mod */
+
 #ifdef PERFORMANCE_TEST
 	/* for TEST	*/
 	gpio_request(GPIO_SPI_TEST1, devname);
@@ -9718,13 +10150,22 @@ static int __devinit mb86a35s_spi_probe(struct spi_device *spi)
 	}
 	
 	wake_lock_init(&mb86a35s_wake_lock, WAKE_LOCK_SUSPEND, "mb86a35s_wake_lock");
+	open_cnt = 0;
+	monitorapp_cnt = 0;
 	
 	return ret;
 
 ERROR3:
 	gpio_free(GPIO_SPIS_XIRQ);
+/* matsumaru_mod */
+	work_thread->mb86a35s_status = 2;
+	wake_up_interruptible(&(work_thread->mb86a35s_thread_wait));
+	kthread_stop(work_thread->mb86a5s_thread);
+/* matsumaru_mod */
 ERROR2:
-
+/* matsumaru_mod */
+	kfree(work_thread);
+/* matsumaru_mod */
 #ifdef PERFORMANCE_TEST
 	/* for TEST	*/
 	gpio_free(GPIO_SPI_TEST1);
@@ -9736,6 +10177,7 @@ ERROR1:
 
 static int __devexit mb86a35s_spi_remove(struct spi_device *spi)
 {
+	
 	DBGPRINT(PRINT_LHEADERFMT "Called. \n", PRINT_LHEADER);
 
 	free_irq(gpio_to_irq(GPIO_SPIS_XIRQ), spi);
@@ -9743,9 +10185,18 @@ static int __devexit mb86a35s_spi_remove(struct spi_device *spi)
 	gpio_free(GPIO_SPIS_XIRQ);
 	
 /* matsumaru_mod */
+#if 1
+	work_thread->mb86a35s_status = 2;
+	wake_up_interruptible(&(work_thread->mb86a35s_thread_wait));
+	kthread_stop(work_thread->mb86a5s_thread);
+	kfree(work_thread);
+#else
+/* matsumaru_mod */
 	if (wq) {
 		destroy_workqueue(wq);
 	}
+/* matsumaru_mod */
+#endif
 /* matsumaru_mod */
 	
 #ifdef PERFORMANCE_TEST
@@ -9846,14 +10297,15 @@ void proc_cleanup_module(void)
 
 }
 
-static int mycopy_to_user(char* dst, char* data)
+static int mycopy_to_user(char* dst, char* data, size_t read_count)
 {
 	u32* pheader;
+	int ValidPacketCounter = 0;
 	int ret = 0;
-	int ValidPacketCounter=0;
+	int cnt = 0;
 	
-	while (ValidPacketCounter < 20) {
-		pheader = data;
+	while (ValidPacketCounter < read_count) {
+		pheader = (u32*)data;
 		if(*pheader != 0x10FF1F47) {
 			if ( copy_to_user(dst, data, MB86A35S_PACKET_SIZE) ) {
 				printk("copy_to_user:error cnt[ %d ]\n", ValidPacketCounter);
@@ -9867,24 +10319,21 @@ static int mycopy_to_user(char* dst, char* data)
 		}
 		data += MB86A35S_PACKET_SIZE;
 		read_counter--;
+		cnt++;
 		
 		if ((u32)(data) == (u32)(stream_data + read_max_size)) {
 			data = stream_data;
 		}
 		
 		if(read_counter == 0) {
-			while (ValidPacketCounter < 20) {
-				if (copy_to_user(dst, null_data, MB86A35S_PACKET_SIZE)) {
-					printk("copy_to_user:error cnt[ %d ]\n", ValidPacketCounter);
-					return -1;
-				}
-				dst+=MB86A35S_PACKET_SIZE;
-				ValidPacketCounter++;
-				ret += MB86A35S_PACKET_SIZE;
-			}
+			break;
 		}
 	}
 	read_bufp = data;
 	
 	return ret;
 }
+
+MODULE_LICENSE("GPL v2");
+MODULE_AUTHOR("Samsung");
+MODULE_DESCRIPTION("ISDBTMM Driver");

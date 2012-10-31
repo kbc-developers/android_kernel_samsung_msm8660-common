@@ -137,6 +137,8 @@ static int driver_paused;
 static int debug_enabled;
 #endif
 
+#define CONFIG_FW_VERSION		"E150S_At_0502"
+
 /* add for protection code */
 /*#######################################*/
 #define CNTLMTTCH_AFT_MEDIAN_ERROR	5
@@ -1115,10 +1117,17 @@ static void report_input_data(struct mxt_data *data)
 			input_mt_slot(data->input_dev, i);
 			input_mt_report_slot_state(data->input_dev,
 					MT_TOOL_FINGER, true);
+#if defined(CONFIG_JPN_MODEL_SC_01E)
+			input_report_abs(data->input_dev, ABS_MT_POSITION_X,
+					(data->pdata->max_y - data->fingers[i].y));
+			input_report_abs(data->input_dev, ABS_MT_POSITION_Y,
+					data->fingers[i].x);
+#else
 			input_report_abs(data->input_dev, ABS_MT_POSITION_X,
 					data->fingers[i].x);
 			input_report_abs(data->input_dev, ABS_MT_POSITION_Y,
 					data->fingers[i].y);
+#endif
 			input_report_abs(data->input_dev, ABS_MT_TOUCH_MAJOR,
 					data->fingers[i].z);
 			input_report_abs(data->input_dev, ABS_MT_PRESSURE,
@@ -1861,12 +1870,20 @@ int read_all_data(uint16_t dbg_mode)
 			if (qt_refrence_node[num-1] == 0)
 				pr_err("qt_refrence_node"
 					"[%d] = 0\n", num);
+#if defined(CONFIG_JPN_MODEL_SC_01E)
+			if (num == 736)
+#else
 			if (num == 768)
+#endif
 				break;
 		}
 		diagnostic_chip(MXT_PAGE_UP);
 		msleep(35);
+#if defined(CONFIG_JPN_MODEL_SC_01E)
+		if (num == 736)
+#else
 		if (num == 768)
+#endif
 			break;
 	}
 
@@ -2909,6 +2926,17 @@ static ssize_t mxt_touchtype_show(struct device *dev,
 	return strlen(buf);
 }
 
+static ssize_t mxt_firm_version_config_show(struct device *dev,
+	struct device_attribute *attr, char *buf)
+{
+	char temp[15];
+
+	sprintf(temp, "%s\n", CONFIG_FW_VERSION);
+	strcat(buf, temp);
+
+	return strlen(buf);
+}
+
 static ssize_t x_line_show(struct device *dev,
 	struct device_attribute *attr, char *buf)
 {
@@ -3206,6 +3234,8 @@ static DEVICE_ATTR(set_module_on, S_IRUGO | S_IWUSR | S_IWGRP,
 	NULL, set_module_on_store);
 static DEVICE_ATTR(mxt_touchtype, S_IRUGO | S_IWUSR | S_IWGRP,
 	mxt_touchtype_show, NULL);
+static DEVICE_ATTR(tsp_firm_version_config, S_IRUGO,
+	mxt_firm_version_config_show, NULL);
 static DEVICE_ATTR(set_threshold, S_IRUGO,
 	set_threshold_mode_show, NULL);
 /* firmware update */
@@ -3332,11 +3362,17 @@ static int __devinit mxt_probe(struct i2c_client *client,
 	set_bit(INPUT_PROP_DIRECT, input_dev->propbit);
 
 	input_mt_init_slots(input_dev, MAX_USING_FINGER_NUM);
-
+#if defined(CONFIG_JPN_MODEL_SC_01E)
+	input_set_abs_params(input_dev, ABS_MT_POSITION_X, pdata->min_x,
+			     pdata->max_y, 0, 0);
+	input_set_abs_params(input_dev, ABS_MT_POSITION_Y, pdata->min_y,
+			     pdata->max_x, 0, 0);
+#else
 	input_set_abs_params(input_dev, ABS_MT_POSITION_X, pdata->min_x,
 			     pdata->max_x, 0, 0);
 	input_set_abs_params(input_dev, ABS_MT_POSITION_Y, pdata->min_y,
 			     pdata->max_y, 0, 0);
+#endif
 	input_set_abs_params(input_dev, ABS_MT_TOUCH_MAJOR, pdata->min_z,
 			     pdata->max_z, 0, 0);
 	input_set_abs_params(input_dev, ABS_MT_PRESSURE, pdata->min_w,
@@ -3553,6 +3589,11 @@ static int __devinit mxt_probe(struct i2c_client *client,
 				&dev_attr_mxt_touchtype) < 0)
 		pr_err("Failed to create device file(%s)!\n",
 			dev_attr_mxt_touchtype.attr.name);
+
+	if (device_create_file(sec_touchscreen,
+				&dev_attr_tsp_firm_version_config) < 0)
+		pr_err("Failed to create device file(%s)!\n",
+			dev_attr_tsp_firm_version_config.attr.name);
 
 	mxt_noise_test = device_create(sec_class,
 		NULL, 0, NULL, "tsp_noise_test");

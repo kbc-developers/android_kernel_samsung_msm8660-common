@@ -29,7 +29,9 @@
 #include "samsung_cmc624.h"
 #endif
 
+#if 0
 #define LCDC_DEBUG
+#endif
 //#define LCD_FACTORY_TEST
 
 //#define MIPI_SINGLE_WRITE

@@ -21,15 +21,10 @@
 	QXGA: 2048 x 1536
 ********************************************************************************************/
 
-#if defined(CONFIG_TARGET_LOCALE_KOR_SKT) || defined(CONFIG_TARGET_LOCALE_KOR_KT) || defined(CONFIG_TARGET_LOCALE_KOR_LGU) || defined (CONFIG_TARGET_LOCALE_USA) \
-	|| defined(CONFIG_JPN_MODEL_SC_01E)
 #define	S5K5CCAF_DEBUG	0
-#else
-#define	S5K5CCAF_DEBUG	1
-#endif
 
 #if S5K5CCAF_DEBUG
-#define CAM_DEBUG(fmt, arg...)	\
+#define cam_dbg(fmt, arg...)	\
 		do {\
 		printk(KERN_DEBUG "[S5K5CCAF] %s : " fmt "\n", __FUNCTION__, ##arg);}\
 		while(0)
@@ -45,7 +40,7 @@
 		while(0)
 			
 #else
-#define CAM_DEBUG(fmt, arg...)	
+#define cam_dbg(fmt, arg...)	
 #define cam_info(fmt, arg...)
 #define cam_err(fmt, arg...)
 #endif
@@ -311,9 +306,6 @@ struct s5k5ccaf_ctrl {
 	int vtcall_mode;	
 	int sensor_mode;
 	int app_mode;
-#if defined(CONFIG_TARGET_SERIES_P8LTE)
-	int first_af_running;
-#endif
 };                                                               
 
 #endif

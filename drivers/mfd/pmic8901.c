@@ -312,10 +312,20 @@ int pm8901_is_old_PCB_with_PM8901(void)
                 retval = 1;
         else if( rev >=15 )
                 retval = 0;
-#elif defined(CONFIG_TARGET_LOCALE_JPN)
+#elif defined(CONFIG_JPN_MODEL_SC_01D)
 	if( rev <= 5)
 		retval = 1;
-	else if ( rev >6 )
+	else if ( rev >=6 )
+		retval = 0;
+#elif defined (CONFIG_JPN_MODEL_SC_03D)
+	if( rev <= 11 )
+		retval = 1;
+	else if( rev >=12 )
+		retval = 0;
+#elif defined(CONFIG_JPN_MODEL_SC_05D)
+	if( rev <= 3 )
+		retval = 1;
+	else if( rev >=4 )
 		retval = 0;
 #endif
 

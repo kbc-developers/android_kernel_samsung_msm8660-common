@@ -1970,7 +1970,16 @@ enum msm_cam_stat{
 };
 
 #if 1 //samsung_camera, temp
-
+#if defined (CONFIG_JPN_MODEL_SC_03D)
+static uint32_t camera_off_gpio_table[] = {
+	/* parallel CAMERA interfaces */
+	GPIO_CFG(50,  0, GPIO_CFG_OUTPUT, GPIO_CFG_PULL_DOWN, GPIO_CFG_2MA), /* ISP_RST */
+	GPIO_CFG(37,  0, GPIO_CFG_OUTPUT, GPIO_CFG_PULL_DOWN, GPIO_CFG_2MA), /* CAM_IO_EN */
+	GPIO_CFG(41,  0, GPIO_CFG_OUTPUT, GPIO_CFG_PULL_DOWN, GPIO_CFG_2MA), /* CAM_VGA_RST */
+	GPIO_CFG(42,  0, GPIO_CFG_OUTPUT, GPIO_CFG_PULL_DOWN, GPIO_CFG_2MA), /* CAM_VGA_EN */
+	GPIO_CFG(32,  0, GPIO_CFG_OUTPUT, GPIO_CFG_PULL_DOWN, GPIO_CFG_2MA), /* CAM_MCLK_F */
+};
+#else
 static uint32_t camera_off_gpio_table[] = {
 	/* parallel CAMERA interfaces */
 	GPIO_CFG(50,  0, GPIO_CFG_OUTPUT, GPIO_CFG_PULL_DOWN, GPIO_CFG_2MA), /* ISP_RST */
@@ -1979,6 +1988,7 @@ static uint32_t camera_off_gpio_table[] = {
 	GPIO_CFG(42,  0, GPIO_CFG_OUTPUT, GPIO_CFG_PULL_DOWN, GPIO_CFG_2MA), /* CAM_VGA_EN */
 	GPIO_CFG(32,  0, GPIO_CFG_OUTPUT, GPIO_CFG_PULL_DOWN, GPIO_CFG_2MA), /* CAM_MCLK_F */
 };
+#endif
 
 static uint32_t camera_on_gpio_table[] = {
 	/* parallel CAMERA interfaces */
@@ -5866,7 +5876,11 @@ static struct sec_jack_zone jack_zones[] = {
 #else
                 .adc_high       = 3,
 #endif
+#if defined (CONFIG_JPN_MODEL_SC_03D)
+                .delay_ms       = 25,
+#else
                 .delay_ms       = 10,
+#endif
                 .check_count    = 10,
                 .jack_type      = SEC_HEADSET_3POLE,
         },
@@ -5876,7 +5890,11 @@ static struct sec_jack_zone jack_zones[] = {
 #else
                 .adc_high       = 980,
 #endif
+#if defined (CONFIG_JPN_MODEL_SC_03D)
+		.delay_ms	= 25,
+#else
                 .delay_ms       = 10,
+#endif
                 .check_count    = 10,
                 .jack_type      = SEC_HEADSET_3POLE,
         },
@@ -5887,7 +5905,12 @@ static struct sec_jack_zone jack_zones[] = {
 #else
 		.adc_high	= 2700,
 #endif
-                .delay_ms       = 10,
+ #if defined (CONFIG_JPN_MODEL_SC_03D)
+		.delay_ms	= 25,
+#else
+		.delay_ms	= 10,
+#endif
+
                 .check_count    = 10,
                 .jack_type      = SEC_HEADSET_4POLE,
         },
@@ -5923,7 +5946,11 @@ static struct sec_jack_buttons_zone jack_buttons_zones[] = {
 
 int get_sec_det_jack_state(void)
 {
-#if defined (CONFIG_KOR_MODEL_SHV_E110S)
+#if defined (CONFIG_JPN_MODEL_SC_03D)
+	if(get_hw_rev() == 0x04){ // only for JPN_NTT REV03
+			return gpio_get_value_cansleep(PM8058_GPIO_PM_TO_SYS(PMIC_GPIO_EAR_DET));
+	}else
+#elif defined (CONFIG_KOR_MODEL_SHV_E110S)
 	if(get_hw_rev()==0x05) //only for celox_REV05
 		return(gpio_get_value_cansleep(PM8058_GPIO_PM_TO_SYS(PMIC_GPIO_EAR_DET)));
 	else
@@ -5960,7 +5987,12 @@ static int get_sec_send_key_state(void)
 		gpio_set_value_cansleep(PM8058_GPIO_PM_TO_SYS(PMIC_GPIO_EAR_MICBIAS_EN),1);
 	}
 
-#if defined(CONFIG_KOR_MODEL_SHV_E110S) 
+#if defined(CONFIG_JPN_MODEL_SC_03D)
+	if(get_hw_rev() == 0x04) // only for JPN_NTT REV03
+	{
+		return gpio_get_value_cansleep(PM8058_GPIO_PM_TO_SYS(PMIC_GPIO_SHORT_SENDEND));
+	}else
+#elif defined(CONFIG_KOR_MODEL_SHV_E110S)
 	if(get_hw_rev()==0x05) //only for celox_REV05
 	{
 		return(gpio_get_value_cansleep(PM8058_GPIO_PM_TO_SYS(PMIC_GPIO_SHORT_SENDEND)));
@@ -6609,7 +6641,7 @@ static struct platform_device amp_i2c_gpio_device = {
 
 static struct snd_set_ampgain init_ampgain[] = {
 
-#if defined (CONFIG_KOR_MODEL_SHV_E110S) || defined(CONFIG_JPN_MODEL_SC_03D)
+#if defined (CONFIG_KOR_MODEL_SHV_E110S)
     // SPK
 	[0] = {
 		.in1_gain = 2,
@@ -6634,6 +6666,34 @@ static struct snd_set_ampgain init_ampgain[] = {
 		.in2_gain = 2,
 		.hp_att = 1,
 		.hp_gainup = 1,
+		.sp_att = 26,
+		.sp_gainup = 1,
+	},
+#elif defined (CONFIG_JPN_MODEL_SC_03D)
+// SPK
+	[0] = {
+		.in1_gain = 2,
+		.in2_gain = 2,
+		.hp_att = 0,
+		.hp_gainup = 0,
+		.sp_att = 26,
+		.sp_gainup = 1,
+	},
+	// HEADSET
+	[1] = {
+		.in1_gain = 3,
+		.in2_gain = 2,
+		.hp_att = 31,
+		.hp_gainup = 0,
+		.sp_att = 0,
+		.sp_gainup = 0,
+	},
+	// SPK + HEADSET
+	[2] = {
+		.in1_gain = 2,
+		.in2_gain = 2,
+		.hp_att = 1,
+		.hp_gainup = 0,
 		.sp_att = 26,
 		.sp_gainup = 1,
 	},
@@ -6958,7 +7018,7 @@ static struct snd_set_ampgain init_ampgain[] = {
 		.in2_gain = 2,
 		.hp_att = 0,
 		.hp_gainup = 0,
-		.sp_att = 31,
+		.sp_att = 30,
 		.sp_gainup = 0,
 	},
     // HEADSET
@@ -9404,7 +9464,7 @@ static const u8 *mxt224e_config[] = {
 	end_config_e,
 };
 #else
-#if defined (CONFIG_USA_MODEL_SGH_I727) 
+#if defined (CONFIG_USA_MODEL_SGH_I727) || defined (CONFIG_JPN_MODEL_SC_03D)
 static u8 t7_config_e[] = {GEN_POWERCONFIG_T7,
 				48,		/* IDLEACQINT */
 				255,	/* ACTVACQINT */
@@ -11339,7 +11399,7 @@ static struct pmic8058_othc_config_pdata othc_config_pdata_0 = {
 	.micbias_regulator = &othc_reg,
 };
 
-#if (defined(CONFIG_SAMSUNG_JACK) || defined (CONFIG_SAMSUNG_EARJACK)) && (defined(CONFIG_TARGET_LOCALE_KOR) || defined (CONFIG_TARGET_LOCALE_USA))
+#if (defined(CONFIG_SAMSUNG_JACK) || defined (CONFIG_SAMSUNG_EARJACK)) && (defined(CONFIG_TARGET_LOCALE_KOR) || defined (CONFIG_TARGET_LOCALE_USA) || defined (CONFIG_TARGET_LOCALE_JPN))
 /* MIC_BIAS1 is configured as normal MIC BIAS */
 static struct pmic8058_othc_config_pdata othc_config_pdata_1 = {
 	.micbias_select = OTHC_MICBIAS_1,
@@ -15316,12 +15376,17 @@ static void proximity_LED_off(void)
 
 static void sensor_power_on(void)
 {
-#if defined(CONFIG_KOR_MODEL_SHV_E110S) || defined(CONFIG_JPN_MODEL_SC_03D) || defined(CONFIG_EUR_MODEL_GT_I9210)
+#if defined(CONFIG_KOR_MODEL_SHV_E110S) || defined(CONFIG_EUR_MODEL_GT_I9210)
 	if(get_hw_rev() >= 0x08)
 		sensor_power_on_vdd(1, 0, 0, 1);
 	else if(get_hw_rev() >= 0x05)
 		sensor_power_on_vdd(1, 0, 0, 0);
 	else
+		sensor_power_on_vdd(1, 1, 0, 0);
+#elif defined(CONFIG_JPN_MODEL_SC_03D)
+	if(get_hw_rev() >= 0x06)
+		sensor_power_on_vdd(1, 0, 0, 1);
+	else 
 		sensor_power_on_vdd(1, 1, 0, 0);
 #elif defined(CONFIG_USA_MODEL_SGH_I757) || defined (CONFIG_CAN_MODEL_SGH_I757M)
 	sensor_power_on_vdd(1, 0, 0, 0);
@@ -15330,15 +15395,21 @@ static void sensor_power_on(void)
 #endif
 }
 
+
 static void sensor_power_off(void)
 {
-#if defined(CONFIG_KOR_MODEL_SHV_E110S)|| defined(CONFIG_JPN_MODEL_SC_03D) || defined(CONFIG_EUR_MODEL_GT_I9210)
+#if defined(CONFIG_KOR_MODEL_SHV_E110S) || defined(CONFIG_EUR_MODEL_GT_I9210)
 	if(get_hw_rev() >= 0x08)
 		sensor_power_off_vdd(1, 0, 0, 1);
 	else if(get_hw_rev() >= 0x05)
 		sensor_power_off_vdd(1, 0, 0, 0);
 	else
 		sensor_power_off_vdd(1, 1, 0, 0);
+#elif defined(CONFIG_JPN_MODEL_SC_03D)
+	if(get_hw_rev() >= 0x06)
+		sensor_power_on_vdd(1, 0, 0, 1);
+	else 
+		sensor_power_on_vdd(1, 1, 0, 0);
 #elif defined(CONFIG_USA_MODEL_SGH_I757) || defined (CONFIG_CAN_MODEL_SGH_I757M)
 	sensor_power_off_vdd(1, 0, 0, 0);
 #else
@@ -15838,8 +15909,8 @@ static struct msm_bus_vectors mdp_sd_smi_vectors[] = {
 	{
 		.src = MSM_BUS_MASTER_MDP_PORT0,
 		.dst = MSM_BUS_SLAVE_SMI,
-		.ab = 407808000,
-		.ib = 509760000,
+		.ab = 304128000, //407808000,
+		.ib = 380160000, //509760000,
 	},
 	/* Master and slaves can be from different fabrics */
 	{
@@ -15859,42 +15930,9 @@ static struct msm_bus_vectors mdp_sd_ebi_vectors[] = {
 		.ab = 0,
 		.ib = 0,
 #else	/* onlyjazz.el26 : temporarilly use non-zero bandwidth in order to avoid mmfab rate change during smi_clk is disabled */
-		.ab = 407808000,
-		.ib = 509760000 * 2,
+		.ab = 304128000, //407808000,
+		.ib = 380160000 * 2, //509760000 * 2,
 #endif
-	},
-	/* Master and slaves can be from different fabrics */
-	{
-		.src = MSM_BUS_MASTER_MDP_PORT0,
-		.dst = MSM_BUS_SLAVE_EBI_CH0,
-		.ab = 407808000,
-		.ib = 509760000 * 2,
-	},
-};
-
-static struct msm_bus_vectors mdp_vga_vectors[] = {
-	/* VGA and less video */
-	{
-		.src = MSM_BUS_MASTER_MDP_PORT0,
-		.dst = MSM_BUS_SLAVE_SMI,
-		.ab = 248832000,
-		.ib = 311040000,
-	},
-	{
-		.src = MSM_BUS_MASTER_MDP_PORT0,
-		.dst = MSM_BUS_SLAVE_EBI_CH0,
-		.ab = 248832000,
-		.ib = 311040000 * 2,
-	},
-};
-
-static struct msm_bus_vectors mdp_720p_vectors[] = {
-	/* 720p and less video */
-	{
-		.src = MSM_BUS_MASTER_MDP_PORT0,
-		.dst = MSM_BUS_SLAVE_SMI,
-		.ab = 304128000,
-		.ib = 380160000,
 	},
 	/* Master and slaves can be from different fabrics */
 	{
@@ -15905,20 +15943,48 @@ static struct msm_bus_vectors mdp_720p_vectors[] = {
 	},
 };
 
+static struct msm_bus_vectors mdp_vga_vectors[] = {
+	{
+		.src = MSM_BUS_MASTER_MDP_PORT0,
+		.dst = MSM_BUS_SLAVE_SMI,
+		.ab = 331776000, //248832000,
+		.ib = 414720000, //311040000,
+	},
+	{
+		.src = MSM_BUS_MASTER_MDP_PORT0,
+		.dst = MSM_BUS_SLAVE_EBI_CH0,
+		.ab = 331776000,
+		.ib = 414720000 * 2,
+	},
+};
+static struct msm_bus_vectors mdp_720p_vectors[] = {
+	{
+		.src = MSM_BUS_MASTER_MDP_PORT0,
+		.dst = MSM_BUS_SLAVE_SMI,
+		.ab = 387072000, //304128000,
+		.ib = 483840000, //380160000,
+	},
+	{
+		.src = MSM_BUS_MASTER_MDP_PORT0,
+		.dst = MSM_BUS_SLAVE_EBI_CH0,
+		.ab = 387072000, //304128000,
+		.ib = 483840000 * 2, //380160000 * 2,
+	},
+};
 static struct msm_bus_vectors mdp_1080p_vectors[] = {
 	/* 1080p and less video */
 	{
 		.src = MSM_BUS_MASTER_MDP_PORT0,
 		.dst = MSM_BUS_SLAVE_SMI,
-		.ab = 407808000,
-		.ib = 509760000,
+		.ab = 490752000, //407808000,
+		.ib = 613440000, //509760000,
 	},
 	/* Master and slaves can be from different fabrics */
 	{
 		.src = MSM_BUS_MASTER_MDP_PORT0,
 		.dst = MSM_BUS_SLAVE_EBI_CH0,
-		.ab = 407808000,
-		.ib = 509760000 * 2,
+		.ab = 490752000, //407808000,
+		.ib = 613440000 * 2, //509760000 * 2,
 	},
 };
 
@@ -15965,7 +16031,7 @@ static struct msm_bus_paths mdp_bus_scale_usecases[] = {
 		ARRAY_SIZE(mdp_1080p_vectors),
 		mdp_1080p_vectors,
 	},
-#ifdef CONFIG_FB_MSM_MDP_ADDITIONAL_BUS_SCALING 	// Adding the block
+#if 0 //def CONFIG_FB_MSM_MDP_ADDITIONAL_BUS_SCALING 	// Adding the block
 	{
 		ARRAY_SIZE(mdp_vga_special_case),
 		mdp_vga_special_case,
@@ -16800,7 +16866,9 @@ void yda165_avdd_power_on(void)
 #endif
 
 	amp_reg_ref_cnt++;
+	#if !defined(CONFIG_USA_MODEL_SGH_I757)
 	pr_info("%s : amp_reg_ref_cnt = %d\n", __func__, amp_reg_ref_cnt);
+	#endif
 
 #if defined (CONFIG_KOR_MODEL_SHV_E110S) || defined(CONFIG_JPN_MODEL_SC_03D)
 	if(get_hw_rev()>=0x04)
@@ -16851,7 +16919,9 @@ void yda165_avdd_power_off(void)
 	int ret;
 
 	amp_reg_ref_cnt--;
+	#if !defined(CONFIG_USA_MODEL_SGH_I757)
 	pr_info("%s : amp_reg_ref_cnt = %d\n", __func__, amp_reg_ref_cnt);
+	#endif
 
 #if defined (CONFIG_USA_MODEL_SGH_T989) || defined (CONFIG_USA_MODEL_SGH_T769)
 	if(get_hw_rev()>=0x05)
@@ -17029,6 +17099,7 @@ int __init brcm_wlan_init(void);
 #ifdef CONFIG_BATTERY_SEC
 extern unsigned int sec_get_lpm_mode(void);
 #endif
+
 static void __init msm8x60_init(struct msm_board_data *board_data)
 {
 	uint32_t soc_platform_version;

@@ -60,34 +60,11 @@ static struct gpiomux_setting console_uart = {
 	.pull = GPIOMUX_PULL_NONE,
 };
 
-#ifndef CONFIG_ISDBTMM
-#if 0
-static struct gpiomux_setting gsbi1_in_cfg = {
-	.func = GPIOMUX_FUNC_1,
-	.drv = GPIOMUX_DRV_2MA,
-	.pull = GPIOMUX_PULL_NONE,
-//	.dir = GPIOMUX_IN,
-};
-static struct gpiomux_setting gsbi1_out_cfg = {
-	.func = GPIOMUX_FUNC_1,
-	.drv = GPIOMUX_DRV_2MA,
-	.pull = GPIOMUX_PULL_NONE,
-//	.dir = GPIOMUX_OUT_LOW,
-};
-#else
 static struct gpiomux_setting gsbi1 = {
 	.func = GPIOMUX_FUNC_GPIO,
 	.drv = GPIOMUX_DRV_8MA,
 	.pull = GPIOMUX_PULL_DOWN,
 };
-#endif
-#else
-static struct gpiomux_setting gsbi1 = {
-	.func = GPIOMUX_FUNC_GPIO,
-	.drv = GPIOMUX_DRV_8MA,
-	.pull = GPIOMUX_PULL_DOWN,
-};
-#endif
 
 static struct gpiomux_setting gsbi3 = {
 	.func = GPIOMUX_FUNC_1,

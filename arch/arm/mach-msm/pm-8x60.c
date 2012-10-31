@@ -213,6 +213,7 @@ static ssize_t msm_pm_mode_attr_store(struct kobject *kobj,
 	return ret ? ret : count;
 }
 
+
 /*
  * Add sysfs entries for one cpu.
  */

@@ -996,8 +996,8 @@ static int msm_hsusb_config_vddcx(int high)
 	return ret;
 }
 
-#define USB_PHY_3P3_VOL_MIN	3600000 /* uV */
-#define USB_PHY_3P3_VOL_MAX	3600000 /* uV */
+#define USB_PHY_3P3_VOL_MIN	3050000 /* uV */
+#define USB_PHY_3P3_VOL_MAX	3050000 /* uV */
 #define USB_PHY_3P3_HPM_LOAD	50000	/* uA */
 #define USB_PHY_3P3_LPM_LOAD	4000	/* uA */
 
@@ -2399,7 +2399,7 @@ static int msm_qsd_spi_dma_config(void)
 }
 
 static struct msm_spi_platform_data msm_gsbi1_qup_spi_pdata = {
-	.max_clock_speed = 27000000,
+	.max_clock_speed = 24000000,
 	.dma_config      = msm_qsd_spi_dma_config,
 };
 #else
@@ -2426,7 +2426,7 @@ static struct spi_board_info tmm_spi_info[] __initdata = {
         .mode           = SPI_MODE_0,
         .bus_num        = 0,
         .chip_select    = 0,
-        .max_speed_hz   = 27000000,
+        .max_speed_hz   = 24000000,
     }
 };
 
@@ -3829,18 +3829,18 @@ static const u8 *mxt224_config[] = {
 #define MXT768E_ACTACQINT_BATT			255
 #define MXT768E_ACTACQINT_CHRG			255
 
-#define MXT768E_XLOCLIP_BATT		245
-#define MXT768E_XLOCLIP_CHRG		245
-#define MXT768E_XHICLIP_BATT		245
-#define MXT768E_XHICLIP_CHRG		245
+#define MXT768E_XLOCLIP_BATT		0
+#define MXT768E_XLOCLIP_CHRG		12
+#define MXT768E_XHICLIP_BATT		0
+#define MXT768E_XHICLIP_CHRG		12
 #define MXT768E_YLOCLIP_BATT		0
 #define MXT768E_YLOCLIP_CHRG		5
 #define MXT768E_YHICLIP_BATT		0
 #define MXT768E_YHICLIP_CHRG		5
-#define MXT768E_XEDGECTRL_BATT		143
-#define MXT768E_XEDGECTRL_CHRG		143
-#define MXT768E_XEDGEDIST_BATT		45
-#define MXT768E_XEDGEDIST_CHRG		45
+#define MXT768E_XEDGECTRL_BATT		136
+#define MXT768E_XEDGECTRL_CHRG		128
+#define MXT768E_XEDGEDIST_BATT		50
+#define MXT768E_XEDGEDIST_CHRG		0
 #define MXT768E_YEDGECTRL_BATT		136
 #define MXT768E_YEDGECTRL_CHRG		136
 #define MXT768E_YEDGEDIST_BATT		40
@@ -3912,7 +3912,7 @@ static u8 t48_config_e[] = {PROCG_NOISESUPPRESSION_T48,
 	112, 15, 0, 6, 6, 0, 0, 48, 4, 64,
 	0, 0, 9, 0, 0, 0, 0, 5, 0, 0,
 	0, 0, 0, 0, 112, MXT768E_THRESHOLD_BATT, 2, 16, 2, 81,
-	MXT768E_MAX_MT_FINGERS, 20, 40, 245, 245, 5, 5, 143, 45, 136,
+	MXT768E_MAX_MT_FINGERS, 20, 40, 250, 250, 5, 5, 143, 50, 136,
 	30, 12, MXT768E_TCHHYST_CHRG, 0, 0, 0, 0, 0, 0, 0,
 	0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 	0, 0, 0, 0
@@ -3923,7 +3923,7 @@ static u8 t48_config_chrg_e[] = {PROCG_NOISESUPPRESSION_T48,
 	96, 20, 0, 6, 6, 0, 0, 48, 4, 64,
 	0, 0, 20, 0, 0, 0, 0, 15, 0, 0,
 	0, 0, 0, 0, 96, MXT768E_THRESHOLD_CHRG, 2, 10, 5, 81,
-	MXT768E_MAX_MT_FINGERS, 20, 40, 245, 245, 6, 6, 143, 45, 136,
+	MXT768E_MAX_MT_FINGERS, 20, 40, 251, 251, 6, 6, 144, 50, 136,
 	30, 12, MXT768E_TCHHYST_CHRG, 0, 0, 0, 0, 0, 0, 0,
 	0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 	0, 0, 0, 0
@@ -6023,12 +6023,40 @@ static struct xoadc_platform_data pm8058_xoadc_pdata = {
 };
 #endif
 
-#if defined(CONFIG_SAMSUNG_JACK) || defined (CONFIG_SAMSUNG_EARJACK)
+#if defined(CONFIG_SAMSUNG_JACK) || defined(CONFIG_SAMSUNG_EARJACK)
 
 void *adc_handle;
 static struct regulator *vreg_earmic_bias;
 bool earmic_bias = 0;
 
+#if defined(CONFIG_TARGET_LOCALE_KOR) || defined(CONFIG_TARGET_LOCALE_JPN)
+#define JACK_WATERPROOF
+#endif
+
+#if defined(JACK_WATERPROOF)
+#if defined(CONFIG_TARGET_LOCALE_KOR) || defined(CONFIG_TARGET_LOCALE_JPN)
+static struct sec_jack_zone jack_zones[] = {
+	[0] = {
+		.adc_high	= 1220, // spec  : 920
+		.delay_ms	= 10,
+		.check_count	= 5,
+		.jack_type	= SEC_HEADSET_3POLE,
+	},
+	[1] = {
+		.adc_high	= 3090,
+		.delay_ms	= 10,
+		.check_count	= 5,
+		.jack_type	= SEC_HEADSET_4POLE,
+	},
+       [2] = {
+		.adc_high	= 9999, // spec :  1038
+		.delay_ms	= 10,
+		.check_count	= 5,
+		.jack_type	= SEC_HEADSET_4POLE,
+	},
+};
+#endif
+#else
 static struct sec_jack_zone jack_zones[] = {
 	[0] = {
 		.adc_high	= 1230, // spec  : 1161
@@ -6043,9 +6071,29 @@ static struct sec_jack_zone jack_zones[] = {
 		.jack_type	= SEC_HEADSET_4POLE,
 	},
 };
+#endif
 
 #ifdef CONFIG_SAMSUNG_EARJACK
 /* To support 3-buttons earjack */
+#if defined(CONFIG_TARGET_LOCALE_KOR) || defined(CONFIG_TARGET_LOCALE_JPN)
+static struct sec_jack_buttons_zone jack_buttons_zones[] = {
+	{
+		.code		= KEY_MEDIA,
+		.adc_low		= 0,
+		.adc_high		= 185,  // spec : 168
+	},
+	{
+		.code		= KEY_VOLUMEUP,
+		.adc_low		= 186, // spec : 189
+		.adc_high		= 417, // spec : 391
+	},
+	{
+		.code		= KEY_VOLUMEDOWN,
+		.adc_low		= 418, // spec : 438
+		.adc_high		= 880, // spec :  832
+	},
+};
+#else
 static struct sec_jack_buttons_zone jack_buttons_zones[] = {
 	{
 		.code		= KEY_MEDIA,
@@ -6063,6 +6111,7 @@ static struct sec_jack_buttons_zone jack_buttons_zones[] = {
 		.adc_high		= 850, // spec :  832
 	},
 };
+#endif
 #endif
 
 static int get_p8lte_det_jack_state(void)
