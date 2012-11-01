@@ -1,3 +1,3 @@
 #!/bin/bash
 
-./_build.sh RECO boot $1
+./_build.sh RECO recovery $1

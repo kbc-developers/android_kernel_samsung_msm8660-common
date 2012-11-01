@@ -291,6 +291,13 @@ int ath6kl_wmi_implicit_create_pstream(struct wmi *wmi, u8 if_idx,
 					layer2_priority);
 		} else
 			usr_pri = layer2_priority & 0x7;
+
+		/*
+		 * Queue the EAPOL frames in the same WMM_AC_VO queue
+		 * as that of management frames.
+		 */
+		if (skb->protocol == cpu_to_be16(ETH_P_PAE))
+			usr_pri = WMI_VOICE_USER_PRIORITY;
 	}
 
 	/*
@@ -526,6 +533,8 @@ static int ath6kl_wmi_tx_status_event_rx(struct wmi *wmi, u8 *datap, int len,
 	id = le32_to_cpu(ev->id);
 	ath6kl_dbg(ATH6KL_DBG_WMI, "tx_status: id=%x ack_status=%u\n",
 		   id, ev->ack_status);
+
+	mutex_lock(&wmi->lock_mgmt);
 	if (wmi->last_mgmt_tx_frame) {
 		cfg80211_mgmt_tx_status(vif->ndev, id,
 					wmi->last_mgmt_tx_frame,
@@ -535,6 +544,7 @@ static int ath6kl_wmi_tx_status_event_rx(struct wmi *wmi, u8 *datap, int len,
 		wmi->last_mgmt_tx_frame = NULL;
 		wmi->last_mgmt_tx_frame_len = 0;
 	}
+	mutex_unlock(&wmi->lock_mgmt);
 
 	return 0;
 }
@@ -712,12 +722,25 @@ int ath6kl_wmi_set_roam_lrssi_cmd(struct wmi *wmi, u8 lrssi)
 
 	cmd = (struct roam_ctrl_cmd *) skb->data;
 
-	cmd->info.params.lrssi_scan_period = cpu_to_le16(DEF_LRSSI_SCAN_PERIOD);
+#ifdef CONFIG_MACH_PX
+	if (wmi->parent_dev->psminfo == 0)
+		cmd->info.params.lrssi_scan_period = 0xFFFF;
+	else
+		cmd->info.params.lrssi_scan_period = a_cpu_to_sle16(DEF_LRSSI_SCAN_PERIOD);
+#else
+	cmd->info.params.lrssi_scan_period = a_cpu_to_sle16(DEF_LRSSI_SCAN_PERIOD);
+#endif
+
 	cmd->info.params.lrssi_scan_threshold = a_cpu_to_sle16(lrssi +
 						       DEF_SCAN_FOR_ROAM_INTVL);
 	cmd->info.params.lrssi_roam_threshold = a_cpu_to_sle16(lrssi);
 	cmd->info.params.roam_rssi_floor = DEF_LRSSI_ROAM_FLOOR;
 	cmd->roam_ctrl = WMI_SET_LRSSI_SCAN_PARAMS;
+
+	ath6kl_dbg(ATH6KL_DBG_WMI, "lrssi_scan_period %d, lrssi_scan_threshold = %d, "
+		"lrssi_roam_threshold = %d, roam_rssi_floor = %d\n",
+		cmd->info.params.lrssi_scan_period, cmd->info.params.lrssi_scan_threshold,
+		cmd->info.params.lrssi_roam_threshold, cmd->info.params.roam_rssi_floor);
 
 	ath6kl_wmi_cmd_send(wmi, 0, skb, WMI_SET_ROAM_CTRL_CMDID,
 			    NO_SYNC_WMIFLAG);
@@ -1260,6 +1283,11 @@ static int ath6kl_wmi_neighbor_report_event_rx(struct wmi *wmi, u8 *datap,
 {
 	struct wmi_neighbor_report_event *ev;
 	u8 i;
+#ifdef CONFIG_MACH_PX
+	static int prev_num_aps = 0; 
+	struct low_rssi_scan_params roam_ctrl;
+	bool need_adjust = false;
+#endif
 
 	if (len < sizeof(*ev))
 		return -EINVAL;
@@ -1270,6 +1298,41 @@ static int ath6kl_wmi_neighbor_report_event_rx(struct wmi *wmi, u8 *datap,
 			   "(num=%d len=%d)\n", ev->num_neighbors, len);
 		return -EINVAL;
 	}
+	
+
+#ifdef CONFIG_MACH_PX
+	ath6kl_dbg(ATH6KL_DBG_WMI, "neighbor_report_event: numAps = %d, prev_numAps = %d\n", ev->num_neighbors, prev_num_aps);
+
+	if (prev_num_aps != 0 && ev->num_neighbors != prev_num_aps) {
+		memset(&roam_ctrl, 0, sizeof(struct low_rssi_scan_params));
+		need_adjust = true;
+		
+		if (ev->num_neighbors < 2) { 
+			roam_ctrl.lrssi_scan_period  = a_cpu_to_sle16(DEF_LRSSI_SCAN_PERIOD_30SEC); 
+		} else if (ev->num_neighbors >= 2 && prev_num_aps < 2){
+			roam_ctrl.lrssi_scan_period  = a_cpu_to_sle16(DEF_LRSSI_SCAN_PERIOD); 
+		} else
+			need_adjust = false;
+		
+		if (need_adjust == true) {
+			roam_ctrl.lrssi_scan_threshold = a_cpu_to_sle16(DEF_LRSSI_ROAM_THRESHOLD +
+									   DEF_SCAN_FOR_ROAM_INTVL);
+			roam_ctrl.lrssi_roam_threshold = a_cpu_to_sle16(DEF_LRSSI_ROAM_THRESHOLD);
+			roam_ctrl.roam_rssi_floor = DEF_LRSSI_ROAM_FLOOR;
+		
+
+			ath6kl_wmi_set_roam_lrssi_config_cmd(wmi, &roam_ctrl);
+
+			ath6kl_dbg(ATH6KL_DBG_WMI, "[adjustment] low rssi scan interval = %d, scan threshold = %d, roam threshold = %d, roam floor = %d\n",
+					 roam_ctrl.lrssi_scan_period ,
+					 roam_ctrl.lrssi_scan_threshold,
+					 roam_ctrl.lrssi_roam_threshold,
+					 roam_ctrl.roam_rssi_floor);
+		}
+	}
+	prev_num_aps = ev->num_neighbors; 
+#endif	
+	
 	for (i = 0; i < ev->num_neighbors; i++) {
 		ath6kl_dbg(ATH6KL_DBG_WMI, "neighbor %d/%d - %s 0x%x\n",
 			   i + 1, ev->num_neighbors,
@@ -1879,6 +1942,7 @@ int ath6kl_wmi_beginscan_cmd(struct wmi *wmi, u8 if_idx,
 		size += sizeof(u16) * (num_chan - 1);
 
 	skb = ath6kl_wmi_get_new_buf(size);
+	printk("%s() size = %d, buf len = %d\n", __func__, size, skb->len);
 	if (!skb)
 		return -ENOMEM;
 
@@ -1928,7 +1992,11 @@ int ath6kl_wmi_startscan_cmd(struct wmi *wmi, u8 if_idx,
 {
 	struct sk_buff *skb;
 	struct wmi_start_scan_cmd *sc;
+#ifdef CONFIG_MACH_PX
+	unsigned int size;
+#else
 	s8 size;
+#endif
 	int i, ret;
 
 	size = sizeof(struct wmi_start_scan_cmd);
@@ -2025,7 +2093,7 @@ int ath6kl_wmi_probedssid_cmd(struct wmi *wmi, u8 if_idx, u8 index, u8 flag,
 	struct wmi_probed_ssid_cmd *cmd;
 	int ret;
 
-	if (index > MAX_PROBED_SSID_INDEX)
+	if (index > MAX_PROBED_SSIDS)
 		return -EINVAL;
 
 	if (ssid_len > sizeof(cmd->ssid))
@@ -2083,7 +2151,7 @@ int ath6kl_wmi_mcastrate_cmd(struct wmi *wmi, u8 if_idx,
 	struct wmi_set_mcastrate_cmd *cmd;
 	int ret;
 
-	printk("\tmcastrate = %d\n", bitrate);
+	printk(KERN_INFO "\tmcastrate = %d\n", bitrate);
 
 	skb = ath6kl_wmi_get_new_buf(sizeof(*cmd));
 	if (!skb)
@@ -2134,7 +2202,8 @@ int ath6kl_wmi_powermode_cmd(struct wmi *wmi, u8 if_idx, u8 pwr_mode)
 	if(wmi->parent_dev->psminfo == 0)
 	{
 		pwr_mode = MAX_PERF_POWER;
-		ath6kl_dbg(ATH6KL_DBG_WMI, "%s() pwr_mode = %d\n", __func__, pwr_mode);
+		ath6kl_dbg(ATH6KL_DBG_WMI, "%s() pwr_mode = %d\n",
+						__func__, pwr_mode);
 	}
 
 	cmd->pwr_mode = pwr_mode;
@@ -3401,6 +3470,7 @@ static int ath6kl_wmi_send_action_cmd(struct wmi *wmi, u8 if_idx, u32 id,
 	struct sk_buff *skb;
 	struct wmi_send_action_cmd *p;
 	u8 *buf;
+	int ret;
 
 	if (wait)
 		return -EINVAL; /* Offload for wait not supported */
@@ -3415,7 +3485,10 @@ static int ath6kl_wmi_send_action_cmd(struct wmi *wmi, u8 if_idx, u32 id,
 		return -ENOMEM;
 	}
 
+	mutex_lock(&wmi->lock_mgmt);
+	if (wmi->last_mgmt_tx_frame)
 	kfree(wmi->last_mgmt_tx_frame);
+
 	memcpy(buf, data, data_len);
 	wmi->last_mgmt_tx_frame = buf;
 	wmi->last_mgmt_tx_frame_len = data_len;
@@ -3428,8 +3501,10 @@ static int ath6kl_wmi_send_action_cmd(struct wmi *wmi, u8 if_idx, u32 id,
 	p->wait = cpu_to_le32(wait);
 	p->len = cpu_to_le16(data_len);
 	memcpy(p->data, data, data_len);
-	return ath6kl_wmi_cmd_send(wmi, if_idx, skb, WMI_SEND_ACTION_CMDID,
+	ret = ath6kl_wmi_cmd_send(wmi, if_idx, skb, WMI_SEND_ACTION_CMDID,
 				   NO_SYNC_WMIFLAG);
+	mutex_unlock(&wmi->lock_mgmt);
+	return ret;
 }
 
 static int __ath6kl_wmi_send_mgmt_cmd(struct wmi *wmi, u8 if_idx, u32 id,
@@ -3439,6 +3514,7 @@ static int __ath6kl_wmi_send_mgmt_cmd(struct wmi *wmi, u8 if_idx, u32 id,
 	struct sk_buff *skb;
 	struct wmi_send_mgmt_cmd *p;
 	u8 *buf;
+	int ret;
 
 	if (wait)
 		return -EINVAL; /* Offload for wait not supported */
@@ -3453,7 +3529,10 @@ static int __ath6kl_wmi_send_mgmt_cmd(struct wmi *wmi, u8 if_idx, u32 id,
 		return -ENOMEM;
 	}
 
+	mutex_lock(&wmi->lock_mgmt);
+	if (wmi->last_mgmt_tx_frame)
 	kfree(wmi->last_mgmt_tx_frame);
+
 	memcpy(buf, data, data_len);
 	wmi->last_mgmt_tx_frame = buf;
 	wmi->last_mgmt_tx_frame_len = data_len;
@@ -3467,8 +3546,11 @@ static int __ath6kl_wmi_send_mgmt_cmd(struct wmi *wmi, u8 if_idx, u32 id,
 	p->no_cck = cpu_to_le32(no_cck);
 	p->len = cpu_to_le16(data_len);
 	memcpy(p->data, data, data_len);
-	return ath6kl_wmi_cmd_send(wmi, if_idx, skb, WMI_SEND_MGMT_CMDID,
+	ret = ath6kl_wmi_cmd_send(wmi, if_idx, skb, WMI_SEND_MGMT_CMDID,
 				   NO_SYNC_WMIFLAG);
+	mutex_unlock(&wmi->lock_mgmt);
+
+	return ret;
 }
 
 int ath6kl_wmi_send_mgmt_cmd(struct wmi *wmi, u8 if_idx, u32 id, u32 freq,
@@ -3890,6 +3972,7 @@ void *ath6kl_wmi_init(struct ath6kl *dev)
 		return NULL;
 
 	spin_lock_init(&wmi->lock);
+	mutex_init(&wmi->lock_mgmt);
 
 	wmi->parent_dev = dev;
 

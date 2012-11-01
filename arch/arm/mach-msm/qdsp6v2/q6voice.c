@@ -1772,7 +1772,7 @@ if( common.voc_path == VOC_PATH_PASSIVE)  //if( voice.voc_path == VOC_PATH_PASSI
 	pr_err("Start of sending apr packets\n");
 	/* send cvs cal */
 	voice_send_cvs_cal_to_modem(v);
-#if defined(CONFIG_USA_MODEL_SGH_T989)
+#if defined(CONFIG_USA_MODEL_SGH_T989) || defined (CONFIG_KOR_MODEL_SHV_E150S)
 	/* timing relaxation for VoIP */
 	if( common.voc_path == VOC_PATH_FULL) {
 		msleep(1);
@@ -1781,7 +1781,7 @@ if( common.voc_path == VOC_PATH_PASSIVE)  //if( voice.voc_path == VOC_PATH_PASSI
 
 	/* send cvp cal */
 	voice_send_cvp_cal_to_modem(v);
-#if defined(CONFIG_USA_MODEL_SGH_T989)
+#if defined(CONFIG_USA_MODEL_SGH_T989) || defined (CONFIG_KOR_MODEL_SHV_E150S)
 	/* timing relaxation for VoIP */
 	if( common.voc_path == VOC_PATH_FULL) {
 		msleep(1);

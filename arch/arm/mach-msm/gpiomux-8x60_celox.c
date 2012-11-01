@@ -665,6 +665,13 @@ static struct gpiomux_setting mdm2ap_vddmin_suspend_cfg = {
 	.pull = GPIOMUX_PULL_NONE,
 };
 
+static struct gpiomux_setting wlan_en_init_cfg = {
+	.func = GPIOMUX_FUNC_GPIO,
+	.drv = GPIOMUX_DRV_2MA,
+	.pull = GPIOMUX_PULL_NONE,
+	.dir = GPIOMUX_OUT_LOW,
+};
+
 static struct gpiomux_setting wlan_en_active_cfg = {
 	.func = GPIOMUX_FUNC_GPIO,
 	.drv = GPIOMUX_DRV_2MA,
@@ -674,8 +681,8 @@ static struct gpiomux_setting wlan_en_active_cfg = {
 static struct gpiomux_setting wlan_en_suspend_cfg = {
 	.func = GPIOMUX_FUNC_GPIO,
 	.drv = GPIOMUX_DRV_2MA,
-	.pull = GPIOMUX_PULL_UP,
-	.dir = GPIOMUX_OUT_HIGH,
+	.pull = GPIOMUX_PULL_NONE,
+	.dir = GPIOMUX_OUT_LOW,
 };
 
 
@@ -724,7 +731,7 @@ static struct gpiomux_setting boot_config_cfg = {
 };
 
 static struct msm_gpiomux_config msm8x60_gsbi_configs[] __initdata = {
-#if defined(CONFIG_USA_MODEL_SGH_T769)
+#if defined(CONFIG_USA_MODEL_SGH_T769) || defined(CONFIG_JPN_MODEL_SC_03D)
 	{
 		.gpio      = 33,
 		.settings = {

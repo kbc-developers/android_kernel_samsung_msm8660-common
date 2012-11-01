@@ -1242,10 +1242,7 @@ void taos_on(struct taos_data *taos, int type)
    
 	printk("%s : type=%d (0:light, 1:prox, 2:all)\n", __func__,type);
 
-       if(1)//taos_chip_status != TAOS_CHIP_WORKING)
-       {
             taos_chip_on();
-       }
 #if IRQ_WAKE    
                 err = enable_irq_wake(taos ->irq);
                 pr_err("%s: register wakeup source = %d\n", __func__, err);

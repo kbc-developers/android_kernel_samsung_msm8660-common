@@ -248,19 +248,25 @@ static void lpm_mode_check(struct battery_data *battery)
 
 	if (!charging_mode_from_boot)
 		return;
-
+#if defined(CONFIG_JPN_OPERATOR_NTT)
+	battery->charging_mode_booting = 1;
+	lpm_mode_flag = 1;
+	pr_info("%s: charging_mode_booting(%d)\n", __func__,
+		battery->charging_mode_booting);
+#else
 	if (check_ta_conn(battery)) {
 		battery->charging_mode_booting = 1;
 		lpm_mode_flag = 1;
 		pr_info("%s: charging_mode_booting(%d)\n", __func__,
 			battery->charging_mode_booting);
 	} else {
-#if !defined(CONFIG_KOR_OPERATOR_SKT) && !defined(CONFIG_KOR_OPERATOR_KT) && !defined(CONFIG_KOR_OPERATOR_LGU) && !defined(CONFIG_JPN_OPERATOR_NTT)
+#if !defined(CONFIG_KOR_OPERATOR_SKT) && !defined(CONFIG_KOR_OPERATOR_KT) && !defined(CONFIG_KOR_OPERATOR_LGU)
 		pr_info("%s: ta no longer connected, powering off\n", __func__);
 		if (pm_power_off)
 			pm_power_off();
 #endif
 	}
+#endif
 }
 #endif
 
@@ -319,6 +325,23 @@ static void p5_program_alarm(struct battery_data *battery, int seconds, int init
 	alarm_start_range(&battery->alarm, next, ktime_add(next, slack));
 }
 
+#if defined(CONFIG_KOR_OPERATOR_SKT) || defined(CONFIG_KOR_OPERATOR_KT) || defined(CONFIG_KOR_OPERATOR_LGU)
+/* keep 100% level incase of cable out and full charged. */
+static void p5_check_full_charged(struct battery_data *battery)
+{
+	int fullcap = get_fuelgauge_value(FG_FULLCAP);
+	int remcap = get_fuelgauge_value(FG_REMCAP_REP);
+
+	if (battery->info.batt_is_full) {
+		if (fullcap > remcap) {
+			pr_info("%s: forcely, adjust full_cap!\n",
+				__func__);
+			fg_set_full_charged();
+		}
+	}
+}
+#endif
+
 static void p5_get_cable_status(struct battery_data *battery)
 {
 	if (check_ta_conn(battery)) {
@@ -338,7 +361,10 @@ static void p5_get_cable_status(struct battery_data *battery)
 			//IRQ_TYPE_LEVEL_LOW);
 		if (battery->pdata->inform_charger_connection)
 			battery->pdata->inform_charger_connection(false);
-		
+#if defined(CONFIG_KOR_OPERATOR_SKT) || defined(CONFIG_KOR_OPERATOR_KT) || defined(CONFIG_KOR_OPERATOR_LGU)
+		/* keep 100% level incase of cable out and full charged. */
+		p5_check_full_charged(battery);
+#endif
 		battery->info.batt_improper_ta = 0;  // clear flag
 	}
 

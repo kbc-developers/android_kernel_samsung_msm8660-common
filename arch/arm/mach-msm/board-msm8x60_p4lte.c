@@ -212,24 +212,10 @@
 static struct platform_device ion_dev;
 #endif
 
-
-#if defined (CONFIG_JPN_MODEL_SC_01D) && defined (CONFIG_TOUCHSCREEN_QT602240)
 static struct mxt_callbacks *charger_callbacks;
-#if 0
-
-#define GPIO_TOUHCH_EN		62
-#define GPIO_TOUHCH_RST 	63
-#define GPIO_TOUCH_INT		125  
-
-#else
-
 #define GPIO_TOUCH_EN		62
 #define GPIO_TOUCH_RST 	        63
 #define GPIO_TOUCH_INT		125 
-
-#endif
-
-#endif
 
 #define GPIO_WLAN_HOST_WAKE 105	//WLAN_HOST_WAKE
 #define GPIO_WLAN_REG_ON 45	//WLAN_BT_EN
@@ -3465,64 +3451,58 @@ static void __init msm8x60_allocate_memory_regions(void)
 }
 
 #if defined (CONFIG_JPN_MODEL_SC_01D) && defined (CONFIG_TOUCHSCREEN_QT602240)
-static void p3_touch_exit_hw(void)
+static void p4lte_touch_exit_hw(void)
 {
-	pr_info("p3_touch_exit_hw\n");
+	printk("[TSP] %s, %d\n",__func__,__LINE__);
+	
 	gpio_free(GPIO_TOUCH_INT);
 	gpio_free(GPIO_TOUCH_RST);
 	gpio_free(GPIO_TOUCH_EN);
 
-/*
-	tegra_gpio_disable(GPIO_TOUCH_INT);
-	tegra_gpio_disable(GPIO_TOUCH_RST);
-	tegra_gpio_disable(GPIO_TOUCH_EN);
-*/
 	gpio_tlmm_config(GPIO_CFG(GPIO_TOUCH_EN,  0, GPIO_CFG_INPUT, GPIO_CFG_PULL_DOWN, GPIO_CFG_2MA), GPIO_CFG_ENABLE);
 	gpio_tlmm_config(GPIO_CFG(GPIO_TOUCH_RST,	0, GPIO_CFG_INPUT, GPIO_CFG_PULL_DOWN, GPIO_CFG_2MA), GPIO_CFG_ENABLE);
 	gpio_tlmm_config(GPIO_CFG(GPIO_TOUCH_INT,  0, GPIO_CFG_INPUT, GPIO_CFG_PULL_DOWN, GPIO_CFG_2MA), GPIO_CFG_ENABLE);
+
+	return;
 }
 
 
-static void p3_touch_suspend_hw(void)
+static void p4lte_touch_suspend_hw(void)
 {
-	gpio_direction_output(GPIO_TOUCH_RST, 0);
-	gpio_direction_output(GPIO_TOUCH_INT, 0);
-	gpio_direction_output(GPIO_TOUCH_EN, 0);
-}
-
-static void p3_touch_resume_hw(void)
-{
-	gpio_direction_output(GPIO_TOUCH_RST, 1);
-	gpio_direction_output(GPIO_TOUCH_EN, 1);
-	gpio_direction_input(GPIO_TOUCH_INT);
-	msleep(120);
-}
-
-static void p3_register_touch_callbacks(struct mxt_callbacks *cb)
-{
-	charger_callbacks = cb;
-}
-
-/*p3 touch : atmel_mxt1386*/
-static void p3_touch_init_hw(void)
-{
-int ret;
-	pr_info("p3_touch_init_hw\n");
-/*
+	printk("[TSP] %s, %d\n",__func__,__LINE__);
 	
-	gpio_request(GPIO_TOUCH_EN, "TOUCH_EN");
-	gpio_request(GPIO_TOUCH_RST, "TOUCH_RST");
-	gpio_request(GPIO_TOUCH_INT, "TOUCH_INT");
+	gpio_direction_output(GPIO_TOUCH_RST, 0);
+	gpio_direction_output(GPIO_TOUCH_EN, 0);
+	gpio_tlmm_config(GPIO_CFG(GPIO_TOUCH_INT,  0, GPIO_CFG_INPUT, GPIO_CFG_PULL_DOWN, GPIO_CFG_2MA), GPIO_CFG_ENABLE);
 
+	return;
+}
+
+static void p4lte_touch_resume_hw(void)
+{
+	printk("[TSP] %s, %d\n",__func__,__LINE__);
+	
 	gpio_direction_output(GPIO_TOUCH_EN, 1);
 	gpio_direction_output(GPIO_TOUCH_RST, 1);
-	gpio_direction_input(GPIO_TOUCH_INT);
+	gpio_tlmm_config(GPIO_CFG(GPIO_TOUCH_INT,  0, GPIO_CFG_INPUT, GPIO_CFG_NO_PULL, GPIO_CFG_2MA), GPIO_CFG_ENABLE);
+	msleep(120);
 
-	tegra_gpio_enable(GPIO_TOUCH_EN);
-	tegra_gpio_enable(GPIO_TOUCH_RST);
-	tegra_gpio_enable(GPIO_TOUCH_INT);
-*/
+	return;
+}
 
+static void p4lte_register_touch_callbacks(struct mxt_callbacks *cb)
+{
+	printk("[TSP] %s, %d\n",__func__,__LINE__);
+
+	charger_callbacks = cb;
+
+	return;
+}
+
+/*p4lte touch : atmel_mxt1386*/
+static void p4lte_touch_init_hw(void)
+{
+	int ret;
 
 	printk("[TSP] %s, %d\n",__func__,__LINE__);
 	
@@ -3549,19 +3529,18 @@ int ret;
 		gpio_tlmm_config(GPIO_CFG(GPIO_TOUCH_INT,  0, GPIO_CFG_INPUT, GPIO_CFG_NO_PULL, GPIO_CFG_2MA), GPIO_CFG_ENABLE);
 	}
 
-
-
+	return;
 }
 
-static struct mxt_platform_data p3_touch_platform_data = {
+static struct mxt_platform_data p4lte_touch_platform_data = {
 	.numtouch = 10,
 	.max_x	= 1279,
 	.max_y	= 799,
-	.init_platform_hw  = p3_touch_init_hw,
-	.exit_platform_hw  = p3_touch_exit_hw,
-	.suspend_platform_hw = p3_touch_suspend_hw,
-	.resume_platform_hw = p3_touch_resume_hw,
-	.register_cb = p3_register_touch_callbacks,
+	.init_platform_hw  = p4lte_touch_init_hw,
+	.exit_platform_hw  = p4lte_touch_exit_hw,
+	.suspend_platform_hw = p4lte_touch_suspend_hw,
+	.resume_platform_hw = p4lte_touch_resume_hw,
+	.register_cb = p4lte_register_touch_callbacks,
 	/*mxt_power_config*/
 	/* Set Idle Acquisition Interval to 32 ms. */
 	.power_config.idleacqint = 32,
@@ -3724,20 +3703,10 @@ static const struct i2c_board_info sec_i2c_touch_info[] = {
 	{
 		I2C_BOARD_INFO("sec_touch", 0x4c),
 		.irq		= MSM_GPIO_TO_INT(GPIO_TOUCH_INT),
-		.platform_data = &p3_touch_platform_data,
+		.platform_data = &p4lte_touch_platform_data,
 
 	},
 };
-
-static int __init p3_touch_init(void)
-{
-	p3_touch_init_hw();
-	i2c_register_board_info(1, sec_i2c_touch_info,
-					ARRAY_SIZE(sec_i2c_touch_info));
-
-	return 0;
-}
-
 #endif
 
 #if defined(CONFIG_TOUCHSCREEN_MELFAS)
@@ -4178,10 +4147,22 @@ static struct platform_device wm8994_p5lte = {
 #ifdef CONFIG_30PIN_CONN
 static void acc_int_init(void)
 {
+	int gpio_acc_check = get_accessory_irq_gpio();
+	int gpio_acc_en = PM8058_GPIO_PM_TO_SYS(PMIC_GPIO_ACCESSORY_EN);
+
 	gpio_tlmm_config(GPIO_CFG(GPIO_ACCESSORY_INT,
 		GPIOMUX_FUNC_GPIO, GPIO_CFG_INPUT,
 		GPIO_CFG_NO_PULL, GPIO_CFG_2MA), GPIO_CFG_ENABLE);
+
+	if ( system_rev < 0x3 ) {
+		gpio_request(gpio_acc_en, "accessory_en");
+		gpio_direction_output(gpio_acc_en, 0);
+		gpio_free(gpio_acc_en);
+		gpio_request(gpio_acc_check, "accessory_check");
+		gpio_direction_input(gpio_acc_check);
+	}
 }
+
 int64_t acc_get_adc_value(void)
 {
 	int64_t value =0;
@@ -5152,7 +5133,7 @@ static struct msm_adc_channels msm_adc_channels_data[] = {
 	{"cable_check", CHANNEL_ADC_CABLE_CHECK, 0, &xoadc_fn, CHAN_PATH_TYPE7,
 		ADC_CONFIG_TYPE2, ADC_CALIB_CONFIG_TYPE2, scale_default},
 #endif
-	{"acc_detect", CHANNEL_ADC_ACC_CHECK, 0, &xoadc_fn, CHAN_PATH_TYPE10,
+	{"acc_detect", CHANNEL_ADC_ACC_CHECK, 0, &xoadc_fn, CHAN_PATH_TYPE9,
 		ADC_CONFIG_TYPE2, ADC_CALIB_CONFIG_TYPE2, scale_default},
 
 
@@ -7662,7 +7643,7 @@ static void register_i2c_devices(void)
 						msm8x60_i2c_devices[i].len);
 	}
 
-	if ( system_rev >= 3 ) {
+	if ( system_rev >= 2 ) {
 		for (i = 0; i < ARRAY_SIZE(p5lte_rev03_i2c_devices); ++i) {
 			if (p5lte_rev03_i2c_devices[i].machs & mach_mask)
 				i2c_register_board_info(p5lte_rev03_i2c_devices[i].bus,
@@ -9237,35 +9218,16 @@ static void __init usb_host_init(void)
 	mutex_init(&adc_lock);
 #endif
 }
-static int tsp_power_on(void)
+static void p4lte_touch_power_on(void)
 {
-	int ret = 0;
-
-	gpio_request(62, "tsp_pwr_en");
-	gpio_tlmm_config(GPIO_CFG(62, 0, GPIO_CFG_OUTPUT, GPIO_CFG_NO_PULL, GPIO_CFG_2MA), 1);
-	gpio_direction_output(62, 1);
+	printk("[TSP] %s, %d\n",__func__,__LINE__);
 	
-#if !defined(CONFIG_USA_OPERATOR_ATT) && \
-	!defined(CONFIG_KOR_OPERATOR_SKT) && \
-	!defined(CONFIG_KOR_OPERATOR_LGU) && \
-	!defined(CONFIG_EUR_OPERATOR_OPEN)
-
-	ret = gpio_request( 63 , "TOUCH_RST");
-	if (ret < 0) {
-		printk(KERN_ERR "%s: TOUCH_RST gpio %d request"
-			"failed\n", __func__, 63 );
-		return ret;
-	}
-	gpio_direction_output(63 , 0);
+	gpio_direction_output(GPIO_TOUCH_EN, 1);
 	msleep(20);
-	gpio_set_value_cansleep(63 , 1);
-	msleep(100);
-	gpio_set_value_cansleep(63 , 0);
-	msleep(100);
-	gpio_set_value_cansleep(63 , 1);
+	gpio_set_value_cansleep(GPIO_TOUCH_RST , 1);
 	msleep(200);
-#endif
-	return ret;
+
+	return;
 }
 
 static int lcdc_panel_power(int on)
@@ -10152,7 +10114,8 @@ static void __init msm8x60_init(struct msm_board_data *board_data)
 	platform_add_devices(asoc_devices,
 		ARRAY_SIZE(asoc_devices));
 
-	tsp_power_on();
+	p4lte_touch_init_hw();
+	p4lte_touch_power_on();
 
 //	if(charging_mode_from_boot == 1)
 //		platform_add_devices(&charm_devices[1], ARRAY_SIZE(charm_devices) - 1);

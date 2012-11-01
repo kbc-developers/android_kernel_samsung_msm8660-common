@@ -794,7 +794,9 @@ static struct tcf_proto_ops cls_u32_ops __read_mostly = {
 
 static int __init init_u32(void)
 {
+#if !defined(CONFIG_USA_MODEL_SGH_I757)
 	pr_info("u32 classifier\n");
+#endif
 #ifdef CONFIG_CLS_U32_PERF
 	pr_info("    Performance counters on\n");
 #endif

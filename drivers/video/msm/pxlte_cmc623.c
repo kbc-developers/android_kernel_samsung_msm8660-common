@@ -491,7 +491,8 @@ void set_backlight_pwm(int level)
 			return;
 		}
 		if(cmc623_state.cabc_mode == CABC_OFF_MODE || 
-						(cmc623_state.main_tune->flag & TUNE_FLAG_CABC_ALWAYS_OFF))
+						(cmc623_state.main_tune->flag & TUNE_FLAG_CABC_ALWAYS_OFF) ||
+						level <= 3)
 			cmc623_manual_pwm_brightness(level);		
 		else 
 			cmc623_pwm_brightness(level * VALUE_FOR_1600);
@@ -1053,7 +1054,7 @@ int p5lte_cmc623_normal_mode(void)
 		gpio_set_value(CMC623_SLEEP, 1);
 		ret = gpio_get_value(CMC623_SLEEP);
 		pr_debug("%s, CMC623_SLEEP : %d\n",__func__,ret);
-		udelay(20);
+		mdelay(4);
 		gpio_set_value(CMC623_nRST, 1);
 		ret = gpio_get_value(CMC623_nRST);
 		pr_debug("%s, CMC623_nRST : %d\n",__func__,ret);
@@ -1061,7 +1062,7 @@ int p5lte_cmc623_normal_mode(void)
 		gpio_set_value(CMC623_nRST, 0);
 		ret = gpio_get_value(CMC623_nRST);
 		pr_debug("%s, CMC623_nRST : %d\n",__func__,ret);
-		msleep(4);
+		mdelay(4);
 		gpio_set_value(CMC623_nRST, 1);
 		ret = gpio_get_value(CMC623_nRST);
 		pr_debug("%s, CMC623_nRST : %d\n",__func__,ret);

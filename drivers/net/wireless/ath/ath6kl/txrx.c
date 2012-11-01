@@ -25,6 +25,10 @@
 #define ATH6KL_TID_MASK 0xf
 #define ATH6KL_AID_SHIFT 4
 
+#ifdef CONFIG_MACH_PX
+extern u8 g_nw_type;
+#endif
+
 static inline u8 ath6kl_get_tid(u8 tid_mux)
 {
 	return tid_mux & ATH6KL_TID_MASK;
@@ -481,13 +485,8 @@ int ath6kl_data_tx(struct sk_buff *skb, struct net_device *dev)
 
 	spin_unlock_bh(&ar->lock);
 
-#if !defined(CONFIG_KOR_MODEL_SHV_E150S) && !defined(CONFIG_JPN_MODEL_SC_01E)    // #ifdef CONFIG_MACH_PX
-	if (false && !IS_ALIGNED((unsigned long) skb->data - HTC_HDR_LENGTH, 4) &&
-	    skb_cloned(skb)) {
-#else 
 	if (!IS_ALIGNED((unsigned long) skb->data - HTC_HDR_LENGTH, 4) &&
 	    skb_cloned(skb)) {
-#endif
 		/*
 		 * We will touch (move the buffer data to align it. Since the
 		 * skb buffer is cloned and not only the header is changed, we
@@ -841,6 +840,7 @@ static void ath6kl_deliver_frames_to_nw_stack(struct net_device *dev,
 
 	skb->protocol = eth_type_trans(skb, skb->dev);
 #ifdef CONFIG_MACH_PX
+	if (g_nw_type == AP_NETWORK)
 	skb->len = skb->tail - skb->data;
 #endif
 	netif_rx_ni(skb);
@@ -1351,8 +1351,8 @@ void ath6kl_rx(struct htc_target *target, struct htc_packet *packet)
 	spin_unlock_bh(&vif->if_lock);
 
 
-	ath6kl_dbg_dump(ATH6KL_DBG_RAW_BYTES, __func__, "rx ",
-			skb->data, skb->len);
+	//ath6kl_dbg_dump(ATH6KL_DBG_RAW_BYTES, __func__, "rx ",
+	//		skb->data, skb->len);
 
 	skb->dev = vif->ndev;
 

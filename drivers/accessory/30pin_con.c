@@ -203,7 +203,7 @@ void acc_accessory_uevent(struct acc_con_info *acc, int acc_adc)
 			if ((acc->current_accessory == ACCESSORY_OTG) &&
 				acc->pdata->otg_en)
 				acc->pdata->otg_en(0);
-#if defined(CONFIG_TARGET_LOCALE_KOR) || defined(CONFIG_TARGET_LOCALE_JPN)
+#if (!defined(CONFIG_JPN_MODEL_SC_01E) && !defined(CONFIG_JPN_MODEL_SC_01D)) && (defined(CONFIG_TARGET_LOCALE_KOR) || defined(CONFIG_TARGET_LOCALE_JPN))
 #else
 			if (acc->current_accessory == ACCESSORY_LINEOUT)
 				switch_set_state(&acc->ear_jack_switch, UEVENT_DOCK_NONE);
@@ -229,7 +229,7 @@ void acc_accessory_uevent(struct acc_con_info *acc, int acc_adc)
 				acc->pdata->otg_en(1);
 			msleep(30);
 		} else if (acc->current_accessory == ACCESSORY_LINEOUT) {
-#if defined(CONFIG_TARGET_LOCALE_KOR)  || defined(CONFIG_TARGET_LOCALE_JPN)
+#if (!defined(CONFIG_JPN_MODEL_SC_01E) && !defined(CONFIG_JPN_MODEL_SC_01D)) && (defined(CONFIG_TARGET_LOCALE_KOR) || defined(CONFIG_TARGET_LOCALE_JPN))
 #else
 			switch_set_state(&acc->ear_jack_switch, 1);
 #endif
@@ -242,7 +242,7 @@ void acc_accessory_uevent(struct acc_con_info *acc, int acc_adc)
 			env_ptr = "ACCESSORY=OTG";
 		else if (acc->current_accessory == ACCESSORY_LINEOUT) {
 			env_ptr = "ACCESSORY=lineout";
-#if defined(CONFIG_TARGET_LOCALE_KOR) || defined(CONFIG_TARGET_LOCALE_JPN)
+#if (!defined(CONFIG_JPN_MODEL_SC_01E) && !defined(CONFIG_JPN_MODEL_SC_01D)) && (defined(CONFIG_TARGET_LOCALE_KOR) || defined(CONFIG_TARGET_LOCALE_JPN))
 #else
 			switch_set_state(&acc->ear_jack_switch, UEVENT_DOCK_NONE);
 #endif

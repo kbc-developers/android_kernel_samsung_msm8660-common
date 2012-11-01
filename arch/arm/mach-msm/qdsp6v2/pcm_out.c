@@ -295,14 +295,14 @@ static int pcm_out_open(struct inode *inode, struct file *file)
 	struct pcm *pcm;
 	int rc = 0;
 	char name[24];
-
+#if !defined(CONFIG_USA_MODEL_SGH_I757)
 	pr_info("[%s:%s] open\n", __MM_FILE__, __func__);
+#endif
 	pcm = kzalloc(sizeof(struct pcm), GFP_KERNEL);
 	if (!pcm) {
 		pr_err("%s: Failed to allocated memory\n", __func__);
 		return -ENOMEM;
 	}
-
 	pcm->channel_count = 2;
 	pcm->sample_rate = 44100;
 	pcm->buffer_size = BUFSZ;

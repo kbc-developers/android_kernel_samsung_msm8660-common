@@ -799,8 +799,10 @@ int usb_register_device_driver(struct usb_device_driver *new_udriver,
 	retval = driver_register(&new_udriver->drvwrap.driver);
 
 	if (!retval) {
+		#if !defined(CONFIG_USA_MODEL_SGH_I757)
 		pr_info("%s: registered new device driver %s\n",
 			usbcore_name, new_udriver->name);
+		#endif
 		usbfs_update_special();
 	} else {
 		printk(KERN_ERR "%s: error %d registering device "
@@ -875,9 +877,10 @@ int usb_register_driver(struct usb_driver *new_driver, struct module *owner,
 	retval = usb_create_removeid_file(new_driver);
 	if (retval)
 		goto out_removeid;
-
+	#if !defined(CONFIG_USA_MODEL_SGH_I757)
 	pr_info("%s: registered new interface driver %s\n",
 			usbcore_name, new_driver->name);
+	#endif
 
 out:
 	return retval;

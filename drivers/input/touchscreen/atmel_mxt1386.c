@@ -2496,7 +2496,7 @@ static DEVICE_ATTR(set_delta4, S_IRUGO, show_set_delta4, NULL);
 static DEVICE_ATTR(tsp_firm_update, S_IRUGO, set_mxt_update_show, NULL);
 static DEVICE_ATTR(tsp_firm_update_status, S_IRUGO,
 	set_mxt_firm_status_show, NULL);
-static DEVICE_ATTR(tsp_threshold, S_IRUGO | S_IWUSR,
+static DEVICE_ATTR(threshold, S_IRUGO | S_IWUSR,
 	show_threshold, store_threshold);
 static DEVICE_ATTR(tsp_firm_version_phone, S_IRUGO,
 	set_mxt_firm_version_show, NULL);
@@ -2543,7 +2543,7 @@ static struct attribute *maxTouch_attributes[] = {
 	&dev_attr_set_delta4.attr,
 	&dev_attr_tsp_firm_update.attr,
 	&dev_attr_tsp_firm_update_status.attr,
-	&dev_attr_tsp_threshold.attr,
+	&dev_attr_threshold.attr,
 	&dev_attr_tsp_firm_version_phone.attr,
 	&dev_attr_tsp_firm_version_panel.attr,
 	&dev_attr_set_suppression.attr,
@@ -3071,7 +3071,7 @@ static int __devinit mxt_probe(struct i2c_client *client,
 	register_early_suspend(&mxt->early_suspend);
 #endif	/* CONFIG_HAS_EARLYSUSPEND */
 
-	tsp_dev  = device_create(sec_class, NULL, 0, mxt, "sec_touchscreen");
+	tsp_dev  = device_create(sec_class, NULL, 0, mxt, "sec_touch");
 	if (IS_ERR(tsp_dev)) {
 		printk(KERN_ERR "[TSP] Failed to create device for the sysfs\n");
 		error = -ENODEV;

@@ -1859,7 +1859,7 @@ int input_register_device(struct input_dev *dev)
 
 	path = kobject_get_path(&dev->dev.kobj, GFP_KERNEL);
 
-#if !defined(CONFIG_USA_MODEL_SGH_I727R) ||  !defined(CONFIG_USA_MODEL_SGH_T989D)
+#if !defined(CONFIG_USA_MODEL_SGH_I727R) &&  !defined(CONFIG_USA_MODEL_SGH_T989D) && !defined(CONFIG_USA_MODEL_SGH_I757)
 	pr_info("%s as %s\n",
 		dev->name ? dev->name : "Unspecified device",
 		path ? path : "N/A");

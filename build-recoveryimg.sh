@@ -10,8 +10,8 @@ if [ ! -d $BIN_DIR ]; then
   mkdir -p $BIN_DIR  
 fi
 
-INITRAMFS_SRC_DIR=../sc05d_recovery_ramdisk
-INITRAMFS_TMP_DIR=/tmp/sc05d_recovery_ramdisk
+INITRAMFS_SRC_DIR=../sc03d_recovery_ramdisk
+INITRAMFS_TMP_DIR=/tmp/sc03d_recovery_ramdisk
 IMAGE_NAME=recovery
 
 # generate LOCALVERSION
@@ -34,7 +34,7 @@ echo "----- Making uncompressed $IMAGE_NAME ramdisk ------"
 echo "----- Making $IMAGE_NAME ramdisk ------"
 ./release-tools/minigzip < $BIN_DIR/ramdisk-$IMAGE_NAME.cpio > $BIN_DIR/ramdisk-$IMAGE_NAME.img
 echo "----- Making $IMAGE_NAME image ------"
-./release-tools/mkbootimg --cmdline "androidboot.hardware=qcom usb_id_pin_rework=true" --kernel $BIN_DIR/kernel  --ramdisk $BIN_DIR/ramdisk-$IMAGE_NAME.img --base 0x48000000 --pagesize 2048 --ramdiskaddr 0x49400000 --output $BIN_DIR/$IMAGE_NAME.img
+./release-tools/mkbootimg --cmdline "androidboot.hardware=qcom usb_id_pin_rework=true" --kernel $BIN_DIR/kernel  --ramdisk $BIN_DIR/ramdisk-$IMAGE_NAME.img --base 0x40400000 --pagesize 2048 --ramdiskaddr 0x41800000 --output $BIN_DIR/$IMAGE_NAME.img
 
 # create odin image
 cd $BIN_DIR

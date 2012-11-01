@@ -71,7 +71,7 @@
 #elif defined(CONFIG_JPN_MODEL_SC_01D)  //P4LTE-NTT
 #include "timpani_profile_p4lte_ntt.h"
 #elif defined(CONFIG_EUR_MODEL_GT_P7320)  //P5LTE-EUR //SHOULD BE CHECKED
-#include "timpani_profile_p5lte_att.h"
+#include "timpani_profile_p5lte_eur_open.h"
 #elif defined(CONFIG_KOR_MODEL_SHV_E140S)  //P5LTE-SKT
 #include "timpani_profile_p5lte_skt.h"
 #elif defined(CONFIG_KOR_MODEL_SHV_E140K)  //P5LTE-KT
@@ -159,7 +159,7 @@ struct platform_device msm_device_dspcrashd_8x60 = {
 #define PMIC_GPIO_MAIN_MICBIAS_EN      PM8058_GPIO(25)
 #define PMIC_GPIO_SUB_MICBIAS_EN       PM8058_GPIO(26)
 #endif
-#if defined(CONFIG_USA_MODEL_SGH_I957)
+#if defined(CONFIG_USA_MODEL_SGH_I957) || defined(CONFIG_EUR_MODEL_GT_P7320)
 #define PMIC_GPIO_MAIN_MICBIAS_EN PM8058_GPIO(28)
 #endif
 #if defined(CONFIG_TARGET_SERIES_P5LTE) && defined(CONFIG_TARGET_LOCALE_KOR)
@@ -1566,8 +1566,8 @@ static int msm_snddev_enable_amic_power(void)
 		gpio_direction_output(SNDDEV_GPIO_MIC1_ANCL_SEL, 0);
 #endif
 	} else {
-#if defined(CONFIG_USA_MODEL_SGH_I957)
-	
+#if defined(CONFIG_USA_MODEL_SGH_I957) || defined(CONFIG_EUR_MODEL_GT_P7320)
+
 		gpio_direction_output(PM8058_GPIO_PM_TO_SYS(PMIC_GPIO_MAIN_MICBIAS_EN), 1);
 
 #elif defined(CONFIG_TARGET_SERIES_P5LTE) && defined(CONFIG_TARGET_LOCALE_KOR)
@@ -1664,7 +1664,7 @@ static void msm_snddev_disable_amic_power(void)
 		gpio_free(SNDDEV_GPIO_MIC1_ANCL_SEL);
 		gpio_free(SNDDEV_GPIO_MIC2_ANCR_SEL);
 	} else
-#if defined(CONFIG_USA_MODEL_SGH_I717)
+#if defined(CONFIG_USA_MODEL_SGH_I717) || defined(CONFIG_EUR_MODEL_GT_P7320)
 		if( get_hw_rev() >= 0x3 ){
 			gpio_direction_output(PM8058_GPIO_PM_TO_SYS(PMIC_GPIO_MAIN_MICBIAS_EN), 0);
 		}
