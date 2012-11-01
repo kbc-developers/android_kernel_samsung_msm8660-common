@@ -22,7 +22,7 @@ fi
 # check target
 BUILD_TARGET=$1
 case "$BUILD_TARGET" in
-  "AOSP" ) BUILD_DEFCONFIG=kbc_sc05d_aosp_defconfig ;;
+  "AOSP" ) BUILD_DEFCONFIG=kbc_sc03d_aosp_defconfig ;;
   "SAM" ) BUILD_DEFCONFIG=kbc_sc05d_samsung_defconfig ;;
   "RECO" ) BUILD_DEFCONFIG=kbc_sc03d_recovery_defconfig ;;
   "MULTI" ) BUILD_DEFCONFIG=kbc_sc05d_multi_defconfig ;;
