@@ -348,6 +348,14 @@ int sec_debug_is_enabled(void)
 {
 	return enable;
 }
+
+void sec_debug_disabled(void)
+{
+	enable = 0;
+}
+
+
+
 EXPORT_SYMBOL(sec_debug_is_enabled);
 
 /* core reg dump function*/
@@ -498,6 +506,16 @@ static void sec_debug_save_context(void)
 
 	pr_emerg("(%s) context saved(CPU:%d)\n", __func__, smp_processor_id());
 	local_irq_restore(flags);
+}
+
+void sec_debug_clear_upload_magic(void)
+{
+	pr_emerg("(%s)\n", __func__);
+
+	writel(0x0, restart_reason);
+
+	flush_cache_all();
+	outer_flush_all();
 }
 
 static void sec_debug_set_upload_magic(unsigned magic)

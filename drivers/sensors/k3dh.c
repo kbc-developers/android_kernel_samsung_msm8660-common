@@ -105,6 +105,10 @@ static int k3dh_read_accel_raw_xyz(struct k3dh_data *k3dh,
 	acc->y = acc->y >> 4;
 	acc->z = acc->z >> 4;
 
+#if defined(CONFIG_JPN_MODEL_SC_01D)
+	acc->z = -(acc->z);
+#endif
+	
 	return 0;
 }
 
@@ -126,6 +130,14 @@ static int k3dh_read_accel_xyz(struct k3dh_data *k3dh,
 	acc->y -= k3dh->cal_data.y;
 	acc->z -= k3dh->cal_data.z;
 
+#if defined(CONFIG_JPN_MODEL_SC_01E)
+	{
+		s16 temp = acc->x;
+		acc->x = acc->y;
+		acc->y = -temp;
+		acc->z = acc->z;
+	}
+#endif
 
 	return err;
 }
@@ -553,7 +565,6 @@ static ssize_t k3dh_calibration_store(struct device *dev,
 	return count;
 }
 
-#if !(defined(CONFIG_TARGET_LOCALE_KOR) && defined(CONFIG_TARGET_SERIES_P5LTE))
 static ssize_t k3dh_acc_raw_data_show(struct device *dev,
 					struct device_attribute *attr,
 					char *buf)
@@ -570,36 +581,23 @@ static ssize_t k3dh_acc_raw_data_show(struct device *dev,
 		return err;
 	}
 
-	printk("[K3DH] x=%d, y=%d, z=%d\n", acc_raw_data.x, acc_raw_data.y, acc_raw_data.z );
-
-	return sprintf(buf, "%d,%d,%d\n",
-			-1 * acc_raw_data.y,
-			-1 * acc_raw_data.x,
-			-1 * acc_raw_data.z );
-}
-#else
-static ssize_t k3dh_acc_raw_data_show(struct device *dev,
-					struct device_attribute *attr,
-					char *buf)
-{
-	int err;
-	struct k3dh_acc acc_raw_data;
-	struct k3dh_data *k3dh = dev_get_drvdata(dev);
-
-	mutex_lock(&k3dh->read_lock);
-	err = k3dh_read_accel_raw_xyz(k3dh, &acc_raw_data);
-	mutex_unlock(&k3dh->read_lock);
-	if (err < 0) {
-		pr_err("%s: k3dh_read_accel_raw_xyz() failed\n", __func__);
-		return err;
+#if defined(CONFIG_JPN_MODEL_SC_01E)
+	acc_raw_data.x -= k3dh->cal_data.x;
+	acc_raw_data.y -= k3dh->cal_data.y;
+	acc_raw_data.z -= k3dh->cal_data.z;
+	{
+		s16 temp = acc_raw_data.x;
+		acc_raw_data.x = acc_raw_data.y;
+		acc_raw_data.y = -temp;
+		acc_raw_data.z = acc_raw_data.z;
 	}
+#endif
 
 	printk("[K3DH] x=%d, y=%d, z=%d\n", acc_raw_data.x, acc_raw_data.y, acc_raw_data.z );
 
 	return sprintf(buf, "%d,%d,%d\n",
 		acc_raw_data.x, acc_raw_data.y, acc_raw_data.z );
 }
-#endif
 
 static DEVICE_ATTR(calibration, 0664,
 		   k3dh_calibration_show, k3dh_calibration_store);

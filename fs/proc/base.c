@@ -776,6 +776,15 @@ static int mem_open(struct inode* inode, struct file* file)
 	if (!task)
 		return -ESRCH;
 
+/* FSI TmmSecure start */
+#if defined(CONFIG_SECURITY_SEC)
+	if (!ptrace_may_access(task, PTRACE_MODE_ATTACH)) {
+		put_task_struct(task);
+		return PTR_ERR(ERR_PTR(-EACCES));
+	}
+#endif
+/* FSI TmmSecure end */
+	
 	mm = mm_access(task, PTRACE_MODE_ATTACH);
 	put_task_struct(task);
 
@@ -1212,6 +1221,33 @@ static const struct file_operations proc_oom_score_adj_operations = {
 	.write		= oom_score_adj_write,
 	.llseek		= default_llseek,
 };
+
+
+static ssize_t oom_killed_read(struct file *file, char __user *buf,
+					size_t count, loff_t *ppos)
+{
+	struct task_struct *task = get_proc_task(file->f_path.dentry->d_inode);
+	char buffer[PROC_NUMBUF];
+	int oom_killed = 0;
+	unsigned long flags;
+	size_t len;
+
+	if (!task)
+		return -ESRCH;
+	if (lock_task_sighand(task, &flags)) {
+		oom_killed = task->signal->oom_killed;
+		unlock_task_sighand(task, &flags);
+	}
+	put_task_struct(task);
+	len = snprintf(buffer, sizeof(buffer), "%d\n", oom_killed);
+	return simple_read_from_buffer(buf, count, ppos, buffer, len);
+}
+
+
+static const struct file_operations proc_oom_killed_operations = {
+	.read		= oom_killed_read,
+};
+
 
 #ifdef CONFIG_AUDITSYSCALL
 #define TMPBUFLEN 21
@@ -2813,6 +2849,7 @@ static const struct pid_entry tgid_base_stuff[] = {
 	INF("oom_score",  S_IRUGO, proc_oom_score),
 	ANDROID("oom_adj",S_IRUGO|S_IWUSR, oom_adjust),
 	REG("oom_score_adj", S_IRUGO|S_IWUSR, proc_oom_score_adj_operations),
+	REG("oom_killed", S_IRUGO, proc_oom_killed_operations),
 #ifdef CONFIG_AUDITSYSCALL
 	REG("loginuid",   S_IWUSR|S_IRUGO, proc_loginuid_operations),
 	REG("sessionid",  S_IRUGO, proc_sessionid_operations),
@@ -3158,6 +3195,7 @@ static const struct pid_entry tid_base_stuff[] = {
 	INF("oom_score", S_IRUGO, proc_oom_score),
 	REG("oom_adj",   S_IRUGO|S_IWUSR, proc_oom_adjust_operations),
 	REG("oom_score_adj", S_IRUGO|S_IWUSR, proc_oom_score_adj_operations),
+	REG("oom_killed", S_IRUGO, proc_oom_killed_operations),
 #ifdef CONFIG_AUDITSYSCALL
 	REG("loginuid",  S_IWUSR|S_IRUGO, proc_loginuid_operations),
 	REG("sessionid",  S_IRUGO, proc_sessionid_operations),

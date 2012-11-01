@@ -1,4 +1,22 @@
-/* isdbtmm_mod_s_2012.06.05 */
+/*
+*
+* drivers/media/isdbtmm/radio-mb86a35s.h
+*
+* isdbtmm driver
+*
+* Copyright (C) (2012, Samsung Electronics)
+*
+* This program is free software; you can redistribute it and/or modify
+* it under the terms of the GNU General Public License as published by
+* the Free Software Foundation version 2.
+*
+* This program is distributed "as is" WITHOUT ANY WARRANTY of any
+* kind, whether express or implied; without even the implied warranty
+* of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+* GNU General Public License for more details.
+*
+*/
+
 #include <linux/kernel.h>
 #include <linux/fs.h>
 #include <linux/errno.h>
@@ -106,7 +124,3 @@ extern ssize_t mb86a35_read(struct file *filp, char *buf, size_t count, loff_t *
 extern int mb86a35_write(struct file *filp, const char __user * buf, size_t count, loff_t * f_pos);
 extern long mb86a35_ioctl(struct file *filp, unsigned int cmd, unsigned long arg);
 extern int mb86a35_mmap(struct file *filp, struct vm_area_struct *vma);
-
-MODULE_DESCRIPTION("MB86A35 Driver");
-MODULE_LICENSE("GPL v2");
-/* isdbtmm_mod_e_2012.06.05 */

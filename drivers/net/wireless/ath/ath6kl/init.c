@@ -33,7 +33,8 @@ unsigned int debug_mask = ATH6KL_DBG_WMI | ATH6KL_DBG_BOOT |
 			ATH6KL_DBG_TRC;
 static unsigned int testmode;
 #ifdef CONFIG_MACH_PX
-static unsigned int suspend_mode = WLAN_POWER_STATE_WOW; /* WoW2 (deepsleep), Suspend (WoW) */
+/* WoW2 (deepsleep), Suspend (WoW) */
+static unsigned int suspend_mode = WLAN_POWER_STATE_WOW;
 static unsigned int wow_mode = WLAN_POWER_STATE_DEEP_SLEEP;
 #else
 static unsigned int suspend_mode;
@@ -45,8 +46,11 @@ static unsigned int ar6k_clock = 26000000;
 #else
 static unsigned int ar6k_clock = 19200000;
 #endif
+#if defined(CONFIG_JPN_MODEL_SC_01E)
+static unsigned short reg_domain = 0x0088;
+#else
 static unsigned short reg_domain = 0xffff;
-static unsigned short lrssi = 20;   /* -95 dBm (SNR) - ROAM_THRESHOLD (20) = -75 dBm*/
+#endif
 
 static unsigned short en_ani = 1;
 module_param(debug_mask, uint, 0644);
@@ -56,7 +60,6 @@ module_param(wow_mode, uint, 0644);
 module_param(uart_debug, uint, 0644);
 module_param(ar6k_clock, uint, 0644);
 module_param(reg_domain, ushort, 0644);
-module_param(lrssi, ushort, 0644);
 module_param(en_ani, ushort, 0644);
 
 
@@ -479,7 +482,8 @@ static int ath6kl_target_config_wlan_params(struct ath6kl *ar, int idx)
 {
 	int status = 0;
 	int ret;
-#if CONFIG_MACH_PX
+#ifdef CONFIG_MACH_PX
+	struct low_rssi_scan_params roam_ctrl;
 	struct ath6kl_vif *vif = ath6kl_get_vif_by_index(ar, idx);
 #endif
 	/*
@@ -494,7 +498,7 @@ static int ath6kl_target_config_wlan_params(struct ath6kl *ar, int idx)
 	}
 
 
-#if CONFIG_MACH_PX
+#ifdef CONFIG_MACH_PX
 	if (ar->conf_flags & ATH6KL_CONF_IGNORE_PS_FAIL_EVT_IN_SCAN) {
 		if ((ath6kl_wmi_pmparams_cmd(ar->wmi, idx,
 			0, vif->pspoll_num, 0, 0, 1,
@@ -573,7 +577,7 @@ static int ath6kl_target_config_wlan_params(struct ath6kl *ar, int idx)
 			vif->scparams.maxact_chdwell_time,
 			vif->scparams.pas_chdwell_time);
 
-		ath6kl_wmi_scanparams_cmd(ar->wmi, idx,
+		ret = ath6kl_wmi_scanparams_cmd(ar->wmi, idx,
 		      vif->scparams.fg_start_period,
 		      vif->scparams.fg_end_period, vif->scparams.bg_period,
 		      vif->scparams.minact_chdwell_time,
@@ -583,8 +587,24 @@ static int ath6kl_target_config_wlan_params(struct ath6kl *ar, int idx)
 		      vif->scparams.scan_ctrl_flags,
 		      vif->scparams.max_dfsch_act_time,
 		      vif->scparams.maxact_scan_per_ssid);
+		if (ret) {
+			ath6kl_dbg(ATH6KL_DBG_TRC, "failed to set scanparams"
+				   "(%d)\n", status);
+		}
 
-		ath6kl_wmi_set_roam_lrssi_cmd(ar->wmi, lrssi);
+		memset(&roam_ctrl, 0, sizeof(struct low_rssi_scan_params));
+		//roam_ctrl.lrssi_scan_period = 0xFFFF;
+		roam_ctrl.lrssi_scan_period  = a_cpu_to_sle16(DEF_LRSSI_SCAN_PERIOD); 
+		roam_ctrl.lrssi_scan_threshold = a_cpu_to_sle16(DEF_LRSSI_ROAM_THRESHOLD +
+							   DEF_SCAN_FOR_ROAM_INTVL);
+		roam_ctrl.lrssi_roam_threshold = a_cpu_to_sle16(DEF_LRSSI_ROAM_THRESHOLD);
+		roam_ctrl.roam_rssi_floor = DEF_LRSSI_ROAM_FLOOR;
+				
+		ret = ath6kl_wmi_set_roam_lrssi_config_cmd(ar->wmi, &roam_ctrl);
+		if (status) {
+			ath6kl_dbg(ATH6KL_DBG_TRC, "failed to set lrssi roam"
+				   "(%d)\n", status);
+		}
 	}
 #endif
 	return status;

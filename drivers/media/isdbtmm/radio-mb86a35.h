@@ -1,9 +1,21 @@
-/**
-	@file	radio-mb86a35.h
-	multimedia tuner module device driver header file.
-	This file is a header file for multimedia tuner module device driver users.
+/*
+*
+* drivers/media/isdbtmm/radio-mb86a35.h
+*
+* isdbtmm driver
+*
+* Copyright (C) (2012, Samsung Electronics)
+*
+* This program is free software; you can redistribute it and/or modify
+* it under the terms of the GNU General Public License as published by
+* the Free Software Foundation version 2.
+*
+* This program is distributed "as is" WITHOUT ANY WARRANTY of any
+* kind, whether express or implied; without even the implied warranty
+* of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+* GNU General Public License for more details.
+*
 */
-/* COPYRIGHT FUJITSU SEMICONDUCTOR LIMITED 2011 */
 
 #ifndef	__RADIO_MB86A35_H__
 #define	__RADIO_MB86A35_H__
@@ -18,9 +30,8 @@ typedef unsigned int u32;
 #include <string.h>
 #endif
 
-/* isdbtmm_mod_s_2012.06.01 */
+#define NODE_BASENAME 	"/dev/mmtun"
 #define NODE_PATHNAME 	"mmtun"  /* Device Name */
-/* isdbtmm_mod_e_2012.06.01 */
 
 /* Debug Start */
 #undef PERFORMANCE_TEST	
@@ -117,6 +128,9 @@ enum ioctl_command_no {
 	IOCTL_STREAM_READ_CTRL,				/* Stream Read Control				*/
 	IOCTL_SPI_CONFIG,				/* SPI config Setting				*/
 	IOCTL_TS_SETUP,					/* TS Setting					*/
+	
+	IOCTL_GET_OPEN_COUNT		= 0xF300,	/* Open Count Getting				*/
+	IOCTL_SET_MONITORAPP_MODE,
 };
 
 /********************************************************************************************************/
@@ -951,13 +965,5 @@ struct ioctl_ts_setup {
 	u8 ERRCTRL;
 };
 typedef struct ioctl_ts_setup ioctl_ts_setup_t;
-
-
-u32 inline GET32(u32 * merdata)
-{
-	u32 rtncode = 0;
-	memcpy(&rtncode, merdata, sizeof(u32));
-	return rtncode;
-}
 
 #endif /* __RADIO_MB86A35_H__ */

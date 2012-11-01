@@ -599,6 +599,13 @@ config MACH_P5_LTE
 	help
 	  Support for the Samsung P5 LTE device.
 
+config MACH_P4_LTE
+	depends on ARCH_MSM8X60
+	default n
+	bool "MSM8x60 Samsung P4 LTE"
+	help
+	  Support for the Samsung P4 LTE device.
+
 config MACH_MSM8960_SIM
 	depends on ARCH_MSM8960
 	bool "MSM8960 Simulator"

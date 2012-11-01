@@ -48,7 +48,7 @@
 #include "timpani_profile_p5lte_eur_open.h"
 #elif defined(CONFIG_MACH_P8_LTE) && !defined(CONFIG_TARGET_LOCALE_KOR_SKT)
 #include "timpani_profile_p8lte.h"  // not SKT
-#elif defined(CONFIG_MACH_P4_LTE)
+#elif defined(CONFIG_JPN_MODEL_SC_01D)
 #include "timpani_profile_p4lte.h"
 #elif defined(CONFIG_MACH_P5_LTE) && defined(CONFIG_TARGET_LOCALE_KOR_SKT)
 #include "timpani_profile_p5lte_kor_skt.h"
@@ -5735,29 +5735,37 @@ void __init msm_snddev_init(void)
 
 		platform_add_devices(snd_devices_qt,
 		ARRAY_SIZE(snd_devices_qt));
-	} else if (machine_is_p5_lte()){
-*/		pr_info("snd_devices_p5_lte\n");
+	} */
+#if defined (CONFIG_USA_MODEL_SGH_I957)
+
+		pr_info("snd_devices_p5_lte\n");
 		for (i = 0; i < ARRAY_SIZE(snd_devices_p5_lte); i++)
 			snd_devices_p5_lte[i]->id = dev_id++;
 
 		platform_add_devices(snd_devices_p5_lte,
 		ARRAY_SIZE(snd_devices_p5_lte));
-/*	} else if (machine_is_p8_lte()){
+	
+#endif
+/*	 else if (machine_is_p8_lte()){
 		pr_info("snd_devices_p8_lte\n");
 		for (i = 0; i < ARRAY_SIZE(snd_devices_p8_lte); i++)
 			snd_devices_p8_lte[i]->id = dev_id++; //kks_110908 snd_devices_p5_lte->snd_devices_p8_lte
 
 		platform_add_devices(snd_devices_p8_lte,
 		ARRAY_SIZE(snd_devices_p8_lte));
-	} else if (machine_is_p4_lte()){
+	} 
+*/
+#if defined (CONFIG_JPN_MODEL_SC_01D)
+
 		pr_info("snd_devices_p4_lte\n");
 		for (i = 0; i < ARRAY_SIZE(snd_devices_p4_lte); i++)
 			snd_devices_p4_lte[i]->id = dev_id++;
 
 		platform_add_devices(snd_devices_p4_lte,
 		ARRAY_SIZE(snd_devices_p4_lte));
-	}
-*/
+
+#endif
+
 	if (machine_is_msm8x60_surf()) {
 		for (i = 0; i < ARRAY_SIZE(snd_devices_ftm); i++)
 			snd_devices_ftm[i]->id = dev_id++;

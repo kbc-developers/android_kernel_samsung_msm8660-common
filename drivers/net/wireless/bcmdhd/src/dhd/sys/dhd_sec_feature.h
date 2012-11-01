@@ -78,7 +78,7 @@
 #undef WRITE_MACADDR
 #endif
 
-#if defined(CONFIG_TARGET_SERIES_Q1)\
+#if (defined(CONFIG_TARGET_SERIES_Q1) || defined(CONFIG_TARGET_SERIES_CELOX))\
 	&& defined(CONFIG_JPN_OPERATOR_NTT)
 #undef READ_MACADDR
 #undef RDWR_MACADDR

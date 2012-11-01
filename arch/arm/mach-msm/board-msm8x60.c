@@ -15324,7 +15324,9 @@ void yda165_avdd_power_on(void)
 #endif
 
 	amp_reg_ref_cnt++;
+	#if !defined(CONFIG_USA_MODEL_SGH_I757)
 	pr_info("%s : amp_reg_ref_cnt = %d\n", __func__, amp_reg_ref_cnt);
+	#endif
 	
 #if defined (CONFIG_USA_MODEL_SGH_T989)
 	if(get_hw_rev()>=0x05) 
@@ -15419,7 +15421,9 @@ void yda165_avdd_power_off(void)
 	int ret;
 
 	amp_reg_ref_cnt--;
+	 #if !defined(CONFIG_USA_MODEL_SGH_I757)
 	pr_info("%s : amp_reg_ref_cnt = %d\n", __func__, amp_reg_ref_cnt);
+	#endif
 		
 #if defined (CONFIG_USA_MODEL_SGH_T989)
 	if(get_hw_rev()>=0x05) 

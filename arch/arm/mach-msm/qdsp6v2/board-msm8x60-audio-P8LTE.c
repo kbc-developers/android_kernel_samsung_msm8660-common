@@ -2115,7 +2115,7 @@ ADIE_SPEAKER_RX_48000_256;
 // ------- DEFINITION OF EXTERNAL DEVICES ------ 
 #if defined (CONFIG_TARGET_LOCALE_KOR) || defined(CONFIG_TARGET_LOCALE_JPN)
 static struct adie_codec_action_unit lineout_rx_48KHz_osr256_actions[] =
-ADIE_LINEOUT_RX_48000_256;
+ADIE_SPEAKER_LINEOUT_RX_48000_256; //kks_120724 ADIE_LINEOUT_RX_48000_256
 #else
 #if defined (CONFIG_USA_MODEL_SGH_I727) || defined(CONFIG_USA_MODEL_SGH_T989) || defined (CONFIG_USA_MODEL_SGH_I717)
 static struct adie_codec_action_unit lineout_rx_48KHz_osr256_actions[] =

@@ -50,8 +50,9 @@
 //#define CHARM_MODEM_TIMEOUT	6000
 //#define CHARM_HOLD_TIME		4000
 #define CHARM_MODEM_TIMEOUT	1500
-#if defined(CONFIG_TARGET_LOCALE_USA)
-/* CHARM_HOLD_TIME 4000ms : Currently, there is a debounce timer on the charm PMIC. 
+#if defined(CONFIG_TARGET_LOCALE_USA) \
+ || (defined(CONFIG_EUR_OPERATOR_OPEN) && defined(CONFIG_TARGET_SERIES_P5LTE))
+/* CHARM_HOLD_TIME 4000ms : Currently, there is a debounce timer on the charm PMIC.
  * It is necessary to hold the AP2MDM_PMIC_RESET low for ~3.5 seconds for the reset to fully take place.
  */
 #define CHARM_HOLD_TIME		4000
@@ -85,8 +86,10 @@ DECLARE_COMPLETION(charm_needs_reload);
 DECLARE_COMPLETION(charm_boot);
 DECLARE_COMPLETION(charm_ram_dumps);
 
-#if (defined(CONFIG_USA_OPERATOR_ATT) && (defined(CONFIG_TARGET_SERIES_P5LTE) || defined(CONFIG_TARGET_SERIES_P8LTE))) || \
-	(defined(CONFIG_JPN_OPERATOR_NTT) && defined (CONFIG_TARGET_SERIES_P4LTE))
+#if (defined(CONFIG_USA_OPERATOR_ATT) && (defined(CONFIG_TARGET_SERIES_P5LTE) \
+ || defined(CONFIG_TARGET_SERIES_P8LTE))) \
+ || (defined(CONFIG_JPN_OPERATOR_NTT) && defined (CONFIG_TARGET_SERIES_P4LTE)) \
+ || (defined(CONFIG_EUR_OPERATOR_OPEN) && defined(CONFIG_TARGET_SERIES_P5LTE))
 int get_charm_ready(void)
 {
 	return charm_ready;
@@ -252,7 +255,7 @@ static long charm_modem_ioctl(struct file *filp, unsigned int cmd,
 		gpio_direction_output(AP2MDM_PMIC_RESET_N, 0);
 		gpio_direction_output(AP2MDM_KPDPWR_N, 1);
 		CHARM_DBG("%s: reset charm ok\n", __func__);
-		break;	
+		break;
 	default:
 		pr_err("%s: invalid ioctl cmd = %d\n", __func__, _IOC_NR(cmd));
 		ret = -EINVAL;
@@ -550,23 +553,24 @@ static void charm_modem_shutdown(struct platform_device *pdev)
 	}
 
 	msleep(200); // Add delay for NFC Card Mode after power-off
-#if defined(CONFIG_TARGET_LOCALE_USA)
+#if defined(CONFIG_TARGET_LOCALE_USA) \
+ || (defined(CONFIG_EUR_OPERATOR_OPEN) && defined(CONFIG_TARGET_SERIES_P5LTE))
 	/* When PM8058 has already shut down, PM8028 is still pulsing.
-	 * After shut down the MDM9K by AP2MDM_STATUS , 
-	 * then always turn off the PM8028 by AP2MDM_PMIC_RESET 
+	 * After shut down the MDM9K by AP2MDM_STATUS ,
+	 * then always turn off the PM8028 by AP2MDM_PMIC_RESET
 	 */
 	if (true) {
 		if (i <= 0)
-			pr_err("%s: MDM2AP_STATUS never went low. Doing a hard reset of the charm modem.\n", 
-				__func__);		
-		else		
-			pr_err("%s: MDM2AP_STATUS went low. but we still need doing a hard reset again.\n", 
-				__func__);		
+			pr_err("%s: MDM2AP_STATUS never went low. Doing a hard reset of the charm modem.\n",
+				__func__);
+		else
+			pr_err("%s: MDM2AP_STATUS went low. but we still need doing a hard reset again.\n",
+				__func__);
 #else
 	if (i <= 0) {
 		pr_err("%s: MDM2AP_STATUS never went low.\n",
 			 __func__);
-#endif	
+#endif
 		gpio_direction_output(AP2MDM_PMIC_RESET_N, 1);
 		for (i = CHARM_HOLD_TIME; i > 0; i -= CHARM_MODEM_DELTA) {
 			pet_watchdog();

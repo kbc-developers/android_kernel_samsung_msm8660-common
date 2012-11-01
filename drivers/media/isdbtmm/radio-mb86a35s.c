@@ -1,4 +1,22 @@
-/* isdbtmm_mod_s_2012.06.05 */
+/*
+*
+* drivers/media/isdbtmm/radio-mb86a35s.c
+*
+* isdbtmm driver
+*
+* Copyright (C) (2012, Samsung Electronics)
+*
+* This program is free software; you can redistribute it and/or modify
+* it under the terms of the GNU General Public License as published by
+* the Free Software Foundation version 2.
+*
+* This program is distributed "as is" WITHOUT ANY WARRANTY of any
+* kind, whether express or implied; without even the implied warranty
+* of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+* GNU General Public License for more details.
+*
+*/
+
 #include <linux/kernel.h>
 #include <linux/fs.h>
 #include <linux/errno.h>
@@ -166,11 +184,11 @@ static struct platform_driver mb86a35_driver = {
 	},
 };
 
-void mb86a35_com_gpio(unsigned int cmd)
+void mb86a35_com_gpio(unsigned long arg)
 {
 	int cnt, ret;
 
-	if (cmd) {
+	if (arg) {
 		
 		for (cnt = 0; cnt < ARRAY_SIZE(mb86a35_on_gpio_table); cnt++) {
 			ret = gpio_tlmm_config(mb86a35_on_gpio_table[cnt], GPIO_CFG_ENABLE);
@@ -219,9 +237,6 @@ static int __init mb86a35_com_init(void)
 {
 	int ret;
 
-	/* POWER ON */
-	mb86a35_com_gpio(POWER_ON);
-
 	ret = platform_driver_register(&mb86a35_driver);
 
 	if (ret)
@@ -251,6 +266,7 @@ static void __exit mb86a35_com_exit(void)
 module_init(mb86a35_com_init);
 module_exit(mb86a35_com_exit);
 
-MODULE_DESCRIPTION("MB86A35 Driver");
+MODULE_AUTHOR("Samsung");
+MODULE_DESCRIPTION("ISDBTMM Driver");
 MODULE_LICENSE("GPL v2");
-/* isdbtmm_mod_e_2012.06.05 */
+

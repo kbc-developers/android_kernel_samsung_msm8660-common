@@ -62,9 +62,9 @@
 #include <linux/fb.h>
 #include <linux/backlight.h>
 #include <linux/miscdevice.h>
-#include <lcdc_ld9040_seq.h>
-#include <lcdc_ea8868_seq.h>
-#include <mdp4_video_enhance.h>
+#include "lcdc_ld9040_seq.h"
+#include "lcdc_ea8868_seq.h"
+#include "mdp4_video_enhance.h"
 
 #define MAPPING_TBL_AUTO_BRIGHTNESS 1
 //#if defined (CONFIG_JPN_MODEL_SC_03D)
@@ -73,8 +73,9 @@
 #if defined(SMART_DIMMING) // smartdimming
 #include "smart_dimming_ea8868.h"
 #endif
+
 #define LCDC_DEBUG 1
- #if defined(CONFIG_USA_MODEL_SGH_T989D)
+ #if defined(CONFIG_USA_MODEL_SGH_T989D) || defined(CONFIG_USA_MODEL_SGH_I757)
  #define LCDC_DEBUG 0
  #endif
 //#define LCDC_19GAMMA_ENABLE
@@ -1480,8 +1481,9 @@ static int get_gamma_value_from_bl(int bl)
 	int gamma_val_x10 =0;
 
 #ifdef MAPPING_TBL_AUTO_BRIGHTNESS
+#if !defined(CONFIG_JPN_MODEL_SC_03D)
 	if (unlikely(!lcd.auto_brightness && bl > 250))	bl = 250;
-  
+#endif  
         	switch (bl) {
 		case 0 ... 29:
 		gamma_value = 0; // 30cd

@@ -608,18 +608,24 @@ static int remove_config(struct usb_composite_dev *cdev,
 
 		f = list_first_entry(&config->functions,
 				struct usb_function, list);
+		#if !defined(CONFIG_USA_MODEL_SGH_I757)
 		printk(KERN_DEBUG "unbind function '%s'/%p\n", f->name, f);
+		#endif
 		list_del(&f->list);
 		if (f->unbind) {
+			 #if !defined(CONFIG_USA_MODEL_SGH_I757)
 			DBG(cdev, "unbind function '%s'/%p\n", f->name, f);
+			#endif
 			f->unbind(config, f);
 			/* may free memory for "f" */
 		}
 	}
 	list_del(&config->list);
 	if (config->unbind) {
+		 #if !defined(CONFIG_USA_MODEL_SGH_I757)	
 		DBG(cdev, "unbind config '%s'/%p\n", config->label, config);
 		printk(KERN_DEBUG "unbind config '%s'/%p\n", config->label, config);
+		#endif
 		config->unbind(config);
 			/* may free memory for "c" */
 	}

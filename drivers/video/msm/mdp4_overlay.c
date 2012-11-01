@@ -1336,6 +1336,30 @@ int mdp4_mixer_info(int mixer_num, struct mdp_mixer_info *info)
 	return cnt;
 }
 
+static void mdp4_overlay_bg_solidfill_clear(uint32 mixer_num)
+{
+	 struct mdp4_overlay_pipe *bg_pipe;
+	 unsigned char *rgb_base;
+	 uint32 rgb_src_format;
+	 int pnum;
+	 bg_pipe = mdp4_overlay_stage_pipe(mixer_num,
+	 MDP4_MIXER_STAGE_BASE);
+	 if (bg_pipe && bg_pipe->pipe_type == OVERLAY_TYPE_BF) {
+		bg_pipe = mdp4_overlay_stage_pipe(mixer_num,
+		MDP4_MIXER_STAGE0);
+	 }
+	 if (bg_pipe && bg_pipe->pipe_type == OVERLAY_TYPE_RGB) {
+		rgb_src_format = mdp4_overlay_format(bg_pipe);
+		if (!(rgb_src_format & MDP4_FORMAT_SOLID_FILL)) {
+			pnum = bg_pipe->pipe_num - OVERLAY_PIPE_RGB1;
+			rgb_base = MDP_BASE + MDP4_RGB_BASE;
+			rgb_base += MDP4_RGB_OFF * pnum;
+			outpdw(rgb_base + 0x50, rgb_src_format);
+			outpdw(rgb_base + 0x0058, bg_pipe->op_mode);
+			mdp4_overlay_reg_flush(bg_pipe, 0);
+			}
+		}
+} 
 static void mdp4_mixer_stage_commit(int mixer)
 {
 	struct mdp4_overlay_pipe *pipe;
@@ -1696,7 +1720,8 @@ static int mdp4_overlay_validate_downscale(struct mdp_overlay *req,
 	struct msm_fb_data_type *mfd, uint32 perf_level, uint32 pclk_rate)
 {
 	__u32 panel_clk_khz, mdp_clk_khz;
-	__u32 num_hsync_pix_clks, mdp_clks_per_hsync, src_wh;
+	//__u32 num_hsync_pix_clks, mdp_clks_per_hsync, src_wh;
+	__u32 num_hsync_pix_clks, mdp_clks_per_hsync, scale_fct_y;
 	__u32 hsync_period_ps, mdp_period_ps, total_hsync_period_ps;
 	unsigned long fill_rate_y_dir, fill_rate_x_dir;
 	unsigned long fillratex100, mdp_pixels_produced;
@@ -1736,11 +1761,13 @@ static int mdp4_overlay_validate_downscale(struct mdp_overlay *req,
 		"total_hsync_period_ps %u\n", hsync_period_ps,
 		mdp_period_ps, total_hsync_period_ps);
 
-	src_wh = req->src_rect.w * req->src_rect.h;
-	if (src_wh % req->dst_rect.h)
-		fill_rate_y_dir = (src_wh / req->dst_rect.h) + 1;
-	else
-		fill_rate_y_dir = (src_wh / req->dst_rect.h);
+	//src_wh = req->src_rect.w * req->src_rect.h;
+	//if (src_wh % req->dst_rect.h)
+		//fill_rate_y_dir = (src_wh / req->dst_rect.h) + 1;
+	//else
+		//fill_rate_y_dir = (src_wh / req->dst_rect.h);
+		scale_fct_y = ((req->src_rect.h - 1)/req->dst_rect.h) + 1;
+		fill_rate_y_dir = (scale_fct_y * req->src_rect.w);
 
 	fill_rate_x_dir = (mfd->panel_info.xres - req->dst_rect.w)
 		+ req->src_rect.w;
@@ -2131,7 +2158,7 @@ static uint32 mdp4_overlay_get_perf_level(struct mdp_overlay *req,
 	if (mdp4_extn_disp)
 		return OVERLAY_PERF_LEVEL1;
 
-	if (req->flags & MDP_DEINTERLACE)
+	if (req->flags & (MDP_DEINTERLACE | MDP_BACKEND_COMPOSITION)) 
 		return OVERLAY_PERF_LEVEL1;
 
 	for (i = 0, cnt = 0; i < OVERLAY_PIPE_MAX; i++) {
@@ -2236,7 +2263,7 @@ static u32 mdp4_overlay_blt_enable(struct mdp_overlay *req,
 {
 	u32 clk_rate = mfd->panel_info.clk_rate;
 	u32 pull_mode = 0, use_blt = 0;
-#if !(defined CONFIG_FB_MSM_LCDC_PANEL)
+#if !(defined CONFIG_FB_MSM_LCDC_PANEL) && !(defined CONFIG_CMC624_P8LTE)
 	int screen_width, screen_height;
 #endif
 
@@ -2268,7 +2295,7 @@ static u32 mdp4_overlay_blt_enable(struct mdp_overlay *req,
 		    (mfd->panel_info.type != DTV_PANEL))
 			use_blt = 1;
 	}
-#if !(defined CONFIG_FB_MSM_LCDC_PANEL)
+#if !(defined CONFIG_FB_MSM_LCDC_PANEL) && !(defined CONFIG_CMC624_P8LTE)
 	screen_width = mfd->panel_info.xres;
 	screen_height = mfd->panel_info.yres;
 
@@ -2351,6 +2378,7 @@ int mdp4_overlay_set(struct fb_info *info, struct mdp_overlay *req)
 	}
 
 #if !(defined CONFIG_FB_MSM_LCDC_PANEL) \
+	&& !(defined CONFIG_CMC624_P8LTE) \
 	&& !(defined CONFIG_FB_MSM_MIPI_DSI_S6E8AA0_WXGA_Q1)
 	if (mfd->use_ov0_blt)
 	 mdp4_overlay_update_blt_mode(mfd);
@@ -2471,10 +2499,18 @@ int mdp4_overlay_unset(struct fb_info *info, int ndx)
 #endif
 	}
 
-	if (mfd->mdp_rev >= MDP_REV_41 && !mfd->use_ov0_blt &&
-		(pipe->mixer_num == MDP4_MIXER0)) {
+	if (mfd->mdp_rev >= MDP_REV_41 &&
+		mdp4_overlay_is_rgb_type(pipe->src_format) &&
+		!mfd->use_ov0_blt && (pipe->mixer_num == MDP4_MIXER0)) 		{ 
 		ctrl->stage[pipe->mixer_num][pipe->mixer_stage] = NULL;
 	} else {
+		if (pipe->is_fg &&
+			!mdp4_overlay_is_rgb_type(pipe->src_format)) {
+				//pr_info(">>> unset solidfill\n");
+				mdp4_overlay_bg_solidfill_clear(pipe->mixer_num);
+				pipe->is_fg = 0;
+			}
+			//pr_info(">>> unset stage down : %u\n", pipe->src_format); 
 		mdp4_mixer_stage_down(pipe);
 
 		if (pipe->mixer_num == MDP4_MIXER0) {

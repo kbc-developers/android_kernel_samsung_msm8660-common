@@ -1,9 +1,21 @@
-/**
-	@file	radio-mb86a35-dev.h \n
-	multimedia tuner module device driver header file. \n
-	This file is a header file for multimedia tuner module device driver users.
+/*
+*
+* drivers/media/isdbtmm/radio-mb86a35-dev.h
+*
+* isdbtmm driver
+*
+* Copyright (C) (2012, Samsung Electronics)
+*
+* This program is free software; you can redistribute it and/or modify
+* it under the terms of the GNU General Public License as published by
+* the Free Software Foundation version 2.
+*
+* This program is distributed "as is" WITHOUT ANY WARRANTY of any
+* kind, whether express or implied; without even the implied warranty
+* of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+* GNU General Public License for more details.
+*
 */
-/* COPYRIGHT FUJITSU SEMICONDUCTOR LIMITED 2011 */
 
 #ifndef	__RADIO_MB86A35_DEV_H__
 #define	__RADIO_MB86A35_DEV_H__
@@ -44,11 +56,14 @@
 #include <linux/dma-mapping.h>
 #include <linux/gpio.h>
 #include <linux/wakelock.h>
+/* matsumaru_mod */
+#include <linux/kthread.h>
+#include <linux/spinlock.h>
+#include <linux/sched.h>
+/* matsumaru_mod */
 
-/* isdbtmm_mod_s_2012.06.01 */
 #define	NODE_MAJOR		225	/* Major No. */
 #define	NODE_MINOR		0	/* Minor No. */
-/* isdbtmm_mod_e_2012.06.01 */
 
 #include "radio-mb86a35.h"
 
@@ -62,9 +77,7 @@
 #define	PRINT_LHEADER		PRINT_BASENAME,PRINT_LINE,PRINT_FUNCTION
 #define PRINT_FORMAT		"%s[%d] %s [%05d] %s | %s\n"
 
-/* isdbtmm_mod_s_2012.06.01 */
-extern void mb86a35_com_gpio(unsigned int cmd);
-/* isdbtmm_mod_e_2012.06.01 */
+extern void mb86a35_com_gpio(unsigned long arg);
 
 #ifdef	DEBUG
 unsigned char STOPLOG = 0;
@@ -159,7 +172,7 @@ int LOGCOPYSIZE = 0;
 
 #define MB86A35S_IRQ_WAIT			5000
 #define MB86A35S_IRQ_DELAY			1
-#define MB86A35S_SPI_WAITTIME			10000	/* micro sec	*/
+#define MB86A35S_SPI_WAITTIME			250	/* micro sec	*/
 
 #define MB86A35S_MAP_SIZE			(500 * 1024) /* 500KB	*/
 #define MB86A35S_SPIS_160PAC			0x7F80 + 4
@@ -188,12 +201,11 @@ int LOGCOPYSIZE = 0;
 #define	MB86A35S_REG_SUBR_RAMDATAL		0x24
 
 #ifndef FPGA
-#define	MB86A35S_READ_SIZE_MAX			(160*204*32)
+#define	MB86A35S_READ_SIZE_MAX			(160*188*32)
 #define MB86A35S_PACKET_SIZE			188
-#define MB86A35S_PACKET_SIZE_MAX		5555
-#define MB86A35S_PACKET_MULTIPLE		8
-#define MB86A35S_READ_SIZE				(188*16)
-#define MB86A35S_STREAM_SIZE			(160*204*32)
+#define MB86A35S_PACKET_SIZE_MAX		5120
+#define MB86A35S_READ_SIZE			(188*20)
+#define MB86A35S_STREAM_SIZE			(160*188*32)
 #else
 #define	MB86A35S_READ_SIZE_MAX			(120*204+3)
 #endif
@@ -231,9 +243,9 @@ int LOGCOPYSIZE = 0;
 #define	MB86A35_SELECT_UHF			1
 #define	MB86A35_SELECT_VHF			0
 
-#define MB86A35_CN_MONI_WAITTIME(n)		( 1260 * ( 2 << ( n + 1 )))/1000 + 10
+#define MB86A35_CN_MONI_WAITTIME(n)		( ( 1260 * ( 2 << n ))/1000 + 10 )
 
-#define MB86A35_MER_MONI_WAITTIME(n)		( 1260 * ( 2 << n ))/1000 + 10
+#define MB86A35_MER_MONI_WAITTIME(n)		( ( 1260 * ( 2 << n ))/1000 + 10 )
 
 #define	MB86A35_RF_CHANNEL_SET_TIMEOUTCOUNT	3
 

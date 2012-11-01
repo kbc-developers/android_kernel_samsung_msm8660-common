@@ -376,7 +376,7 @@ extern void fg_recovery_adjust_repsoc(u32 level);
 #endif
 #endif
 
-#ifdef CONFIG_JPN_OPERATOR_NTT
+#if defined(CONFIG_JPN_OPERATOR_NTT) || defined(CONFIG_BATTERY_P5LTE)
 #define ENABLE_SYSFS_FG_CAPACITY
 #endif
 
