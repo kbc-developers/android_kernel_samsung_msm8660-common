@@ -2,6 +2,10 @@
 
 KERNEL_DIR=$PWD
 
+BUILD_DEVICE=$1
+BUILD_TARGET=$2
+BUILD_SELECT=$3
+
 cpoy_initramfs()
 {
   if [ -d $INITRAMFS_TMP_DIR ]; then
@@ -12,29 +16,60 @@ cpoy_initramfs()
   find $INITRAMFS_TMP_DIR -name .gitignore | xargs rm
 }
 
-if [ ! -n "$1" ]; then
+if [ ! -n "$BUILD_DEVICE" ]; then
   echo ""
-  read -p "select ramdisk? [(s)amsung/(a)osp default:samsung] " BUILD_RAMDISK
+  read -p "select device? [SC05D/SC03D] " BUILD_DEVICE
+fi
+
+# device setting
+if [ "$BUILD_DEVICE" = 'SC05D' ]; then
+  AOSP_DEFCONFIG=kbc_sc05d_aosp_defconfig
+  SAM_DEFCONFIG=kbc_sc05d_samsung_defconfig
+  RECO_DEFCONFIG=kbc_sc05d_recovery_defconfig
+  MULTI_DEFCONFIG=kbc_sc05d_multi_defconfig
+  MOD_VERSION=sc05d_mod_version
+  BOOT_RAMDISK_NAME=sc05d_boot_ramdisk
+  RECOVERY_RAMDISK_NAME=sc05d_recovery_ramdisk
+  KERNEL_BASE_ADDRESS=0x48000000
+  KERNEL_RAMDISK_ADDRESS=0x49400000
+
+elif [ "$BUILD_DEVICE" = 'SC03D' ]; then
+  AOSP_DEFCONFIG=kbc_sc03d_aosp_defconfig
+  SAM_DEFCONFIG=kbc_sc03d_samsung_defconfig
+  RECO_DEFCONFIG=kbc_sc03d_recovery_defconfig
+  MULTI_DEFCONFIG=kbc_sc03d_multi_defconfig
+  MOD_VERSION=sc03d_mod_version
+  BOOT_RAMDISK_NAME=sc03d_boot_ramdisk
+  RECOVERY_RAMDISK_NAME=sc03d_recovery_ramdisk
+  KERNEL_BASE_ADDRESS=0x40400000
+  KERNEL_RAMDISK_ADDRESS=0x41800000
+
 else
-  BUILD_RADISK=$1
+  echo "error: not found BUILD_DEVICE"
+  exit -1
+fi
+
+if [ ! -n "$BUILD_TARGET" ]; then
+  echo "error: not found BUILD_TARGET"
+  exit -1
 fi
 
 # check target
-BUILD_TARGET=$1
 case "$BUILD_TARGET" in
-  "AOSP" ) BUILD_DEFCONFIG=kbc_sc03d_aosp_defconfig ;;
-  "SAM" ) BUILD_DEFCONFIG=kbc_sc05d_samsung_defconfig ;;
-  "RECO" ) BUILD_DEFCONFIG=kbc_sc03d_recovery_defconfig ;;
-  "MULTI" ) BUILD_DEFCONFIG=kbc_sc05d_multi_defconfig ;;
+  "AOSP" ) BUILD_DEFCONFIG=$AOSP_DEFCONFIG ;;
+  "SAM" ) BUILD_DEFCONFIG=$SAM_DEFCONFIG ;;
+  "RECO" ) BUILD_DEFCONFIG=$RECO_DEFCONFIG ;;
+  "MULTI" ) BUILD_DEFCONFIG=$MULTI_DEFCONFIG ;;
   * ) echo "error: not found BUILD_TARGET" && exit -1 ;;
 esac
+
 BIN_DIR=out/$BUILD_TARGET/bin
 OBJ_DIR=out/$BUILD_TARGET/obj
 mkdir -p $BIN_DIR
 mkdir -p $OBJ_DIR
 
 # generate LOCALVERSION
-. mod_version
+. $MOD_VERSION
 
 # check and get compiler
 . cross_compile
@@ -46,13 +81,6 @@ export LOCALVERSION="-$BUILD_LOCALVERSION"
 
 echo "=====> BUILD START $BUILD_KERNELVERSION-$BUILD_LOCALVERSION"
 
-if [ ! -n "$2" ]; then
-  echo ""
-  read -p "select build? [(b)oot/(r)ecovery default:boot] " BUILD_TARGET
-else
-  BUILD_TARGET=$2
-fi
-
 if [ ! -n "$3" ]; then
   echo ""
   read -p "select build? [(a)ll/(u)pdate/(i)mage default:update] " BUILD_SELECT
@@ -61,13 +89,13 @@ else
 fi
 
 # copy initramfs
-if [ "$BUILD_TARGET" = 'recovery' -o "$BUILD_TARGET" = 'r' ]; then
-  INITRAMFS_SRC_DIR=../sc03d_recovery_ramdisk
-  INITRAMFS_TMP_DIR=/tmp/sc03d_recovery_ramdisk
+if [ "$BUILD_TARGET" = 'RECO' ]; then
+  INITRAMFS_SRC_DIR=../$RECOVERY_RAMDISK_NAME
+  INITRAMFS_TMP_DIR=/tmp/$RECOVERY_RAMDISK_NAME
   IMAGE_NAME=recovery
 else
-  INITRAMFS_SRC_DIR=../sc03d_boot_ramdisk
-  INITRAMFS_TMP_DIR=/tmp/sc03d_boot_ramdisk
+  INITRAMFS_SRC_DIR=../$BOOT_RAMDISK_NAME
+  INITRAMFS_TMP_DIR=/tmp/$BOOT_RAMDISK_NAME
   IMAGE_NAME=boot
 fi
 echo ""
@@ -120,7 +148,7 @@ echo "----- Making uncompressed $IMAGE_NAME ramdisk ------"
 echo "----- Making $IMAGE_NAME ramdisk ------"
 ./release-tools/minigzip < $BIN_DIR/ramdisk-$IMAGE_NAME.cpio > $BIN_DIR/ramdisk-$IMAGE_NAME.img
 echo "----- Making $IMAGE_NAME image ------"
-./release-tools/mkbootimg --cmdline "androidboot.hardware=qcom user_debug=31 zcache" --kernel $BIN_DIR/kernel  --ramdisk $BIN_DIR/ramdisk-$IMAGE_NAME.img --base 0x40400000 --pagesize 2048 --ramdiskaddr 0x41800000 --output $BIN_DIR/$IMAGE_NAME.img
+./release-tools/mkbootimg --cmdline "androidboot.hardware=qcom user_debug=31 zcache" --kernel $BIN_DIR/kernel  --ramdisk $BIN_DIR/ramdisk-$IMAGE_NAME.img --base $KERNEL_BASE_ADDRESS --pagesize 2048 --ramdiskaddr $KERNEL_RAMDISK_ADDRESS --output $BIN_DIR/$IMAGE_NAME.img
 
 # create odin image
 cd $BIN_DIR
@@ -136,7 +164,7 @@ fi
 mkdir -p ./tmp/META-INF/com/google/android
 cp $IMAGE_NAME.img ./tmp/
 cp $KERNEL_DIR/release-tools/update-binary ./tmp/META-INF/com/google/android/
-sed -e "s/@VERSION/$BUILD_LOCALVERSION/g" $KERNEL_DIR/release-tools/updater-script-$IMAGE_NAME.sed > ./tmp/META-INF/com/google/android/updater-script
+sed -e "s/@VERSION/$BUILD_LOCALVERSION/g" $KERNEL_DIR/release-tools/$BUILD_DEVICE/updater-script-$IMAGE_NAME.sed > ./tmp/META-INF/com/google/android/updater-script
 cd tmp && zip -rq ../cwm.zip ./* && cd ../
 SIGNAPK_DIR=$KERNEL_DIR/release-tools/signapk
 java -jar $SIGNAPK_DIR/signapk.jar $SIGNAPK_DIR/testkey.x509.pem $SIGNAPK_DIR/testkey.pk8 cwm.zip $BUILD_LOCALVERSION-$IMAGE_NAME-signed.zip
