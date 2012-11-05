@@ -37,12 +37,11 @@
         -> /system/media/bootsound.mp3
       bootmovie support
         -> /data/local/bootmovie.mp4
-      exfat "not" support -> (ext4かFAT32でformatしちゃおう)
       external sd ext4 format support
       RAM Console support
 
     Others
-      kernel version 3.0.8 -> 3.0.45
+      kernel version 3.0.8 -> 3.0.49
       Use compiler linaro 2012.09
 
 
@@ -51,8 +50,7 @@
     rootを取った時点で保証は切れていますので構いませんよね
     文鎮化の可能性があります
 
-    root取得について
-      CWM Based Galaxy S3 Recovery v6.0.0.10_r1以降で
+    純正ROMでのroot取得について
       Advanced -> root hackingから導入可能です
 
     Sansung ROMでのCPU上限/下限設定について
@@ -64,8 +62,8 @@
 
 
   3. 導入方法:
-    SC06D-JB-KBC-XXX-odin.tar.md5 : Odinで煮込んでください
-    SC06D-JB-KBC-XXX-sign.zip : CWM Recovery からinstallしてください
+    SC05D-ICS-KBC-XXX-odin.tar.md5 : Odinで煮込んでください
+    SC05D-ICS-KBC-XXX-sign.zip : CWM Recovery からinstallしてください
 
 
   4. その他
