@@ -609,6 +609,8 @@ struct ath6kl_vif {
 	struct wmi_scan_params_cmd scparams;
 	unsigned int pspoll_num;
 	u16 mcastrate;
+	bool force_reload; 
+	bool sdio_remove; 
 };
 
 #define WOW_LIST_ID		0
@@ -918,7 +920,7 @@ int ath6kl_init_hw_start(struct ath6kl *ar);
 int ath6kl_init_hw_stop(struct ath6kl *ar);
 void ath6kl_check_wow_status(struct ath6kl *ar, struct sk_buff *skb,
 			     bool is_event_pkt);
-#ifdef CONFIG_KOR_MODEL_SHV_E150S   // CONFIG_MACH_PX  
+#if defined(CONFIG_KOR_MODEL_SHV_E150S) || defined(CONFIG_JPN_MODEL_SC_01E)  // CONFIG_MACH_PX  
 void ath6kl_sdio_init_msm(void);
 void ath6kl_sdio_exit_msm(void);
 #else

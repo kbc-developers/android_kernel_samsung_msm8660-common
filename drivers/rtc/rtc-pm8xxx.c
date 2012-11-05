@@ -509,8 +509,8 @@ static int __devinit pm8xxx_rtc_probe(struct platform_device *pdev)
 	}
 	rtc_tm_to_time(&tm, &tv_sec);
 
-	if ( tm.tm_year + 1900 < 2012 ) {
-		pr_debug("rtc year is below 2012. initialize to 2012-01-01\n");
+	if ( tm.tm_year + 1900 < 2000 ) {
+		pr_debug("rtc year is below 2000. initialize to 2012-01-01\n");
 		tm.tm_year = (2012 - 1900);
 		tm.tm_mon = (1 - 1);
 		tm.tm_mday = 1;

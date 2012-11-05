@@ -377,8 +377,8 @@ static int call_crda(const char *alpha2)
 	if (!is_world_regdom((char *) alpha2))
 		pr_info("Calling CRDA for country: %c%c\n",
 			alpha2[0], alpha2[1]);
-	else
-		pr_info("Calling CRDA to update world regulatory domain\n");
+    /*	else
+		pr_info("Calling CRDA to update world regulatory domain\n"); */
 
 	/* query internal regulatory database (if it exists) */
 	reg_regdb_query(alpha2);

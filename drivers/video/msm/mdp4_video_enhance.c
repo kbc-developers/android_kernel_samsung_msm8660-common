@@ -849,7 +849,7 @@ void init_mdnie_class(void)
 #endif	
 	s3c_mdnie_start();
 	sharpness_tune(0);	
-#ifdef CONFIG_FB_MSM_MIPI_S6E8AA0_WXGA_Q1_PANEL
+#if defined(CONFIG_FB_MSM_MIPI_S6E8AA0_WXGA_Q1_PANEL) || defined(CONFIG_FB_MSM_MIPI_S6E8AA0_HD720_PANEL)
 	lut_tune(MAX_LUT_SIZE, UI_LUT);
 #endif
 }

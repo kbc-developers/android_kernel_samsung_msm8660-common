@@ -150,7 +150,7 @@ static ssize_t mdnie_cabc_store(struct device *dev,
     return size;
 }
 
-static DEVICE_ATTR(mdnie_cabc, 0664, mdnie_cabc_show,mdnie_cabc_store);
+static DEVICE_ATTR(cabc, 0664, mdnie_cabc_show,mdnie_cabc_store);
 
 
 
@@ -544,9 +544,8 @@ int cmc623_sysfs_init(void)
 		printk("Failed to create device file!(%s)!\n", dev_attr_bypassonoff.attr.name);
 		ret = -1;
 	}
-	if (device_create_file(tune_cmc623_dev, &dev_attr_mdnie_cabc) < 0) {
-		pr_err("Failed to create device file!(%s)!\n",
-			dev_attr_mdnie_cabc.attr.name);
+	if (device_create_file(tune_cmc623_dev, &dev_attr_cabc) < 0) {
+		pr_err("Failed to create device file!(%s)!\n", dev_attr_cabc.attr.name);
 		ret = -1;
 	}
 	if (device_create_file(tune_cmc623_dev, &dev_attr_lcd_power) < 0) {

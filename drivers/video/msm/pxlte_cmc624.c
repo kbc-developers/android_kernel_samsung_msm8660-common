@@ -74,7 +74,7 @@ static int Cmc624_TuneSeqLen = 0;
 static int current_gamma_level = CMC624_BRIGHTNESS_MAX_LEVEL;
 static int current_cabc_onoff = 1;
 
-#if defined(CONFIG_TARGET_LOCALE_KOR_SKT) || defined(CONFIG_TARGET_LOCALE_KOR_LGU)
+#if defined(CONFIG_TARGET_LOCALE_KOR_SKT) || defined(CONFIG_TARGET_LOCALE_KOR_LGU) || defined(CONFIG_JPN_MODEL_SC_01E)
 //static int cmc624_current_region_enable = false; //region mode added
 #endif
 
@@ -265,7 +265,7 @@ bool cmc624_I2cWrite16(unsigned char Addr, unsigned long Data)
 		return -ENODEV;
 	}
 	
-#if defined(CONFIG_TARGET_LOCALE_KOR_SKT)|| defined(CONFIG_TARGET_LOCALE_KOR_LGU)
+#if defined(CONFIG_TARGET_LOCALE_KOR_SKT)|| defined(CONFIG_TARGET_LOCALE_KOR_LGU) || defined(CONFIG_JPN_MODEL_SC_01E)
 		if(Addr == 0x0000)
 		{
 		if(Data == last_cmc624_Bank)
@@ -1254,7 +1254,7 @@ int p8lte_cmc624_on(int enable)
 			ret = gpio_get_value(LCD_PWR_EN);
 			pr_debug("%s, LCD_PWR_EN : %d\n",__func__,ret);
 			cmc624_state.suspended = 1;
-#if defined (CONFIG_MACH_P4_LTE) && defined (CONFIG_TARGET_LOCALE_JPN_NTT)
+#if defined (CONFIG_MACH_P4_LTE) && defined (CONFIG_JPN_MODEL_SC_01E)
 			msleep(500); /* This is H/W Limitation (about LVDS) */
 #else
 			msleep(200); /* This is H/W Limitation (about LVDS) */

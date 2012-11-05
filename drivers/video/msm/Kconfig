@@ -157,9 +157,9 @@ config FB_MSM_LCDC_AUTO_DETECT
 	default n
 
 config FB_MSM_LCDC_PANEL
-	bool
+ 	bool "FB MSM LCDC Panel"
 	select FB_MSM_LCDC
-	default n
+	default y
 
 config FB_MSM_MIPI_DSI_TOSHIBA
 	bool
@@ -412,6 +412,13 @@ config FB_MSM_LCDC_LD9040_WVGA_PANEL
 	select FB_MSM_LCDC_LD9040_WVGA
 	---help---
 	  Support for LCDC LD9040 WVGA (480x800) panel
+
+config FB_MSM_LCDC_S6E63M0_WVGA_PANEL
+        depends on FB_MSM_LCDC_HW
+        bool "LCDC S6B63M0 WVGA Panel"
+        select FB_MSM_LCDC_S6E63M0_WVGA
+        ---help---
+          Support for LCDC S6E63M0 WVGA (480x800) panel
 
 config FB_MSM_LCDC_P5LTE_WXGA_PANEL
 	depends on FB_MSM_LCDC_HW

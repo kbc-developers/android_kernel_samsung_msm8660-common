@@ -613,7 +613,7 @@ static void touchkey_auto_calibration(int autocal_on_off)
 static void melfas_touchkey_early_suspend(struct early_suspend *h)
 {
     int index =0;
-#if defined(CONFIG_KOR_MODEL_SHV_E160L) || defined (CONFIG_USA_MODEL_SGH_I717)    
+#if defined(CONFIG_KOR_MODEL_SHV_E160L) || defined (CONFIG_USA_MODEL_SGH_I717) || defined (CONFIG_USA_MODEL_SGH_T989D)
     int ret = 0;
     signed char int_data[] ={0x80};
 #endif    
@@ -627,7 +627,7 @@ static void melfas_touchkey_early_suspend(struct early_suspend *h)
     }
 
     disable_irq(IRQ_TOUCHKEY_INT);
-#if defined (CONFIG_USA_MODEL_SGH_I717)
+#if defined (CONFIG_USA_MODEL_SGH_I717)|| defined (CONFIG_USA_MODEL_SGH_T989D)
     ret = cancel_work_sync(&touchkey_work);
     if (ret) {
 	    printk(KERN_DEBUG "[Touchkey] enable_irq ret = %d\n", ret);
@@ -700,6 +700,12 @@ static void melfas_touchkey_early_suspend(struct early_suspend *h)
 		gpio_direction_output(GPIO_TOUCHKEY_SDA, 0);
 		gpio_free(GPIO_TOUCHKEY_SDA);
 		}		 
+#elif defined(CONFIG_JPN_MODEL_SC_05D)
+		tkey_vdd_enable(0);
+		gpio_direction_output(GPIO_TOUCHKEY_SCL, 0);
+		gpio_free(GPIO_TOUCHKEY_SCL);
+		gpio_direction_output(GPIO_TOUCHKEY_SDA, 0);
+		gpio_free(GPIO_TOUCHKEY_SDA);		
 #endif
 	for (index = 1; index< sizeof(touchkey_keycode)/sizeof(*touchkey_keycode); index++)
 	{
@@ -804,12 +810,19 @@ static void melfas_touchkey_early_resume(struct early_suspend *h)
 		gpio_request(GPIO_TOUCHKEY_SDA, "TKEY_SDA");
 		gpio_direction_input(GPIO_TOUCHKEY_SDA);
 		}		 
+#elif defined(CONFIG_JPN_MODEL_SC_05D)
+		tkey_vdd_enable(1);
+		gpio_request(GPIO_TOUCHKEY_SCL, "TKEY_SCL");
+		gpio_direction_input(GPIO_TOUCHKEY_SCL);
+		gpio_request(GPIO_TOUCHKEY_SDA, "TKEY_SDA");
+		gpio_direction_input(GPIO_TOUCHKEY_SDA);		
 #endif // defined (CONFIG_USA_MODEL_SGH_T989)||defined (CONFIG_USA_MODEL_SGH_I727)
 	init_hw();
 
 if(touchled_cmd_reversed) {
 			touchled_cmd_reversed = 0;
-#if defined (CONFIG_USA_MODEL_SGH_I717)	|| defined (CONFIG_USA_MODEL_SGH_T769) || defined(CONFIG_USA_MODEL_SGH_I577) || defined(CONFIG_CAN_MODEL_SGH_I577R)		
+#if defined (CONFIG_USA_MODEL_SGH_I717)	|| defined (CONFIG_USA_MODEL_SGH_T769) || defined(CONFIG_USA_MODEL_SGH_I577) || defined(CONFIG_CAN_MODEL_SGH_I577R)\
+			|| defined (CONFIG_USA_MODEL_SGH_T989) || defined (CONFIG_USA_MODEL_SGH_I727)
 			msleep(100);
 #endif
 	//		msleep(300);		
@@ -874,7 +887,9 @@ if(touchled_cmd_reversed) {
 			}
 #endif		
 
-#if defined (CONFIG_USA_MODEL_SGH_I717) || defined (CONFIG_KOR_MODEL_SHV_E160L)\
+#if defined (CONFIG_EUR_MODEL_GT_I9210)
+	schedule_delayed_work(&touch_resume_work, msecs_to_jiffies(100));
+#elif defined (CONFIG_USA_MODEL_SGH_I717) || defined (CONFIG_KOR_MODEL_SHV_E160L)\
 	|| defined (CONFIG_USA_MODEL_SGH_T769)|| defined(CONFIG_USA_MODEL_SGH_I577)|| defined(CONFIG_CAN_MODEL_SGH_I577R)\
 	|| defined(CONFIG_USA_MODEL_SGH_I757) || defined(CONFIG_CAN_MODEL_SGH_I757M)|| defined(CONFIG_USA_MODEL_SGH_I727)\
 	|| defined(CONFIG_USA_MODEL_SGH_T989) 
@@ -1076,7 +1091,8 @@ static void init_hw(void)
 		struct pm_gpio cfg;
 	};
 
-#if	defined (CONFIG_USA_MODEL_SGH_I727)
+#if defined (CONFIG_USA_MODEL_SGH_I727) || defined (CONFIG_USA_MODEL_SGH_T989)
+
 	struct pm8058_gpio_cfg touchkey_int_cfg = 
 	{
 	  PM8058_GPIO_PM_TO_SYS(12), // id-1		
@@ -1400,6 +1416,11 @@ static ssize_t touch_led_control(struct device *dev, struct device_attribute *at
 #else
 
 #endif
+
+#if defined (CONFIG_JPN_MODEL_SC_05D)
+	int_data = int_data * 0x10;
+#endif
+
 		if(g_debug_switch)
 			printk(KERN_DEBUG "touch_led_control int_data: %d  %d\n", int_data, data);
 
@@ -1455,7 +1476,7 @@ static ssize_t touchkey_menu_show(struct device *dev, struct device_attribute *a
 
     ret = i2c_touchkey_read(KEYCODE_REG, data, 18);
 
-    #if defined(CONFIG_KOR_MODEL_SHV_E160L)
+    #if defined(CONFIG_KOR_MODEL_SHV_E160L)||defined(CONFIG_JPN_MODEL_SC_05D)
     printk("[TKEY] %s data[12] =%d,data[13] = %d\n",__func__,data[12],data[13]);
     menu_sensitivity = ((0x00FF&data[12])<<8)|data[13];
     #else 
@@ -1492,7 +1513,8 @@ static ssize_t touchkey_back_show(struct device *dev, struct device_attribute *a
 		printk("called %s data[14] =%d,data[15] = %d\n",__func__,data[14],data[15]);
 		back_sensitivity = ((0x00FF&data[14])<<8)|data[15];		
 	}
-#elif defined(CONFIG_KOR_MODEL_SHV_E160L)
+
+#elif defined(CONFIG_KOR_MODEL_SHV_E160L) || defined(CONFIG_JPN_MODEL_SC_05D)
     {
         printk("[TKEY] %s data[10] =%d,data[11] = %d\n",__func__,data[10],data[11]);
         back_sensitivity = ((0x00FF&data[10])<<8)|data[11];	
@@ -1734,6 +1756,8 @@ static ssize_t set_touchkey_update_show(struct device *dev, struct device_attrib
 	while (retry--) {
 #if defined (CONFIG_JPN_MODEL_SC_03D)
 			if (ISSP_main(get_hw_rev()) == 0) {
+#elif defined (CONFIG_USA_MODEL_SGH_T989)
+			if (ISSP_main(TOUCHKEY_PBA_REV_05) == 0) {
 #else
 			if (ISSP_main(TOUCHKEY_PBA_REV_NA) == 0) {
 #endif

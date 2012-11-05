@@ -1119,6 +1119,8 @@ int mipi_dsi_cmds_tx(struct msm_fb_data_type *mfd,
 	struct dsi_cmd_desc *cm;
 	uint32 dsi_ctrl, ctrl;
 	int i, video_mode;
+	int length_tx;
+	int ret;
 	unsigned long flag;
 
 	/* turn on cmd mode
@@ -1156,11 +1158,19 @@ int mipi_dsi_cmds_tx(struct msm_fb_data_type *mfd,
 	for (i = 0; i < cnt; i++) {
 		mipi_dsi_buf_init(tp);
 		mipi_dsi_cmd_dma_add(tp, cm);
-		mipi_dsi_cmd_dma_tx(tp);
+		length_tx = mipi_dsi_cmd_dma_tx(tp);
+		if( length_tx < 0 ) // if failed
+		{
+			pr_err(" mipi_dsi_cmd_dma_tx FAILED, %d/%d(%x %x %x %x)\n",
+				i, cnt, cm->payload[0], cm->payload[1], cm->payload[2], cm->payload[3]);
+			break;
+		}
 		if (cm->wait)
 			msleep(cm->wait);
 		cm++;
 	}
+
+	ret = i;
 
 	spin_lock_irqsave(&dsi_mdp_lock, flag);
 	dsi_mdp_busy = FALSE;
@@ -1171,7 +1181,7 @@ int mipi_dsi_cmds_tx(struct msm_fb_data_type *mfd,
 	if (video_mode)
 		MIPI_OUTP(MIPI_DSI_BASE + 0x0000, dsi_ctrl); /* restore */
 
-	return cnt;
+	return ret;
 }
 
 /* MIPI_DSI_MRPS, Maximum Return Packet Size */

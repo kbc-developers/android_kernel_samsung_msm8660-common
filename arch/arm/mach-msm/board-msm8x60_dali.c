@@ -3941,7 +3941,7 @@ static void __init msm8x60_init_dsps(void)
 #endif
 
 #ifdef CONFIG_FB_MSM_HDMI_MSM_PANEL
-#define MSM_FB_EXT_BUF_SIZE  (1920 * 1080 * 2 * 1) /* 2 bpp x 1 page */
+#define MSM_FB_EXT_BUF_SIZE  (1920 * 1080 * 4 * 1) /* 32 bpp x 1 page */
 #elif defined(CONFIG_FB_MSM_TVOUT)
 #define MSM_FB_EXT_BUF_SIZE  (720 * 576 * 2 * 2) /* 2 bpp x 2 pages */
 #else
@@ -16534,7 +16534,9 @@ void yda165_avdd_power_on(void)
 #endif
 
 	amp_reg_ref_cnt++;
+	#if !defined(CONFIG_USA_MODEL_SGH_I757)
 	pr_info("%s : amp_reg_ref_cnt = %d\n", __func__, amp_reg_ref_cnt);
+	#endif
 	
 #if defined (CONFIG_KOR_MODEL_SHV_E120S) || defined (CONFIG_KOR_MODEL_SHV_E120K)
 	if(get_hw_rev()>=0x01)
@@ -16605,7 +16607,9 @@ void yda165_avdd_power_off(void)
 	int ret;
 
 	amp_reg_ref_cnt--;
+	#if !defined(CONFIG_USA_MODEL_SGH_I757)
 	pr_info("%s : amp_reg_ref_cnt = %d\n", __func__, amp_reg_ref_cnt);
+	#endif
 		
 #if defined (CONFIG_KOR_MODEL_SHV_E120S) || defined (CONFIG_KOR_MODEL_SHV_E120K)
 	if(get_hw_rev()>=0x01)

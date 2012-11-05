@@ -62,9 +62,9 @@
 #include <linux/fb.h>
 #include <linux/backlight.h>
 #include <linux/miscdevice.h>
-#include <lcdc_ld9040_seq.h>
-#include <lcdc_ea8868_seq.h>
-#include <mdp4_video_enhance.h>
+#include "lcdc_ld9040_seq.h"
+#include "lcdc_ea8868_seq.h"
+#include "mdp4_video_enhance.h"
 
 #define MAPPING_TBL_AUTO_BRIGHTNESS 1
 //#if defined (CONFIG_JPN_MODEL_SC_03D)
@@ -73,9 +73,14 @@
 #if defined(SMART_DIMMING) // smartdimming
 #include "smart_dimming_ea8868.h"
 #endif
-#define LCDC_DEBUG
 
+#define LCDC_DEBUG 1
+ #if defined(CONFIG_USA_MODEL_SGH_T989D) || defined(CONFIG_USA_MODEL_SGH_I757)
+ #define LCDC_DEBUG 0
+ #endif
 //#define LCDC_19GAMMA_ENABLE
+
+#define CONFIG_JPN_MODEL_SC_03D //tmp solution celox jpn
 
 #ifdef LCDC_DEBUG
 #define DPRINT(x...)	printk("ld9040 " x)
@@ -152,7 +157,7 @@ int IElvssOffset = 0;
 
 #if defined (CONFIG_KOR_MODEL_SHV_E110S) || defined (CONFIG_EUR_MODEL_GT_I9210) \
  || defined (CONFIG_USA_MODEL_SGH_T989) || defined (CONFIG_USA_MODEL_SGH_I727) \
- || defined (CONFIG_USA_MODEL_SGH_T769)
+ || defined (CONFIG_USA_MODEL_SGH_T769) || defined (CONFIG_JPN_MODEL_SC_03D)
 extern unsigned int get_hw_rev(void);
 #endif
 
@@ -195,7 +200,7 @@ static struct setting_table ea8868_gamma_update_disable[] = {
 
 #if defined(CONFIG_EUR_MODEL_GT_I9210) \
  || defined (CONFIG_USA_MODEL_SGH_T989) || defined (CONFIG_USA_MODEL_SGH_I727) \
- || defined (CONFIG_USA_MODEL_SGH_T769)
+ || defined (CONFIG_USA_MODEL_SGH_T769) || defined (CONFIG_JPN_MODEL_SC_03D)
 static struct setting_table sleep_out_display[] = {
    	// Sleep Out Command
 	{ 0x11,	0, 
@@ -1102,7 +1107,7 @@ void ld9040_disp_on(void)
 	int i;
 #if defined (CONFIG_KOR_MODEL_SHV_E110S) \
   || defined (CONFIG_USA_MODEL_SGH_I727) || defined (CONFIG_USA_MODEL_SGH_T769) \
-  || defined (CONFIG_USA_MODEL_SGH_T989)
+  || defined (CONFIG_USA_MODEL_SGH_T989) || defined (CONFIG_JPN_MODEL_SC_03D)
 	DPRINT("start %s - HW Rev: %d\n", __func__,get_hw_rev());	
 #endif
 
@@ -1137,7 +1142,7 @@ void ld9040_disp_on(void)
 		}
 #elif defined(CONFIG_EUR_MODEL_GT_I9210) \
   || defined (CONFIG_USA_MODEL_SGH_I727) || defined (CONFIG_USA_MODEL_SGH_T769) \
-  || defined (CONFIG_USA_MODEL_SGH_T989)
+  || defined (CONFIG_USA_MODEL_SGH_T989) || defined (CONFIG_JPN_MODEL_SC_03D)
 		if(isEA8868)
 		{
 			// For EA8868
@@ -1159,7 +1164,7 @@ void ld9040_disp_on(void)
 
 #if defined(CONFIG_EUR_MODEL_GT_I9210) \
   || defined (CONFIG_USA_MODEL_SGH_I727) || defined (CONFIG_USA_MODEL_SGH_T769) \
-  || defined (CONFIG_USA_MODEL_SGH_T989)
+  || defined (CONFIG_USA_MODEL_SGH_T989) || defined (CONFIG_JPN_MODEL_SC_03D)
 		ld9040_read_lcd_id();
 
 		for (i = 0; i < POWER_AUTO_SEQ; i++)
@@ -1398,7 +1403,7 @@ static void ld9040_gamma_ctl(struct ld9040 *lcd)
 			    setting_table_write(lcd_brightness_table_22gamma[0]);
 #elif defined(CONFIG_EUR_MODEL_GT_I9210) \
   || defined (CONFIG_USA_MODEL_SGH_I727) || defined (CONFIG_USA_MODEL_SGH_T769) \
-  || defined (CONFIG_USA_MODEL_SGH_T989)
+  || defined (CONFIG_USA_MODEL_SGH_T989) || defined (CONFIG_JPN_MODEL_SC_03D)
 		setting_table_write(lcd_brightness_table_22gamma[0]);
 #else
             setting_table_write(lcd_brightness_table_2[0]);
@@ -1417,7 +1422,7 @@ static void ld9040_gamma_ctl(struct ld9040 *lcd)
 			    setting_table_write(lcd_brightness_table_22gamma[tune_level]);
 #elif defined(CONFIG_EUR_MODEL_GT_I9210) \
   || defined (CONFIG_USA_MODEL_SGH_I727) || defined (CONFIG_USA_MODEL_SGH_T769) \
-  || defined (CONFIG_USA_MODEL_SGH_T989)
+  || defined (CONFIG_USA_MODEL_SGH_T989) || defined (CONFIG_JPN_MODEL_SC_03D)
 			    setting_table_write(lcd_brightness_table_22gamma[tune_level]);
 #else
             setting_table_write(lcd_brightness_table_2[tune_level]);
@@ -1476,8 +1481,9 @@ static int get_gamma_value_from_bl(int bl)
 	int gamma_val_x10 =0;
 
 #ifdef MAPPING_TBL_AUTO_BRIGHTNESS
+#if !defined(CONFIG_JPN_MODEL_SC_03D)
 	if (unlikely(!lcd.auto_brightness && bl > 250))	bl = 250;
-  
+#endif  
         	switch (bl) {
 		case 0 ... 29:
 		gamma_value = 0; // 30cd
@@ -2296,7 +2302,9 @@ static int __init lcdc_ld9040_panel_init(void)
 	pinfo->wait_cycle = 0;
 	pinfo->bpp = 24;
 	pinfo->fb_num = 2;
-#if defined (CONFIG_KOR_MODEL_SHV_E110S)
+#if defined (CONFIG_JPN_MODEL_SC_03D)
+	if (get_hw_rev() < 0x03 ) 
+#elif defined (CONFIG_KOR_MODEL_SHV_E110S)
 	if (get_hw_rev() < 0x05 ) 
 #elif defined(CONFIG_EUR_MODEL_GT_I9210)
 	if (get_hw_rev() < 0x06 )

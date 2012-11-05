@@ -54,6 +54,16 @@
 #include <asm/io.h>
 #include <asm/unistd.h>
 
+
+#if defined(CONFIG_JPN_MODEL_SC_01D) || \
+	defined(CONFIG_TARGET_SERIES_P5LTE) || \
+	(defined( CONFIG_TARGET_SERIES_P8LTE ) && defined( CONFIG_TARGET_LOCALE_KOR ))
+#define POWER_OFF_TIME ( 20 * HZ ) // 20 secs
+void power_off_registertimer(struct timer_list* ptimer, unsigned long timeover );
+void power_off_timeout(unsigned long arg);
+struct timer_list power_off_timer;
+#endif
+
 #ifndef SET_UNALIGN_CTL
 # define SET_UNALIGN_CTL(a,b)	(-EINVAL)
 #endif
@@ -351,6 +361,31 @@ static void kernel_shutdown_prepare(enum system_states state)
 	usermodehelper_disable();
 	device_shutdown();
 }
+
+#if defined(CONFIG_JPN_MODEL_SC_01D) || \
+	defined(CONFIG_TARGET_SERIES_P5LTE) || \
+	(defined( CONFIG_TARGET_SERIES_P8LTE ) && defined( CONFIG_TARGET_LOCALE_KOR ))
+void power_off_registertimer(struct timer_list* ptimer, unsigned long timeover )
+{
+        printk("%s\n",__func__);
+        init_timer(ptimer);
+        ptimer->expires = get_jiffies_64() + timeover;
+        ptimer->data = (long) NULL;
+        ptimer->function = power_off_timeout;
+        add_timer(ptimer);
+}
+ 
+void power_off_timeout(unsigned long arg)
+{
+        printk("%s\n",__func__);
+        if (pm_power_off) 
+        {
+            printk(KERN_EMERG "pm_power_off\n");
+            pm_power_off();
+        }
+ }
+#endif
+
 /**
  *	kernel_halt - halt the system
  *
@@ -439,6 +474,11 @@ SYSCALL_DEFINE4(reboot, int, magic1, int, magic2, unsigned int, cmd,
 		panic("cannot halt");
 
 	case LINUX_REBOOT_CMD_POWER_OFF:
+		#if defined(CONFIG_JPN_MODEL_SC_01D) || \
+			defined(CONFIG_TARGET_SERIES_P5LTE) || \
+			(defined( CONFIG_TARGET_SERIES_P8LTE ) && defined( CONFIG_TARGET_LOCALE_KOR ))
+		power_off_registertimer(&power_off_timer, POWER_OFF_TIME);
+		#endif
 		kernel_power_off();
 		do_exit(0);
 		break;

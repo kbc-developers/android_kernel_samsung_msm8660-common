@@ -285,8 +285,9 @@ static int __init mirred_init_module(void)
 	int err = register_netdevice_notifier(&mirred_device_notifier);
 	if (err)
 		return err;
-
+#if !defined(CONFIG_USA_MODEL_SGH_I757)
 	pr_info("Mirror/redirect action on\n");
+#endif
 	return tcf_register_action(&act_mirred_ops);
 }
 

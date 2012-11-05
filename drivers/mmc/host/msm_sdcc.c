@@ -4661,9 +4661,13 @@ msmsdcc_probe(struct platform_device *pdev)
 			&& host->dma.crci != -1) {
 		pr_info("%s: DM non-cached buffer at %p, dma_addr 0x%.8x\n",
 		       mmc_hostname(mmc), host->dma.nc, host->dma.nc_busaddr);
+		
+		#if !defined(CONFIG_USA_MODEL_SGH_I757)
 		pr_info("%s: DM cmd busaddr 0x%.8x, cmdptr busaddr 0x%.8x\n",
 		       mmc_hostname(mmc), host->dma.cmd_busaddr,
 		       host->dma.cmdptr_busaddr);
+		#endif
+
 	} else if (host->is_sps_mode) {
 		pr_info("%s: SPS-BAM data transfer mode available\n",
 			mmc_hostname(mmc));
@@ -4902,7 +4906,10 @@ msmsdcc_runtime_suspend(struct device *dev)
 
 	pr_debug("%s: %s: start\n", mmc_hostname(mmc), __func__);
 	if (mmc) {
-		host->sdcc_suspending = 1;
+#ifndef CONFIG_ATHEROS_WIFI     /*   atheros wifi   ATHENV +++ avoid this otherwise wakelock will prevent system suspend*/
+              if (host->pdev_id == 4) 			  	
+		     host->sdcc_suspending = 1;
+#endif /* ATHENV --- */
 		mmc->suspend_task = current;
 
 		/*

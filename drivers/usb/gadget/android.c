@@ -719,15 +719,7 @@ static int rndis_function_bind_config(struct android_usb_function *f,
 		return -1;
 	}
 
-	printk(KERN_DEBUG "usb: %s before MAC:%02X:%02X:%02X:%02X:%02X:%02X\n",
-			__func__, rndis->ethaddr[0], rndis->ethaddr[1],
-			rndis->ethaddr[2], rndis->ethaddr[3], rndis->ethaddr[4],
-			rndis->ethaddr[5]);
 	ret = gether_setup_name(c->cdev->gadget, rndis->ethaddr, "rndis");
-	printk(KERN_DEBUG "usb: %s after MAC:%02X:%02X:%02X:%02X:%02X:%02X\n",
-			__func__, rndis->ethaddr[0], rndis->ethaddr[1],
-			rndis->ethaddr[2], rndis->ethaddr[3], rndis->ethaddr[4],
-			rndis->ethaddr[5]);
 	if (ret) {
 		pr_err("%s: gether_setup failed\n", __func__);
 		return ret;
@@ -809,10 +801,6 @@ static ssize_t rndis_ethaddr_show(struct device *dev,
 {
 	struct android_usb_function *f = dev_get_drvdata(dev);
 	struct rndis_function_config *rndis = f->config;
-	printk(KERN_DEBUG "usb: %s MAC: %02X:%02X:%02X:%02X:%02X:%02X\n",
-			__func__,
-		rndis->ethaddr[0], rndis->ethaddr[1], rndis->ethaddr[2],
-		rndis->ethaddr[3], rndis->ethaddr[4], rndis->ethaddr[5]);
 
 	return snprintf(buf, PAGE_SIZE, "%02x:%02x:%02x:%02x:%02x:%02x\n",
 		rndis->ethaddr[0], rndis->ethaddr[1], rndis->ethaddr[2],
@@ -839,10 +827,6 @@ static ssize_t rndis_ethaddr_store(struct device *dev,
 		/* XOR the USB serial across the remaining bytes */
 		rndis->ethaddr[i % (ETH_ALEN - 1) + 1] ^= *src++;
 	}
-	printk(KERN_DEBUG "usb: %s MAC:%02X:%02X:%02X:%02X:%02X:%02X\n",
-			__func__, rndis->ethaddr[0], rndis->ethaddr[1],
-			rndis->ethaddr[2], rndis->ethaddr[3], rndis->ethaddr[4],
-			rndis->ethaddr[5]);
 	return size;
 #else
 	if (sscanf(buf, "%02x:%02x:%02x:%02x:%02x:%02x\n",
@@ -850,17 +834,9 @@ static ssize_t rndis_ethaddr_store(struct device *dev,
 		    (int *)&rndis->ethaddr[2], (int *)&rndis->ethaddr[3],
 		    (int *)&rndis->ethaddr[4],
 		    (int *)&rndis->ethaddr[5]) == 6) {
-		printk(KERN_DEBUG "usb: %s MAC:%02X:%02X:%02X:%02X:%02X:%02X\n",
-			__func__, rndis->ethaddr[0], rndis->ethaddr[1],
-			rndis->ethaddr[2], rndis->ethaddr[3], rndis->ethaddr[4],
-			rndis->ethaddr[5]);
 		return size;
 
 	}
-	printk(KERN_DEBUG "usb: %s MAC: %02X:%02X:%02X:%02X:%02X:%02X\n",
-			__func__,
-		rndis->ethaddr[0], rndis->ethaddr[1], rndis->ethaddr[2],
-		rndis->ethaddr[3], rndis->ethaddr[4], rndis->ethaddr[5]);
 	return -EINVAL;
 #endif
 }

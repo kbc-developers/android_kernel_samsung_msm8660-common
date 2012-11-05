@@ -325,7 +325,7 @@ static int tk_request(struct l2cap_conn *conn, u8 remote_oob, u8 auth,
 			remote_io > SMP_IO_KEYBOARD_DISPLAY)
 		method = JUST_WORKS;
 	else
-		method = gen_method[local_io][remote_io];
+		method = gen_method[remote_io][local_io];
 
 	/* If not bonding, don't ask user to confirm a Zero TK */
 	if (!(auth & SMP_AUTH_BONDING) && method == JUST_CFM)
@@ -629,8 +629,7 @@ static u8 smp_cmd_pairing_req(struct l2cap_conn *conn, struct sk_buff *skb)
 	smp_send_cmd(conn, SMP_CMD_PAIRING_RSP, sizeof(rsp), &rsp);
 
 	/* Request setup of TK */
-	/* SSBT :: KJH * loc, rem */
-	ret = tk_request(conn, 0, auth, req->io_capability, rsp.io_capability);
+	ret = tk_request(conn, 0, auth, rsp.io_capability, req->io_capability);
 	if (ret)
 		return SMP_UNSPECIFIED;
 
@@ -671,7 +670,6 @@ static u8 smp_cmd_pairing_rsp(struct l2cap_conn *conn, struct sk_buff *skb)
 
 	auth |= (req->auth_req | rsp->auth_req) & SMP_AUTH_MITM;
 
-	/* SSBT :: KJH * loc, rem */
 	ret = tk_request(conn, 0, auth, req->io_capability, rsp->io_capability);
 	if (ret)
 		return SMP_UNSPECIFIED;

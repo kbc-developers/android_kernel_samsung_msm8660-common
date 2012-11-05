@@ -565,7 +565,6 @@ static int __init vfp_init(void)
 	unsigned int cpu_arch = cpu_architecture();
 
 	struct cpumask cpus_curr, cpus;
-
 	sched_getaffinity(current->pid,&cpus_curr);
 	cpumask_clear(&cpus);
 	cpumask_set_cpu(smp_processor_id(), &cpus);

@@ -2623,7 +2623,8 @@ static struct clk_freq_tbl clk_tbl_pixel_mdp[] = {
 	F_PIXEL_MDP( 24000000, pll8, 1,	  1,   16), // for TDMB	
 #endif
 	F_PIXEL_MDP( 25600000, pll8, 3,   1,    5),
-#if defined (CONFIG_KOR_MODEL_SHV_E110S) || defined (CONFIG_USA_MODEL_SGH_I727) || defined (CONFIG_USA_MODEL_SGH_T989)	
+#if defined (CONFIG_KOR_MODEL_SHV_E110S) || defined (CONFIG_USA_MODEL_SGH_I727) \
+	|| defined (CONFIG_USA_MODEL_SGH_T989) || defined (CONFIG_JPN_MODEL_SC_03D)	
 	F_PIXEL_MDP( 27400000, pll8, 1,	  1,   14), // for TDMB	
 #endif	
 	F_PIXEL_MDP( 42667000, pll8, 1,   1,    9),
@@ -3604,7 +3605,7 @@ static struct clk_lookup msm_clocks_8x60[] = {
 	CLK_LOOKUP("mmfpb_a_clk",	mmfpb_a_clk.c,	NULL),
 
 	CLK_LOOKUP("core_clk",		gp0_clk.c,		NULL),
-#if defined(CONFIG_TARGET_SERIES_P8LTE)	
+#if defined(CONFIG_TARGET_SERIES_P8LTE) || defined(CONFIG_TARGET_SERIES_P5LTE) || defined(CONFIG_TARGET_SERIES_P4LTE)
 	CLK_LOOKUP("core_clk",		gp1_clk.c,		"vibrator"),
 #else
 	CLK_LOOKUP("core_clk",		gp1_clk.c,		NULL),
