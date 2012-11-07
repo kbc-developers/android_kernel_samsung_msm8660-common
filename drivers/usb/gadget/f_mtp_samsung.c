@@ -1143,6 +1143,7 @@ mtpg_function_bind(struct usb_configuration *c, struct usb_function *f)
 		int_hs_notify_desc.bEndpointAddress =
 				int_fs_notify_desc.bEndpointAddress;
 
+		f->hs_descriptors = hs_mtpg_desc;
 	}
 
 	mtpg->cdev = cdev;

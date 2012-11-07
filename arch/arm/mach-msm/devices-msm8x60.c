@@ -109,7 +109,6 @@ static void charm_ap2mdm_kpdpwr_off(void)
 	int i;
 
 	gpio_direction_output(AP2MDM_ERRFATAL, 1);
-	gpio_direction_output(AP2MDM_KPDPWR_N, 0);
 
 	for (i = 20; i > 0; i--) {
 		if (gpio_get_value(MDM2AP_STATUS) == 0)
@@ -118,19 +117,18 @@ static void charm_ap2mdm_kpdpwr_off(void)
 	}
 	gpio_direction_output(AP2MDM_ERRFATAL, 0);
 
-#if defined(CONFIG_TARGET_LOCALE_USA) \
- || (defined(CONFIG_EUR_OPERATOR_OPEN) && defined(CONFIG_TARGET_SERIES_P5LTE))
+#if defined(CONFIG_TARGET_LOCALE_USA)
 	/* When PM8058 has already shut down, PM8028 is still pulsing.
-	 * After shut down the MDM9K by AP2MDM_STATUS ,
-	 * then always turn off the PM8028 by AP2MDM_PMIC_RESET
+	 * After shut down the MDM9K by AP2MDM_STATUS , 
+	 * then always turn off the PM8028 by AP2MDM_PMIC_RESET 
 	 */
 	if (true) {
 		if (i == 0)
-			pr_err("%s: MDM2AP_STATUS never went low. Doing a hard reset of the charm modem.\n",
-				__func__);
-		else
-			pr_err("%s: MDM2AP_STATUS went low. but we still need doing a hard reset again.\n",
-				__func__);
+			pr_err("%s: MDM2AP_STATUS never went low. Doing a hard reset of the charm modem.\n", 
+				__func__);		
+		else		
+			pr_err("%s: MDM2AP_STATUS went low. but we still need doing a hard reset again.\n", 
+				__func__);	
 #else
 	if (i == 0) {
 		pr_err("%s: MDM2AP_STATUS never went low. Doing a hard reset \
@@ -189,8 +187,6 @@ void __init msm8x60_init_irq(void)
 	msm_mpm_irq_extn_init();
 	gic_init(0, GIC_PPI_START, MSM_QGIC_DIST_BASE, (void *)MSM_QGIC_CPU_BASE);
 
-	/* Edge trigger PPIs except AVS_SVICINT and AVS_SVICINTSWDONE */
-	writel(0xFFFFD7FF, MSM_QGIC_DIST_BASE + GIC_DIST_CONFIG + 4);
 }
 
 #define MSM_LPASS_QDSP6SS_PHYS 0x28800000
@@ -935,7 +931,7 @@ void __init msm8x60_check_2d_hardware(void)
 
 #if !defined (CONFIG_SAMSUNG_8X60_TABLET)
 #if defined (CONFIG_TARGET_LOCALE_USA)
-#define MSM_A2220_I2C_BUS_ID		16
+#define MSM_A2220_I2C_BUS_ID		16	
 
 /* Use GSBI1 QUP for /dev/i2c-0 */
 struct platform_device msm_gsbi1_qup_i2c_device = {
@@ -1689,6 +1685,7 @@ struct platform_device msm_rotator_device = {
 #ifdef CONFIG_MSM_DSPS
 
 #define PPSS_REG_PHYS_BASE	0x12080000
+#define PPSS_PAUSE_REG          0x1804
 
 #define MHZ (1000*1000)
 
@@ -1751,6 +1748,7 @@ struct msm_dsps_platform_data msm_dsps_pdata = {
 	.regs = dsps_regs,
 	.regs_num = ARRAY_SIZE(dsps_regs),
 	.init = dsps_init1,
+	.ppss_pause_reg = PPSS_PAUSE_REG,
 	.signature = DSPS_SIGNATURE,
 };
 
@@ -2379,12 +2377,14 @@ struct msm_vidc_platform_data vidc_platform_data = {
 #ifdef CONFIG_MSM_MULTIMEDIA_USE_ION
 	.memtype = ION_CP_MM_HEAP_ID,
 	.enable_ion = 1,
+	.cp_enabled = 0,
 #else
 	.memtype = MEMTYPE_SMI_KERNEL,
 	.enable_ion = 0,
 #endif
 	.disable_dmx = 0,
-	.disable_fullhd = 0
+	.disable_fullhd = 0,
+	.disable_turbo = 1
 };
 
 struct platform_device msm_device_vidc = {

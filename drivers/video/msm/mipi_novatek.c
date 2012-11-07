@@ -1,4 +1,4 @@
-/* Copyright (c) 2010-2011, Code Aurora Forum. All rights reserved.
+/* Copyright (c) 2010-2012, Code Aurora Forum. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -240,13 +240,8 @@ static char set_height[5] = { /* DTYPE_DCS_LWRITE */
 	0x2B, 0x00, 0x00, 0x03, 0xBF}; /* 960 - 1 */
 #endif
 
-static char led_pwm1[2] = {0x51, 0x0};	/* DTYPE_DCS_WRITE1 */
 static char led_pwm2[2] = {0x53, 0x24}; /* DTYPE_DCS_WRITE1 */
 static char led_pwm3[2] = {0x55, 0x00}; /* DTYPE_DCS_WRITE1 */
-
-static struct dsi_cmd_desc novatek_cmd_backlight_cmds[] = {
-	{DTYPE_DCS_LWRITE, 1, 0, 0, 1, sizeof(led_pwm1), led_pwm1},
-};
 
 static struct dsi_cmd_desc novatek_video_on_cmds[] = {
 	{DTYPE_DCS_WRITE, 1, 0, 0, 50,
@@ -315,7 +310,7 @@ static uint32 mipi_novatek_manufacture_id(struct msm_fb_data_type *mfd)
 	cmd = &novatek_manufacture_id_cmd;
 	mipi_dsi_cmds_rx(mfd, tp, rp, cmd, 3);
 	lp = (uint32 *)rp->data;
-	pr_info("%s: manufacture_id=%x", __func__, *lp);
+	pr_info("%s: manufacture_id=%x\n", __func__, *lp);
 	return *lp;
 }
 
@@ -396,14 +391,14 @@ static int mipi_novatek_lcd_on(struct platform_device *pdev)
 	mipi  = &mfd->panel_info.mipi;
 
 	if (mipi->mode == DSI_VIDEO_MODE) {
-		mipi_dsi_cmds_tx(mfd, &novatek_tx_buf, novatek_video_on_cmds,
-			ARRAY_SIZE(novatek_video_on_cmds));
+		mipi_dsi_cmds_tx(&novatek_tx_buf, novatek_video_on_cmds,
+				ARRAY_SIZE(novatek_video_on_cmds));
 	} else {
-		mipi_dsi_cmds_tx(mfd, &novatek_tx_buf, novatek_cmd_on_cmds,
-			ARRAY_SIZE(novatek_cmd_on_cmds));
+		mipi_dsi_cmds_tx(&novatek_tx_buf, novatek_cmd_on_cmds,
+				ARRAY_SIZE(novatek_cmd_on_cmds));
 
-		mipi_dsi_cmd_bta_sw_trigger(); /* clean up ack_err_status */
-
+		/* clean up ack_err_status */
+		mipi_dsi_cmd_bta_sw_trigger();
 		mipi_novatek_manufacture_id(mfd);
 	}
 
@@ -421,35 +416,29 @@ static int mipi_novatek_lcd_off(struct platform_device *pdev)
 	if (mfd->key != MFD_KEY)
 		return -EINVAL;
 
-	mipi_dsi_cmds_tx(mfd, &novatek_tx_buf, novatek_display_off_cmds,
+	mipi_dsi_cmds_tx(&novatek_tx_buf, novatek_display_off_cmds,
 			ARRAY_SIZE(novatek_display_off_cmds));
 
 	return 0;
 }
 
+static char led_pwm1[2] = {0x51, 0x0};	/* DTYPE_DCS_WRITE1 */
+static struct dsi_cmd_desc backlight_cmd = {
+	DTYPE_DCS_LWRITE, 1, 0, 0, 1, sizeof(led_pwm1), led_pwm1};
 
+struct dcs_cmd_req cmdreq;
 
 static void mipi_novatek_set_backlight(struct msm_fb_data_type *mfd)
 {
-	struct mipi_panel_info *mipi;
+	led_pwm1[1] = (unsigned char)mfd->bl_level;
 
-	mipi  = &mfd->panel_info.mipi;
+	cmdreq.cmds = &backlight_cmd;
+	cmdreq.cmds_cnt = 1;
+	cmdreq.flags = 0;
+	cmdreq.rlen = 0;
+	cmdreq.cb = NULL;
 
-	mutex_lock(&mfd->dma->ov_mutex);
-	if (mdp4_overlay_dsi_state_get() <= ST_DSI_SUSPEND) {
-		mutex_unlock(&mfd->dma->ov_mutex);
-		return;
-	}
-	/* mdp4_dsi_cmd_busy_wait: will turn on dsi clock also */
-	mdp4_dsi_cmd_dma_busy_wait(mfd);
-	mdp4_dsi_blt_dmap_busy_wait(mfd);
-	mipi_dsi_mdp_busy_wait(mfd);
-
-	led_pwm1[1] = (unsigned char)(mfd->bl_level);
-	mipi_dsi_cmds_tx(mfd, &novatek_tx_buf, novatek_cmd_backlight_cmds,
-			ARRAY_SIZE(novatek_cmd_backlight_cmds));
-	mutex_unlock(&mfd->dma->ov_mutex);
-	return;
+	mipi_dsi_cmdlist_put(&cmdreq);
 }
 
 static int mipi_dsi_3d_barrier_sysfs_register(struct device *dev);
@@ -461,6 +450,7 @@ static int __devinit mipi_novatek_lcd_probe(struct platform_device *pdev)
 	struct mipi_panel_info *mipi;
 	struct platform_device *current_pdev;
 	static struct mipi_dsi_phy_ctrl *phy_settings;
+	static char dlane_swap;
 
 	if (pdev->id == 0) {
 		mipi_novatek_pdata = pdev->dev.platform_data;
@@ -468,6 +458,11 @@ static int __devinit mipi_novatek_lcd_probe(struct platform_device *pdev)
 		if (mipi_novatek_pdata
 			&& mipi_novatek_pdata->phy_ctrl_settings) {
 			phy_settings = (mipi_novatek_pdata->phy_ctrl_settings);
+		}
+
+		if (mipi_novatek_pdata
+			&& mipi_novatek_pdata->dlane_swap) {
+			dlane_swap = (mipi_novatek_pdata->dlane_swap);
 		}
 
 		if (mipi_novatek_pdata
@@ -499,6 +494,9 @@ static int __devinit mipi_novatek_lcd_probe(struct platform_device *pdev)
 
 		if (phy_settings != NULL)
 			mipi->dsi_phy_db = phy_settings;
+
+		if (dlane_swap)
+			mipi->dlane_swap = dlane_swap;
 	}
 	return 0;
 }

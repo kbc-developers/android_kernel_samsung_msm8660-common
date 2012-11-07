@@ -1371,7 +1371,7 @@ static inline void skb_set_mac_header(struct sk_buff *skb, const int offset)
 #endif /* NET_SKBUFF_DATA_USES_OFFSET */
 
 static inline void skb_mac_header_rebuild(struct sk_buff *skb)
-{       
+{
 	if (skb_mac_header_was_set(skb)) {
 		const unsigned char *old_mac = skb_mac_header(skb);
 

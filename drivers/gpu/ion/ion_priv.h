@@ -37,6 +37,12 @@ struct ion_kernel_mapping {
 	void *vaddr;
 };
 
+enum {
+	DI_PARTITION_NUM = 0,
+	DI_DOMAIN_NUM = 1,
+	DI_MAX,
+};
+
 /**
  * struct ion_iommu_map - represents a mapping of an ion buffer to an iommu
  * @iova_addr - iommu virtual address
@@ -47,6 +53,7 @@ struct ion_kernel_mapping {
  * @ref - for reference counting this mapping
  * @mapped_size - size of the iova space mapped
  *		(may not be the same as the buffer size)
+ * @flags - iommu domain/partition specific flags.
  *
  * Represents a mapping of one ion buffer to a particular iommu domain
  * and address range. There may exist other mappings of this buffer in
@@ -57,12 +64,13 @@ struct ion_iommu_map {
 	unsigned long iova_addr;
 	struct rb_node node;
 	union {
-		int domain_info[2];
+		int domain_info[DI_MAX];
 		uint64_t key;
 	};
 	struct ion_buffer *buffer;
 	struct kref ref;
 	int mapped_size;
+	unsigned long flags;
 };
 
 struct ion_buffer *ion_handle_buffer(struct ion_handle *handle);
@@ -147,7 +155,8 @@ struct ion_heap_ops {
 				unsigned long iova_length,
 				unsigned long flags);
 	void (*unmap_iommu)(struct ion_iommu_map *data);
-	int (*print_debug)(struct ion_heap *heap, struct seq_file *s);
+	int (*print_debug)(struct ion_heap *heap, struct seq_file *s,
+			   const struct rb_root *mem_map);
 	int (*secure_heap)(struct ion_heap *heap);
 	int (*unsecure_heap)(struct ion_heap *heap);
 };
@@ -177,7 +186,22 @@ struct ion_heap {
 	const char *name;
 };
 
-
+/**
+ * struct mem_map_data - represents information about the memory map for a heap
+ * @node:		rb node used to store in the tree of mem_map_data
+ * @addr:		start address of memory region.
+ * @addr:		end address of memory region.
+ * @size:		size of memory region
+ * @client_name:		name of the client who owns this buffer.
+ *
+ */
+struct mem_map_data {
+	struct rb_node node;
+	unsigned long addr;
+	unsigned long addr_end;
+	unsigned long size;
+	const char *client_name;
+};
 
 #define iommu_map_domain(__m)		((__m)->domain_info[1])
 #define iommu_map_partition(__m)	((__m)->domain_info[0])
@@ -270,5 +294,29 @@ struct ion_heap *msm_get_contiguous_heap(void);
  */
 void *ion_map_fmem_buffer(struct ion_buffer *buffer, unsigned long phys_base,
 				void *virt_base, unsigned long flags);
+
+/**
+ * ion_do_cache_op - do cache operations.
+ *
+ * @client - pointer to ION client.
+ * @handle - pointer to buffer handle.
+ * @uaddr -  virtual address to operate on.
+ * @offset - offset from physical address.
+ * @len - Length of data to do cache operation on.
+ * @cmd - Cache operation to perform:
+ *		ION_IOC_CLEAN_CACHES
+ *		ION_IOC_INV_CACHES
+ *		ION_IOC_CLEAN_INV_CACHES
+ *
+ * Returns 0 on success
+ */
+int ion_do_cache_op(struct ion_client *client, struct ion_handle *handle,
+			void *uaddr, unsigned long offset, unsigned long len,
+			unsigned int cmd);
+
+void ion_cp_heap_get_base(struct ion_heap *heap, unsigned long *base,
+			unsigned long *size);
+
+void ion_mem_map_show(struct ion_heap *heap);
 
 #endif /* _ION_PRIV_H */

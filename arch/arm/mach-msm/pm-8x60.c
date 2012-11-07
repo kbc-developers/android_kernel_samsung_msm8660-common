@@ -213,7 +213,6 @@ static ssize_t msm_pm_mode_attr_store(struct kobject *kobj,
 	return ret ? ret : count;
 }
 
-
 /*
  * Add sysfs entries for one cpu.
  */
@@ -743,12 +742,28 @@ static bool msm_pm_power_collapse(bool from_idle)
 
 	collapsed = msm_pm_spm_power_collapse(cpu, from_idle, true);
 
-	if (MSM_PM_DEBUG_CLOCK & msm_pm_debug_mask)
-		pr_info("CPU%u: %s: restore clock rate to %lu\n",
-			cpu, __func__, saved_acpuclk_rate);
-	if (acpuclk_set_rate(cpu, saved_acpuclk_rate, SETRATE_PC) < 0)
-		pr_err("CPU%u: %s: failed to restore clock rate(%lu)\n",
-			cpu, __func__, saved_acpuclk_rate);
+	if (cpu_online(cpu)) {
+		if (MSM_PM_DEBUG_CLOCK & msm_pm_debug_mask)
+			pr_info("CPU%u: %s: restore clock rate to %lu\n",
+				cpu, __func__, saved_acpuclk_rate);
+		if (acpuclk_set_rate(cpu, saved_acpuclk_rate, SETRATE_PC) < 0)
+			pr_err("CPU%u: %s: failed to restore clock rate(%lu)\n",
+				cpu, __func__, saved_acpuclk_rate);
+	} else {
+		unsigned int gic_dist_enabled;
+		unsigned int gic_dist_pending;
+		gic_dist_enabled = readl_relaxed(
+				MSM_QGIC_DIST_BASE + GIC_DIST_ENABLE_CLEAR);
+		gic_dist_pending = readl_relaxed(
+				MSM_QGIC_DIST_BASE + GIC_DIST_PENDING_SET);
+		mb();
+		gic_dist_pending &= gic_dist_enabled;
+
+		if (gic_dist_pending)
+			pr_err("CPU %d interrupted during hotplug.Pending int 0x%x\n",
+					cpu, gic_dist_pending);
+	}
+
 
 	avs_reset_delays(avsdscr_setting);
 	msm_pm_config_hw_after_power_up();
@@ -1011,7 +1026,7 @@ void msm_pm_cpu_enter_lowpower(unsigned int cpu)
 		msm_pm_power_collapse_standalone(false);
 	} else if (allow[MSM_PM_SLEEP_MODE_WAIT_FOR_INTERRUPT]) {
 		per_cpu(msm_pm_last_slp_mode, cpu)
-			= MSM_PM_SLEEP_MODE_POWER_COLLAPSE_STANDALONE;
+			= MSM_PM_SLEEP_MODE_WAIT_FOR_INTERRUPT;
 		msm_pm_swfi();
 	} else
 		per_cpu(msm_pm_last_slp_mode, cpu) = MSM_PM_SLEEP_MODE_NR;
@@ -1187,6 +1202,17 @@ static int __init msm_pm_init(void)
 	pmd[0] = __pmd(pmdval);
 	pmd[1] = __pmd(pmdval + (1 << (PGDIR_SHIFT - 1)));
 
+	msm_saved_state_phys =
+		allocate_contiguous_ebi_nomap(CPU_SAVED_STATE_SIZE *
+					      num_possible_cpus(), 4);
+	if (!msm_saved_state_phys)
+		return -ENOMEM;
+	msm_saved_state = ioremap_nocache(msm_saved_state_phys,
+					  CPU_SAVED_STATE_SIZE *
+					  num_possible_cpus());
+	if (!msm_saved_state)
+		return -ENOMEM;
+
 	/* It is remotely possible that the code in msm_pm_collapse_exit()
 	 * which turns on the MMU with this mapping is in the
 	 * next even-numbered megabyte beyond the
@@ -1196,6 +1222,8 @@ static int __init msm_pm_init(void)
 	pmd[2] = __pmd(pmdval + (2 << (PGDIR_SHIFT - 1)));
 	flush_pmd_entry(pmd);
 	msm_pm_pc_pgd = virt_to_phys(pc_pgd);
+	clean_caches((unsigned long)&msm_pm_pc_pgd, sizeof(msm_pm_pc_pgd),
+		     virt_to_phys(&msm_pm_pc_pgd));
 
 	ret = request_irq(rpm_cpu0_wakeup_irq,
 			msm_pm_rpm_wakeup_interrupt, IRQF_TRIGGER_RISING,

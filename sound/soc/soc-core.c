@@ -67,7 +67,7 @@ int soc_dsp_debugfs_add(struct snd_soc_pcm_runtime *rtd);
  * It can be used to eliminate pops between different playback streams, e.g.
  * between two audio tracks.
  */
-static int pmdown_time = 5000;
+static int pmdown_time;
 module_param(pmdown_time, int, 0);
 MODULE_PARM_DESC(pmdown_time, "DAPM stream powerdown time (msecs)");
 
@@ -3789,6 +3789,7 @@ int snd_soc_register_card(struct snd_soc_card *card)
 	mutex_init(&card->mutex);
 	mutex_init(&card->dapm_mutex);
 	mutex_init(&card->dsp_mutex);
+	spin_lock_init(&card->dsp_spinlock);
 
 	mutex_lock(&client_mutex);
 	list_add(&card->list, &card_list);

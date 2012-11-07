@@ -108,15 +108,6 @@ Lcd_mDNIe_UI current_mDNIe_Mode = mDNIe_UI_MODE; /* mDNIe Set Status Checking Va
 //u8 current_mDNIe_OutDoor_OnOff = FALSE;  // not support by mdp
 static bool g_mdine_enable = 0;
 
-#ifdef CONFIG_TWEAK_MDNIE_CTRL
-static bool mdnie_force_disable = 0;
-static bool mdnie_ctrl_enable = 0;
-static int mdnie_ctrl_red = 0;
-static int mdnie_ctrl_blue = 0;
-static int mdnie_ctrl_green = 0;
-static int mdnie_ctrl_sharpness = 0;
-#endif /* CONFIG_TWEAK_MDNIE_CTRL */
-
 void lut_tune(int num, unsigned int *pLutTable );
 void sharpness_tune(int num );
 DEFINE_MUTEX(msm_fb_ioctl_lut_sem1);
@@ -307,18 +298,17 @@ void free_cmap(struct fb_cmap *cmap)
 
 void lut_tune(int num, unsigned int *pLutTable )
 {
-	
-//	int fb;
+
+	__u16 *r, *g, *b, i;
+	int j;
 	struct fb_info *info;
 	struct fb_cmap test_cmap;
 	struct fb_cmap *cmap;
+	struct msm_fb_data_type *mfd;
+	uint32_t out;
 
-	static int mdp_lut_i = 0;
 	u16 r_1, g_1, b_1;//for final assignment
-//	fb = open("/dev/graphics/fb0", O_RDWR);
-	__u16 *r, *g, *b, i;
-	int j = 0;
-	
+
 	info = registered_fb[0];
 	cmap = &test_cmap;
 	//=====================================
@@ -359,41 +349,16 @@ void lut_tune(int num, unsigned int *pLutTable )
 		*g++ = pLutTable[j++];
 		*b++ = pLutTable[j++];
 	}
-#if 1
+
 	/*instead of an ioctl*/
-	mutex_lock(&msm_fb_ioctl_lut_sem1);
 	mdp_pipe_ctrl(MDP_CMD_BLOCK, MDP_BLOCK_POWER_ON, FALSE);
-	//ret = mdp_lut_hw_update(cmap);
+
 	j = 0;
 	for (i = 0; i < cmap->len; i++) {
-//		r_1 = mDNIe_data_R[i];
-//		g_1 = mDNIe_data_G[i];
-//		b_1 = mDNIe_data_B[i];
-#ifdef CONFIG_TWEAK_MDNIE_CTRL
-		if (mdnie_ctrl_enable && !mdnie_force_disable) {
-			int r_ctrl = (int)pLutTable[j++] + mdnie_ctrl_red;
-			int g_ctrl = (int)pLutTable[j++] + mdnie_ctrl_green;
-			int b_ctrl = (int)pLutTable[j++] + mdnie_ctrl_blue;
-                        if (r_ctrl > 255) r_ctrl = 255;
-                        else if (r_ctrl < 0) r_ctrl = 0;
-                        r_1 = r_ctrl;
-                        if (g_ctrl > 255) g_ctrl = 255;
-                        else if (g_ctrl < 0) g_ctrl = 0;
-                        g_1 = g_ctrl;
-                        if (b_ctrl > 255) b_ctrl = 255;
-                        else if (b_ctrl < 0) b_ctrl = 0;
-                        b_1 = b_ctrl;
-		} else {
-			r_1 = pLutTable[j++];
-			g_1 = pLutTable[j++];
-			b_1 = pLutTable[j++];
-		}
-#else
-		r_1 = pLutTable[j++]; 
+		r_1 = pLutTable[j++];
 		g_1 = pLutTable[j++];
 		b_1 = pLutTable[j++];
-#endif /* CONFIG_TWEAK_MDNIE_CTRL */
-		
+
 
 #ifdef CONFIG_FB_MSM_MDP40
 		MDP_OUTP(MDP_BASE + 0x94800 +
@@ -405,13 +370,22 @@ void lut_tune(int num, unsigned int *pLutTable )
 				 ((b_1 & 0xff) << 8) |
 				 ((r_1 & 0xff) << 16)));
 	}
-	MDP_OUTP(MDP_BASE + 0x90070, (mdp_lut_i << 10) | 0x17);
-	mdp_pipe_ctrl(MDP_CMD_BLOCK, MDP_BLOCK_POWER_OFF, FALSE);
+
+    mfd = (struct msm_fb_data_type *) registered_fb[0]->par;
+    if (mfd->panel.type == MIPI_CMD_PANEL) {
+        mdp_pipe_ctrl(MDP_CMD_BLOCK, MDP_BLOCK_POWER_OFF, FALSE);
+        mutex_lock(&mdp_lut_push_sem);
+        mdp_lut_push = 1;
+        mdp_lut_push_i = mdp_lut_i;
+        mutex_unlock(&mdp_lut_push_sem);
+    } else {
+        /*mask off non LUT select bits*/
+        out = inpdw(MDP_BASE + 0x90070) & ~((0x1 << 10) | 0x7);
+        MDP_OUTP(MDP_BASE + 0x90070, (mdp_lut_i << 10) | 0x7 | out);
+        mdp_pipe_ctrl(MDP_CMD_BLOCK, MDP_BLOCK_POWER_OFF, FALSE);
+    }
+
 	mdp_lut_i = (mdp_lut_i + 1)%2;
-	mutex_unlock(&msm_fb_ioctl_lut_sem1);
-#else	
-	info->fbops->fb_open && info->fbops->fb_ioctl(info, MSMFB_SET_LUT, cmap);
-#endif	
 
  fail_rest:
 	free_cmap(cmap);
@@ -421,17 +395,11 @@ void lut_tune(int num, unsigned int *pLutTable )
 void sharpness_tune(int num )
 {
 	char *vg_base;
-
-#ifdef CONFIG_TWEAK_MDNIE_CTRL
-	if (mdnie_ctrl_enable && !mdnie_force_disable) {
-	        num += mdnie_ctrl_sharpness;
-	        if (num > 127) num = 127;
-	        else if (num < -127) num = -127;
-	}
-#endif
+	mdp_pipe_ctrl(MDP_CMD_BLOCK, MDP_BLOCK_POWER_ON, FALSE);
 	vg_base = MDP_BASE + MDP4_VIDEO_BASE;
-	outpdw(vg_base + 0x8200, mdp4_ss_table_value((int8_t)num, 0)); 
-	outpdw(vg_base + 0x8204, mdp4_ss_table_value((int8_t)num, 1)); 
+	outpdw(vg_base + 0x8200, mdp4_ss_table_value((int8_t)num, 0));
+	outpdw(vg_base + 0x8204, mdp4_ss_table_value((int8_t)num, 1));
+	mdp_pipe_ctrl(MDP_CMD_BLOCK, MDP_BLOCK_POWER_OFF, FALSE);
 }
 
 
@@ -455,11 +423,7 @@ void mDNIe_Set_Mode(Lcd_mDNIe_UI mode)
 	static int isSetDMBMode = 0;
 
 	DPRINT("[mdnie set] mDNIe_Set_Mode \n");
-#ifdef CONFIG_TWEAK_MDNIE_CTRL
-	if (!g_mdine_enable || mdnie_force_disable) {
-#else
 	if(!g_mdine_enable) {
-#endif
 		printk(KERN_ERR"[mDNIE WARNING] mDNIE engine is OFF. So you cannot set mDnie Mode correctly.\n");
 		return;  // return 0;
 	}
@@ -853,149 +817,6 @@ static ssize_t outdoor_store(struct device *dev,
 static DEVICE_ATTR(outdoor, 0664, outdoor_show, outdoor_store);
 ////////////////]
 
-#ifdef CONFIG_TWEAK_MDNIE_CTRL
-// force_disable
-static ssize_t mdnie_force_disable_show(struct device *dev,
-		struct device_attribute *attr, char *buf)
-{
-	return sprintf(buf, "%d\n", mdnie_force_disable);
-}
-
-static ssize_t mdnie_force_disable_store(struct device *dev,
-		struct device_attribute *attr, const char *buf, size_t size)
-{
-	int value;
-	sscanf(buf, "%d", &value);
-	mdnie_force_disable = value ? 1 : 0;
-
-	if (mdnie_force_disable) {
-		lut_tune(MAX_LUT_SIZE, BYPASS_LUT);
-		sharpness_tune(SHARPNESS_BYPASS);
-	} else {
-		mDNIe_Set_Mode(current_mDNIe_Mode);
-	}
-
-	return size;
-}
-
-static DEVICE_ATTR(mdnie_force_disable, 0666, mdnie_force_disable_show, mdnie_force_disable_store);
-
-// mdnie_ctrl_enable
-static ssize_t mdnie_ctrl_enable_show(struct device *dev,
-		struct device_attribute *attr, char *buf)
-{
-	return sprintf(buf, "%d\n", mdnie_ctrl_enable);
-}
-
-static ssize_t mdnie_ctrl_enable_store(struct device *dev,
-		struct device_attribute *attr, const char *buf, size_t size)
-{
-	int value;
-	sscanf(buf, "%d", &value);
-	mdnie_ctrl_enable = value ? 1 : 0;
-	mDNIe_Set_Mode(current_mDNIe_Mode);
-
-	return size;
-}
-
-static DEVICE_ATTR(mdnie_ctrl_enable, 0666, mdnie_ctrl_enable_show, mdnie_ctrl_enable_store);
-
-// mdnie_ctrl_red
-static ssize_t mdnie_ctrl_red_show(struct device *dev,
-		struct device_attribute *attr, char *buf)
-{
-	return sprintf(buf, "%d\n", mdnie_ctrl_red);
-}
-
-static ssize_t mdnie_ctrl_red_store(struct device *dev,
-		struct device_attribute *attr, const char *buf, size_t size)
-{
-	int value;
-	sscanf(buf, "%d", &value);
-	if (value >= -255 || value <= 255)
-		mdnie_ctrl_red = value;
-	else
-		printk(KERN_ERR "[mDNIe] invalid red value. -255 <= value <= 255\n");
-
-	mDNIe_Set_Mode(current_mDNIe_Mode);
-
-	return size;
-}
-
-static DEVICE_ATTR(mdnie_ctrl_red, 0666, mdnie_ctrl_red_show, mdnie_ctrl_red_store);
-
-// mdnie_ctrl_green
-static ssize_t mdnie_ctrl_green_show(struct device *dev,
-		struct device_attribute *attr, char *buf)
-{
-	return sprintf(buf, "%d\n", mdnie_ctrl_green);
-}
-
-static ssize_t mdnie_ctrl_green_store(struct device *dev,
-		struct device_attribute *attr, const char *buf, size_t size)
-{
-	int value;
-	sscanf(buf, "%d", &value);
-	if (value >= -255 || value <= 255)
-		mdnie_ctrl_green = value;
-	else
-		printk(KERN_ERR "[mDNIe] invalid green value. -255 <= value <= 255\n");
-
-	mDNIe_Set_Mode(current_mDNIe_Mode);
-
-	return size;
-}
-
-static DEVICE_ATTR(mdnie_ctrl_green, 0666, mdnie_ctrl_green_show, mdnie_ctrl_green_store);
-
-// mdnie_ctrl_blue
-static ssize_t mdnie_ctrl_blue_show(struct device *dev,
-		struct device_attribute *attr, char *buf)
-{
-	return sprintf(buf, "%d\n", mdnie_ctrl_blue);
-}
-
-static ssize_t mdnie_ctrl_blue_store(struct device *dev,
-		struct device_attribute *attr, const char *buf, size_t size)
-{
-	int value;
-	sscanf(buf, "%d", &value);
-	if (value >= -255 || value <= 255)
-		mdnie_ctrl_blue = value;
-	else
-		printk(KERN_ERR "[mDNIe] invalid blue value. -255 <= value <= 255\n");
-
-	mDNIe_Set_Mode(current_mDNIe_Mode);
-
-	return size;
-}
-
-static DEVICE_ATTR(mdnie_ctrl_blue, 0666, mdnie_ctrl_blue_show, mdnie_ctrl_blue_store);
-
-// mdnie_ctrl_blue
-static ssize_t mdnie_ctrl_sharpness_show(struct device *dev,
-		struct device_attribute *attr, char *buf)
-{
-	return sprintf(buf, "%d\n", mdnie_ctrl_sharpness);
-}
-
-static ssize_t mdnie_ctrl_sharpness_store(struct device *dev,
-		struct device_attribute *attr, const char *buf, size_t size)
-{
-	int value;
-	sscanf(buf, "%d", &value);
-	if (value >= -127 || value <= 127)
-		mdnie_ctrl_sharpness = value;
-	else
-		printk(KERN_ERR "[mDNIe] invalid blue value. -127 <= value <= 127\n");
-
-	mDNIe_Set_Mode(current_mDNIe_Mode);
-
-	return size;
-}
-
-static DEVICE_ATTR(mdnie_ctrl_sharpness, 0666, mdnie_ctrl_sharpness_show, mdnie_ctrl_sharpness_store);
-#endif /* CONFIG_TWEAK_MDNIE_CTRL */
 
 void init_mdnie_class(void)
 {
@@ -1032,42 +853,9 @@ void init_mdnie_class(void)
         pr_err("Failed to create device file(%s)!\n",dev_attr_tuning.attr.name);
     }
 #endif	
-
-#ifdef CONFIG_TWEAK_MDNIE_CTRL
-	if (device_create_file
-		(mdnie_dev, &dev_attr_mdnie_force_disable) < 0)
-		pr_err("Failed to create device file(%s)!=n",
-		dev_attr_mdnie_force_disable.attr.name);
-
-	if (device_create_file
-		(mdnie_dev, &dev_attr_mdnie_ctrl_enable) < 0)
-		pr_err("Failed to create device file(%s)!=n",
-		dev_attr_mdnie_ctrl_enable.attr.name);
-
-	if (device_create_file
-		(mdnie_dev, &dev_attr_mdnie_ctrl_red) < 0)
-		pr_err("Failed to create device file(%s)!=n",
-		dev_attr_mdnie_ctrl_red.attr.name);
-
-	if (device_create_file
-		(mdnie_dev, &dev_attr_mdnie_ctrl_green) < 0)
-		pr_err("Failed to create device file(%s)!=n",
-		dev_attr_mdnie_ctrl_green.attr.name);
-
-	if (device_create_file
-		(mdnie_dev, &dev_attr_mdnie_ctrl_blue) < 0)
-		pr_err("Failed to create device file(%s)!=n",
-		dev_attr_mdnie_ctrl_blue.attr.name);
-
-	if (device_create_file
-		(mdnie_dev, &dev_attr_mdnie_ctrl_sharpness) < 0)
-		pr_err("Failed to create device file(%s)!=n",
-		dev_attr_mdnie_ctrl_sharpness.attr.name);
-#endif /* CONFIG_TWEAK_MDNIE_CTRL */
-
 	s3c_mdnie_start();
 	sharpness_tune(0);	
-#if defined(CONFIG_FB_MSM_MIPI_S6E8AA0_WXGA_Q1_PANEL) || defined(CONFIG_FB_MSM_MIPI_S6E8AA0_HD720_PANEL)
+#ifdef CONFIG_FB_MSM_MIPI_S6E8AA0_WXGA_Q1_PANEL
 	lut_tune(MAX_LUT_SIZE, UI_LUT);
 #endif
 }

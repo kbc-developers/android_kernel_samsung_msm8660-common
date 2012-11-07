@@ -43,6 +43,13 @@ int msm_ion_unsecure_heap(int heap_id)
 }
 EXPORT_SYMBOL(msm_ion_unsecure_heap);
 
+int msm_ion_do_cache_op(struct ion_client *client, struct ion_handle *handle,
+			void *vaddr, unsigned long len, unsigned int cmd)
+{
+	return ion_do_cache_op(client, handle, vaddr, 0, len, cmd);
+}
+EXPORT_SYMBOL(msm_ion_do_cache_op);
+
 static unsigned long msm_ion_get_base(unsigned long size, int memory_type,
 				    unsigned int align)
 {
@@ -206,6 +213,45 @@ static void msm_ion_allocate(struct ion_platform_heap *heap)
 	}
 }
 
+static int is_heap_overlapping(const struct ion_platform_heap *heap1,
+				const struct ion_platform_heap *heap2)
+{
+	unsigned long heap1_base = heap1->base;
+	unsigned long heap2_base = heap2->base;
+	unsigned long heap1_end = heap1->base + heap1->size - 1;
+	unsigned long heap2_end = heap2->base + heap2->size - 1;
+
+	if (heap1_base == heap2_base)
+		return 1;
+	if (heap1_base < heap2_base && heap1_end >= heap2_base)
+		return 1;
+	if (heap2_base < heap1_base && heap2_end >= heap1_base)
+		return 1;
+	return 0;
+}
+
+static void check_for_heap_overlap(const struct ion_platform_heap heap_list[],
+				   unsigned long nheaps)
+{
+	unsigned long i;
+	unsigned long j;
+
+	for (i = 0; i < nheaps; ++i) {
+		const struct ion_platform_heap *heap1 = &heap_list[i];
+		if (!heap1->base)
+			continue;
+		for (j = i + 1; j < nheaps; ++j) {
+			const struct ion_platform_heap *heap2 = &heap_list[j];
+			if (!heap2->base)
+				continue;
+			if (is_heap_overlapping(heap1, heap2)) {
+				panic("Memory in heap %s overlaps with heap %s\n",
+					heap1->name, heap2->name);
+			}
+		}
+	}
+}
+
 static int msm_ion_probe(struct platform_device *pdev)
 {
 	struct ion_platform_data *pdata = pdev->dev.platform_data;
@@ -234,6 +280,7 @@ static int msm_ion_probe(struct platform_device *pdev)
 		struct ion_platform_heap *heap_data = &pdata->heaps[i];
 		msm_ion_allocate(heap_data);
 
+		heap_data->has_outer_cache = pdata->has_outer_cache;
 		heaps[i] = ion_heap_create(heap_data);
 		if (IS_ERR_OR_NULL(heaps[i])) {
 			heaps[i] = 0;
@@ -254,6 +301,8 @@ static int msm_ion_probe(struct platform_device *pdev)
 
 		ion_device_add_heap(idev, heaps[i]);
 	}
+
+	check_for_heap_overlap(pdata->heaps, num_heaps);
 	platform_set_drvdata(pdev, idev);
 	return 0;
 

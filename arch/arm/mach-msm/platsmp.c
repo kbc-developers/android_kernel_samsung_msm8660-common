@@ -173,8 +173,6 @@ int __cpuinit boot_secondary(unsigned int cpu, struct task_struct *idle)
 	pen_release = cpu;
 	dmac_flush_range((void *)&pen_release,
 			 (void *)(&pen_release + sizeof(pen_release)));
-	__asm__("sev");
-	mb();
 
 	/* Use smp_cross_call() to send a soft interrupt to wake up
 	 * the other core.
@@ -202,15 +200,6 @@ void __cpuinit platform_secondary_init(unsigned int cpu)
 	WARN_ON(msm_platform_secondary_init(cpu));
 
 	trace_hardirqs_off();
-
-	/* Edge trigger PPIs except AVS_SVICINT and AVS_SVICINTSWDONE */
-	writel(0xFFFFD7FF, MSM_QGIC_DIST_BASE + GIC_DIST_CONFIG + 4);
-
-	/* RUMI does not adhere to GIC spec by enabling STIs by default.
-	 * Enable/clear is supposed to be RO for STIs, but is RW on RUMI.
-	 */
-	if (!machine_is_msm8x60_sim())
-		writel(0x0000FFFF, MSM_QGIC_DIST_BASE + GIC_DIST_ENABLE_SET);
 
 	gic_secondary_init(0);
 }

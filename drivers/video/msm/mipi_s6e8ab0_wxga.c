@@ -30,9 +30,7 @@
 #endif
 
 static void set_backlight(struct msm_fb_data_type *mfd);
-#if 0
 #define LCDC_DEBUG
-#endif
 //#define LCD_FACTORY_TEST
 
 //#define MIPI_SINGLE_WRITE
@@ -51,10 +49,13 @@ static char log_buffer[256] = {0,};
 #define LOG_FINISH(x...)	do { if( strlen(log_buffer) != 0 ) DPRINT( "%s\n", log_buffer); LOG_START(); } while(0)
 
 ///////////MAX
-int BrightLimitValue = 0;
+#define BRIGHTLIMITVALUE 171
+#define BRIGHTLIMITVALUE2 151
+int BrightLimitValue = BRIGHTLIMITVALUE;
 int FlagMaxBrightLimit = 0;
 int savLastBrightness = 0;
-void set_lcd_MaxLimit(int val);
+void set_lcd_MaxLimit();
+void set_lcd_MaxLimit2();
 void unset_lcd_MaxLimit();
 //////////
 
@@ -667,13 +668,13 @@ void read_reg( char srcReg, int srcLength, char* destBuffer, const int isUseMute
 //	MIPI_OUTP(MIPI_DSI_BASE + 0x38, 0x14000000); // lp
 
 	packet_size[0] = (char) srcLength;
-	mipi_dsi_cmds_tx(pMFD, &s6e8ab0_tx_buf, &(s6e8ab0_packet_size_cmd),	1);
+	mipi_dsi_cmds_tx(&s6e8ab0_tx_buf, &(s6e8ab0_packet_size_cmd),	1);
 
 	show_cnt = 0;
 	for( j = 0; j < loop_limit; j ++ )
 	{
 		reg_read_pos[1] = read_pos;
-		if( mipi_dsi_cmds_tx(pMFD, &s6e8ab0_tx_buf, &(s6e8ab0_read_pos_cmd), 1) < 1 ) {
+		if( mipi_dsi_cmds_tx(&s6e8ab0_tx_buf, &(s6e8ab0_read_pos_cmd), 1) < 1 ) {
 			LOG_ADD( "Tx command FAILED" );
 			break;
 		}
@@ -769,7 +770,7 @@ static int lcd_on_seq(struct msm_fb_data_type *mfd)
 		DPRINT("%s +\n", __func__);
 
 		txAmount = ARRAY_SIZE(s6e8ab0_display_on_before_read_id);
-		txCnt = mipi_dsi_cmds_tx(mfd, &s6e8ab0_tx_buf, s6e8ab0_display_on_before_read_id,
+		txCnt = mipi_dsi_cmds_tx(&s6e8ab0_tx_buf, s6e8ab0_display_on_before_read_id,
 				txAmount );    
 		if( txAmount != txCnt )	
 		{
@@ -828,7 +829,7 @@ static int lcd_on_seq(struct msm_fb_data_type *mfd)
 #endif
 
 		txAmount = ARRAY_SIZE(s6e8ab0_display_on_before_gamma_cmds);
-		txCnt = mipi_dsi_cmds_tx(mfd, &s6e8ab0_tx_buf, s6e8ab0_display_on_before_gamma_cmds,
+		txCnt = mipi_dsi_cmds_tx(&s6e8ab0_tx_buf, s6e8ab0_display_on_before_gamma_cmds,
 				txAmount );    
 
 		if( txAmount != txCnt )	
@@ -850,7 +851,7 @@ static int lcd_on_seq(struct msm_fb_data_type *mfd)
 		}
 		s6e8ab0_lcd.lcd_gamma = s6e8ab0_lcd.stored_gamma;
 		
-		mipi_dsi_cmds_tx(mfd, &s6e8ab0_tx_buf, s6e8ab0_display_on_after_gamma_cmds,
+		mipi_dsi_cmds_tx(&s6e8ab0_tx_buf, s6e8ab0_display_on_after_gamma_cmds,
 				ARRAY_SIZE(s6e8ab0_display_on_after_gamma_cmds));    
 
 		s6e8ab0_lcd.lcd_state.initialized = TRUE;
@@ -865,7 +866,7 @@ static int lcd_on_seq(struct msm_fb_data_type *mfd)
 		VREGOUT_SET[1] = s6e8ab0_lcd.lcd_id_buffer[0];
 		VREGOUT_SET[2] = s6e8ab0_lcd.lcd_id_buffer[1];		
 		VREGOUT_SET[3] = s6e8ab0_lcd.lcd_id_buffer[2];
-		mipi_dsi_cmds_tx(mfd, &s6e8ab0_tx_buf, s6e8ab0_wxga_display_on,
+		mipi_dsi_cmds_tx(&s6e8ab0_tx_buf, s6e8ab0_wxga_display_on,
 				ARRAY_SIZE(s6e8ab0_wxga_display_on));  
 
 		// set acl 
@@ -947,7 +948,7 @@ static int lcd_off_seq(struct msm_fb_data_type *mfd)
 #endif
 	mutex_lock(&(s6e8ab0_lcd.lock));
 //	set_lcd_esd_ignore( TRUE );
-	mipi_dsi_cmds_tx(mfd, &s6e8ab0_tx_buf, s6e8ab0_display_off_cmds,
+	mipi_dsi_cmds_tx(&s6e8ab0_tx_buf, s6e8ab0_display_off_cmds,
 			ARRAY_SIZE(s6e8ab0_display_off_cmds));
 	s6e8ab0_lcd.lcd_state.display_on = state_lcd_on = FALSE;
 	s6e8ab0_lcd.lcd_state.initialized = FALSE;
@@ -1024,8 +1025,8 @@ static int __devinit lcd_shutdown(struct platform_device *pdev)
 static void lcd_gamma_apply( struct msm_fb_data_type *mfd, int srcGamma)
 {
 	LOG_ADD( " GAMMA(%d=%dcd)", srcGamma, s6e8ab0_lcd.lcd_brightness_table[srcGamma].lux );
-	mipi_dsi_cmds_tx(mfd, &s6e8ab0_tx_buf, s6e8ab0_lcd.lcd_brightness_table[srcGamma].cmd,	1);
-	mipi_dsi_cmds_tx(mfd, &s6e8ab0_tx_buf, &s6e8ab0_gamma_update_cmd, 1);
+	mipi_dsi_cmds_tx(&s6e8ab0_tx_buf, s6e8ab0_lcd.lcd_brightness_table[srcGamma].cmd,	1);
+	mipi_dsi_cmds_tx(&s6e8ab0_tx_buf, &s6e8ab0_gamma_update_cmd, 1);
 }
 
 
@@ -1033,7 +1034,9 @@ static void lcd_gamma_apply( struct msm_fb_data_type *mfd, int srcGamma)
 static void lcd_gamma_smartDimming_apply( struct msm_fb_data_type *mfd, int srcGamma)
 {
 	int gamma_lux;
-//	int i;
+	int i;
+
+	DPRINT("[%s] +\n", __func__);
 
 #if 1
 	if(srcGamma >= MAX_GAMMA_VALUE)	srcGamma = MAX_GAMMA_VALUE-1;
@@ -1070,9 +1073,10 @@ static void lcd_gamma_smartDimming_apply( struct msm_fb_data_type *mfd, int srcG
 		sprintf( pBuffer+ strlen(pBuffer), " %02x", GAMMA_SmartDimming_COND_SET[i] );
 	}
 	DPRINT( "SD: %03d %s\n", gamma_lux, pBuffer );
-#endif
-	mipi_dsi_cmds_tx(mfd, &s6e8ab0_tx_buf, &DSI_CMD_SmartDimming_GAMMA,	1);
-	mipi_dsi_cmds_tx(mfd, &s6e8ab0_tx_buf, &s6e8ab0_gamma_update_cmd, 1);
+#endif 
+	mipi_dsi_cmds_tx(&s6e8ab0_tx_buf, &DSI_CMD_SmartDimming_GAMMA,	1);
+	mipi_dsi_cmds_tx(&s6e8ab0_tx_buf, &s6e8ab0_gamma_update_cmd, 1);
+
 
 	LOG_ADD( " SDIMMING(%d=%dcd)", srcGamma, gamma_lux );
 }
@@ -1129,21 +1133,22 @@ static void lcd_set_brightness(struct msm_fb_data_type *mfd, int gamma_level)
    s6e8ab0_lcd.stored_elvss= gamma_level;
    s6e8ab0_lcd.stored_acl = gamma_level;
    s6e8ab0_lcd.goal_brightness = gamma_level;
-
+   
 	lcd_gamma_ctl(mfd, &s6e8ab0_lcd);
 	lcd_set_elvss(mfd, &s6e8ab0_lcd);
 	if(s6e8ab0_lcd.enabled_acl && 
 		((!s6e8ab0_lcd.lcd_acl &&  s6e8ab0_lcd.stored_acl > 1) ||
-		(s6e8ab0_lcd.lcd_acl &&  s6e8ab0_lcd.stored_acl < 2)) ) lcd_set_acl(mfd, &s6e8ab0_lcd);
+		(s6e8ab0_lcd.lcd_acl &&  s6e8ab0_lcd.stored_acl < 2)) )lcd_set_acl(mfd, &s6e8ab0_lcd);
 
 #if !defined(CONFIG_HAS_EARLYSUSPEND)
 	if (s6e8ab0_lcd.lcd_gamma <= LCD_OFF_GAMMA_VALUE) {
-		lcd_off_seq( mfd );	// brightness = 0 -> LCD Off
+		lcd_off_seq( mfd );	// brightness = 0 -> LCD Off 
 	}
-#endif
+#endif 
 
 	//TODO: unlock
 	//spin_unlock_irqrestore(&bl_ctrl_lock, irqflags);
+
 }
 
 
@@ -1159,8 +1164,8 @@ static int get_gamma_value_from_bl(int bl_value )// same as Seine, Celox
 	if(bl_value >= MIN_BL){
 #ifdef MAPPING_TBL_AUTO_BRIGHTNESS	
 
-		if (unlikely(!s6e8ab0_lcd.auto_brightness && bl_value > MAX_BL))
-			bl_value = MAX_BL;
+		if (unlikely(!s6e8ab0_lcd.auto_brightness && bl_value > 250))
+			bl_value = 250;
   
         	switch (bl_value) {
         	case 0 ... 29:
@@ -1180,9 +1185,11 @@ static int get_gamma_value_from_bl(int bl_value )// same as Seine, Celox
       
 	        DPRINT(" >>> bl_value:%d,gamma_value: %d\n ",bl_value,gamma_value);
 #else
+
 		gamma_val_x10 = 10 *(MAX_GAMMA_VALUE-1)*bl_value/(MAX_BL-MIN_BL) + (10 - 10*(MAX_GAMMA_VALUE-1)*(MIN_BL)/(MAX_BL-MIN_BL));
 		gamma_value=(gamma_val_x10 +5)/10;
-#endif
+		
+#endif			
 	}else{
 		gamma_value =0;
 	}
@@ -1207,14 +1214,15 @@ static void set_backlight(struct msm_fb_data_type *mfd)
 	{
 		if(bl_level > BrightLimitValue)
 		{
-			bl_level = BrightLimitValue;
+			DPRINT("MaxBrightLimit -> 200/180cd %d\n", BrightLimitValue);
+			return;
 		}
 	}
-//////////
+//////////	
 	gamma_level = get_gamma_value_from_bl(bl_level);
 
-	if ((s6e8ab0_lcd.lcd_state.initialized)
-		&& (s6e8ab0_lcd.lcd_state.powered_up)
+	if ((s6e8ab0_lcd.lcd_state.initialized) 
+		&& (s6e8ab0_lcd.lcd_state.powered_up) 
 		&& (s6e8ab0_lcd.lcd_state.display_on))
 	{
 		if(s6e8ab0_lcd.lcd_gamma != gamma_level)
@@ -1222,7 +1230,6 @@ static void set_backlight(struct msm_fb_data_type *mfd)
 			LOG_START();
 			lcd_set_brightness(mfd, gamma_level);
 			LOG_FINISH();
-			printk("[%s] bl_level=%d gamma_level=%d \n", __func__, bl_level, gamma_level);
 		}
 		else
 		{
@@ -1246,20 +1253,40 @@ static void set_backlight(struct msm_fb_data_type *mfd)
 }
 
 ///////////MAX
-void set_lcd_MaxLimit(int val)
+void set_lcd_MaxLimit()
 {
+	int tmpValue;
 	FlagMaxBrightLimit = 1;
-	BrightLimitValue = val;
-	set_backlight(pMFD);
-	printk("[%s] brightness=%d\n", __func__, val);
+	BrightLimitValue = BRIGHTLIMITVALUE;
+	if(savLastBrightness > BrightLimitValue)
+	{
+		tmpValue = pMFD->bl_level;
+		pMFD->bl_level = 	BrightLimitValue-5;
+		set_backlight(pMFD);
+		pMFD->bl_level = tmpValue;
+	}
+	DPRINT("MaxBrightLimit -> 200cd\n");
+}
+void set_lcd_MaxLimit2()
+{
+	int tmpValue;
+	FlagMaxBrightLimit = 1;
+	BrightLimitValue = BRIGHTLIMITVALUE2;
+	if(savLastBrightness > BrightLimitValue)
+	{
+		tmpValue = pMFD->bl_level; 
+		pMFD->bl_level = 	BrightLimitValue-5;
+		set_backlight(pMFD);
+		pMFD->bl_level = tmpValue;
+	}
+	DPRINT("MaxBrightLimit -> 180cd\n");
 }
 
 void unset_lcd_MaxLimit()
 {
 	FlagMaxBrightLimit = 0;
-	BrightLimitValue = 0;
-    set_backlight(pMFD);
-	printk("[%s] brightness=%d\n", __func__, savLastBrightness);
+	set_backlight(pMFD);
+	DPRINT("MaxBrightLimit -> expired\n");
 }
 //////////
 
@@ -1312,7 +1339,7 @@ static  int lcd_apply_elvss(struct msm_fb_data_type *mfd, int srcElvss, struct l
 		elvss_cmd[1] = 0x84;
 		elvss_cmd[2] = srcElvss;
 
-		mipi_dsi_cmds_tx(mfd, &s6e8ab0_tx_buf, &(s6e8aa0_elvss_cmd),	1);
+		mipi_dsi_cmds_tx(&s6e8ab0_tx_buf, &(s6e8aa0_elvss_cmd),	1);
 	//	printk("huggac : apply elvss : %x\n", srcElvss);
 	}
 
@@ -1321,7 +1348,7 @@ static  int lcd_apply_elvss(struct msm_fb_data_type *mfd, int srcElvss, struct l
 		elvss_cmd_dynamic[i] = 0xb2; // addresss
 		for(i = 1; i < 6 ; i++)elvss_cmd_dynamic[i] = srcElvss; //data
 
-		mipi_dsi_cmds_tx(mfd, &s6e8ab0_tx_buf, &(s6e8aa0_elvss_table_dynamic),	1);			
+		mipi_dsi_cmds_tx(&s6e8ab0_tx_buf, &(s6e8aa0_elvss_table_dynamic),	1);			
 	}
 	
 }
@@ -1399,15 +1426,15 @@ static void lcd_set_acl(struct msm_fb_data_type *mfd, struct lcd_setting *lcd)
 			{
 			case 0 ... 1: // 30cd ~ 40cd 
 				if (lcd->lcd_acl != 0) {  // 40%
-					mipi_dsi_cmds_tx(mfd, &s6e8ab0_tx_buf, &(s6e8aa0_seq_acl_off),	1); 
+					mipi_dsi_cmds_tx(&s6e8ab0_tx_buf, &(s6e8aa0_seq_acl_off),	1); 
 					lcd->lcd_acl = 0;					
 					}
 					break;
 					
 			default: // more than 40cd  
 				if (lcd->lcd_acl != 40) {  // not 40% 
-					mipi_dsi_cmds_tx(mfd, &s6e8ab0_tx_buf, &(s6e8aa0_seq_acl_on),	1);
-					mipi_dsi_cmds_tx(mfd, &s6e8ab0_tx_buf, &(s6e8aa0_acl_cutoff_table),	1);				
+					mipi_dsi_cmds_tx(&s6e8ab0_tx_buf, &(s6e8aa0_seq_acl_on),	1);
+					mipi_dsi_cmds_tx(&s6e8ab0_tx_buf, &(s6e8aa0_acl_cutoff_table),	1);				
 					lcd->lcd_acl = 40;					
 					}
 					break;
@@ -1415,7 +1442,7 @@ static void lcd_set_acl(struct msm_fb_data_type *mfd, struct lcd_setting *lcd)
 	} 
 	
 	else {
-		mipi_dsi_cmds_tx(mfd, &s6e8ab0_tx_buf, &(s6e8aa0_seq_acl_off),	1);
+		mipi_dsi_cmds_tx(&s6e8ab0_tx_buf, &(s6e8aa0_seq_acl_off),	1);
 		lcd->lcd_acl = 0;
 	}
 	printk("%s acl_enable:%d , bl-level:%d, cur_acl:%d\n",__func__, lcd->enabled_acl, lcd->stored_acl, lcd->lcd_acl);	
@@ -1849,35 +1876,6 @@ static DEVICE_ATTR(lcdtype, 0664,
 		lcdtype_show, NULL);
 #endif
 
-static ssize_t max_brightness_show(struct device *dev,
-        struct device_attribute *attr, char *buf)
-{
-	char temp[10];
-
-	sprintf(temp, "%d\n", BrightLimitValue);
-	strcpy(buf, temp);
-
-	return strlen(buf);
-}
-
-static ssize_t max_brightness_store(struct device *dev,
-        struct device_attribute *attr, const char *buf, size_t size)
-{
-	int value;
-	int rc;
-
-	rc = strict_strtoul(buf, (unsigned int) 0, (unsigned long *)&value);
-	if (rc < 0) return rc;
-	else {
-		if(value) set_lcd_MaxLimit(value);
-		else unset_lcd_MaxLimit();
-		return size;
-	}
-}
-
-static DEVICE_ATTR(max_brightness, 0664,
-		max_brightness_show, max_brightness_store);
-
 static int __devinit lcd_probe(struct platform_device *pdev)
 {
 	int ret = 0;
@@ -1923,7 +1921,7 @@ if(p8lte_has_cmc624())
 	s6e8ab0_lcd.enabled_acl= 1;
 	s6e8ab0_lcd.stored_acl= default_gamma_value;
 	s6e8ab0_lcd.goal_brightness = default_gamma_value;
-	s6e8ab0_lcd.lcd_acl = -1;
+	s6e8ab0_lcd.lcd_acl = 40;
 	s6e8ab0_lcd.lcd_state.display_on = state_lcd_on = false;
 	s6e8ab0_lcd.lcd_state.initialized= false;
 	s6e8ab0_lcd.lcd_state.powered_up= false;
@@ -1983,18 +1981,14 @@ if(p8lte_has_cmc624())
 	if (ret < 0)
 		DPRINT("octa_mtp failed to add sysfs entries\n");
 
-	ret = device_create_file(sysfs_panel_dev, &dev_attr_octa_adjust_mtp);
+	ret = device_create_file(sysfs_panel_dev, &dev_attr_octa_adjust_mtp);  
 	if (ret < 0)
 		DPRINT("octa_adjust_mtp failed to add sysfs entries\n");
 
-	ret = device_create_file(sysfs_panel_dev, &dev_attr_lcd_power);
+	ret = device_create_file(sysfs_panel_dev, &dev_attr_lcd_power);  
 	if (ret < 0)
 		DPRINT("lcd_power failed to add sysfs entries\n");
 //		dev_err(&(pdev->dev), "failed to add sysfs entries\n");
-
-	ret = device_create_file(sysfs_panel_dev, &dev_attr_max_brightness);
-	if (ret < 0)
-		DPRINT("max_brightness: lcd_power failed to add sysfs entries\n");
 
 	// mdnie sysfs create
 	//init_mdnie_class();

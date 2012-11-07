@@ -220,10 +220,10 @@ void msm_snddev_audience_call_route_deconfig(void)
 {
 	pr_debug("%s()\n", __func__);
 
-	a2220_ioctl2(A2220_SET_CONFIG , A2220_PATH_SUSPEND);	
+	a2220_ioctl2(A2220_SET_CONFIG , A2220_PATH_SUSPEND);
 	gpio_set_value(GPIO_SELECT_I2S_AUDIENCE_QTR, 1);
 	pr_debug("[AUD] QTR Path \n");
-	
+
 	return;
 }
 
@@ -236,7 +236,7 @@ void msm_snddev_audience_call_route_speaker_config(void)
 		return 0;
 #endif
 	gpio_set_value(GPIO_SELECT_I2S_AUDIENCE_QTR, 0); //switch  to I2S audience
-	a2220_ioctl2(A2220_SET_CONFIG , A2220_PATH_INCALL_SPEAKER);	
+	a2220_ioctl2(A2220_SET_CONFIG , A2220_PATH_INCALL_SPEAKER);
 	pr_debug("[AUD] AUD Path \n");
 
 	return;
@@ -245,7 +245,7 @@ void msm_snddev_audience_call_route_speaker_deconfig(void)
 {
 	pr_debug("%s()\n", __func__);
 
-	a2220_ioctl2(A2220_SET_CONFIG , A2220_PATH_SUSPEND);	
+	a2220_ioctl2(A2220_SET_CONFIG , A2220_PATH_SUSPEND);
 	gpio_set_value(GPIO_SELECT_I2S_AUDIENCE_QTR, 1); //switch  to I2S QTR
 	pr_debug("[AUD] QTR Path \n");
 
@@ -455,7 +455,7 @@ static int msm_snddev_audience_speaker_on(void)
 	}
 config_gpio_fail:
 	return rc;
-#endif	
+#endif
 }
 
 static int msm_snddev_audience_speaker_off(void)
@@ -474,7 +474,7 @@ static int msm_snddev_audience_speaker_off(void)
 			config_class_d1_gpio(0);
 		msleep(30);
 #endif
-	}	
+	}
 	return 0;
 }
 #endif
@@ -590,11 +590,11 @@ void msm_snddev_audience_call_route_headset_config(void)
 #if (defined(CONFIG_USA_MODEL_SGH_T989) || defined (CONFIG_USA_MODEL_SGH_T769)) && defined(AUDIENCE_SUSPEND)
 		pr_debug("%s: dualmic disabled\n", __func__);
 		return 0;
-#endif 
+#endif
 
 	gpio_set_value(GPIO_SELECT_I2S_AUDIENCE_QTR, 0); //switch  to I2S audience
 
-	a2220_ioctl2(A2220_SET_CONFIG , A2220_PATH_INCALL_HEADSET);	
+	a2220_ioctl2(A2220_SET_CONFIG , A2220_PATH_INCALL_HEADSET);
 	pr_debug("[AUD] AUD Path \n");
 
 	return;
@@ -603,7 +603,7 @@ void msm_snddev_audience_call_route_headset_deconfig(void)
 {
 	pr_debug("%s()\n", __func__);
 
-	a2220_ioctl2(A2220_SET_CONFIG , A2220_PATH_SUSPEND);	
+	a2220_ioctl2(A2220_SET_CONFIG , A2220_PATH_SUSPEND);
 	gpio_set_value(GPIO_SELECT_I2S_AUDIENCE_QTR, 1); //switch  to I2S QTR
 	pr_debug("[AUD] QTR Path \n");
 
@@ -688,23 +688,23 @@ void msm_snddev_vpsamp_off_headset(void)
 int msm_snddev_spkvpsamp_on_together(void)
 {
 	pr_info("%s\n", __func__);
-	
+
 #ifdef CONFIG_SENSORS_YDA165
 	yda165_speaker_headset_onoff(1);
 #endif
 
 	fsa9480_audiopath_control(1);
-	
+
 	return 0;
 }
 void msm_snddev_spkvpsamp_off_together(void)
 {
 	pr_info("%s\n", __func__);
-	
+
 #ifdef CONFIG_SENSORS_YDA165
 	yda165_speaker_headset_onoff(0);
 #endif
-	
+
 	fsa9480_audiopath_control(0);
 }
 
@@ -746,7 +746,7 @@ static int msm_snddev_voltage_on(void)
 					"l2", PTR_ERR(snddev_reg_l10));
 			return -EBUSY;
 		}
-		
+
 		rc = regulator_set_voltage(snddev_reg_l10, 2600000, 2600000);
 		if (rc < 0)
 			pr_err("%s: regulator_set_voltage(l10) failed (%d)\n",
@@ -848,7 +848,7 @@ static int msm_snddev_setting_audience_call_disconnect(void)
 static int msm_snddev_enable_audience_amic_power(void)
 {
 	int ret = 0;
-	
+
 #ifdef CONFIG_PMIC8058_OTHC
 	ret = pm8058_micbias_enable(OTHC_MICBIAS_0,
 			OTHC_SIGNAL_ALWAYS_ON);
@@ -861,7 +861,7 @@ static int msm_snddev_enable_audience_amic_power(void)
 			OTHC_SIGNAL_ALWAYS_ON);
 	if (ret)
 		pr_err("%s: Enabling sub_mic power failed\n", __func__);
-	
+
 	gpio_set_value(GPIO_SELECT_I2S_AUDIENCE_QTR, 0);
 
 	if(!dualmic_enabled)
@@ -883,7 +883,7 @@ static int msm_snddev_enable_audience_amic_power(void)
 static void msm_snddev_disable_audience_amic_power(void)
 {
 	int ret;
-	
+
 #ifdef CONFIG_PMIC8058_OTHC
 	ret = pm8058_micbias_enable(OTHC_MICBIAS_0, OTHC_SIGNAL_OFF);
 
@@ -896,7 +896,7 @@ static void msm_snddev_disable_audience_amic_power(void)
 	if (ret)
 		pr_err("%s: Disabling sub_mic power failed\n", __func__);
 
-	a2220_ioctl2(A2220_SET_CONFIG , A2220_PATH_SUSPEND);	
+	a2220_ioctl2(A2220_SET_CONFIG , A2220_PATH_SUSPEND);
 	gpio_set_value(GPIO_SELECT_I2S_AUDIENCE_QTR, 1); //switch  to I2S QTR
 	pr_debug("[AUD] QTR Path \n");
 #endif
@@ -917,12 +917,12 @@ static int msm_snddev_enable_amic_power(void)
 		pr_err("%s: Enabling amic power failed\n", __func__);
 
 #ifdef CONFIG_VP_A2220
-		printk("2.A2220::enable sub_mic on\n");		
+		printk("2.A2220::enable sub_mic on\n");
 		ret = pm8058_micbias_enable(OTHC_MICBIAS_2,
 				OTHC_SIGNAL_ALWAYS_ON);
 		if (ret)
 			pr_err("%s: Enabling sub_mic power failed\n", __func__);
-#endif	
+#endif
 #endif
 	return ret;
 }
@@ -949,7 +949,7 @@ static void msm_snddev_disable_amic_power(void)
 #endif
 
 #ifdef CONFIG_VP_A2220
-		pr_debug("2.A2220::disable sub_mic off\n");		
+		pr_debug("2.A2220::disable sub_mic off\n");
 		ret = pm8058_micbias_enable(OTHC_MICBIAS_2, OTHC_SIGNAL_OFF);
 
 	if (ret)
@@ -1018,7 +1018,7 @@ static void msm_snddev_disable_submic_power(void)
 }
 
 
-// ------- DEFINITION OF NORMAL PAIRED DEVICES ------ 
+// ------- DEFINITION OF NORMAL PAIRED DEVICES ------
 static struct adie_codec_action_unit handset_rx_48KHz_osr256_actions[] =
 ADIE_HANDSET_RX_48000_256;
 static struct adie_codec_action_unit handset_tx_48KHz_osr256_actions[] =
@@ -1033,7 +1033,7 @@ static struct adie_codec_action_unit headset_tx_48KHz_osr256_actions[] =
 ADIE_HEADSET_TX_48000_256;
 
 
-// ------- DEFINITION OF VT CALL PAIRED DEVICES ------ 
+// ------- DEFINITION OF VT CALL PAIRED DEVICES ------
 static struct adie_codec_action_unit handset_vt_rx_48KHz_osr256_actions[] =
 ADIE_HANDSET_RX_48000_256;
 static struct adie_codec_action_unit handset_vt_tx_48KHz_osr256_actions[] =
@@ -1047,7 +1047,7 @@ ADIE_HEADSET_RX_48000_256;
 static struct adie_codec_action_unit headset_vt_tx_48KHz_osr256_actions[] =
 ADIE_HEADSET_TX_48000_256;
 
-// ------- DEFINITION OF VOIP CALL PAIRED DEVICES ------ 
+// ------- DEFINITION OF VOIP CALL PAIRED DEVICES ------
 static struct adie_codec_action_unit handset_voip_rx_48KHz_osr256_actions[] =
 ADIE_HANDSET_VOIP_RX_48000_256;
 static struct adie_codec_action_unit handset_voip_tx_48KHz_osr256_actions[] =
@@ -1061,7 +1061,7 @@ ADIE_HEADSET_VOIP_RX_48000_256;
 static struct adie_codec_action_unit headset_voip_tx_48KHz_osr256_actions[] =
 ADIE_HEADSET_VOIP_TX_48000_256;
 
-// ------- DEFINITION OF VOIP CALL2 PAIRED DEVICES ------ 
+// ------- DEFINITION OF VOIP CALL2 PAIRED DEVICES ------
 static struct adie_codec_action_unit handset_voip2_rx_48KHz_osr256_actions[] =
 ADIE_HANDSET_VOIP2_RX_48000_256;
 static struct adie_codec_action_unit handset_voip2_tx_48KHz_osr256_actions[] =
@@ -1075,7 +1075,7 @@ ADIE_HEADSET_VOIP2_RX_48000_256;
 static struct adie_codec_action_unit headset_voip2_tx_48KHz_osr256_actions[] =
 ADIE_HEADSET_VOIP2_TX_48000_256;
 
-// ------- DEFINITION OF VOIP CALL3 PAIRED DEVICES ------ 
+// ------- DEFINITION OF VOIP CALL3 PAIRED DEVICES ------
 static struct adie_codec_action_unit handset_voip3_rx_48KHz_osr256_actions[] =
 ADIE_HANDSET_VOIP3_RX_48000_256;
 static struct adie_codec_action_unit handset_voip3_tx_48KHz_osr256_actions[] =
@@ -1089,7 +1089,7 @@ ADIE_HEADSET_VOIP3_RX_48000_256;
 static struct adie_codec_action_unit headset_voip3_tx_48KHz_osr256_actions[] =
 ADIE_HEADSET_VOIP3_TX_48000_256;
 
-// ------- DEFINITION OF CALL PAIRED DEVICES ------ 
+// ------- DEFINITION OF CALL PAIRED DEVICES ------
 static struct adie_codec_action_unit handset_call_rx_48KHz_osr256_actions[] =
 ADIE_HANDSET_CALL_RX_48000_256;
 static struct adie_codec_action_unit handset_call_tx_48KHz_osr256_actions[] =
@@ -1105,7 +1105,7 @@ static struct adie_codec_action_unit headset_call_tx_48KHz_osr256_actions[] =
 ADIE_HEADSET_CALL_TX_48000_256;
 
 
-// ------- DEFINITION OF SPECIAL DEVICES ------ 
+// ------- DEFINITION OF SPECIAL DEVICES ------
 static struct adie_codec_action_unit dualmic_handset_tx_48KHz_osr256_actions[] =
 ADIE_HANDSET_TX_48000_256;
 static struct adie_codec_action_unit dualmic_speaker_tx_48KHz_osr256_actions[] =
@@ -1119,7 +1119,7 @@ ADIE_HEADSET_RX_48000_256;
 static struct adie_codec_action_unit fm_radio_speaker_rx_48KHz_osr256_actions[] =
 ADIE_SPEAKER_RX_48000_256;
 
-// ------- DEFINITION OF EXTERNAL DEVICES ------ 
+// ------- DEFINITION OF EXTERNAL DEVICES ------
 static struct adie_codec_action_unit lineout_rx_48KHz_osr256_actions[] =
 ADIE_DOCK_SPEAKER_HEADSET_RX_48000_256;
 static struct adie_codec_action_unit tty_headset_rx_48KHz_osr256_actions[] =
@@ -1156,7 +1156,7 @@ static struct adie_codec_dev_profile dualmic_handset_call_tx_profile = {
 	.setting_sz = ARRAY_SIZE(dualmic_handset_call_tx_settings),
 };
 
-// ------- DEFINITION OF NORMAL PAIRED DEVICES ------ 
+// ------- DEFINITION OF NORMAL PAIRED DEVICES ------
 static struct adie_codec_hwsetting_entry handset_rx_settings[] = {
 	{
 		.freq_plan = 48000,
@@ -1207,7 +1207,7 @@ static struct adie_codec_hwsetting_entry headset_tx_settings[] = {
 };
 
 
-// ------- DEFINITION OF VT CALL PAIRED DEVICES ------ 
+// ------- DEFINITION OF VT CALL PAIRED DEVICES ------
 static struct adie_codec_hwsetting_entry handset_vt_rx_settings[] = {
 	{
 		.freq_plan = 48000,
@@ -1257,7 +1257,7 @@ static struct adie_codec_hwsetting_entry headset_vt_tx_settings[] = {
 	}
 };
 
-// ------- DEFINITION OF VOIP CALL PAIRED DEVICES ------ 
+// ------- DEFINITION OF VOIP CALL PAIRED DEVICES ------
 static struct adie_codec_hwsetting_entry handset_voip_rx_settings[] = {
 	{
 		.freq_plan = 48000,
@@ -1307,7 +1307,7 @@ static struct adie_codec_hwsetting_entry headset_voip_tx_settings[] = {
 	}
 };
 
-// ------- DEFINITION OF VOIP CALL2 PAIRED DEVICES ------ 
+// ------- DEFINITION OF VOIP CALL2 PAIRED DEVICES ------
 static struct adie_codec_hwsetting_entry handset_voip2_rx_settings[] = {
 	{
 		.freq_plan = 48000,
@@ -1357,7 +1357,7 @@ static struct adie_codec_hwsetting_entry headset_voip2_tx_settings[] = {
 	}
 };
 
-// ------- DEFINITION OF VOIP CALL3 PAIRED DEVICES ------ 
+// ------- DEFINITION OF VOIP CALL3 PAIRED DEVICES ------
 static struct adie_codec_hwsetting_entry handset_voip3_rx_settings[] = {
 	{
 		.freq_plan = 48000,
@@ -1407,7 +1407,7 @@ static struct adie_codec_hwsetting_entry headset_voip3_tx_settings[] = {
 	}
 };
 
-// ------- DEFINITION OF CALL PAIRED DEVICES ------ 
+// ------- DEFINITION OF CALL PAIRED DEVICES ------
 static struct adie_codec_hwsetting_entry handset_call_rx_settings[] = {
 	{
 		.freq_plan = AUDIO_FREQUENCY,
@@ -1459,7 +1459,7 @@ static struct adie_codec_hwsetting_entry headset_call_tx_settings[] = {
 	}
 };
 
-// ------- DEFINITION OF SPECIAL DEVICES ------ 
+// ------- DEFINITION OF SPECIAL DEVICES ------
 static struct adie_codec_hwsetting_entry dualmic_handset_tx_settings[] = {
 	{
 		.freq_plan = 48000,
@@ -1509,7 +1509,7 @@ static struct adie_codec_hwsetting_entry fm_radio_speaker_rx_settings[] = {
 	}
 };
 
-// ------- DEFINITION OF EXTERNAL DEVICES ------ 
+// ------- DEFINITION OF EXTERNAL DEVICES ------
 static struct adie_codec_hwsetting_entry lineout_rx_settings[] = {
 	{
 		.freq_plan = 48000,
@@ -1573,7 +1573,7 @@ static struct adie_codec_hwsetting_entry camcoder_tx_settings[] = {
 
 /////////////////////////////////////////////////////////////////////////////
 
-// ------- DEFINITION OF NORMAL PAIRED DEVICES ------ 
+// ------- DEFINITION OF NORMAL PAIRED DEVICES ------
 static struct adie_codec_dev_profile handset_rx_profile = {
 	.path_type = ADIE_CODEC_RX,
 	.settings = handset_rx_settings,
@@ -1606,7 +1606,7 @@ static struct adie_codec_dev_profile headset_tx_profile = {
 };
 
 
-// ------- DEFINITION OF VT CALL PAIRED DEVICES ------ 
+// ------- DEFINITION OF VT CALL PAIRED DEVICES ------
 static struct adie_codec_dev_profile handset_vt_rx_profile = {
 	.path_type = ADIE_CODEC_RX,
 	.settings = handset_vt_rx_settings,
@@ -1638,7 +1638,7 @@ static struct adie_codec_dev_profile headset_vt_tx_profile = {
 	.setting_sz = ARRAY_SIZE(headset_vt_tx_settings),
 };
 
-// ------- DEFINITION OF VOIP CALL PAIRED DEVICES ------ 
+// ------- DEFINITION OF VOIP CALL PAIRED DEVICES ------
 static struct adie_codec_dev_profile handset_voip_rx_profile = {
 	.path_type = ADIE_CODEC_RX,
 	.settings = handset_voip_rx_settings,
@@ -1670,7 +1670,7 @@ static struct adie_codec_dev_profile headset_voip_tx_profile = {
 	.setting_sz = ARRAY_SIZE(headset_voip_tx_settings),
 };
 
-// ------- DEFINITION OF VOIP CALL2 PAIRED DEVICES ------ 
+// ------- DEFINITION OF VOIP CALL2 PAIRED DEVICES ------
 static struct adie_codec_dev_profile handset_voip2_rx_profile = {
 	.path_type = ADIE_CODEC_RX,
 	.settings = handset_voip2_rx_settings,
@@ -1702,7 +1702,7 @@ static struct adie_codec_dev_profile headset_voip2_tx_profile = {
 	.setting_sz = ARRAY_SIZE(headset_voip2_tx_settings),
 };
 
-// ------- DEFINITION OF VOIP CALL3 PAIRED DEVICES ------ 
+// ------- DEFINITION OF VOIP CALL3 PAIRED DEVICES ------
 static struct adie_codec_dev_profile handset_voip3_rx_profile = {
 	.path_type = ADIE_CODEC_RX,
 	.settings = handset_voip3_rx_settings,
@@ -1734,7 +1734,7 @@ static struct adie_codec_dev_profile headset_voip3_tx_profile = {
 	.setting_sz = ARRAY_SIZE(headset_voip3_tx_settings),
 };
 
-// ------- DEFINITION OF CALL PAIRED DEVICES ------ 
+// ------- DEFINITION OF CALL PAIRED DEVICES ------
 static struct adie_codec_dev_profile handset_call_rx_profile = {
 	.path_type = ADIE_CODEC_RX,
 	.settings = handset_call_rx_settings,
@@ -1777,7 +1777,7 @@ static struct adie_codec_dev_profile headset_call_tx_profile = {
 };
 
 
-// ------- DEFINITION OF SPECIAL DEVICES ------ 
+// ------- DEFINITION OF SPECIAL DEVICES ------
 static struct adie_codec_dev_profile dualmic_handset_tx_profile = {
 	.path_type = ADIE_CODEC_TX,
 	.settings = dualmic_handset_tx_settings,
@@ -1809,7 +1809,7 @@ static struct adie_codec_dev_profile fm_radio_speaker_rx_profile = {
 	.setting_sz = ARRAY_SIZE(fm_radio_speaker_rx_settings),
 };
 
-// ------- DEFINITION OF EXTERNAL DEVICES ------ 
+// ------- DEFINITION OF EXTERNAL DEVICES ------
 static struct adie_codec_dev_profile lineout_rx_profile = {
 	.path_type = ADIE_CODEC_RX,
 	.settings = lineout_rx_settings,
@@ -1853,7 +1853,7 @@ static struct adie_codec_dev_profile camcoder_tx_profile = {
 
 /////////////////////////////////////////////////////////////////////////////
 
-// ------- DEFINITION OF NORMAL PAIRED DEVICES ------ 
+// ------- DEFINITION OF NORMAL PAIRED DEVICES ------
 static struct snddev_icodec_data handset_rx_data = {
 	.capability = (SNDDEV_CAP_RX | SNDDEV_CAP_VOICE),
 	.name = "handset_rx",
@@ -1978,7 +1978,7 @@ static struct snddev_ecodec_data bt_sco_stereo_nrec_tx_data = {
 };
 
 
-// ------- DEFINITION OF VT CALL PAIRED DEVICES ------ 
+// ------- DEFINITION OF VT CALL PAIRED DEVICES ------
 
 static struct snddev_icodec_data handset_vt_rx_data = {
 	.capability = (SNDDEV_CAP_RX | SNDDEV_CAP_VOICE),
@@ -2127,7 +2127,7 @@ static struct snddev_icodec_data deskdock_vt_tx_data = {
 };
 
 
-// ------- DEFINITION OF VOIP CALL PAIRED DEVICES ------ 
+// ------- DEFINITION OF VOIP CALL PAIRED DEVICES ------
 static struct snddev_icodec_data handset_voip_rx_data = {
 	.capability = (SNDDEV_CAP_RX | SNDDEV_CAP_VOICE),
 	.name = "handset_voip_rx",
@@ -2274,7 +2274,7 @@ static struct snddev_icodec_data deskdock_voip_tx_data = {
 };
 
 
-// ------- DEFINITION OF CALL PAIRED DEVICES ------ 
+// ------- DEFINITION OF CALL PAIRED DEVICES ------
 static struct snddev_icodec_data handset_call_rx_data = {
 	.capability = (SNDDEV_CAP_RX | SNDDEV_CAP_VOICE),
 	.name = "handset_call_rx",
@@ -2295,10 +2295,10 @@ static struct snddev_icodec_data handset_call_tx_data = {
 	.copp_id = PRIMARY_I2S_TX,
 	.profile = &dualmic_handset_call_tx_profile,
 	.channel_mode = 2,
-	.default_sample_rate = 16000,	
+	.default_sample_rate = 16000,
 	.pamp_on = msm_snddev_enable_amic_power, //msm_snddev_enable_audience_amic_power,
 	.pamp_off = msm_snddev_disable_amic_power, //msm_snddev_disable_audience_amic_power,
-#else	
+#else
 	.capability = (SNDDEV_CAP_TX | SNDDEV_CAP_VOICE),
 	.name = "handset_call_tx",
 	.copp_id = 1,
@@ -2319,8 +2319,8 @@ static struct snddev_icodec_data speaker_call_rx_data = {
 	.default_sample_rate = AUDIO_FREQUENCY,
 #ifdef CONFIG_VP_A2220
 	.pamp_on = msm_snddev_audience_speaker_on,
-	.pamp_off = msm_snddev_audience_speaker_off,	
-#else		
+	.pamp_off = msm_snddev_audience_speaker_off,
+#else
 	.pamp_on = msm_snddev_poweramp_on,
 	.pamp_off = msm_snddev_poweramp_off,
 #endif
@@ -2347,8 +2347,8 @@ static struct snddev_icodec_data deskdock_call_rx_data = {
 	.default_sample_rate = AUDIO_FREQUENCY,
 #ifdef CONFIG_VP_A2220
 	.pamp_on = msm_snddev_audience_speaker_on,
-	.pamp_off = msm_snddev_audience_speaker_off,	
-#else		
+	.pamp_off = msm_snddev_audience_speaker_off,
+#else
 	.pamp_on = msm_snddev_poweramp_on,
 	.pamp_off = msm_snddev_poweramp_off,
 #endif
@@ -2377,7 +2377,7 @@ static struct snddev_icodec_data headset_call_rx_data = {
 #ifdef CONFIG_VP_A2220
 	.pamp_on = msm_snddev_audience_poweramp_on_headset,
 	.pamp_off = msm_snddev_audience_poweramp_off_headset,
-#else		
+#else
 	.pamp_on = msm_snddev_poweramp_on_headset,
 	.pamp_off = msm_snddev_poweramp_off_headset,
 #endif
@@ -2404,10 +2404,10 @@ static struct snddev_icodec_data headset_loopback_rx_data = {
 #ifdef CONFIG_VP_A2220
 	.pamp_on = msm_snddev_audience_poweramp_on_headset,
 	.pamp_off = msm_snddev_audience_poweramp_off_headset,
-#else		
+#else
 	.pamp_on = msm_snddev_poweramp_on_headset,
 	.pamp_off = msm_snddev_poweramp_off_headset,
-#endif	
+#endif
 	.voltage_on = msm_snddev_voltage_on,
 	.voltage_off = msm_snddev_voltage_off,
 };
@@ -2476,7 +2476,7 @@ static struct snddev_ecodec_data bt_sco_stereo_nrec_call_tx_data = {
 };
 
 
-// ------- DEFINITION OF SPECIAL DEVICES ------ 
+// ------- DEFINITION OF SPECIAL DEVICES ------
 static struct snddev_icodec_data dualmic_handset_tx_data = {
 #ifdef CONFIG_VP_A2220
 	.capability = (SNDDEV_CAP_TX | SNDDEV_CAP_VOICE),
@@ -2577,7 +2577,7 @@ static struct snddev_mi2s_data fm_radio_tx_data = {
 	.sample_rate = 48000,
 };
 
-// ------- DEFINITION OF EXTERNAL DEVICES ------ 
+// ------- DEFINITION OF EXTERNAL DEVICES ------
 static struct snddev_hdmi_data hdmi_stereo_rx_data = {
 	.capability = SNDDEV_CAP_RX ,
 	.name = "hdmi_rx",
@@ -2679,9 +2679,9 @@ static struct snddev_icodec_data camcoder_tx_data = {
 	.pamp_off = msm_snddev_disable_amic_power,
 };
 
-// ------- DEFINITION OF CALL2 PAIRED DEVICES ------ 
+// ------- DEFINITION OF CALL2 PAIRED DEVICES ------
 
-// adie_codec_dev_profile  call   
+// adie_codec_dev_profile  call
 //--------------------------------------------------
 static struct snddev_icodec_data handset_call2_rx_data = {
 	.capability = (SNDDEV_CAP_RX | SNDDEV_CAP_VOICE),
@@ -2703,10 +2703,10 @@ static struct snddev_icodec_data handset_call2_tx_data = {
 	.copp_id = PRIMARY_I2S_TX,
 	.profile = &dualmic_handset_call_tx_profile,
 	.channel_mode = 2,
-	.default_sample_rate = 16000,	
+	.default_sample_rate = 16000,
 	.pamp_on = msm_snddev_enable_amic_power, //msm_snddev_enable_audience_amic_power,
 	.pamp_off = msm_snddev_disable_amic_power, //msm_snddev_disable_audience_amic_power,
-#else	
+#else
 	.capability = (SNDDEV_CAP_TX | SNDDEV_CAP_VOICE),
 	.name = "handset_call2_tx",
 	.copp_id = 1,
@@ -2727,8 +2727,8 @@ static struct snddev_icodec_data speaker_call2_rx_data = {
 	.default_sample_rate = AUDIO_FREQUENCY,
 #ifdef CONFIG_VP_A2220
 	.pamp_on = msm_snddev_audience_speaker_on,
-	.pamp_off = msm_snddev_audience_speaker_off,	
-#else		
+	.pamp_off = msm_snddev_audience_speaker_off,
+#else
 	.pamp_on = msm_snddev_poweramp_on,
 	.pamp_off = msm_snddev_poweramp_off,
 #endif
@@ -2755,10 +2755,10 @@ static struct snddev_icodec_data headset_call2_rx_data = {
 #ifdef CONFIG_VP_A2220
 	.pamp_on = msm_snddev_audience_poweramp_on_headset,
 	.pamp_off = msm_snddev_audience_poweramp_off_headset,
-#else		
+#else
 	.pamp_on = msm_snddev_poweramp_on_headset,
 	.pamp_off = msm_snddev_poweramp_off_headset,
-#endif	
+#endif
 	.voltage_on = msm_snddev_voltage_on,
 	.voltage_off = msm_snddev_voltage_off,
 };
@@ -2835,8 +2835,8 @@ static struct snddev_icodec_data deskdock_call2_rx_data = {
 	.default_sample_rate = AUDIO_FREQUENCY,
 #ifdef CONFIG_VP_A2220
 	.pamp_on = msm_snddev_audience_speaker_on,
-	.pamp_off = msm_snddev_audience_speaker_off,	
-#else		
+	.pamp_off = msm_snddev_audience_speaker_off,
+#else
 	.pamp_on = msm_snddev_poweramp_on,
 	.pamp_off = msm_snddev_poweramp_off,
 #endif
@@ -2854,7 +2854,7 @@ static struct snddev_icodec_data deskdock_call2_tx_data = {
 };
 
 
-// ------- DEFINITION OF VOIP CALL2 PAIRED DEVICES ------ 
+// ------- DEFINITION OF VOIP CALL2 PAIRED DEVICES ------
 static struct snddev_icodec_data handset_voip2_rx_data = {
 	.capability = (SNDDEV_CAP_RX | SNDDEV_CAP_VOICE),
 	.name = "handset_voip2_rx",
@@ -2997,7 +2997,7 @@ static struct snddev_icodec_data deskdock_voip2_tx_data = {
 };
 
 
-// ------- DEFINITION OF VOIP CALL3 PAIRED DEVICES ------ 
+// ------- DEFINITION OF VOIP CALL3 PAIRED DEVICES ------
 static struct snddev_icodec_data handset_voip3_rx_data = {
 	.capability = (SNDDEV_CAP_RX | SNDDEV_CAP_VOICE),
 	.name = "handset_voip3_rx",
@@ -3141,7 +3141,7 @@ static struct snddev_icodec_data deskdock_voip3_tx_data = {
 };
 
 
-// ------- DEFINITION OF LOOPBACK PAIRED DEVICES ------ 
+// ------- DEFINITION OF LOOPBACK PAIRED DEVICES ------
 static struct snddev_icodec_data handset_loopback_rx_data = {
 	.capability = (SNDDEV_CAP_RX | SNDDEV_CAP_VOICE),
 	.name = "handset_loopback_rx",
@@ -3162,10 +3162,10 @@ static struct snddev_icodec_data handset_loopback_tx_data = {
 	.copp_id = PRIMARY_I2S_TX,
 	.profile = &dualmic_handset_call_tx_profile,
 	.channel_mode = 2,
-	.default_sample_rate = 16000,	
+	.default_sample_rate = 16000,
 	.pamp_on = msm_snddev_enable_amic_power, //msm_snddev_enable_audience_amic_power,
 	.pamp_off = msm_snddev_disable_amic_power, //msm_snddev_disable_audience_amic_power,
-#else	
+#else
 	.capability = (SNDDEV_CAP_TX | SNDDEV_CAP_VOICE),
 	.name = "handset_loopback_tx",
 	.copp_id = 1,
@@ -3186,8 +3186,8 @@ static struct snddev_icodec_data speaker_loopback_rx_data = {
 	.default_sample_rate = AUDIO_FREQUENCY,
 #ifdef CONFIG_VP_A2220
 	.pamp_on = msm_snddev_audience_speaker_on,
-	.pamp_off = msm_snddev_audience_speaker_off,	
-#else		
+	.pamp_off = msm_snddev_audience_speaker_off,
+#else
 	.pamp_on = msm_snddev_poweramp_on,
 	.pamp_off = msm_snddev_poweramp_off,
 #endif
@@ -3210,7 +3210,7 @@ static struct snddev_icodec_data speaker_loopback_tx_data = {
 
 /////////////////////////////////////////////////////////////////////////////
 
-// ------- DEFINITION OF NORMAL PAIRED DEVICES ------ 
+// ------- DEFINITION OF NORMAL PAIRED DEVICES ------
 static struct platform_device device_handset_rx = {
 	.name = "snddev_icodec",
 	.dev = { .platform_data = &handset_rx_data },
@@ -3270,7 +3270,7 @@ static struct platform_device device_bt_sco_stereo_nrec_tx = {
 };
 
 
-// ------- DEFINITION OF VT CALL PAIRED DEVICES ------ 
+// ------- DEFINITION OF VT CALL PAIRED DEVICES ------
 static struct platform_device device_handset_vt_rx = {
 	.name = "snddev_icodec",
 	.dev = { .platform_data = &handset_vt_rx_data },
@@ -3339,7 +3339,7 @@ static struct platform_device device_deskdock_vt_tx = {
 };
 
 
-// ------- DEFINITION OF VOIP CALL PAIRED DEVICES ------ 
+// ------- DEFINITION OF VOIP CALL PAIRED DEVICES ------
 static struct platform_device device_handset_voip_rx = {
 	.name = "snddev_icodec",
 	.dev = { .platform_data = &handset_voip_rx_data },
@@ -3407,7 +3407,7 @@ static struct platform_device device_deskdock_voip_tx = {
 	.dev = { .platform_data = &deskdock_voip_tx_data },
 };
 
-// ------- DEFINITION OF CALL PAIRED DEVICES ------ 
+// ------- DEFINITION OF CALL PAIRED DEVICES ------
 static struct platform_device device_handset_call_rx = {
 	.name = "snddev_icodec",
 	.dev = { .platform_data = &handset_call_rx_data },
@@ -3489,7 +3489,7 @@ static struct platform_device device_headset_loopback_tx = {
 
 
 
-// ------- DEFINITION OF SPECIAL DEVICES ------ 
+// ------- DEFINITION OF SPECIAL DEVICES ------
 static struct platform_device device_dualmic_handset_tx = {
 	.name = "snddev_icodec",
 	.dev = { .platform_data = &dualmic_handset_tx_data },
@@ -3527,7 +3527,7 @@ static struct platform_device device_fm_radio_tx = {
 	.dev = { .platform_data = &fm_radio_tx_data},
 };
 
-// ------- DEFINITION OF EXTERNAL DEVICES ------ 
+// ------- DEFINITION OF EXTERNAL DEVICES ------
 static struct platform_device device_hdmi_stereo_rx = {
 	.name = "snddev_hdmi",//"snddev_mi2s",
 	.dev = { .platform_data = &hdmi_stereo_rx_data },
@@ -3567,7 +3567,7 @@ static struct platform_device device_camcoder_tx = {
 	.dev = { .platform_data = &camcoder_tx_data },
 };
 
-// ------- DEFINITION OF CALL2 PAIRED DEVICES ------ 
+// ------- DEFINITION OF CALL2 PAIRED DEVICES ------
 static struct platform_device device_handset_call2_rx = {
 	.name = "snddev_icodec",
 	.dev = { .platform_data = &handset_call2_rx_data },
@@ -3634,7 +3634,7 @@ static struct platform_device device_deskdock_call2_tx = {
 	.dev = { .platform_data = &deskdock_call2_tx_data },
 };
 
-// ------- DEFINITION OF VOIP CALL2 PAIRED DEVICES ------ 
+// ------- DEFINITION OF VOIP CALL2 PAIRED DEVICES ------
 static struct platform_device device_handset_voip2_rx = {
 	.name = "snddev_icodec",
 	.dev = { .platform_data = &handset_voip2_rx_data },
@@ -3702,7 +3702,7 @@ static struct platform_device device_deskdock_voip2_tx = {
 	.dev = { .platform_data = &deskdock_voip2_tx_data },
 };
 
-// ------- DEFINITION OF VOIP CALL3 PAIRED DEVICES ------ 
+// ------- DEFINITION OF VOIP CALL3 PAIRED DEVICES ------
 static struct platform_device device_handset_voip3_rx = {
 	.name = "snddev_icodec",
 	.dev = { .platform_data = &handset_voip3_rx_data },
@@ -3770,7 +3770,7 @@ static struct platform_device device_deskdock_voip3_tx = {
 	.dev = { .platform_data = &deskdock_voip3_tx_data },
 };
 
-// ------- DEFINITION OF LOOPBACK PAIRED DEVICES ------ 
+// ------- DEFINITION OF LOOPBACK PAIRED DEVICES ------
 static struct platform_device device_handset_loopback_rx = {
 	.name = "snddev_icodec",
 	.dev = { .platform_data = &handset_loopback_rx_data },
@@ -3791,7 +3791,7 @@ static struct platform_device device_speaker_loopback_tx = {
 
 
 static struct platform_device *snd_devices_celox[] __initdata = {
-	// ------- DEFINITION OF NORMAL PAIRED DEVICES ------ 
+	// ------- DEFINITION OF NORMAL PAIRED DEVICES ------
 	&device_handset_rx,
 	&device_handset_tx,
 	&device_speaker_rx,
@@ -3808,7 +3808,7 @@ static struct platform_device *snd_devices_celox[] __initdata = {
 	&device_bt_sco_stereo_nrec_rx,
 	&device_bt_sco_stereo_nrec_tx,
 
-	// ------- DEFINITION OF VT CALL PAIRED DEVICES ------ 
+	// ------- DEFINITION OF VT CALL PAIRED DEVICES ------
 	&device_handset_vt_rx,
 	&device_handset_vt_tx,
 	&device_speaker_vt_rx,
@@ -3828,7 +3828,7 @@ static struct platform_device *snd_devices_celox[] __initdata = {
 	&device_deskdock_vt_rx,
 	&device_deskdock_vt_tx,
 
-	// ------- DEFINITION OF VOIP CALL PAIRED DEVICES ------ 
+	// ------- DEFINITION OF VOIP CALL PAIRED DEVICES ------
 	&device_handset_voip_rx,
 	&device_handset_voip_tx,
 	&device_speaker_voip_rx,
@@ -3848,7 +3848,7 @@ static struct platform_device *snd_devices_celox[] __initdata = {
 	&device_deskdock_voip_rx,
 	&device_deskdock_voip_tx,
 
-	// ------- DEFINITION OF CALL PAIRED DEVICES ------ 
+	// ------- DEFINITION OF CALL PAIRED DEVICES ------
 	&device_handset_call_rx,
 	&device_handset_call_tx,
 	&device_speaker_call_rx,
@@ -3871,7 +3871,7 @@ static struct platform_device *snd_devices_celox[] __initdata = {
 	&device_headset_loopback_rx,
 	&device_headset_loopback_tx,
 
-	// ------- DEFINITION OF SPECIAL DEVICES ------ 
+	// ------- DEFINITION OF SPECIAL DEVICES ------
 	&device_dualmic_handset_tx,
 	&device_dualmic_speaker_tx,
 	&device_speaker_vr_tx,
@@ -3882,7 +3882,7 @@ static struct platform_device *snd_devices_celox[] __initdata = {
 	&device_fm_radio_speaker_rx,
 	&device_fm_radio_tx,
 
-	// ------- DEFINITION OF EXTERNAL DEVICES ------ 
+	// ------- DEFINITION OF EXTERNAL DEVICES ------
 	&device_hdmi_stereo_rx,
 	&device_lineout_rx,
 	&device_tty_headset_rx,
@@ -3893,7 +3893,7 @@ static struct platform_device *snd_devices_celox[] __initdata = {
 	&device_hac_handset_call_rx,
 	&device_camcoder_tx,
 
-	// ------- DEFINITION OF CALL2 PAIRED DEVICES ------ 
+	// ------- DEFINITION OF CALL2 PAIRED DEVICES ------
 	&device_handset_call2_rx,
 	&device_handset_call2_tx,
 	&device_speaker_call2_rx,
@@ -3913,7 +3913,7 @@ static struct platform_device *snd_devices_celox[] __initdata = {
 	&device_deskdock_call2_rx,
 	&device_deskdock_call2_tx,
 
-	// ------- DEFINITION OF VOIP CALL2 PAIRED DEVICES ------ 
+	// ------- DEFINITION OF VOIP CALL2 PAIRED DEVICES ------
 	&device_handset_voip2_rx,
 	&device_handset_voip2_tx,
 	&device_speaker_voip2_rx,
@@ -3933,19 +3933,19 @@ static struct platform_device *snd_devices_celox[] __initdata = {
 	&device_deskdock_voip2_rx,
 	&device_deskdock_voip2_tx,
 
-	// ------- DEFINITION OF VOIP CALL3 PAIRED DEVICES ------ 
+	// ------- DEFINITION OF VOIP CALL3 PAIRED DEVICES ------
 	&device_handset_loopback_rx,
 	&device_handset_loopback_tx,
 	&device_speaker_loopback_rx,
 	&device_speaker_loopback_tx,
-	
+
 	&device_handset_voip3_rx,
 	&device_handset_voip3_tx,
 	&device_speaker_voip3_rx,
 	&device_speaker_voip3_tx,
 	&device_headset_voip3_rx,
 	&device_headset_voip3_tx,
-	
+
 	&device_bt_sco_mono_voip3_rx,
 	&device_bt_sco_mono_voip3_tx,
 	&device_bt_sco_mono_nrec_voip3_rx,

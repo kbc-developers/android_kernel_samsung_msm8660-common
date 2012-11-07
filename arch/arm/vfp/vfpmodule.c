@@ -433,8 +433,17 @@ int vfp_flush_context(void)
 		/* disable, just in case */
 		fmxr(FPEXC, fmrx(FPEXC) & ~FPEXC_EN);
 		saved = 1;
+	} else if (vfp_current_hw_state[ti->cpu]) {
+#ifndef CONFIG_SMP
+		fmxr(FPEXC, fpexc | FPEXC_EN);
+		vfp_save_state(vfp_current_hw_state[ti->cpu], fpexc);
+		fmxr(FPEXC, fpexc);
+#endif
 	}
 	vfp_current_hw_state[cpu] = NULL;
+
+	/* clear any information we had about last context state */
+	vfp_current_hw_state[ti->cpu] = NULL;
 
 	local_irq_restore(flags);
 
@@ -565,6 +574,7 @@ static int __init vfp_init(void)
 	unsigned int cpu_arch = cpu_architecture();
 
 	struct cpumask cpus_curr, cpus;
+
 	sched_getaffinity(current->pid,&cpus_curr);
 	cpumask_clear(&cpus);
 	cpumask_set_cpu(smp_processor_id(), &cpus);

@@ -197,7 +197,6 @@ void register_page_bootmem_info_node(struct pglist_data *pgdat)
 		if (pfn_valid(pfn) && (pfn_to_nid(pfn) == node))
 			register_page_bootmem_info_section(pfn);
 	}
-
 }
 #endif /* !CONFIG_SPARSEMEM_VMEMMAP */
 
