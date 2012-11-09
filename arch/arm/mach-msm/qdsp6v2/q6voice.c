@@ -54,7 +54,7 @@
 #endif
 #if defined(CONFIG_KOR_MODEL_SHV_E110S) || defined(CONFIG_USA_MODEL_SGH_I577) || defined(CONFIG_KOR_MODEL_SHV_E120S) || defined(CONFIG_KOR_MODEL_SHV_E120K) || defined(CONFIG_USA_MODEL_SGH_T989) \
 || defined(CONFIG_USA_MODEL_SGH_I727) || defined(CONFIG_USA_MODEL_SGH_I757) || defined(CONFIG_KOR_MODEL_SHV_E160S) || defined(CONFIG_KOR_MODEL_SHV_E160K) || defined(CONFIG_JPN_MODEL_SC_03D) \
-|| defined(CONFIG_USA_MODEL_SGH_T769) || defined(CONFIG_USA_MODEL_SGH_I717) || defined (CONFIG_JPN_MODEL_SC_05D)
+|| defined(CONFIG_USA_MODEL_SGH_T769) || defined(CONFIG_USA_MODEL_SGH_I717) || defined (CONFIG_JPN_MODEL_SC_05D) || defined (CONFIG_KOR_MODEL_SHV_E150S) || defined(CONFIG_JPN_MODEL_SC_01E)
 #define CONFIG_VPCM_INTERFACE_ON_CSFB
 #endif
 
@@ -1623,7 +1623,7 @@ static int voice_setup_modem_voice(struct voice_data *v)
 		pr_err("bad dev_id %d\n", v->dev_tx.dev_id);
 		goto fail;
 	}
-#if defined(CONFIG_VPCM_INTERFACE_ON_CSFB)
+#if defined(CONFIG_VPCM_INTERFACE_ON_CSFB)	
 	dev_rx_info = audio_dev_ctrl_find_dev(v->dev_rx.dev_id);
 	if (IS_ERR(dev_rx_info)) {
 		pr_err("bad dev_id %d\n", v->dev_rx.dev_id);
@@ -1772,7 +1772,7 @@ if( common.voc_path == VOC_PATH_PASSIVE)  //if( voice.voc_path == VOC_PATH_PASSI
 	pr_err("Start of sending apr packets\n");
 	/* send cvs cal */
 	voice_send_cvs_cal_to_modem(v);
-#if defined(CONFIG_USA_MODEL_SGH_T989) || defined(CONFIG_USA_MODEL_SGH_T769)
+#if defined(CONFIG_USA_MODEL_SGH_T989) || defined (CONFIG_KOR_MODEL_SHV_E150S)
 	/* timing relaxation for VoIP */
 	if( common.voc_path == VOC_PATH_FULL) {
 		msleep(1);
@@ -1781,7 +1781,7 @@ if( common.voc_path == VOC_PATH_PASSIVE)  //if( voice.voc_path == VOC_PATH_PASSI
 
 	/* send cvp cal */
 	voice_send_cvp_cal_to_modem(v);
-#if defined(CONFIG_USA_MODEL_SGH_T989) || defined(CONFIG_USA_MODEL_SGH_T769)
+#if defined(CONFIG_USA_MODEL_SGH_T989) || defined (CONFIG_KOR_MODEL_SHV_E150S)
 	/* timing relaxation for VoIP */
 	if( common.voc_path == VOC_PATH_FULL) {
 		msleep(1);
@@ -2028,13 +2028,13 @@ static int voice_destroy_modem_voice(struct voice_data *v)
 		goto fail;
 	}
 
-#if defined(CONFIG_VPCM_INTERFACE_ON_CSFB)
+#if defined(CONFIG_VPCM_INTERFACE_ON_CSFB)	
 	dev_rx_info = audio_dev_ctrl_find_dev(v->dev_rx.dev_id);
 	if (IS_ERR(dev_rx_info)) {
 		pr_err("bad dev_id %d\n", v->dev_rx.dev_id);
 		goto fail;
 	}
-#endif
+#endif	
 
 #if defined(CONFIG_EUR_MODEL_GT_I9210)
 if(wb_handle==VPCM_PATH_NARROWBAND)

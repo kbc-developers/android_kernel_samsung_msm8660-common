@@ -805,7 +805,7 @@ static int ath6kl_set_sdio_pm_caps(struct ath6kl *ar)
 	flags = sdio_get_host_pm_caps(func);
 
 	ath6kl_dbg(ATH6KL_DBG_SUSPEND, "sdio suspend pm_caps 0x%x\n", flags);
-#ifdef CONFIG_KOR_MODEL_SHV_E150S
+#if defined(CONFIG_KOR_MODEL_SHV_E150S) || defined(CONFIG_JPN_MODEL_SC_01E)
 	if (!(flags & MMC_PM_WAKE_SDIO_IRQ) ||
 	    !(flags & MMC_PM_KEEP_POWER))
 		return -EINVAL;
@@ -886,7 +886,7 @@ deep_sleep:
 	if (ar->suspend_mode == WLAN_POWER_STATE_DEEP_SLEEP ||
 	    !ar->suspend_mode || try_deepsleep) {
 
-#ifndef CONFIG_KOR_MODEL_SHV_E150S   // #ifdef CONFIG_MACH_PX
+#if !defined(CONFIG_KOR_MODEL_SHV_E150S) && !defined(CONFIG_JPN_MODEL_SC_01E)   // #ifdef CONFIG_MACH_PX
 		ret = ath6kl_set_sdio_pm_caps(ar);
 		if (ret)
 			return ret;
@@ -1430,13 +1430,25 @@ err_hif:
 static void ath6kl_sdio_remove(struct sdio_func *func)
 {
 	struct ath6kl_sdio *ar_sdio;
-
+	struct ath6kl_vif *vif;
+	long timeleft;
+	
 	ath6kl_dbg(ATH6KL_DBG_BOOT,
 		   "sdio removed func %d vendor 0x%x device 0x%x\n",
 		   func->num, func->vendor, func->device);
 
 	ar_sdio = sdio_get_drvdata(func);
-
+#ifdef CONFIG_MACH_PX
+	vif = ath6kl_vif_first(ar_sdio->ar);
+	/* Wait for Wmi event to be ready */
+	timeleft = wait_event_interruptible_timeout(ar_sdio->ar->event_wq,
+						    ar_sdio->ar->state == ATH6KL_STATE_ON,
+						    WMI_TIMEOUT);
+			
+	ath6kl_hif_rx_control(ar_sdio->ar->htc_target->dev, false);
+	vif->sdio_remove = true;
+#endif
+							
 	ath6kl_stop_txrx(ar_sdio->ar);
 	cancel_work_sync(&ar_sdio->wr_async_work);
 
@@ -1471,7 +1483,7 @@ static int __init ath6kl_sdio_init(void)
 	int ret;
 
     ath6kl_err("%s(): Enter\n", __func__);
-#ifdef CONFIG_KOR_MODEL_SHV_E150S   // CONFIG_MACH_PX
+#if defined(CONFIG_KOR_MODEL_SHV_E150S) || defined(CONFIG_JPN_MODEL_SC_01E)   // CONFIG_MACH_PX
 	ath6kl_sdio_init_msm();
 #else
     ath6kl_sdio_init_c210();
@@ -1487,7 +1499,7 @@ static void __exit ath6kl_sdio_exit(void)
 {
     ath6kl_err("%s(): Enter\n", __func__);
 	sdio_unregister_driver(&ath6kl_sdio_driver);
-#ifdef CONFIG_KOR_MODEL_SHV_E150S   // CONFIG_MACH_PX
+#if defined(CONFIG_KOR_MODEL_SHV_E150S) || defined(CONFIG_JPN_MODEL_SC_01E)   // CONFIG_MACH_PX
 	ath6kl_sdio_exit_msm();
 #else
 	ath6kl_sdio_exit_c210();

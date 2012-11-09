@@ -106,6 +106,47 @@ static CLASS_ATTR(swing, 0664,
 		sii9234_swing_test_show, sii9234_swing_test_store);
 #endif
 
+#if defined(CONFIG_JPN_MODEL_SC_05D)
+
+#define MHL_SWITCH_TEST	1
+
+#ifdef MHL_SWITCH_TEST
+struct class *sec_mhl_for_test;
+EXPORT_SYMBOL(sec_mhl_for_test);
+
+struct device *mhl_switch_for_test;
+EXPORT_SYMBOL(mhl_switch_for_test);
+
+unsigned long storedval=0;
+
+static ssize_t check_MHL_command(struct device *dev, struct device_attribute *attr, char *buf)
+{	
+	int retval=0;
+	printk("check_MHL_command:%ld\n",storedval);
+	return retval;
+
+}
+
+static ssize_t change_switch_store(struct device *dev, struct device_attribute *attr, const char *buf, size_t size)
+{
+	char *after;
+	
+	unsigned long value = simple_strtoul(buf, &after, 10);
+
+	printk("change_switch_store: %ld\n", value);
+	
+	storedval=value;
+	
+	return size;;
+}
+
+static DEVICE_ATTR(mhl_sel, 0665, check_MHL_command, change_switch_store);
+#endif
+
+#endif
+
+
+
 int fsa9480_mhl_chg_status_cb(void)
 {
 	struct power_supply *psy = power_supply_get_by_name("battery");
@@ -1673,6 +1714,10 @@ static irqreturn_t sii9234_irq_thread(int irq, void *data)
 	cbus_read_reg(sii9234, CBUS_INT_STATUS_1_REG, &cbus_intr1);
 	cbus_read_reg(sii9234, CBUS_INT_STATUS_2_REG, &cbus_intr2);
 
+#if defined(CONFIG_JPN_MODEL_SC_05D)	
+	//Fix for MHL connected (only MHL and no HDMI and Power), Sleep mode - Kernel Panic issue
+	msleep(100);
+#endif
 	pr_debug("sii9234: irq %02x/%02x %02x/%02x %02x/%02x\n",
 			intr1, intr1_en,
 			intr4, intr4_en,
@@ -1735,7 +1780,7 @@ static irqreturn_t sii9234_irq_thread(int irq, void *data)
 		};
 
 		if (sii9234->rgnd != RGND_1K) {
-#if defined(CONFIG_MHL_D3_SUPPORT)
+#if defined(CONFIG_MHL_D3_SUPPORT) && !defined(CONFIG_USA_MODEL_SGH_T989)
 			sii9234->power_mode = MHL_POWER_MODE_OFF; 
 			INIT_WORK(&sii9234->redetect_work, sii9234_detection_callback);
 			disable_irq_nosync(sii9234->pdata->mhl_tx_client->irq);
@@ -2251,6 +2296,20 @@ static int __init sii9234_init(void)
 		pr_info("%s : LPM Charging Mode! return 0\n", __func__);
 		return 0;
 	}
+#endif
+
+#if defined(CONFIG_JPN_MODEL_SC_05D)
+#ifdef MHL_SWITCH_TEST	
+	sec_mhl_for_test = class_create(THIS_MODULE, "sec_mhl");
+	if (IS_ERR(sec_mhl_for_test))
+		printk(KERN_ERR "[MHL] Failed to create class (sec_mhl)\n");
+
+	mhl_switch_for_test = device_create(sec_mhl_for_test, NULL, 0, NULL, "switch");
+	if (IS_ERR(mhl_switch_for_test))
+		printk(KERN_ERR "[MHL] Failed to create device (mhl_switch)\n");
+	if (device_create_file(mhl_switch_for_test, &dev_attr_mhl_sel) < 0)
+		printk(KERN_ERR "[MHL] Failed to create file (mhl_sel)");
+#endif
 #endif
 
 	ret = i2c_add_driver(&sii9234_mhl_tx_i2c_driver);

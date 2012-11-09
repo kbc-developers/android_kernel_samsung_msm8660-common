@@ -1,0 +1,2734 @@
+  GEN     /home/ecoco/msm8660/out/AOSP/obj/Makefile
+scripts/kconfig/conf --silentoldconfig Kconfig
+drivers/net/wireless/ath/Kconfig:26:warning: choice value used outside its choice group
+arch/arm/mach-msm/Kconfig:1753:warning: defaults for choice values not supported
+arch/arm/Kconfig:1395:warning: 'HZ': number is invalid
+arch/arm/Kconfig:1396:warning: 'HZ': number is invalid
+arch/arm/Kconfig:1397:warning: 'HZ': number is invalid
+drivers/i2c/chips/Kconfig:87:warning: 'INPUT_YAS529_POSITION': number is invalid
+drivers/video/Kconfig:2335:warning: choice value used outside its choice group
+  GEN     /home/ecoco/msm8660/out/AOSP/obj/Makefile
+  CHK     include/linux/version.h
+  Using /home/ecoco/msm8660 as source for kernel
+  CHK     include/generated/utsrelease.h
+  HOSTCC  scripts/genksyms/genksyms.o
+  CC      scripts/mod/empty.o
+make[2]: `include/generated/mach-types.h' は更新済みです
+  HOSTCC  scripts/mod/mk_elfconfig
+  CC      kernel/bounds.s
+  HOSTCC  scripts/genksyms/lex.o
+  HOSTCC  scripts/kallsyms
+  GEN     include/generated/bounds.h
+  HOSTCC  scripts/conmakehash
+  HOSTCC  scripts/genksyms/parse.o
+  HOSTCC  scripts/bin2c
+  CC      arch/arm/kernel/asm-offsets.s
+  MKELF   scripts/mod/elfconfig.h
+  HOSTCC  scripts/mod/file2alias.o
+  HOSTCC  scripts/mod/modpost.o
+  HOSTCC  scripts/mod/sumversion.o
+  GEN     include/generated/asm-offsets.h
+  CALL    /home/ecoco/msm8660/scripts/checksyscalls.sh
+  HOSTLD  scripts/genksyms/genksyms
+  HOSTLD  scripts/mod/modpost
+  HOSTCC  usr/gen_init_cpio
+  CHK     include/generated/compile.h
+  CC      init/main.o
+  CC      init/do_mounts.o
+  CC      init/do_mounts_rd.o
+  CC      init/do_mounts_initrd.o
+  CC      init/initramfs.o
+  CC      arch/arm/kernel/elf.o
+  AS      arch/arm/kernel/entry-armv.o
+  CC      arch/arm/mm/dma-mapping.o
+  CC      arch/arm/vfp/vfpmodule.o
+  CC      arch/arm/common/gic.o
+  AS      arch/arm/kernel/entry-common.o
+  CC      init/calibrate.o
+  CC      arch/arm/kernel/irq.o
+  CC      arch/arm/common/cpaccess.o
+  CC      arch/arm/kernel/process.o
+/home/ecoco/msm8660/arch/arm/kernel/irq.c: In function 'handle_IRQ':
+/home/ecoco/msm8660/arch/arm/kernel/irq.c:80:21: warning: unused variable 'start_time'
+  AS      arch/arm/vfp/entry.o
+  AS      arch/arm/vfp/vfphw.o
+  CC      arch/arm/kernel/ptrace.o
+  GEN     usr/initramfs_data.cpio
+  CC      arch/arm/vfp/vfpsingle.o
+  CC      init/version.o
+  AS      usr/initramfs_data.o
+  CC      arch/arm/vfp/vfpdouble.o
+  LD      usr/built-in.o
+  CC      arch/arm/mm/extable.o
+  LD      init/mounts.o
+  CC      arch/arm/kernel/return_address.o
+  LD      arch/arm/common/built-in.o
+  CC      arch/arm/perfmon/perf-function-hooks.o
+  CC      arch/arm/mm/fault.o
+  CC      arch/arm/mach-msm/io.o
+  CC      arch/arm/kernel/setup.o
+  CC      kernel/sched.o
+  LD      init/built-in.o
+/home/ecoco/msm8660/arch/arm/kernel/return_address.c:62:2: warning: #warning "TODO: return_address should use unwind tables"
+  CC      kernel/fork.o
+  CC      mm/filemap.o
+  CC      arch/arm/kernel/signal.o
+/home/ecoco/msm8660/arch/arm/kernel/return_address.c:62:2: warning: #warning "TODO: return_address should use unwind tables"
+  CC      mm/mempool.o
+  CC      kernel/exec_domain.o
+  CC      arch/arm/kernel/sys_arm.o
+  CC [M]  arch/arm/perfmon/perf-v7.o
+  LD      arch/arm/vfp/vfp.o
+  CC      arch/arm/mm/init.o
+  LD      arch/arm/vfp/built-in.o
+  CC      arch/arm/mach-msm/dma.o
+  CC      arch/arm/kernel/stacktrace.o
+  CC      fs/open.o
+  CC      kernel/panic.o
+  CC [M]  arch/arm/perfmon/per.o
+  CC      mm/oom_kill.o
+  CC      arch/arm/kernel/time.o
+  CC      arch/arm/kernel/traps.o
+  CC      arch/arm/kernel/armksyms.o
+  CC      arch/arm/mach-msm/memory.o
+  CC [M]  arch/arm/perfmon/per-process-perf.o
+  CC      arch/arm/mm/iomap.o
+  CC      kernel/printk.o
+  CC      arch/arm/kernel/module.o
+  AS      arch/arm/kernel/sleep.o
+  CC      arch/arm/kernel/sched_clock.o
+/home/ecoco/msm8660/kernel/printk.c: In function 'printk_remap_nocache':
+/home/ecoco/msm8660/kernel/printk.c:305:15: warning: assignment makes integer from pointer without a cast
+/home/ecoco/msm8660/kernel/printk.c:308:14: warning: assignment makes pointer from integer without a cast
+/home/ecoco/msm8660/kernel/printk.c:309:14: warning: assignment makes pointer from integer without a cast
+/home/ecoco/msm8660/kernel/printk.c:310:14: warning: assignment makes pointer from integer without a cast
+/home/ecoco/msm8660/kernel/printk.c:312:17: warning: assignment makes pointer from integer without a cast
+/home/ecoco/msm8660/kernel/printk.c: At top level:
+/home/ecoco/msm8660/kernel/printk.c:1967:1: warning: initialization from incompatible pointer type
+  CC      mm/fadvise.o
+  CC      kernel/cpu.o
+  CC      fs/read_write.o
+  CC      mm/maccess.o
+  CC      arch/arm/kernel/smp.o
+  CC      arch/arm/mm/fault-armv.o
+  CC      arch/arm/mach-msm/timer.o
+  CC      arch/arm/kernel/smp_tlb.o
+  CC      arch/arm/kernel/smp_scu.o
+  CC      arch/arm/mm/flush.o
+  CC      mm/page_alloc.o
+  CC      mm/page-writeback.o
+  CC [M]  arch/arm/perfmon/per-axi.o
+  CC      arch/arm/kernel/kprobes.o
+  CC      arch/arm/kernel/kprobes-decode.o
+  CC      arch/arm/kernel/sys_oabi-compat.o
+  CC      kernel/exit.o
+  CC      arch/arm/mach-msm/clock.o
+  CC      kernel/itimer.o
+  CC [M]  arch/arm/perfmon/perf-smp.o
+  CC      arch/arm/kernel/unwind.o
+  CC      arch/arm/mm/idmap.o
+  CC      arch/arm/kernel/swp_emulate.o
+  LD      arch/arm/perfmon/built-in.o
+  LD [M]  arch/arm/perfmon/ksapi.o
+  CC      fs/file_table.o
+  CC      arch/arm/kernel/pmu.o
+  CC      ipc/util.o
+  CC      arch/arm/kernel/perf_event.o
+  TIMEC   kernel/timeconst.h
+  CC      arch/arm/mm/ioremap.o
+  CC      kernel/softirq.o
+  CC      arch/arm/kernel/io.o
+  CC      arch/arm/mach-msm/clock-voter.o
+  AS      arch/arm/kernel/head.o
+  CC      ipc/msgutil.o
+  CC      arch/arm/kernel/init_task.o
+  CC      arch/arm/mach-msm/clock-dummy.o
+  CC      arch/arm/mach-msm/modem_notifier.o
+  CC      ipc/msg.o
+  CC      mm/readahead.o
+  CC      arch/arm/mm/mmap.o
+  CC      arch/arm/mm/pgd.o
+  CC      fs/super.o
+  CC      kernel/resource.o
+  LDS     arch/arm/kernel/vmlinux.lds
+  CC      ipc/sem.o
+  CC      ipc/shm.o
+  CC      arch/arm/mach-msm/subsystem_map.o
+  CC      kernel/sysctl.o
+  CC      arch/arm/mm/mmu.o
+  CC      arch/arm/mm/vmregion.o
+  CC      arch/arm/mm/proc-syms.o
+  LD      arch/arm/kernel/built-in.o
+  CC      ipc/ipcns_notifier.o
+  CC      security/keys/gc.o
+  CC      mm/swap.o
+  CC      kernel/sysctl_binary.o
+  CC      ipc/syscall.o
+  CC      ipc/ipc_sysctl.o
+  CC      arch/arm/mach-msm/cpufreq.o
+  CC      arch/arm/mm/alignment.o
+  CC      fs/char_dev.o
+  CC      security/keys/key.o
+  CC      arch/arm/mm/highmem.o
+  CC      security/keys/keyring.o
+  CC      security/keys/keyctl.o
+  LD      ipc/built-in.o
+  CC      arch/arm/mach-msm/nohlt.o
+  AS      arch/arm/mm/abort-ev7.o
+  CC      crypto/api.o
+  AS      arch/arm/mm/pabort-v7.o
+  CC      kernel/capability.o
+  CC      kernel/ptrace.o
+  CC      fs/stat.o
+  CC      mm/truncate.o
+  AS      arch/arm/mm/cache-v7.o
+  CC      arch/arm/mach-msm/clock-debug.o
+  CC      arch/arm/mm/copypage-v6.o
+  CC      arch/arm/mm/context.o
+  CC      security/keys/permission.o
+  CC      security/keys/process_keys.o
+  CC      kernel/timer.o
+  CC      security/keys/request_key.o
+  CC      arch/arm/mach-msm/acpuclock.o
+  AS      arch/arm/mm/tlb-v7.o
+  AS      arch/arm/mm/proc-v7.o
+  CC      security/keys/request_key_auth.o
+  CC      security/keys/user_defined.o
+  CC      kernel/user.o
+  LD      arch/arm/mm/built-in.o
+  CC      security/keys/proc.o
+  CC      crypto/cipher.o
+  CC      kernel/signal.o
+  CC      arch/arm/mach-msm/pmu.o
+  CC      block/elevator.o
+  CC      fs/exec.o
+  CC      security/keys/sysctl.o
+  CC      mm/vmscan.o
+  CC      fs/pipe.o
+  CC      mm/shmem.o
+  AS      arch/arm/mach-msm/headsmp.o
+  CC      fs/namei.o
+  CC      crypto/compress.o
+  CC      arch/arm/mach-msm/platsmp.o
+  LD      security/keys/built-in.o
+  CC      security/commoncap.o
+  LD      drivers/accessory/built-in.o
+  CC      crypto/algapi.o
+  LD      drivers/auxdisplay/built-in.o
+  CC      drivers/base/core.o
+  CC      block/blk-core.o
+  CC      arch/arm/mach-msm/hotplug.o
+  CC      fs/fcntl.o
+  CC      kernel/sys.o
+  AS      arch/arm/mach-msm/idle-v7.o
+  CC      arch/arm/mach-msm/jtag.o
+  CC      security/min_addr.o
+  CC      fs/ioctl.o
+  CC      drivers/base/sys.o
+  CC      fs/readdir.o
+  CC      arch/arm/mach-msm/etm.o
+  CC      kernel/kmod.o
+  CC      crypto/scatterwalk.o
+  LD      security/built-in.o
+  CC      drivers/base/bus.o
+  CC      mm/prio_tree.o
+  CC      sound/sound_core.o
+  CC      mm/util.o
+  CC      fs/select.o
+  CC      kernel/workqueue.o
+  CC      fs/fifo.o
+  CC      arch/arm/mach-msm/scm.o
+  CC      fs/dcache.o
+  LD      sound/arm/built-in.o
+  LD      sound/atmel/built-in.o
+  CC      crypto/proc.o
+  CC      kernel/pid.o
+  CC      sound/core/hwdep.o
+  CC      fs/inode.o
+  CC      mm/mmzone.o
+  CC      drivers/base/dd.o
+  CC      arch/arm/mach-msm/scm-boot.o
+  CC      crypto/ablkcipher.o
+  CC      arch/arm/mach-msm/scm-io.o
+  CC      mm/vmstat.o
+  CC      mm/backing-dev.o
+  CC      block/blk-tag.o
+  CC      arch/arm/mach-msm/peripheral-loader.o
+  CC      sound/core/memalloc.o
+  CC      fs/attr.o
+  CC      drivers/base/syscore.o
+  CC      kernel/rcupdate.o
+  CC      arch/arm/mach-msm/scm-pas.o
+  CC      drivers/base/driver.o
+  CC      crypto/blkcipher.o
+  CC      fs/bad_inode.o
+  CC      sound/core/pcm.o
+  CC      arch/arm/mach-msm/peripheral-reset.o
+  CC      mm/page_isolation.o
+  CC      drivers/base/class.o
+  CC      fs/file.o
+  CC      fs/filesystems.o
+  CC      block/blk-sysfs.o
+  CC      sound/core/pcm_native.o
+  CC      crypto/ahash.o
+  CC      mm/mm_init.o
+  CC      arch/arm/mach-msm/pil-q6v3.o
+  CC      arch/arm/mach-msm/pil-tzapps.o
+  CC      block/blk-flush.o
+  CC      kernel/extable.o
+  CC      drivers/base/platform.o
+  CC      drivers/base/cpu.o
+  CC      arch/arm/mach-msm/pil-modem.o
+  CC      fs/namespace.o
+  CC      mm/mmu_context.o
+  CC      fs/seq_file.o
+  CC      crypto/shash.o
+  CC      arch/arm/mach-msm/sdio_al.o
+  CC      sound/core/pcm_lib.o
+  CC      kernel/params.o
+  CC      arch/arm/mach-msm/sdio_al_test.o
+  CC      drivers/base/firmware.o
+  CC      mm/percpu.o
+  CC      block/blk-settings.o
+  CC      drivers/base/init.o
+  CC      drivers/base/map.o
+  CC      drivers/base/devres.o
+  CC      fs/xattr.o
+  CC      crypto/algboss.o
+  CC      kernel/posix-timers.o
+  CC      drivers/base/attribute_container.o
+  CC      drivers/base/transport_class.o
+  CC      crypto/testmgr.o
+  CC      block/blk-ioc.o
+  LD      firmware/built-in.o
+  CC      drivers/base/power/sysfs.o
+  CC      mm/fremap.o
+  CC      drivers/base/dma-mapping.o
+  CC      fs/libfs.o
+  CC      sound/core/pcm_timer.o
+  CC      arch/arm/oprofile/../../../drivers/oprofile/oprof.o
+  CC      crypto/crypto_wq.o
+  CC      drivers/base/power/generic_ops.o
+  CC      kernel/kthread.o
+  CC      fs/fs-writeback.o
+  CC      arch/arm/oprofile/../../../drivers/oprofile/cpu_buffer.o
+  CC      block/blk-map.o
+  LD      crypto/crypto_algapi.o
+  CC      sound/core/pcm_misc.o
+  CC      crypto/aead.o
+  CC      mm/highmem.o
+  CC      drivers/base/dma-coherent.o
+  CC      arch/arm/mach-msm/sdio_al_dloader.o
+  CC      drivers/base/power/main.o
+  CC      arch/arm/oprofile/../../../drivers/oprofile/buffer_sync.o
+  CC      kernel/wait.o
+  CC      fs/pnode.o
+  CC      sound/core/pcm_memory.o
+  CC      drivers/base/genlock.o
+  CC      block/blk-exec.o
+  CC      arch/arm/mach-msm/sdio_dmux.o
+  CC      mm/madvise.o
+  LD      crypto/crypto_blkcipher.o
+  CC      crypto/chainiv.o
+  CC      fs/drop_caches.o
+  CC      block/blk-merge.o
+  CC      arch/arm/oprofile/../../../drivers/oprofile/event_buffer.o
+  CC      kernel/kfifo.o
+  CC      arch/arm/mach-msm/smem_log.o
+  CC      drivers/base/power/wakeup.o
+  CC      fs/splice.o
+  CC      sound/core/rawmidi.o
+  CC      fs/sync.o
+  CC      mm/memory.o
+  CC      crypto/eseqiv.o
+  CC      arch/arm/oprofile/../../../drivers/oprofile/oprofile_files.o
+  CC      drivers/base/firmware_class.o
+  CC      arch/arm/oprofile/../../../drivers/oprofile/oprofilefs.o
+  CC      arch/arm/mach-msm/smd.o
+  CC      drivers/base/power/runtime.o
+  CC      block/blk-softirq.o
+  LD      crypto/crypto_hash.o
+  CC      kernel/sys_ni.o
+  CC      crypto/pcompress.o
+  CC      arch/arm/oprofile/../../../drivers/oprofile/oprofile_stats.o
+  CC      fs/utimes.o
+  CC      kernel/posix-cpu-timers.o
+  CC      arch/arm/mach-msm/smd_debug.o
+  CC      arch/arm/oprofile/../../../drivers/oprofile/timer_int.o
+  CC      drivers/base/topology.o
+  CC      sound/core/timer.o
+  CC      fs/stack.o
+  CC      drivers/base/power/clock_ops.o
+  CC      arch/arm/oprofile/../../../drivers/oprofile/oprofile_perf.o
+  CC      fs/fs_struct.o
+  LD      crypto/cryptomgr.o
+  CC      block/blk-timeout.o
+  CC      crypto/hmac.o
+  CC      drivers/base/module.o
+  LD      drivers/base/power/built-in.o
+  CC      arch/arm/mach-msm/remote_spinlock.o
+  CC      fs/statfs.o
+  CC      fs/buffer.o
+  CC      mm/mincore.o
+  CC      fs/bio.o
+  LD      drivers/base/built-in.o
+  CC      arch/arm/oprofile/common.o
+  CC      kernel/mutex.o
+  CC      drivers/block/brd.o
+  CC      block/blk-iopoll.o
+  CC      crypto/xcbc.o
+  CC      arch/arm/mach-msm/socinfo.o
+  LD      arch/arm/oprofile/oprofile.o
+  LD      arch/arm/oprofile/built-in.o
+  CC      drivers/block/loop.o
+  CC      mm/mlock.o
+  CC      net/socket.o
+  CC      fs/block_dev.o
+  CC      crypto/crypto_null.o
+  LD      net/802/built-in.o
+  CC      sound/core/sound.o
+  CC      block/blk-lib.o
+  CC      net/bluetooth_mgmt/af_bluetooth.o
+  CC      kernel/hrtimer.o
+  CC      arch/arm/mach-msm/sdio_tty.o
+  CC      crypto/md4.o
+  CC      fs/direct-io.o
+  CC      crypto/md5.o
+  CC      mm/mmap.o
+  CC      block/ioctl.o
+  CC      sound/core/init.o
+  CC      arch/arm/mach-msm/smd_tty.o
+  CC      crypto/sha1_generic.o
+  LD      drivers/block/built-in.o
+  CC      kernel/rwsem.o
+  CC      drivers/bluetooth/hci_ldisc.o
+  CC      net/bluetooth_mgmt/hci_core.o
+  CC      fs/mpage.o
+  CC      crypto/sha256_generic.o
+  CC      crypto/ecb.o
+  CC      crypto/cbc.o
+  CC      kernel/nsproxy.o
+  CC      block/genhd.o
+  CC      drivers/bluetooth/hci_h4.o
+  CC      fs/ioprio.o
+  CC      net/bluetooth_mgmt/hci_conn.o
+  CC      crypto/des_generic.o
+  CC      sound/core/memory.o
+  CC      arch/arm/mach-msm/smd_pkt.o
+  CC      mm/mprotect.o
+  CC      crypto/twofish_generic.o
+  CC      mm/mremap.o
+  CC      fs/cifs/cifsfs.o
+  CC      kernel/srcu.o
+  CC      sound/core/info.o
+  CC      drivers/bluetooth/hci_ibs.o
+  CC      mm/msync.o
+  CC      net/bluetooth_mgmt/hci_event.o
+  CC      arch/arm/mach-msm/sdio_cmux.o
+  CC      fs/debugfs/inode.o
+  CC      mm/rmap.o
+  CC      kernel/semaphore.o
+  CC      crypto/twofish_common.o
+  CC      mm/vmalloc.o
+  CC      net/bluetooth_mgmt/mgmt.o
+  CC      fs/cifs/cifssmb.o
+  CC      block/scsi_ioctl.o
+  CC      kernel/notifier.o
+  CC      sound/core/control.o
+  CC      drivers/bluetooth/bluesleep_bcm.o
+/home/ecoco/msm8660/net/bluetooth_mgmt/mgmt.c: In function 'pin_code_reply':
+/home/ecoco/msm8660/net/bluetooth_mgmt/mgmt.c:1463:36: warning: unused variable 'ncp'
+/home/ecoco/msm8660/net/bluetooth_mgmt/mgmt.c: At top level:
+/home/ecoco/msm8660/net/bluetooth_mgmt/mgmt.c:132:11: warning: 'mgmt_status_table' defined but not used
+  CC      arch/arm/mach-msm/msm_dsps.o
+  CC      fs/debugfs/file.o
+  CC      kernel/ksysfs.o
+  CC      block/bsg.o
+  CC      crypto/aes_generic.o
+  CC      kernel/pm_qos_params.o
+  CC      arch/arm/mach-msm/sdio_ctl.o
+  CC      mm/pagewalk.o
+  LD      drivers/bluetooth/hci_uart.o
+  LD      drivers/bluetooth/built-in.o
+  LD      drivers/cdrom/built-in.o
+  CC      drivers/char/mem.o
+  LD      fs/debugfs/debugfs.o
+  LD      fs/debugfs/built-in.o
+  CC      fs/devpts/inode.o
+  CC      block/noop-iosched.o
+  CC      kernel/sched_clock.o
+  CC      sound/core/misc.o
+  CC      arch/arm/mach-msm/smd_rpcrouter.o
+  CC      mm/pgtable-generic.o
+  CC      mm/init-mm.o
+  LD      fs/devpts/devpts.o
+  LD      fs/devpts/built-in.o
+  CC      kernel/cred.o
+  CC      fs/ecryptfs/dentry.o
+  CC      crypto/arc4.o
+  CC      mm/bootmem.o
+  CC      block/deadline-iosched.o
+  CC      drivers/char/random.o
+  CC      sound/core/device.o
+  CC      mm/memblock.o
+  CC      crypto/deflate.o
+  CC      fs/ecryptfs/file.o
+  CC      net/bluetooth_mgmt/hci_sock.o
+  CC      net/bluetooth_mgmt/hci_sysfs.o
+  CC      block/cfq-iosched.o
+  CC      sound/core/jack.o
+  CC      crypto/crc32c.o
+  CC      mm/bounce.o
+  CC      kernel/async.o
+  CC      mm/page_io.o
+  CC      fs/ecryptfs/inode.o
+/home/ecoco/msm8660/kernel/async.c: In function 'async_synchronize_cookie_domain':
+/home/ecoco/msm8660/kernel/async.c:275:10: warning: 'starttime.tv64' may be used uninitialized in this function
+  CC      crypto/authenc.o
+/home/ecoco/msm8660/kernel/async.c: In function 'async_run_entry_fn':
+/home/ecoco/msm8660/kernel/async.c:129:10: warning: 'calltime.tv64' may be used uninitialized in this function
+  CC      fs/cifs/cifs_debug.o
+  CC      net/bluetooth_mgmt/lib.o
+  LD      sound/core/snd.o
+  LD      sound/core/snd-hwdep.o
+  CC      kernel/range.o
+  LD      sound/core/snd-timer.o
+  CC      mm/swap_state.o
+  LD      sound/core/snd-pcm.o
+  LD      sound/core/snd-page-alloc.o
+  CC      arch/arm/mach-msm/smd_rpcrouter_device.o
+  LD      sound/core/snd-rawmidi.o
+  CC      drivers/char/misc.o
+  LD      sound/core/built-in.o
+  CC      mm/swapfile.o
+  LD      sound/drivers/mpu401/built-in.o
+  LD      sound/drivers/opl3/built-in.o
+  CC      net/bluetooth_mgmt/l2cap_core.o
+  CC      kernel/jump_label.o
+  LD      sound/drivers/opl4/built-in.o
+  CC      arch/arm/mach-msm/smd_rpc_sym.o
+/home/ecoco/msm8660/fs/ecryptfs/inode.c: In function 'ecryptfs_create':
+/home/ecoco/msm8660/fs/ecryptfs/inode.c:164:17: warning: 'dentry_save' may be used uninitialized in this function
+/home/ecoco/msm8660/fs/ecryptfs/inode.c:165:19: warning: 'vfsmount_save' may be used uninitialized in this function
+/home/ecoco/msm8660/fs/ecryptfs/inode.c:166:15: warning: 'flags_save' may be used uninitialized in this function
+  LD      sound/drivers/pcsp/built-in.o
+  LD      sound/drivers/vx/built-in.o
+  CC      crypto/authencesn.o
+  LD      sound/drivers/built-in.o
+  CC      kernel/groups.o
+  CC      crypto/lzo.o
+  CC      fs/ecryptfs/main.o
+  LD      sound/firewire/built-in.o
+  LD      sound/i2c/other/built-in.o
+  CC      arch/arm/mach-msm/smd_rpcrouter_servers.o
+  LD      sound/i2c/built-in.o
+  CC      net/bluetooth_mgmt/l2cap_sock.o
+  CC      drivers/char/hw_random/core.o
+  CC      fs/cifs/connect.o
+  LD      sound/isa/ad1816a/built-in.o
+  CC      crypto/rng.o
+  LD      sound/isa/ad1848/built-in.o
+  LD      sound/isa/cs423x/built-in.o
+  CC      kernel/freezer.o
+  LD      block/built-in.o
+  LD      sound/isa/es1688/built-in.o
+  LD      sound/isa/galaxy/built-in.o
+  LD      arch/arm/lib/built-in.o
+  AS      arch/arm/lib/ashldi3.o
+  AS      arch/arm/lib/ashrdi3.o
+  LD      sound/isa/gus/built-in.o
+  AS      arch/arm/lib/backtrace.o
+  LD      sound/isa/msnd/built-in.o
+  LD      sound/isa/opti9xx/built-in.o
+  AS      arch/arm/lib/changebit.o
+  LD      sound/isa/sb/built-in.o
+  LD      sound/isa/wavefront/built-in.o
+  AS      arch/arm/lib/clear_user.o
+  LD      sound/isa/wss/built-in.o
+  LD      sound/isa/built-in.o
+  AS      arch/arm/lib/clearbit.o
+  LD      sound/mips/built-in.o
+  AS      arch/arm/lib/copy_from_user.o
+  LD      sound/parisc/built-in.o
+  AS      arch/arm/lib/copy_page.o
+  AS      arch/arm/lib/copy_to_user.o
+  LD      sound/pci/ac97/built-in.o
+  AS      arch/arm/lib/csumipv6.o
+  LD      sound/pci/ali5451/built-in.o
+  LD      sound/pci/asihpi/built-in.o
+  LD      sound/pci/au88x0/built-in.o
+  AS      arch/arm/lib/csumpartial.o
+  LD      sound/pci/aw2/built-in.o
+  AS      arch/arm/lib/csumpartialcopy.o
+  LD      sound/pci/ca0106/built-in.o
+  LD      sound/pci/cs46xx/built-in.o
+  CC      arch/arm/mach-msm/smd_rpcrouter_clients.o
+  CC      drivers/char/hw_random/msm_rng.o
+  CC      kernel/profile.o
+  AS      arch/arm/lib/csumpartialcopyuser.o
+  LD      sound/pci/cs5535audio/built-in.o
+  CC      arch/arm/lib/delay.o
+  LD      sound/pci/ctxfi/built-in.o
+  CC      crypto/krng.o
+  CC      fs/ecryptfs/super.o
+  CC      mm/thrash.o
+  CC [M]  crypto/ansi_cprng.o
+  LD      sound/pci/echoaudio/built-in.o
+  CC      net/bluetooth_mgmt/smp.o
+  LD      drivers/char/hw_random/rng-core.o
+  LD      drivers/char/hw_random/built-in.o
+  LD      sound/pci/emu10k1/built-in.o
+  CC      drivers/char/msm_rotator.o
+  AS      arch/arm/lib/div64.o
+  LD      sound/pci/hda/built-in.o
+  AS      arch/arm/lib/findbit.o
+  AS      arch/arm/lib/getuser.o
+  LD      sound/pci/ice1712/built-in.o
+  LD      crypto/crypto.o
+  LD      sound/pci/korg1212/built-in.o
+  LD      crypto/built-in.o
+  AS      arch/arm/lib/io-readsb.o
+  CC      fs/ecryptfs/mmap.o
+  LD      sound/pci/lola/built-in.o
+  LD      sound/pci/lx6464es/built-in.o
+  AS      arch/arm/lib/io-readsl.o
+  CC      net/bluetooth_mgmt/sco.o
+  LD      sound/pci/mixart/built-in.o
+  AS      arch/arm/lib/io-readsw-armv4.o
+  LD      sound/pci/nm256/built-in.o
+  CC      lib/bcd.o
+  CC      mm/dmapool.o
+  LD      sound/pci/oxygen/built-in.o
+  CC      arch/arm/mach-msm/smd_rpcrouter_xdr.o
+  AS      arch/arm/lib/io-writesb.o
+  LD      sound/pci/pcxhr/built-in.o
+  AS      arch/arm/lib/io-writesl.o
+  LD      sound/pci/riptide/built-in.o
+  CC      lib/div64.o
+  CC      kernel/stacktrace.o
+  AS      arch/arm/lib/io-writesw-armv4.o
+  LD      sound/pci/rme9652/built-in.o
+  CC      fs/ecryptfs/read_write.o
+  AS      arch/arm/lib/lib1funcs.o
+  CC      net/bluetooth_mgmt/bnep/core.o
+  LD      sound/pci/trident/built-in.o
+  AS      arch/arm/lib/lshrdi3.o
+  AS      arch/arm/lib/memchr.o
+  AS      arch/arm/lib/memcpy.o
+  LD      sound/pci/vx222/built-in.o
+  CC      arch/arm/mach-msm/rpcrouter_smd_xprt.o
+  AS      arch/arm/lib/memmove.o
+  LD      sound/pci/ymfpci/built-in.o
+  CC      fs/ecryptfs/crypto.o
+  AS      arch/arm/lib/memset.o
+  LD      sound/pci/built-in.o
+  AS      arch/arm/lib/memzero.o
+  AS      arch/arm/lib/muldi3.o
+  AS      arch/arm/lib/putuser.o
+  AS      arch/arm/lib/setbit.o
+  LD      sound/pcmcia/pdaudiocf/built-in.o
+  LD      sound/pcmcia/vx/built-in.o
+  CC      arch/arm/mach-msm/rpcrouter_sdio_xprt.o
+  LD      sound/pcmcia/built-in.o
+  AS      arch/arm/lib/sha1.o
+  LD      sound/ppc/built-in.o
+  AS      arch/arm/lib/strchr.o
+  LD      sound/sh/built-in.o
+  AS      arch/arm/lib/strncpy_from_user.o
+  AS      arch/arm/lib/strnlen_user.o
+  AS      arch/arm/lib/strrchr.o
+  CC      kernel/events/core.o
+  CC      mm/ashmem.o
+  CC      sound/soc/soc-core.o
+  CC      lib/sort.o
+  AS      arch/arm/lib/testchangebit.o
+  LD      drivers/char/built-in.o
+  CC      net/bluetooth_mgmt/hidp/core.o
+  CC      net/bluetooth_mgmt/bnep/sock.o
+  AS      arch/arm/lib/testclearbit.o
+  CC      drivers/char/diag/diagchar_core.o
+  AS      arch/arm/lib/testsetbit.o
+  CC      net/bluetooth_mgmt/rfcomm/core.o
+  AS      arch/arm/lib/ucmpdi2.o
+  CC      lib/parser.o
+  CC      arch/arm/mach-msm/ping_mdm_rpc_client.o
+  CC      fs/cifs/dir.o
+  AR      arch/arm/lib/lib.a
+  CC      arch/arm/mach-msm/ping_apps_server.o
+  CC      net/bluetooth_mgmt/bnep/netdev.o
+  CC      lib/halfmd4.o
+  CC      mm/compaction.o
+  CC      fs/ecryptfs/keystore.o
+  CC      arch/arm/mach-msm/oem_rapi_client.o
+  CC      lib/debug_locks.o
+  CC      arch/arm/mach-msm/dal.o
+  CC      net/bluetooth_mgmt/hidp/sock.o
+  CC      drivers/char/diag/diagchar_hdlc.o
+  CC      fs/cifs/file.o
+  LD      net/bluetooth_mgmt/bnep/bnep.o
+  CC      lib/random32.o
+  LD      net/bluetooth_mgmt/bnep/built-in.o
+  CC      arch/arm/mach-msm/msm_bus/msm_bus_core.o
+  LD      net/bluetooth_mgmt/bluetooth.o
+  CC      drivers/char/diag/diagfwd.o
+  CC      lib/bust_spinlocks.o
+  CC      mm/ksm.o
+  CC      net/bluetooth_mgmt/rfcomm/sock.o
+  CC      lib/hexdump.o
+  CC      arch/arm/mach-msm/msm_bus/msm_bus_fabric.o
+  LD      net/bluetooth_mgmt/hidp/hidp.o
+  LD      net/bluetooth_mgmt/hidp/built-in.o
+  CC      lib/kasprintf.o
+  CC      arch/arm/mach-msm/pm-boot.o
+  CC      arch/arm/mach-msm/qdsp6v2/rtac.o
+  CC      fs/ecryptfs/messaging.o
+  CC      arch/arm/mach-msm/pm-8x60.o
+  CC      lib/bitmap.o
+  CC      drivers/char/diag/diagmem.o
+  CC      arch/arm/mach-msm/msm_bus/msm_bus_config.o
+  CC      drivers/char/diag/diagfwd_cntl.o
+  CC      net/bluetooth_mgmt/rfcomm/tty.o
+  CC      fs/ecryptfs/miscdev.o
+  CC      arch/arm/mach-msm/qdsp6v2/audio_dev_ctl.o
+  CC      arch/arm/mach-msm/msm_bus/msm_bus_arb.o
+  CC      mm/slub.o
+  CC      lib/scatterlist.o
+  CC      drivers/char/diag/diagfwd_sdio.o
+/home/ecoco/msm8660/fs/ecryptfs/miscdev.c: In function 'ecryptfs_miscdev_write':
+/home/ecoco/msm8660/fs/ecryptfs/miscdev.c:437:4: warning: format '%lu' expects type 'long unsigned int', but argument 4 has type 'unsigned int'
+  LD      drivers/char/diag/diagchar.o
+  CC      arch/arm/mach-msm/qdsp6v2/board-msm8x60-audio.o
+  CC      fs/ecryptfs/kthread.o
+In file included from /home/ecoco/msm8660/arch/arm/mach-msm/qdsp6v2/board-msm8x60-audio.c:38:0:
+/home/ecoco/msm8660/arch/arm/mach-msm/include/mach/board-msm8660.h:22:0: warning: "PM8058_GPIO_PM_TO_SYS" redefined
+/home/ecoco/msm8660/include/linux/mfd/pmic8058.h:107:0: note: this is the location of the previous definition
+/home/ecoco/msm8660/arch/arm/mach-msm/include/mach/board-msm8660.h:23:0: warning: "PM8058_GPIO_SYS_TO_PM" redefined
+/home/ecoco/msm8660/include/linux/mfd/pmic8058.h:108:0: note: this is the location of the previous definition
+In file included from /home/ecoco/msm8660/arch/arm/mach-msm/qdsp6v2/board-msm8x60-audio.c:58:0:
+/home/ecoco/msm8660/arch/arm/mach-msm/qdsp6v2/timpani_profile_celox_jpn_ntt.h:929:70: warning: backslash and newline separated by space
+/home/ecoco/msm8660/arch/arm/mach-msm/qdsp6v2/timpani_profile_celox_jpn_ntt.h:930:70: warning: backslash and newline separated by space
+/home/ecoco/msm8660/arch/arm/mach-msm/qdsp6v2/timpani_profile_celox_jpn_ntt.h:940:70: warning: backslash and newline separated by space
+/home/ecoco/msm8660/arch/arm/mach-msm/qdsp6v2/timpani_profile_celox_jpn_ntt.h:952:70: warning: backslash and newline separated by space
+  CC      arch/arm/mach-msm/msm_bus/msm_bus_rpm.o
+  LD      drivers/char/diag/built-in.o
+/home/ecoco/msm8660/arch/arm/mach-msm/qdsp6v2/board-msm8x60-audio.c:507:12: warning: 'config_class_d1_gpio' defined but not used
+/home/ecoco/msm8660/arch/arm/mach-msm/qdsp6v2/board-msm8x60-audio.c:1846:38: warning: 'dualmic_handset_call_tx_profile' defined but not used
+/home/ecoco/msm8660/arch/arm/mach-msm/qdsp6v2/board-msm8x60-audio.c:4664:31: warning: 'device_handset_voip3_rx' defined but not used
+/home/ecoco/msm8660/arch/arm/mach-msm/qdsp6v2/board-msm8x60-audio.c:4668:31: warning: 'device_handset_voip3_tx' defined but not used
+/home/ecoco/msm8660/arch/arm/mach-msm/qdsp6v2/board-msm8x60-audio.c:4672:31: warning: 'device_speaker_voip3_rx' defined but not used
+/home/ecoco/msm8660/arch/arm/mach-msm/qdsp6v2/board-msm8x60-audio.c:4676:31: warning: 'device_speaker_voip3_tx' defined but not used
+/home/ecoco/msm8660/arch/arm/mach-msm/qdsp6v2/board-msm8x60-audio.c:4680:31: warning: 'device_headset_voip3_rx' defined but not used
+/home/ecoco/msm8660/arch/arm/mach-msm/qdsp6v2/board-msm8x60-audio.c:4684:31: warning: 'device_headset_voip3_tx' defined but not used
+/home/ecoco/msm8660/arch/arm/mach-msm/qdsp6v2/board-msm8x60-audio.c:4689:31: warning: 'device_bt_sco_mono_voip3_rx' defined but not used
+/home/ecoco/msm8660/arch/arm/mach-msm/qdsp6v2/board-msm8x60-audio.c:4693:31: warning: 'device_bt_sco_mono_voip3_tx' defined but not used
+/home/ecoco/msm8660/arch/arm/mach-msm/qdsp6v2/board-msm8x60-audio.c:4697:31: warning: 'device_bt_sco_mono_nrec_voip3_rx' defined but not used
+/home/ecoco/msm8660/arch/arm/mach-msm/qdsp6v2/board-msm8x60-audio.c:4701:31: warning: 'device_bt_sco_mono_nrec_voip3_tx' defined but not used
+/home/ecoco/msm8660/arch/arm/mach-msm/qdsp6v2/board-msm8x60-audio.c:4705:31: warning: 'device_bt_sco_stereo_voip3_rx' defined but not used
+/home/ecoco/msm8660/arch/arm/mach-msm/qdsp6v2/board-msm8x60-audio.c:4709:31: warning: 'device_bt_sco_stereo_voip3_tx' defined but not used
+/home/ecoco/msm8660/arch/arm/mach-msm/qdsp6v2/board-msm8x60-audio.c:4713:31: warning: 'device_bt_sco_stereo_nrec_voip3_rx' defined but not used
+/home/ecoco/msm8660/arch/arm/mach-msm/qdsp6v2/board-msm8x60-audio.c:4717:31: warning: 'device_bt_sco_stereo_nrec_voip3_tx' defined but not used
+/home/ecoco/msm8660/arch/arm/mach-msm/qdsp6v2/board-msm8x60-audio.c:4722:31: warning: 'device_deskdock_voip3_rx' defined but not used
+/home/ecoco/msm8660/arch/arm/mach-msm/qdsp6v2/board-msm8x60-audio.c:4726:31: warning: 'device_deskdock_voip3_tx' defined but not used
+/home/ecoco/msm8660/arch/arm/mach-msm/qdsp6v2/board-msm8x60-audio.c:6847:32: warning: 'snd_devices_ffa' defined but not used
+  CC      fs/cifs/inode.o
+  CC      drivers/clk/clkdev.o
+  CC      arch/arm/mach-msm/spm.o
+  CC      sound/soc/soc-dapm.o
+  CC      lib/string_helpers.o
+  CC      arch/arm/mach-msm/qdsp6v2/snddev_icodec.o
+  CC      arch/arm/mach-msm/qdsp6v2/snddev_ecodec.o
+  CC      arch/arm/mach-msm/devices-msm8x60.o
+  LD      net/bluetooth_mgmt/rfcomm/rfcomm.o
+  CC      fs/ecryptfs/debug.o
+  LD      net/bluetooth_mgmt/rfcomm/built-in.o
+  CC      arch/arm/mach-msm/msm_bus/msm_bus_board_8660.o
+  LD      kernel/events/built-in.o
+  LD      drivers/clk/built-in.o
+  LD      net/bluetooth_mgmt/built-in.o
+  CC      lib/gcd.o
+  LD      drivers/clocksource/built-in.o
+  CC      kernel/irq/irqdesc.o
+  CC      drivers/cpufreq/cpufreq.o
+  CC      arch/arm/mach-msm/msm_bus/msm_bus_dbg.o
+In file included from /home/ecoco/msm8660/arch/arm/mach-msm/devices-msm8x60.c:25:0:
+/home/ecoco/msm8660/arch/arm/mach-msm/include/mach/msm_hsusb.h:182:2: warning: function declaration isn't a prototype
+  LD      fs/ecryptfs/ecryptfs.o
+  CC      lib/lcm.o
+  CC      net/core/sock.o
+  CC      arch/arm/mach-msm/qdsp6v2/snddev_mi2s.o
+  CC      kernel/irq/handle.o
+  LD      fs/ecryptfs/built-in.o
+  CC      fs/cifs/link.o
+  CC      lib/list_sort.o
+  LD      arch/arm/mach-msm/msm_bus/built-in.o
+  CC      drivers/cpuidle/cpuidle.o
+  CC      arch/arm/mach-msm/clock-local.o
+  CC      fs/ext2/balloc.o
+  CC      drivers/cpufreq/cpufreq_stats.o
+  CC      lib/uuid.o
+  CC      fs/cifs/misc.o
+  CC      mm/migrate.o
+  CC      arch/arm/mach-msm/qdsp6v2/snddev_virtual.o
+  CC      kernel/irq/manage.o
+  CC      sound/soc/soc-jack.o
+  CC      drivers/cpuidle/driver.o
+  CC      lib/flex_array.o
+  CC      drivers/cpufreq/cpufreq_performance.o
+  CC      fs/cifs/netmisc.o
+  CC      arch/arm/mach-msm/clock-8x60.o
+  CC      arch/arm/mach-msm/qdsp6v2/pcm_out.o
+  CC      drivers/cpufreq/cpufreq_powersave.o
+  CC      fs/ext2/dir.o
+  CC      drivers/cpuidle/governor.o
+  CC      lib/bsearch.o
+  CC      mm/cleancache.o
+  CC      drivers/cpuidle/sysfs.o
+  CC      drivers/cpufreq/cpufreq_userspace.o
+  CC      fs/cifs/smbencrypt.o
+  CC      sound/soc/soc-cache.o
+  CC      lib/find_last_bit.o
+  CC      drivers/cpufreq/cpufreq_ondemand.o
+  CC      kernel/irq/spurious.o
+  CC      arch/arm/mach-msm/acpuclock-8x60.o
+  CC      drivers/cpuidle/governors/ladder.o
+  CC      fs/cifs/transport.o
+  LD      mm/built-in.o
+  CC      arch/arm/mach-msm/qdsp6v2/pcm_in.o
+  CC      fs/ext2/file.o
+  CC      fs/ext2/ialloc.o
+  CC      lib/kstrtox.o
+/home/ecoco/msm8660/drivers/cpufreq/cpufreq_ondemand.c:986:29: warning: 'dbs_input_handler' defined but not used
+  CC      fs/cifs/asn1.o
+  CC      kernel/irq/resend.o
+  CC      drivers/cpuidle/governors/menu.o
+  CC      net/core/request_sock.o
+  CC      fs/ext2/inode.o
+  CC      kernel/irq/chip.o
+  CC      sound/soc/soc-utils.o
+  CC      arch/arm/mach-msm/qdsp6v2/fm.o
+  LD      drivers/cpuidle/governors/built-in.o
+  LD      drivers/cpuidle/built-in.o
+  CC      fs/ext2/ioctl.o
+  CC      lib/iomap_copy.o
+  LD      drivers/crypto/built-in.o
+  CC      drivers/cpufreq/cpufreq_conservative.o
+  LD      drivers/crypto/msm/built-in.o
+  CC [M]  drivers/crypto/msm/qcedev.o
+  CC      fs/ext2/namei.o
+  CC      fs/ext2/super.o
+  CC      fs/ext3/balloc.o
+  CC      fs/cifs/cifs_unicode.o
+  CC      arch/arm/mach-msm/qdsp6v2/audio_lpa.o
+  CC      lib/devres.o
+  CC      drivers/cpufreq/cpufreq_interactive.o
+  CC      sound/soc/soc-dsp.o
+/home/ecoco/msm8660/arch/arm/mach-msm/qdsp6v2/audio_lpa.c: In function 'audio_ioctl':
+/home/ecoco/msm8660/arch/arm/mach-msm/qdsp6v2/audio_lpa.c:776:3: warning: format '%d' expects type 'int', but argument 2 has type 'long unsigned int'
+  CC      fs/ext2/symlink.o
+  CC      kernel/irq/dummychip.o
+  CC      net/core/skbuff.o
+  CC      kernel/irq/devres.o
+  CC      fs/ext2/xattr.o
+  CC      lib/spinlock_debug.o
+  CC      fs/ext2/xattr_user.o
+  CC      kernel/irq/autoprobe.o
+  CC      fs/cifs/nterr.o
+  CC      fs/ext2/xattr_trusted.o
+  CC [M]  drivers/crypto/msm/qce.o
+  CC [M]  drivers/crypto/msm/qcrypto.o
+  CC      arch/arm/mach-msm/qdsp6v2/q6voice.o
+  CC      kernel/irq/irqdomain.o
+  CC      fs/cifs/xattr.o
+  CC      arch/arm/mach-msm/qdsp6v2/snddev_hdmi.o
+  CC      lib/hweight.o
+  CC      drivers/cpufreq/freq_table.o
+  CC      fs/ext3/bitmap.o
+  LD      fs/ext2/ext2.o
+  CC      kernel/irq/proc.o
+  LD      fs/ext2/built-in.o
+  CC      fs/cifs/cifsencrypt.o
+  CC      fs/ext4/balloc.o
+  CC      arch/arm/mach-msm/qdsp6v2/audio_mvs.o
+  CC      lib/bitrev.o
+  LD      sound/soc/atmel/built-in.o
+  CC      fs/ext3/dir.o
+  LD      sound/soc/au1x/built-in.o
+  LD      drivers/cpufreq/built-in.o
+  CC      kernel/irq/pm.o
+  LD      drivers/firewire/built-in.o
+  LD      sound/soc/blackfin/built-in.o
+  CC      lib/crc-ccitt.o
+  LD      drivers/firmware/built-in.o
+  LD      sound/soc/codecs/built-in.o
+  CC      fs/ext4/bitmap.o
+  CC      fs/cifs/readdir.o
+  CC      drivers/gpio/gpiolib.o
+  LD      sound/soc/davinci/built-in.o
+  CC      arch/arm/mach-msm/qdsp6v2/lpa_if_hdmi.o
+  LD      kernel/irq/built-in.o
+  LD      sound/soc/ep93xx/built-in.o
+  CC      lib/crc16.o
+  CC      kernel/power/main.o
+  LD      sound/soc/fsl/built-in.o
+  LD      sound/soc/imx/built-in.o
+  CC      drivers/gpio/sx150x.o
+/home/ecoco/msm8660/kernel/power/main.c: In function 'set_freq_limit':
+/home/ecoco/msm8660/kernel/power/main.c:400:2: warning: format '%x' expects type 'unsigned int', but argument 3 has type 'long unsigned int'
+/home/ecoco/msm8660/kernel/power/main.c:352:6: warning: unused variable 'ret'
+  CC      fs/ext3/file.o
+  LD      sound/soc/jz4740/built-in.o
+  CC      net/core/iovec.o
+  LD      sound/soc/kirkwood/built-in.o
+  LD      drivers/gpu/drm/i2c/built-in.o
+  LD      sound/soc/mid-x86/built-in.o
+  HOSTCC  lib/gen_crc32table
+  CC      arch/arm/mach-msm/qdsp6v2/apr.o
+  LD      drivers/gpu/drm/built-in.o
+  CC      fs/ext4/dir.o
+  CC      sound/soc/msm/lpass-dma.o
+  CC      drivers/gpu/ion/ion.o
+  CC      lib/libcrc32c.o
+  CC      kernel/power/console.o
+  CC      fs/ext3/fsync.o
+  CC      drivers/gpio/pm8xxx-gpio.o
+  CC      arch/arm/mach-msm/qdsp6v2/apr_tal.o
+/home/ecoco/msm8660/drivers/gpu/ion/ion.c: In function 'ion_share_mmap':
+/home/ecoco/msm8660/drivers/gpu/ion/ion.c:1373:3: warning: format '%x' expects type 'unsigned int', but argument 3 has type 'long unsigned int'
+/home/ecoco/msm8660/drivers/gpu/ion/ion.c:1373:3: warning: format '%x' expects type 'unsigned int', but argument 5 has type 'long unsigned int'
+  CC      fs/cifs/ioctl.o
+  CC      arch/arm/mach-msm/qdsp6v2/q6core.o
+  CC      kernel/power/process.o
+  CC      lib/genalloc.o
+  CC      fs/ext4/file.o
+  CC      fs/ext3/ialloc.o
+  CC      sound/soc/msm/msm8x60-dai.o
+  CC      net/core/datagram.o
+  CC      fs/cifs/sess.o
+  CC      drivers/gpio/pm8xxx-mpp.o
+  CC      fs/cifs/export.o
+  CC      arch/arm/mach-msm/qdsp6v2/dsp_debug.o
+  CC      lib/lzo/lzo1x_compress.o
+  CC      kernel/power/suspend.o
+  CC      drivers/gpu/msm/adreno_ringbuffer.o
+  CC      fs/ext4/fsync.o
+  CC      sound/soc/msm/msm8x60-pcm.o
+  CC      fs/ext3/inode.o
+  CC      lib/lzo/lzo1x_decompress.o
+  LD      drivers/gpio/built-in.o
+  CC      drivers/hid/hid-lg.o
+  CC      drivers/gpu/ion/ion_heap.o
+  CC      arch/arm/mach-msm/qdsp6v2/audio_acdb.o
+  CC      arch/arm/mach-msm/qdsp6v2/aac_in.o
+  CC      kernel/power/wakelock.o
+  CC      fs/ext4/ialloc.o
+  LD      lib/lzo/lzo_compress.o
+  LD      lib/lzo/lzo_decompress.o
+  CC      net/core/stream.o
+  LD      lib/lzo/built-in.o
+  LD      fs/cifs/cifs.o
+  CC      drivers/gpu/ion/ion_system_heap.o
+  CC      lib/reed_solomon/reed_solomon.o
+  LD      fs/cifs/built-in.o
+  CC      arch/arm/mach-msm/qdsp6v2/qcelp_in.o
+  CC      drivers/hid/hid-debug.o
+  CC      fs/fat/cache.o
+  CC      drivers/gpu/msm/adreno_drawctxt.o
+  CC      sound/soc/msm/msm8x60.o
+  CC      arch/arm/mach-msm/qdsp6v2/evrc_in.o
+  CC      fs/fat/dir.o
+  CC      drivers/gpu/ion/ion_carveout_heap.o
+  CC      arch/arm/mach-msm/qdsp6v2/amrnb_in.o
+  CC      kernel/power/userwakelock.o
+  LD      lib/reed_solomon/built-in.o
+  CC      drivers/gpu/msm/adreno_postmortem.o
+  CC      lib/zlib_deflate/deflate.o
+  CC      fs/ext4/inode.o
+  CC      arch/arm/mach-msm/qdsp6v2/audio_utils.o
+  CC      net/core/scm.o
+  CC      fs/ext3/ioctl.o
+  CC      drivers/hid/hid-core.o
+  CC      drivers/gpu/ion/ion_iommu_heap.o
+  CC      arch/arm/mach-msm/qdsp6v2/audio_wma.o
+  CC      kernel/power/earlysuspend.o
+  CC      lib/zlib_deflate/deftree.o
+  CC      drivers/gpu/ion/ion_cp_heap.o
+  CC      fs/ext3/namei.o
+  CC      sound/soc/msm/qdsp6/q6asm.o
+  CC      drivers/gpu/msm/adreno_snapshot.o
+  CC      arch/arm/mach-msm/qdsp6v2/audio_wmapro.o
+  CC      lib/zlib_deflate/deflate_syms.o
+  CC      arch/arm/mach-msm/qdsp6v2/audio_aac.o
+  CC      kernel/power/fbearlysuspend.o
+  CC      fs/fat/fatent.o
+  CC      net/core/gen_stats.o
+  CC      drivers/gpu/ion/msm/msm_ion.o
+  CC      arch/arm/mach-msm/qdsp6v2/audio_multi_aac.o
+  LD      lib/zlib_deflate/zlib_deflate.o
+  LD      lib/zlib_deflate/built-in.o
+  CC      arch/arm/mach-msm/qdsp6v2/audio_utils_aio.o
+  CC      drivers/gpu/msm/adreno_a2xx.o
+  CC      lib/zlib_inflate/inffast.o
+  CC      kernel/power/poweroff.o
+  CC      drivers/hid/hid-input.o
+  LD      kernel/power/built-in.o
+  CC      kernel/time/timekeeping.o
+  CC      lib/zlib_inflate/inflate.o
+  LD      drivers/gpu/ion/msm/built-in.o
+  LD      drivers/gpu/ion/built-in.o
+  LD      drivers/gpu/stub/built-in.o
+  LD      drivers/gpu/vga/built-in.o
+  CC      fs/ext3/super.o
+  CC      arch/arm/mach-msm/qdsp6v2/audio_mp3.o
+  CC      arch/arm/mach-msm/qdsp6v2/audio_amrnb.o
+  CC      drivers/gpu/msm/adreno_a2xx_trace.o
+  CC      lib/zlib_inflate/infutil.o
+  CC      arch/arm/mach-msm/qdsp6v2/audio_amrwb.o
+  CC      sound/soc/msm/qdsp6/q6adm.o
+  CC      arch/arm/mach-msm/qdsp6v2/audio_evrc.o
+  CC      arch/arm/mach-msm/qdsp6v2/audio_qcelp.o
+  CC      lib/zlib_inflate/inftrees.o
+  CC      drivers/gpu/msm/adreno_a2xx_snapshot.o
+  CC      arch/arm/mach-msm/qdsp6v2/amrwb_in.o
+  CC      fs/fat/file.o
+  CC      kernel/time/ntp.o
+  CC      net/core/gen_estimator.o
+  CC      lib/zlib_inflate/inflate_syms.o
+  CC      sound/soc/msm/qdsp6/q6afe.o
+  CC      drivers/hwmon/hwmon.o
+  CC      drivers/hwmon/msm_adc.o
+  LD      arch/arm/mach-msm/qdsp6v2/built-in.o
+  CC      arch/arm/mach-msm/clock-rpm.o
+  CC      fs/ext4/page-io.o
+  CC      drivers/gpu/msm/adreno_a3xx.o
+  CC      kernel/time/clocksource.o
+  LD      lib/zlib_inflate/zlib_inflate.o
+  LD      lib/zlib_inflate/built-in.o
+  CC      drivers/hwmon/m_adcproc.o
+  CC      lib/textsearch.o
+  CC      arch/arm/mach-msm/saw-regulator.o
+  LD      sound/soc/msm/qdsp6/built-in.o
+  LD      sound/soc/msm/snd-soc-msm8x60-dai.o
+  CC      net/core/net_namespace.o
+  LD      sound/soc/msm/snd-soc-msm8x60-pcm.o
+  LD      sound/soc/msm/snd-soc-msm8x60.o
+  LD      sound/soc/msm/snd-soc-lpass-dma.o
+  CC      fs/ext3/symlink.o
+  CC      fs/ext3/hash.o
+  CC      fs/fat/inode.o
+  LD      sound/soc/msm/built-in.o
+  CC      lib/ts_kmp.o
+  LD      sound/soc/nuc900/built-in.o
+  CC      fs/fat/misc.o
+  LD      sound/soc/omap/built-in.o
+  CC      arch/arm/mach-msm/footswitch-8x60.o
+  LD      sound/soc/pxa/built-in.o
+  LD      sound/soc/s6000/built-in.o
+  CC      fs/ext4/ioctl.o
+  LD      sound/soc/samsung/built-in.o
+  CC      kernel/time/jiffies.o
+  CC      lib/ts_bm.o
+  CC      fs/ext3/resize.o
+  LD      sound/soc/sh/built-in.o
+  LD      drivers/hwmon/built-in.o
+  LD      sound/soc/tegra/built-in.o
+  CC      drivers/i2c/i2c-boardinfo.o
+  LD      sound/soc/txx9/built-in.o
+  CC      arch/arm/mach-msm/rpm-regulator.o
+  LD      sound/soc/snd-soc-core.o
+  CC      lib/ts_fsm.o
+  LD      sound/soc/built-in.o
+  LD      sound/sparc/built-in.o
+  LD      sound/spi/built-in.o
+  LD      sound/synth/built-in.o
+  CC      sound/usb/card.o
+  CC      fs/ext4/namei.o
+  CC      drivers/hid/hid-a4tech.o
+  CC      net/core/secure_seq.o
+  CC      fs/fat/namei_vfat.o
+  CC      drivers/i2c/i2c-core.o
+  CC      kernel/time/timer_list.o
+  CC      lib/percpu_counter.o
+  CC      sound/usb/mixer.o
+  CC      fs/ext3/ext3_jbd.o
+  CC      net/core/sysctl_net_core.o
+  CC      drivers/hid/hid-apple.o
+  CC      sound/usb/mixer_quirks.o
+  CC      lib/nlattr.o
+  CC      kernel/time/timecompare.o
+  CC      drivers/gpu/msm/adreno_a3xx_trace.o
+  CC      arch/arm/mach-msm/rpm-regulator-8660.o
+  CC      net/core/dev.o
+  CC      fs/ext3/xattr.o
+  CC      drivers/hid/hid-belkin.o
+  LD      fs/fat/fat.o
+  LD      fs/fat/vfat.o
+  LD      fs/fat/built-in.o
+  CC      fs/fuse/dev.o
+  CC      sound/usb/proc.o
+  CC      kernel/time/timeconv.o
+  CC      drivers/i2c/i2c-dev.o
+  CC      arch/arm/mach-msm/subsystem_notif.o
+  CC      drivers/hid/hid-cherry.o
+  CC      drivers/gpu/msm/adreno_a3xx_snapshot.o
+  CC      sound/usb/quirks.o
+  CC      kernel/time/posix-clock.o
+  CC      fs/ext4/super.o
+  CC      drivers/hid/hid-chicony.o
+  CC      lib/cpu_rmap.o
+  CC      drivers/i2c/algos/i2c-algo-bit.o
+  CC      sound/usb/format.o
+  CC      fs/ext3/xattr_user.o
+  CC      arch/arm/mach-msm/subsystem_restart.o
+  CC      drivers/gpu/msm/adreno.o
+  CC      drivers/hid/hid-cypress.o
+  CC      kernel/time/clockevents.o
+  CC      fs/ext3/xattr_trusted.o
+  CC      sound/usb/endpoint.o
+  CC      lib/argv_split.o
+  CC      drivers/hid/hid-dr.o
+  CC      sound/usb/urb.o
+  CC      lib/bug.o
+  LD      fs/ext3/ext3.o
+  CC      kernel/time/tick-common.o
+  LD      drivers/i2c/algos/built-in.o
+  LD      fs/ext3/built-in.o
+  CC      drivers/i2c/busses/i2c-gpio.o
+  CC      sound/usb/pcm.o
+  CC      fs/jbd/transaction.o
+  CC      drivers/hid/hid-elecom.o
+  CC      lib/cmdline.o
+  CC      arch/arm/mach-msm/ramdump.o
+  CC      drivers/hid/hid-ezkey.o
+  CC      kernel/time/tick-oneshot.o
+  CC      drivers/i2c/busses/i2c-qup.o
+  CC      fs/fuse/dir.o
+  CC      drivers/gpu/msm/adreno_debugfs.o
+  CC      lib/cpumask.o
+  CC      net/core/ethtool.o
+  CC      drivers/hid/hid-gyration.o
+  CC      kernel/time/tick-sched.o
+  CC      arch/arm/mach-msm/modem-8660.o
+  CC      drivers/hid/hid-kensington.o
+  CC      sound/usb/helper.o
+  CC      arch/arm/mach-msm/lpass-8660.o
+  CC      lib/ctype.o
+  CC      sound/usb/clock.o
+  CC      drivers/gpu/msm/kgsl.o
+  CC      drivers/hid/hid-kye.o
+  CC      fs/jbd/commit.o
+  CC      lib/dec_and_lock.o
+  CC      arch/arm/mach-msm/sec_switch.o
+  CC      kernel/time/timer_stats.o
+  CC      drivers/i2c/busses/i2c-ssbi.o
+  LD      drivers/hid/hid-logitech.o
+  CC      fs/fuse/file.o
+  CC      sound/usb/midi.o
+  CC      drivers/hid/hid-magicmouse.o
+  CC      lib/decompress.o
+  CC      arch/arm/mach-msm/sysmon.o
+  CC      net/core/dev_addr_lists.o
+  CC      lib/decompress_bunzip2.o
+  CC      drivers/hid/hid-microsoft.o
+  LD      kernel/time/built-in.o
+  CC      kernel/trace/trace_clock.o
+  LD      drivers/i2c/busses/built-in.o
+  CC      drivers/hid/hid-monterey.o
+  CC      arch/arm/mach-msm/cpuidle.o
+  CC      drivers/i2c/chips/yda165.o
+  CC      lib/decompress_inflate.o
+  CC      fs/jbd/recovery.o
+  CC      kernel/trace/ring_buffer.o
+  CC      arch/arm/mach-msm/msm_watchdog.o
+  CC      lib/decompress_unlzma.o
+  CC      drivers/hid/hid-ntrig.o
+  CC      net/core/dst.o
+  LD      sound/usb/6fire/built-in.o
+  LD      sound/usb/caiaq/built-in.o
+  CC      fs/jbd/checkpoint.o
+  LD      sound/usb/misc/built-in.o
+  LD      sound/usb/usx2y/built-in.o
+  LD      sound/usb/snd-usb-audio.o
+  LD      sound/usb/snd-usbmidi-lib.o
+  CC      arch/arm/mach-msm/board-msm8x60_celox.o
+  CC      arch/arm/mach-msm/mdm.o
+  LD      sound/usb/built-in.o
+  CC      drivers/i2c/chips/gp2a_proximity.o
+  CC      sound/last.o
+  CC      fs/fuse/inode.o
+  CC      drivers/gpu/msm/kgsl_trace.o
+  CC      lib/dump_stack.o
+  CC      fs/jbd/revoke.o
+In file included from /home/ecoco/msm8660/arch/arm/mach-msm/board-msm8x60_celox.c:113:0:
+/home/ecoco/msm8660/arch/arm/mach-msm/include/mach/msm_hsusb.h:182:2: warning: function declaration isn't a prototype
+In file included from /home/ecoco/msm8660/arch/arm/mach-msm/board-msm8x60_celox.c:132:0:
+/home/ecoco/msm8660/arch/arm/mach-msm/include/mach/board-msm8660.h:22:0: warning: "PM8058_GPIO_PM_TO_SYS" redefined
+/home/ecoco/msm8660/include/linux/mfd/pmic8058.h:107:0: note: this is the location of the previous definition
+/home/ecoco/msm8660/arch/arm/mach-msm/include/mach/board-msm8660.h:23:0: warning: "PM8058_GPIO_SYS_TO_PM" redefined
+/home/ecoco/msm8660/include/linux/mfd/pmic8058.h:108:0: note: this is the location of the previous definition
+/home/ecoco/msm8660/arch/arm/mach-msm/board-msm8x60_celox.c: In function 'msm_hsusb_pmic_id_notif_init':
+/home/ecoco/msm8660/arch/arm/mach-msm/board-msm8x60_celox.c:1382:2: warning: multi-line comment
+/home/ecoco/msm8660/arch/arm/mach-msm/board-msm8x60_celox.c: At top level:
+/home/ecoco/msm8660/arch/arm/mach-msm/board-msm8x60_celox.c:1774:13: warning: function declaration isn't a prototype
+/home/ecoco/msm8660/arch/arm/mach-msm/board-msm8x60_celox.c:3328:2: warning: initialization from incompatible pointer type
+/home/ecoco/msm8660/arch/arm/mach-msm/board-msm8x60_celox.c:3462:2: warning: initialization from incompatible pointer type
+  CC      drivers/hid/hid-ortek.o
+/home/ecoco/msm8660/arch/arm/mach-msm/board-msm8x60_celox.c: In function 'sec_jack_read_adc':
+/home/ecoco/msm8660/arch/arm/mach-msm/board-msm8x60_celox.c:6092:2: warning: format '%d' expects type 'int', but argument 3 has type 'int64_t'
+/home/ecoco/msm8660/arch/arm/mach-msm/board-msm8x60_celox.c: In function 'get_mhl_int_irq':
+/home/ecoco/msm8660/arch/arm/mach-msm/board-msm8x60_celox.c:6367:17: warning: unused variable 'mhl_int'
+/home/ecoco/msm8660/arch/arm/mach-msm/board-msm8x60_celox.c: At top level:
+/home/ecoco/msm8660/arch/arm/mach-msm/board-msm8x60_celox.c:6581:2: warning: initialization from incompatible pointer type
+/home/ecoco/msm8660/arch/arm/mach-msm/board-msm8x60_celox.c:6582:2: warning: initialization from incompatible pointer type
+/home/ecoco/msm8660/arch/arm/mach-msm/board-msm8x60_celox.c:9816:2: warning: initialization from incompatible pointer type
+/home/ecoco/msm8660/arch/arm/mach-msm/board-msm8x60_celox.c:1635:13: warning: 'msm_hsusb_vbus_power' defined but not used
+/home/ecoco/msm8660/arch/arm/mach-msm/board-msm8x60_celox.c:1950:13: warning: 'config_gpio_table_generic' defined but not used
+/home/ecoco/msm8660/arch/arm/mach-msm/board-msm8x60_celox.c:3647:13: warning: 'gsbi7_qup_i2c_gpio_config' defined but not used
+/home/ecoco/msm8660/arch/arm/mach-msm/board-msm8x60_celox.c:6344:13: warning: 'msm8x60_mhl_gpio_init' defined but not used
+/home/ecoco/msm8660/arch/arm/mach-msm/board-msm8x60_celox.c:7153:12: warning: 'configure_uart_gpios' defined but not used
+/home/ecoco/msm8660/arch/arm/mach-msm/board-msm8x60_celox.c:8264:30: warning: 'core_expander_i2c_info' defined but not used
+/home/ecoco/msm8660/arch/arm/mach-msm/board-msm8x60_celox.c:8271:30: warning: 'docking_expander_i2c_info' defined but not used
+/home/ecoco/msm8660/arch/arm/mach-msm/board-msm8x60_celox.c:8278:30: warning: 'surf_expanders_i2c_info' defined but not used
+/home/ecoco/msm8660/arch/arm/mach-msm/board-msm8x60_celox.c:8285:30: warning: 'fha_expanders_i2c_info' defined but not used
+/home/ecoco/msm8660/arch/arm/mach-msm/board-msm8x60_celox.c:8296:30: warning: 'fluid_expanders_i2c_info' defined but not used
+/home/ecoco/msm8660/arch/arm/mach-msm/board-msm8x60_celox.c:8307:30: warning: 'fluid_core_expander_i2c_info' defined but not used
+/home/ecoco/msm8660/arch/arm/mach-msm/board-msm8x60_celox.c:9820:38: warning: 'qt602240_pdata' defined but not used
+/home/ecoco/msm8660/arch/arm/mach-msm/board-msm8x60_celox.c:10394:36: warning: 'isl_mpp' defined but not used
+/home/ecoco/msm8660/arch/arm/mach-msm/board-msm8x60_celox.c:10543:23: warning: 'ta_current_sel' defined but not used
+/home/ecoco/msm8660/arch/arm/mach-msm/board-msm8x60_celox.c:10604:23: warning: 'ear_det' defined but not used
+/home/ecoco/msm8660/arch/arm/mach-msm/board-msm8x60_celox.c:10652:23: warning: 'chg_en' defined but not used
+/home/ecoco/msm8660/arch/arm/mach-msm/board-msm8x60_celox.c:10661:23: warning: 'chg_stat' defined but not used
+/home/ecoco/msm8660/arch/arm/mach-msm/board-msm8x60_celox.c:15110:13: warning: 'tsp_power_on' defined but not used
+/home/ecoco/msm8660/arch/arm/mach-msm/board-msm8x60_celox.c:15179:26: warning: 'vsensor_2p4' defined but not used
+  CC      arch/arm/mach-msm/broadcom_wlan.o
+  CC      net/core/netevent.o
+  CC      lib/extable.o
+  CC      drivers/hid/hid-quanta.o
+  LD      sound/soundcore.o
+  LD      sound/built-in.o
+  CC      fs/ext4/symlink.o
+  CC      fs/ext4/hash.o
+  CC      drivers/i2c/chips/gp2a_light.o
+  CC      lib/find_next_bit.o
+  CC      fs/jbd/journal.o
+  CC      fs/fuse/control.o
+  CC      arch/arm/mach-msm/rmt_storage_client.o
+  CC      kernel/trace/trace.o
+  CC      drivers/hid/hid-pl.o
+  CC      lib/idr.o
+  CC      fs/ext4/resize.o
+  CC      fs/jbd2/transaction.o
+  CC      net/core/neighbour.o
+  CC      drivers/i2c/chips/gp2a_proc.o
+  CC      drivers/hid/hid-petalynx.o
+  LD      fs/fuse/fuse.o
+  LD      fs/fuse/built-in.o
+  CC      drivers/gpu/msm/kgsl_sharedmem.o
+  CC      drivers/i2c/chips/fsa9480.o
+  CC      arch/arm/mach-msm/sdio_smem.o
+  CC      fs/lockd/clntlock.o
+/home/ecoco/msm8660/drivers/i2c/chips/fsa9480.c: In function 'fsa9480_otg_set_autosw_pba':
+/home/ecoco/msm8660/drivers/i2c/chips/fsa9480.c:716:6: warning: unused variable 'ret'
+/home/ecoco/msm8660/drivers/i2c/chips/fsa9480.c:715:15: warning: unused variable 'data'
+  CC      lib/int_sqrt.o
+  CC      drivers/hid/hid-picolcd.o
+  LD      fs/jbd/jbd.o
+  CC      fs/ext4/extents.o
+  LD      fs/jbd/built-in.o
+  CC      arch/arm/mach-msm/rpm.o
+  CC      lib/ioremap.o
+/home/ecoco/msm8660/drivers/i2c/chips/fsa9480.c: In function 'fsa9480_irq_thread':
+/home/ecoco/msm8660/drivers/i2c/chips/fsa9480.c:1343:15: warning: 'code' may be used uninitialized in this function
+/home/ecoco/msm8660/drivers/i2c/chips/fsa9480.c:1344:6: warning: 'state' may be used uninitialized in this function
+  CC      fs/nfs/client.o
+In file included from /home/ecoco/msm8660/arch/arm/mach-msm/board-msm8x60_celox.c:132:0:
+/home/ecoco/msm8660/arch/arm/mach-msm/include/mach/board-msm8660.h:22:0: warning: "PM8058_GPIO_PM_TO_SYS" redefined
+/home/ecoco/msm8660/include/linux/mfd/pmic8058.h:107:0: note: this is the location of the previous definition
+/home/ecoco/msm8660/arch/arm/mach-msm/include/mach/board-msm8660.h:23:0: warning: "PM8058_GPIO_SYS_TO_PM" redefined
+/home/ecoco/msm8660/include/linux/mfd/pmic8058.h:108:0: note: this is the location of the previous definition
+/home/ecoco/msm8660/arch/arm/mach-msm/board-msm8x60_celox.c:1382:2: warning: multi-line comment
+  CC      arch/arm/mach-msm/rpm_resources.o
+  CC      lib/irq_regs.o
+  CC      drivers/i2c/chips/k3g.o
+  CC      fs/jbd2/commit.o
+  CC      drivers/gpu/msm/kgsl_pwrctrl.o
+  CC      fs/jbd2/recovery.o
+  CC      fs/lockd/clntproc.o
+  CC      lib/is_single_threaded.o
+  CC      drivers/hid/hid-roccat.o
+  CC      lib/klist.o
+  CC      kernel/trace/trace_output.o
+  CC      arch/arm/mach-msm/mpm.o
+  CC      fs/jbd2/checkpoint.o
+  CC      net/core/rtnetlink.o
+  CC      drivers/i2c/chips/orientation.o
+  CC      drivers/gpu/msm/kgsl_pwrscale.o
+  CC      fs/jbd2/revoke.o
+  CC      drivers/hid/hid-roccat-common.o
+  CC      lib/kobject.o
+  CC      arch/arm/mach-msm/rpm_stats.o
+  LD      drivers/i2c/chips/built-in.o
+  CC      kernel/trace/trace_stat.o
+  CC      fs/lockd/clntxdr.o
+  CC      drivers/hid/hid-roccat-kone.o
+  CC      drivers/hid/hid-samsung.o
+  CC      fs/jbd2/journal.o
+  CC      arch/arm/mach-msm/rpm_log.o
+  LD      drivers/i2c/muxes/built-in.o
+  LD      drivers/i2c/built-in.o
+  CC      drivers/gpu/msm/kgsl_mmu.o
+  CC      lib/kobject_uevent.o
+  CC      fs/ext4/ext4_jbd2.o
+  CC      fs/nfs/dir.o
+  CC      kernel/trace/trace_printk.o
+  LD      drivers/idle/built-in.o
+  LD      drivers/ieee802154/built-in.o
+  CC      drivers/input/input.o
+  CC      drivers/hid/hid-sjoy.o
+  CC      drivers/hid/hid-sony.o
+  CC      fs/lockd/host.o
+  CC      fs/ext4/migrate.o
+  CC      net/core/utils.o
+  CC      arch/arm/mach-msm/msm_xo.o
+  CC      drivers/hid/hid-sunplus.o
+  CC      drivers/hid/hid-gaff.o
+  CC      kernel/trace/trace_sched_switch.o
+  CC      fs/lockd/svc.o
+  CC      drivers/gpu/msm/kgsl_gpummu.o
+  CC      drivers/hid/hid-tmff.o
+  CC      lib/kref.o
+  CC      drivers/hid/hid-topseed.o
+  CC      fs/ext4/mballoc.o
+  CC      arch/arm/mach-msm/gpiomux-8x60_celox.o
+  CC      drivers/hid/hid-twinhan.o
+  CC      lib/md5.o
+  CC      kernel/trace/trace_sched_wakeup.o
+/home/ecoco/msm8660/arch/arm/mach-msm/gpiomux-8x60_celox.c:69:31: warning: 'gsbi1' defined but not used
+/home/ecoco/msm8660/arch/arm/mach-msm/gpiomux-8x60_celox.c:412:31: warning: 'mdm2ap_status_active_cfg' defined but not used
+/home/ecoco/msm8660/arch/arm/mach-msm/gpiomux-8x60_celox.c:425:31: warning: 'mdm2ap_status_suspend_cfg' defined but not used
+/home/ecoco/msm8660/arch/arm/mach-msm/gpiomux-8x60_celox.c:522:31: warning: 'cam_active_4_cfg' defined but not used
+/home/ecoco/msm8660/arch/arm/mach-msm/gpiomux-8x60_celox.c:668:31: warning: 'wlan_en_init_cfg' defined but not used
+  CC      net/core/link_watch.o
+  CC      drivers/hid/hid-zpff.o
+  CC      arch/arm/mach-msm/gpiomux-v2.o
+  CC      fs/nfs/file.o
+  CC      drivers/input/input-compat.o
+  CC      drivers/hid/hid-zydacron.o
+  CC      drivers/gpu/msm/kgsl_iommu.o
+  CC      arch/arm/mach-msm/gpiomux.o
+  CC      fs/lockd/svclock.o
+  CC      drivers/input/input-mt.o
+  CC      lib/memory_alloc.o
+  CC      drivers/hid/hid-wacom.o
+  LD      fs/jbd2/jbd2.o
+  CC      kernel/trace/trace_nop.o
+  LD      fs/jbd2/built-in.o
+  CC      fs/nfs_common/nfsacl.o
+/home/ecoco/msm8660/drivers/gpu/msm/kgsl_iommu.c:31:32: warning: 'get_iommu_unit' defined but not used
+/home/ecoco/msm8660/drivers/gpu/msm/kgsl_iommu.c:61:34: warning: 'get_iommu_device' defined but not used
+  CC      arch/arm/mach-msm/gpio-v2.o
+  CC      drivers/hid/usbhid/hid-core.o
+  CC      net/core/filter.o
+  CC      drivers/input/ff-core.o
+  LD      drivers/hid/hid.o
+  CC      kernel/trace/blktrace.o
+  CC      kernel/trace/trace_events.o
+  CC      lib/plist.o
+  CC      lib/prio_heap.o
+  CC      drivers/gpu/msm/kgsl_snapshot.o
+  CC      arch/arm/mach-msm/msm_rq_stats.o
+  CC      fs/lockd/svcshare.o
+  LD      fs/nfs_common/nfs_acl.o
+  CC      fs/nfs/getroot.o
+  LD      fs/nfs_common/built-in.o
+  CC      lib/prio_tree.o
+  CC      fs/nls/nls_base.o
+  CC      kernel/trace/trace_export.o
+  CC      drivers/input/mousedev.o
+  CC      lib/proportions.o
+  CC      arch/arm/mach-msm/msm_show_resume_irq.o
+  CC      net/core/flow.o
+  CC      arch/arm/mach-msm/restart.o
+  CC      fs/nls/nls_cp437.o
+  CC      fs/lockd/svcproc.o
+  CC      drivers/gpu/msm/kgsl_debugfs.o
+  CC      fs/nfs/inode.o
+  CC      lib/radix-tree.o
+  CC      fs/nls/nls_ascii.o
+  CC      kernel/trace/trace_event_perf.o
+  CC      drivers/input/evdev.o
+/home/ecoco/msm8660/arch/arm/mach-msm/restart.c: In function 'set_dload_mode':
+/home/ecoco/msm8660/arch/arm/mach-msm/restart.c:109:3: warning: format '%x' expects type 'unsigned int', but argument 3 has type 'long unsigned int'
+/home/ecoco/msm8660/arch/arm/mach-msm/restart.c: In function 'arch_reset':
+/home/ecoco/msm8660/arch/arm/mach-msm/restart.c:252:18: warning: ignoring return value of 'kstrtoul', declared with attribute warn_unused_result
+/home/ecoco/msm8660/arch/arm/mach-msm/restart.c:257:18: warning: ignoring return value of 'kstrtoul', declared with attribute warn_unused_result
+  CC      drivers/hid/usbhid/hid-quirks.o
+  CC      kernel/trace/trace_events_filter.o
+  CC      fs/nls/nls_iso8859-1.o
+  CC      drivers/gpu/msm/kgsl_pwrscale_trustzone.o
+  CC      kernel/trace/trace_kprobe.o
+  CC      arch/arm/mach-msm/board-bluetooth-bcm4330.o
+  CC      net/core/net-sysfs.o
+  CC      fs/lockd/svcsubs.o
+  LD      fs/nls/built-in.o
+  LD      drivers/hid/usbhid/usbhid.o
+  CC      fs/notify/fsnotify.o
+  CC      lib/ratelimit.o
+  LD      drivers/hid/usbhid/built-in.o
+  LD      drivers/hid/built-in.o
+  LD      drivers/input/joystick/built-in.o
+  CC      fs/ext4/block_validity.o
+  CC      drivers/input/keyboard/atkbd.o
+  CC      arch/arm/mach-msm/sec_debug.o
+  CC      lib/rbtree.o
+  CC      drivers/input/serio/serio.o
+  CC      fs/nfs/super.o
+/home/ecoco/msm8660/arch/arm/mach-msm/sec_debug.c:168:23: warning: 'gExcpIrqLog' defined but not used
+/home/ecoco/msm8660/arch/arm/mach-msm/sec_debug.c:169:29: warning: 'gExcpIrqEnterExitLog' defined but not used
+/home/ecoco/msm8660/arch/arm/mach-msm/sec_debug.c:170:25: warning: 'gExcpTimerLog' defined but not used
+  CC      kernel/trace/power-traces.o
+  CC      fs/ext4/move_extent.o
+  CC      fs/notify/notification.o
+  CC      lib/reciprocal_div.o
+  CC      drivers/gpu/msm/z180.o
+  CC      fs/ext4/mmp.o
+  CC      fs/lockd/mon.o
+  CC      lib/rwsem-spinlock.o
+  CC      arch/arm/mach-msm/sec_getlog.o
+  CC      net/core/fib_rules.o
+  CC      drivers/input/keyboard/gpio_keys.o
+  CC      drivers/input/keyboard/matrix_keypad.o
+  CC      drivers/gpu/msm/z180_trace.o
+  CC      drivers/input/serio/serport.o
+  CC      fs/notify/group.o
+  CC      arch/arm/mach-msm/sec_gaf.o
+  CC      lib/sha1.o
+  CC      fs/ext4/xattr.o
+  LD      kernel/trace/built-in.o
+  CC      kernel/mutex-debug.o
+  CC      fs/lockd/xdr.o
+  CC      fs/nfs/nfs2xdr.o
+  CC      fs/notify/inode_mark.o
+  CC      drivers/input/keyboard/pmic8xxx-keypad.o
+  LD      drivers/gpu/msm/msm_kgsl_core.o
+  LD      drivers/gpu/msm/msm_adreno.o
+  CC      drivers/input/keyboard/cypress-touchkey.o
+  LD      drivers/gpu/msm/msm_z180.o
+  CC      lib/show_mem.o
+  CC      drivers/input/serio/libps2.o
+  LD      drivers/gpu/msm/built-in.o
+/home/ecoco/msm8660/drivers/input/keyboard/pmic8xxx-keypad.c: In function 'pmic8xxx_kp_probe':
+/home/ecoco/msm8660/drivers/input/keyboard/pmic8xxx-keypad.c:734:2: warning: passing argument 3 of 'input_set_capability' makes integer from pointer without a cast
+/home/ecoco/msm8660/include/linux/input.h:1518:6: note: expected 'unsigned int' but argument is of type 'void *'
+  LD      drivers/gpu/built-in.o
+  CC      net/core/net-traces.o
+  CC      drivers/leds/led-core.o
+  CC [M]  arch/arm/mach-msm/dal_remotetest.o
+  CC      kernel/futex.o
+  CC      fs/notify/mark.o
+/home/ecoco/msm8660/drivers/input/keyboard/cypress-touchkey.c: In function 'i2c_touchkey_probe':
+/home/ecoco/msm8660/drivers/input/keyboard/cypress-touchkey.c:1063:157: warning: backslash and newline separated by space
+/home/ecoco/msm8660/drivers/input/keyboard/cypress-touchkey.c:1094:153: warning: backslash and newline separated by space
+/home/ecoco/msm8660/drivers/input/keyboard/cypress-touchkey.c: In function 'touch_led_control':
+/home/ecoco/msm8660/drivers/input/keyboard/cypress-touchkey.c:1460:118: warning: backslash and newline separated by space
+/home/ecoco/msm8660/drivers/input/keyboard/cypress-touchkey.c:1474:42: warning: backslash and newline separated by space
+/home/ecoco/msm8660/drivers/input/keyboard/cypress-touchkey.c: In function 'touchkey_init':
+/home/ecoco/msm8660/drivers/input/keyboard/cypress-touchkey.c:2584:5: warning: ISO C90 forbids mixed declarations and code
+/home/ecoco/msm8660/drivers/input/keyboard/cypress-touchkey.c:2587:6: warning: passing argument 1 of 'ISSP_main' makes integer from pointer without a cast
+/home/ecoco/msm8660/drivers/input/keyboard/cypress-touchkey.c:2584:16: note: expected 'int' but argument is of type 'void *'
+/home/ecoco/msm8660/drivers/input/keyboard/cypress-touchkey.c:2607:5: warning: ISO C90 forbids mixed declarations and code
+/home/ecoco/msm8660/drivers/input/keyboard/cypress-touchkey.c:2630:5: warning: ISO C90 forbids mixed declarations and code
+/home/ecoco/msm8660/drivers/input/keyboard/cypress-touchkey.c:2653:5: warning: ISO C90 forbids mixed declarations and code
+/home/ecoco/msm8660/drivers/input/keyboard/cypress-touchkey.c: At top level:
+/home/ecoco/msm8660/drivers/input/keyboard/cypress-touchkey.c:173:13: warning: 'Q1_debug_msg' defined but not used
+  CC      lib/string.o
+  CC      fs/lockd/grace.o
+  CC      drivers/leds/led-class.o
+  CC      fs/ext4/xattr_user.o
+  CC [M]  arch/arm/mach-msm/dma_test.o
+  CC      drivers/input/keyboard/issp_driver_routines.o
+  LD      drivers/input/serio/built-in.o
+  CC      fs/notify/vfsmount_mark.o
+  CC      fs/nfs/direct.o
+  LD      drivers/lguest/built-in.o
+  LD      drivers/macintosh/built-in.o
+  CC      drivers/input/keyboard/issp_main.o
+  CC      drivers/leds/led-triggers.o
+  CC      fs/lockd/clnt4xdr.o
+  CC      fs/notify/dnotify/dnotify.o
+  CC      fs/ext4/xattr_trusted.o
+  CC      lib/timerqueue.o
+  CC      drivers/md/dm-uevent.o
+  CC [M]  arch/arm/mach-msm/msm-buspm-dev.o
+  CC      drivers/input/keyboard/issp_routines.o
+  LD      net/core/built-in.o
+  CC      lib/vsprintf.o
+  CC      drivers/leds/leds-gpio.o
+  CC      fs/ext4/acl.o
+  CC      net/dns_resolver/dns_key.o
+  CC      drivers/leds/leds-pmic8058.o
+  CC      net/dns_resolver/dns_query.o
+  LD      fs/notify/dnotify/built-in.o
+  LD      fs/notify/fanotify/built-in.o
+  CC      fs/ext4/xattr_security.o
+  CC      fs/notify/inotify/inotify_fsnotify.o
+  CC      kernel/rtmutex.o
+  CC      drivers/md/dm.o
+  LD      net/dns_resolver/dns_resolver.o
+  LD      net/dns_resolver/built-in.o
+  LD      arch/arm/mach-msm/msm-etm.o
+  CC      fs/lockd/xdr4.o
+  LD      arch/arm/mach-msm/built-in.o
+  CC      net/ethernet/eth.o
+  CC      fs/lockd/svc4proc.o
+  LD      drivers/input/keyboard/built-in.o
+  CC      fs/nfs/pagelist.o
+  CC      drivers/input/misc/pmic8xxx-pwrkey.o
+  CC      drivers/input/misc/uinput.o
+  CC      fs/notify/inotify/inotify_user.o
+  LD      fs/ext4/ext4.o
+  LD      fs/ext4/built-in.o
+  CC      drivers/leds/ledtrig-timer.o
+  CC      kernel/smp.o
+  CC      drivers/input/misc/pmic8058-othc.o
+  CC      fs/partitions/check.o
+  CC      drivers/leds/ledtrig-heartbeat.o
+  CC      drivers/leds/ledtrig-sleep.o
+  LD      fs/lockd/lockd.o
+  LD      fs/lockd/built-in.o
+  LD      fs/notify/inotify/built-in.o
+  LD      fs/notify/built-in.o
+  LD      fs/quota/built-in.o
+  CC      net/ipv4/route.o
+  CC      kernel/spinlock.o
+  CC      fs/proc/mmu.o
+  CC      fs/ramfs/inode.o
+  LD      drivers/leds/built-in.o
+  CC      kernel/uid16.o
+  CC      fs/nfs/proc.o
+  GEN     lib/crc32table.h
+  AR      lib/lib.a
+  CC      drivers/media/common/tuners/tuner-xc2028.o
+  CC      lib/crc32.o
+  CC      fs/proc/task_mmu.o
+  CC      fs/ramfs/file-mmu.o
+  CC      kernel/module.o
+  LD      fs/ramfs/ramfs.o
+  LD      fs/ramfs/built-in.o
+  CC      kernel/kallsyms.o
+  LD      drivers/input/misc/built-in.o
+  CC      drivers/md/dm-table.o
+  CC      fs/partitions/msdos.o
+  LD      net/ethernet/built-in.o
+  LD      lib/built-in.o
+  CC      drivers/media/common/tuners/tuner-simple.o
+  CC      drivers/media/radio/radio-tavarua.o
+  CC      drivers/input/mouse/psmouse-base.o
+  CC      fs/proc/inode.o
+  CC      fs/nfs/read.o
+  CC      net/ipv6/af_inet6.o
+  LD      fs/partitions/built-in.o
+  CC      drivers/media/common/tuners/tuner-types.o
+  CC      kernel/cgroup.o
+  CC      fs/proc/root.o
+  CC      drivers/input/mouse/synaptics.o
+  CC      drivers/media/common/tuners/mt20xx.o
+  CC      drivers/media/common/tuners/tda8290.o
+  CC      fs/proc/base.o
+  CC      drivers/md/dm-target.o
+  CC      drivers/media/common/tuners/tea5767.o
+  CC      net/ipv4/inetpeer.o
+  CC      drivers/input/mouse/alps.o
+  CC      drivers/md/dm-linear.o
+  LD      drivers/media/radio/built-in.o
+  CC      drivers/media/common/tuners/tea5761.o
+  CC      fs/nfs/symlink.o
+  CC      drivers/media/rc/keymaps/rc-adstech-dvb-t-pci.o
+  CC      drivers/media/common/tuners/tda9887.o
+  CC      net/ipv6/anycast.o
+  CC      drivers/media/common/tuners/tda827x.o
+  CC      kernel/cgroup_freezer.o
+  CC      drivers/input/mouse/logips2pp.o
+  CC      drivers/md/dm-stripe.o
+  CC      drivers/media/rc/keymaps/rc-alink-dtu-m.o
+  CC      drivers/media/common/tuners/tda18271-maps.o
+  CC      fs/nfs/unlink.o
+  GZIP    kernel/config_data.gz
+  CC      net/ipv4/protocol.o
+  CC      drivers/media/rc/keymaps/rc-anysee.o
+  CC      kernel/res_counter.o
+  CC      drivers/input/mouse/trackpoint.o
+  CC      net/ipv6/ip6_output.o
+  CC      fs/proc/generic.o
+  CC      drivers/media/rc/keymaps/rc-apac-viewcomp.o
+  CC      drivers/md/dm-ioctl.o
+  CC      drivers/media/common/tuners/tda18271-common.o
+  CC      drivers/media/rc/keymaps/rc-asus-pc39.o
+  CC      drivers/media/common/tuners/tda18271-fe.o
+  CC      drivers/media/common/tuners/xc5000.o
+  LD      drivers/input/mouse/psmouse.o
+  LD      drivers/input/mouse/built-in.o
+  CC      kernel/stop_machine.o
+  CC      drivers/input/touchscreen/atmel_maxtouch.o
+  CC      kernel/kprobes.o
+  CC      net/ipv4/ip_input.o
+  CC      drivers/media/rc/keymaps/rc-ati-tv-wonder-hd-600.o
+  CC      drivers/media/rc/keymaps/rc-avermedia-a16d.o
+  CC      fs/nfs/write.o
+  CC      fs/proc/array.o
+  CC      kernel/hung_task.o
+  CC      drivers/media/rc/keymaps/rc-avermedia.o
+  CC      drivers/md/dm-io.o
+  CC      drivers/media/common/tuners/mc44s803.o
+  CC      drivers/mfd/marimba-core.o
+  CC      drivers/input/touchscreen/qt602240_ts.o
+  CC      net/ipv4/ip_fragment.o
+  CC      kernel/watchdog.o
+  CC      drivers/media/rc/keymaps/rc-avermedia-cardbus.o
+/home/ecoco/msm8660/drivers/input/touchscreen/qt602240_ts.c:387:158: warning: backslash and newline separated by space
+/home/ecoco/msm8660/drivers/input/touchscreen/qt602240_ts.c: In function 'check_chip_calibration':
+/home/ecoco/msm8660/drivers/input/touchscreen/qt602240_ts.c:839:5: warning: unused variable 'val'
+/home/ecoco/msm8660/drivers/input/touchscreen/qt602240_ts.c: In function 'mxt224_irq_thread':
+/home/ecoco/msm8660/drivers/input/touchscreen/qt602240_ts.c:1912:7: warning: unused variable 'ta_status'
+/home/ecoco/msm8660/drivers/input/touchscreen/qt602240_ts.c:1906:15: warning: unused variable 'register_address'
+/home/ecoco/msm8660/drivers/input/touchscreen/qt602240_ts.c:1902:6: warning: unused variable 'obj_address'
+/home/ecoco/msm8660/drivers/input/touchscreen/qt602240_ts.c:1901:12: warning: unused variable 'ret'
+/home/ecoco/msm8660/drivers/input/touchscreen/qt602240_ts.c:1901:5: warning: unused variable 'value'
+/home/ecoco/msm8660/drivers/input/touchscreen/qt602240_ts.c:1900:6: warning: unused variable 'size_one'
+/home/ecoco/msm8660/drivers/input/touchscreen/qt602240_ts.c: In function 'mxt224_internal_resume':
+/home/ecoco/msm8660/drivers/input/touchscreen/qt602240_ts.c:2280:6: warning: unused variable 'i'
+/home/ecoco/msm8660/drivers/input/touchscreen/qt602240_ts.c: At top level:
+/home/ecoco/msm8660/drivers/input/touchscreen/qt602240_ts.c:3633:2: warning: initialization from incompatible pointer type
+/home/ecoco/msm8660/drivers/input/touchscreen/qt602240_ts.c:2848:13: warning: 'mxt224_optical_gain' defined but not used
+/home/ecoco/msm8660/drivers/input/touchscreen/qt602240_ts.c:3619:1: warning: 'dev_attr_tsp_reg_version' defined but not used
+  CC      drivers/media/rc/keymaps/rc-avermedia-dvbt.o
+  CC      fs/proc/proc_tty.o
+  LD      drivers/media/common/tuners/tda18271.o
+  LD      drivers/media/common/tuners/built-in.o
+  CC      kernel/rcutree.o
+  LD      drivers/media/common/built-in.o
+  CC      drivers/media/rc/keymaps/rc-avermedia-m135a.o
+  CC      drivers/md/dm-kcopyd.o
+  CC      drivers/media/rc/keymaps/rc-avermedia-m733a-rm-k6.o
+  CC      fs/proc/cmdline.o
+  CC      drivers/media/video/v4l2-dev.o
+  CC      drivers/media/rc/keymaps/rc-avermedia-rm-ks.o
+  CC      fs/proc/consoles.o
+  CC      kernel/utsname_sysctl.o
+  CC      drivers/mfd/timpani-codec.o
+  CC      drivers/media/rc/keymaps/rc-avertv-303.o
+  CC      drivers/media/rc/keymaps/rc-azurewave-ad-tu700.o
+  CC      fs/nfs/namespace.o
+  CC      kernel/tracepoint.o
+  CC      fs/proc/cpuinfo.o
+  CC      drivers/media/rc/keymaps/rc-behold.o
+  CC      drivers/md/dm-sysfs.o
+  CC      net/ipv6/ip6_input.o
+  CC      drivers/media/rc/keymaps/rc-behold-columbus.o
+  CC      net/ipv4/ip_forward.o
+  CC      fs/proc/devices.o
+  CC      drivers/media/video/v4l2-ioctl.o
+  CC      drivers/media/rc/keymaps/rc-budget-ci-old.o
+  CC      kernel/elfcore.o
+  CC      drivers/media/rc/keymaps/rc-cinergy-1400.o
+  CC      drivers/md/dm-crypt.o
+  CC      drivers/mfd/msm-adie-codec.o
+  CC      drivers/media/rc/keymaps/rc-cinergy.o
+  CC      kernel/sched_cpupri.o
+  CC      fs/proc/interrupts.o
+  CC      fs/nfs/mount_clnt.o
+/home/ecoco/msm8660/drivers/input/touchscreen/qt602240_ts.c:387:158: warning: backslash and newline separated by space
+  CC      drivers/media/rc/keymaps/rc-dib0700-nec.o
+  CC      net/ipv6/addrconf.o
+  CC      drivers/media/rc/keymaps/rc-dib0700-rc5.o
+  LD      drivers/input/touchscreen/built-in.o
+  CC      drivers/input/keyreset.o
+  CC      net/ipv4/ip_options.o
+  CC      kernel/irq_work.o
+  CC      kernel/cpu_pm.o
+  CC      fs/proc/loadavg.o
+  CC      drivers/media/rc/keymaps/rc-digitalnow-tinytwin.o
+  CC      drivers/media/rc/keymaps/rc-digittrade.o
+  CC      drivers/mfd/mfd-core.o
+  CC      drivers/media/rc/keymaps/rc-dm1105-nec.o
+  CC      net/ipv4/ip_output.o
+  CC      drivers/media/rc/keymaps/rc-dntv-live-dvb-t.o
+  CC      fs/proc/meminfo.o
+  CC      kernel/time.o
+  CC [M]  drivers/input/evbug.o
+  CC      drivers/media/rc/keymaps/rc-dntv-live-dvbt-pro.o
+  CC      fs/nfs/dns_resolve.o
+  CC      drivers/media/rc/keymaps/rc-em-terratec.o
+  LD      drivers/md/dm-mod.o
+  LD      drivers/md/built-in.o
+  CC      drivers/mfd/pm8xxx-irq.o
+  CC      fs/proc/stat.o
+  CC      drivers/media/rc/keymaps/rc-encore-enltv2.o
+  CC      drivers/misc/lkdtm.o
+  CC      net/ipv4/ip_sockglue.o
+  LD      drivers/input/input-core.o
+  LD      drivers/input/built-in.o
+  CC      drivers/media/rc/keymaps/rc-encore-enltv.o
+  CHK     kernel/config_data.h
+  UPD     kernel/config_data.h
+  CC      kernel/configs.o
+  CC      drivers/mmc/card/block.o
+  CC      fs/nfs/cache_lib.o
+  CC      fs/proc/uptime.o
+/home/ecoco/msm8660/drivers/misc/lkdtm.c: In function 'lkdtm_do_action':
+/home/ecoco/msm8660/drivers/misc/lkdtm.c:301:4: warning: array subscript is above array bounds
+  CC      drivers/mfd/pmic8058.o
+  CC      drivers/media/rc/keymaps/rc-encore-enltv-fm53.o
+  LD      kernel/built-in.o
+  CC      fs/nfs/nfs3proc.o
+  CC      drivers/media/video/v4l2-device.o
+  CC      drivers/mmc/core/core.o
+  CC      drivers/misc/pmem.o
+/home/ecoco/msm8660/drivers/mfd/pmic8058.c: In function 'pm8058_lvs0_ocp_disable':
+/home/ecoco/msm8660/drivers/mfd/pmic8058.c:715:1: warning: passing argument 3 of 'pm8058_writeb' makes integer from pointer without a cast
+/home/ecoco/msm8660/drivers/mfd/pmic8058.c:87:12: note: expected 'u8' but argument is of type 'u8 *'
+/home/ecoco/msm8660/drivers/mfd/pmic8058.c:702:10: warning: unused variable 'smpl'
+/home/ecoco/msm8660/drivers/mfd/pmic8058.c: In function 'pm8058_lvs0_get_ocp':
+/home/ecoco/msm8660/drivers/mfd/pmic8058.c:728:10: warning: unused variable 'smpl'
+  CC      drivers/misc/uid_stat.o
+  CC      fs/proc/version.o
+  CC      drivers/media/rc/keymaps/rc-evga-indtube.o
+/home/ecoco/msm8660/drivers/mmc/core/core.c: In function 'mmc_erase':
+/home/ecoco/msm8660/drivers/mmc/core/core.c:1571:20: warning: unused variable 'to'
+/home/ecoco/msm8660/drivers/mmc/core/core.c:1571:15: warning: unused variable 'rem'
+/home/ecoco/msm8660/drivers/mmc/core/core.c: At top level:
+/home/ecoco/msm8660/drivers/mmc/core/core.c:1441:12: warning: 'mmc_do_erase' defined but not used
+  CC      fs/proc/softirqs.o
+  CC      drivers/media/rc/keymaps/rc-eztv.o
+  CC      drivers/mmc/card/queue.o
+  LD      drivers/misc/carma/built-in.o
+  LD      drivers/misc/cb710/built-in.o
+  LD      drivers/misc/eeprom/built-in.o
+  CC      drivers/mfd/pmic8901.o
+  CC      fs/nfs/nfs3xdr.o
+  CC      drivers/media/video/v4l2-fh.o
+  LD      drivers/misc/lis3lv02d/built-in.o
+  CC      net/ipv4/inet_hashtables.o
+  CC      fs/proc/namespaces.o
+  CC      drivers/media/rc/keymaps/rc-flydvb.o
+  LD      drivers/misc/ti-st/built-in.o
+  LD      drivers/misc/vibetonz/built-in.o
+  CC [M]  drivers/misc/vibetonz/tspdrv.o
+  CC      drivers/media/rc/keymaps/rc-flyvideo.o
+  CC      fs/proc/proc_sysctl.o
+  CC      net/ipv6/addrlabel.o
+  CC      drivers/mmc/core/bus.o
+  CC [M]  drivers/mmc/card/mmc_test.o
+  CC      drivers/media/video/v4l2-event.o
+  CC      net/ipv4/inet_timewait_sock.o
+  CC      drivers/media/rc/keymaps/rc-fusionhdtv-mce.o
+/home/ecoco/msm8660/drivers/misc/vibetonz/ImmVibeSPI.c:540:26: warning: 'ImmVibeSPI_ForceOut_Set' defined but not used
+/home/ecoco/msm8660/drivers/misc/vibetonz/tspdrv.c:75:17: warning: 'vibrator_device_gpio_config' defined but not used
+/home/ecoco/msm8660/drivers/misc/vibetonz/tspdrv.c:79:25: warning: 'vib_wake_lock' defined but not used
+  CC      drivers/mfd/pm8xxx-debug.o
+  CC      drivers/misc/ak8975.o
+  CC      drivers/mfd/pm8xxx-misc.o
+  CC      drivers/media/rc/keymaps/rc-gadmei-rm008z.o
+  CC      fs/proc/proc_net.o
+  CC      fs/nfs/nfs3acl.o
+  LD [M]  drivers/misc/vibetonz/vibrator.o
+  CC      drivers/misc/k3dh.o
+  CC      drivers/media/rc/keymaps/rc-genius-tvgo-a11mce.o
+  CC      drivers/media/video/v4l2-ctrls.o
+  CC      drivers/mmc/core/host.o
+  CC      net/ipv4/inet_connection_sock.o
+  CC      drivers/misc/sec_jack.o
+  CC      net/ipv6/route.o
+  CC      drivers/mfd/pm8xxx-batt-alarm.o
+  CC      drivers/media/rc/keymaps/rc-gotview7135.o
+  CC      net/ipv4/tcp.o
+  CC      net/ipv4/tcp_input.o
+  CC      fs/proc/kmsg.o
+  CC      drivers/mmc/core/mmc.o
+  CC      fs/nfs/nfs4proc.o
+  CC      drivers/media/rc/keymaps/rc-imon-mce.o
+  CC      drivers/misc/pmic8058-pwm.o
+  CC      fs/proc/page.o
+  CC      drivers/media/rc/keymaps/rc-imon-pad.o
+  LD      drivers/mfd/built-in.o
+  LD      drivers/mmc/card/mmc_block.o
+  LD      drivers/mmc/card/built-in.o
+  CC      drivers/net/mii.o
+  CC      drivers/mmc/host/msm_sdcc.o
+  CC      drivers/media/video/v4l2-subdev.o
+  CC      drivers/mmc/core/mmc_ops.o
+  CC      drivers/media/rc/keymaps/rc-iodata-bctv7e.o
+  CC      net/ipv4/tcp_output.o
+  LD      fs/proc/proc.o
+  CC      drivers/media/rc/keymaps/rc-kaiomy.o
+  LD      fs/proc/built-in.o
+  CC      fs/sysfs/inode.o
+  CC      drivers/misc/pm8xxx-upl.o
+  CC      drivers/media/rc/keymaps/rc-kworld-315u.o
+  CC      drivers/media/video/videobuf2-core.o
+  CC      drivers/media/rc/keymaps/rc-kworld-plus-tv-analog.o
+  LD      drivers/net/arm/built-in.o
+  CC      fs/sysfs/file.o
+  CC      drivers/net/phy/phy.o
+  CC      drivers/mmc/core/sd.o
+  CC      drivers/media/rc/keymaps/rc-leadtek-y04g0051.o
+  CC      drivers/misc/pmic8058-xoadc.o
+  CC      drivers/media/rc/keymaps/rc-lirc.o
+/home/ecoco/msm8660/drivers/misc/pmic8058-xoadc.c: In function 'pm8058_xoadc':
+/home/ecoco/msm8660/drivers/misc/pmic8058-xoadc.c:407:5: warning: 'slot_amux_chan' may be used uninitialized in this function
+  CC      drivers/mmc/core/sd_ops.o
+  CC      drivers/media/video/videobuf2-memops.o
+  CC      net/ipv4/tcp_timer.o
+  CC      net/ipv6/ip6_fib.o
+  CC      drivers/media/rc/keymaps/rc-lme2510.o
+  CC      fs/sysfs/dir.o
+  CC      drivers/net/phy/phy_device.o
+  CC      drivers/misc/tzcom.o
+  CC      drivers/media/rc/keymaps/rc-manli.o
+  CC      drivers/mmc/core/sdio.o
+  CC      drivers/media/video/videobuf2-msm-mem.o
+  CC      fs/nfs/nfs4xdr.o
+  CC      drivers/media/rc/keymaps/rc-msi-digivox-ii.o
+  LD      drivers/mmc/host/built-in.o
+  CC      net/ipv4/tcp_ipv4.o
+  CC      net/ipv4/tcp_minisocks.o
+  CC      fs/sysfs/symlink.o
+  CC      drivers/net/phy/mdio_bus.o
+  CC      drivers/media/rc/keymaps/rc-msi-digivox-iii.o
+  CC      drivers/media/video/videobuf2-dma-contig.o
+  CC      net/ipv4/tcp_cong.o
+  CC      net/ipv6/ipv6_sockglue.o
+  CC      drivers/misc/sec_misc.o
+  CC      net/ipv4/datagram.o
+  CC      drivers/mmc/core/sdio_ops.o
+  CC      drivers/media/rc/keymaps/rc-msi-tvanywhere.o
+  CC      fs/sysfs/mount.o
+  CC      drivers/mmc/core/sdio_bus.o
+  CC      drivers/media/rc/keymaps/rc-msi-tvanywhere-plus.o
+  CC      drivers/media/video/videobuf2-vmalloc.o
+  CC      drivers/misc/sec_level.o
+  LD      drivers/net/phy/libphy.o
+  LD      drivers/net/phy/built-in.o
+  CC      drivers/media/rc/keymaps/rc-nebula.o
+  CC      drivers/net/usb/asix.o
+  CC      net/ipv4/raw.o
+  CC      drivers/media/rc/rc-main.o
+  CC      net/ipv4/udp.o
+  CC      drivers/misc/sec_param.o
+/home/ecoco/msm8660/drivers/misc/sec_param.c: In function 'param_sec_operation':
+/home/ecoco/msm8660/drivers/misc/sec_param.c:34:2: warning: format '%x' expects type 'unsigned int', but argument 3 has type 'void *'
+/home/ecoco/msm8660/drivers/misc/sec_param.c: At top level:
+/home/ecoco/msm8660/drivers/misc/sec_param.c:95:1: warning: data definition has no type or storage class
+/home/ecoco/msm8660/drivers/misc/sec_param.c:95:1: warning: type defaults to 'int' in declaration of 'EXPORT_SYMBOL'
+/home/ecoco/msm8660/drivers/misc/sec_param.c:95:1: warning: parameter names (without types) in function declaration
+/home/ecoco/msm8660/drivers/misc/sec_param.c:120:1: warning: data definition has no type or storage class
+/home/ecoco/msm8660/drivers/misc/sec_param.c:120:1: warning: type defaults to 'int' in declaration of 'EXPORT_SYMBOL'
+/home/ecoco/msm8660/drivers/misc/sec_param.c:120:1: warning: parameter names (without types) in function declaration
+/home/ecoco/msm8660/drivers/misc/sec_param.c:147:1: warning: data definition has no type or storage class
+/home/ecoco/msm8660/drivers/misc/sec_param.c:147:1: warning: type defaults to 'int' in declaration of 'EXPORT_SYMBOL'
+/home/ecoco/msm8660/drivers/misc/sec_param.c:147:1: warning: parameter names (without types) in function declaration
+  CC      drivers/mmc/core/sdio_cis.o
+  CC      fs/sysfs/bin.o
+  CC      drivers/media/rc/keymaps/rc-nec-terratec-cinergy-xs.o
+  CC      drivers/media/video/videobuf2-dma-sg.o
+  CC      net/ipv6/ndisc.o
+  CC      drivers/misc/tzic.o
+  CC      drivers/media/rc/keymaps/rc-norwood.o
+  CC      drivers/mmc/core/sdio_io.o
+/home/ecoco/msm8660/drivers/misc/tzic.c:41:0: warning: "SCM_SVC_FUSE" redefined
+/home/ecoco/msm8660/arch/arm/mach-msm/include/mach/scm.h:22:0: note: this is the location of the previous definition
+  CC      drivers/media/rc/keymaps/rc-npgtech.o
+  CC      net/ipv4/udplite.o
+  CC      drivers/misc/bln.o
+  CC      drivers/media/video/v4l2-int-device.o
+  CC      drivers/media/rc/keymaps/rc-pctv-sedna.o
+  CC      drivers/net/usb/cdc_ether.o
+  CC      fs/sysfs/group.o
+  CC      drivers/media/rc/keymaps/rc-pinnacle-color.o
+  CC      drivers/media/video/v4l2-common.o
+  CC      drivers/mmc/core/sdio_irq.o
+  CC      drivers/media/rc/ir-raw.o
+  CC      drivers/media/rc/keymaps/rc-pinnacle-grey.o
+  CC [M]  drivers/misc/tsif.o
+  CC      fs/nfs/nfs4state.o
+  CC      net/ipv4/arp.o
+/home/ecoco/msm8660/drivers/mmc/core/sdio_irq.c: In function 'process_sdio_pending_irqs':
+/home/ecoco/msm8660/drivers/mmc/core/sdio_irq.c:35:20: warning: unused variable 'func'
+  LD      fs/sysfs/built-in.o
+  CC      drivers/media/rc/keymaps/rc-pinnacle-pctv-hd.o
+  CC      fs/eventpoll.o
+  CC      net/ipv4/icmp.o
+  CC      drivers/net/usb/net1080.o
+  CC      drivers/media/rc/keymaps/rc-pixelview.o
+  CC      drivers/mmc/core/quirks.o
+  CC      drivers/media/rc/keymaps/rc-pixelview-mk12.o
+  CC      drivers/net/usb/cdc_subset.o
+  CC      drivers/media/rc/lirc_dev.o
+  CC      drivers/mmc/core/debugfs.o
+  CC      net/ipv4/devinet.o
+  LD      drivers/media/video/davinci/built-in.o
+  CC      net/ipv6/udp.o
+  LD      drivers/media/video/gspca/built-in.o
+  CC      drivers/media/rc/keymaps/rc-pixelview-002t.o
+  CC [M]  drivers/media/video/gspca/gspca.o
+  CC [M]  drivers/misc/tsif_chrdev.o
+  CC      net/ipv4/af_inet.o
+  CC      drivers/media/rc/keymaps/rc-pixelview-new.o
+  LD      drivers/misc/built-in.o
+  CC      drivers/net/usb/zaurus.o
+  CC      fs/nfs/nfs4renewd.o
+  LD [M]  drivers/misc/msm_tsif.o
+  LD      drivers/mmc/core/mmc_core.o
+  CC      net/ipv4/igmp.o
+  LD      drivers/mmc/core/built-in.o
+  CC      drivers/media/video/msm/msm_camera.o
+  LD      drivers/mmc/built-in.o
+  CC      drivers/nfc/pn544.o
+  CC      drivers/media/rc/keymaps/rc-powercolor-real-angel.o
+  CC      drivers/media/rc/ir-nec-decoder.o
+  CC      drivers/platform/msm/ssbi.o
+/home/ecoco/msm8660/drivers/nfc/pn544.c:296:2: warning: initialization from incompatible pointer type
+  CC      drivers/net/usb/usbnet.o
+  CC      drivers/media/rc/keymaps/rc-proteus-2309.o
+  CC      fs/nfs/delegation.o
+  CC      drivers/media/rc/keymaps/rc-purpletv.o
+  LD      drivers/nfc/built-in.o
+  CC      drivers/regulator/core.o
+  CC      drivers/power/power_supply_core.o
+  LD      drivers/platform/msm/built-in.o
+  LD      drivers/platform/built-in.o
+  CC      drivers/rtc/rtc-lib.o
+  CC      drivers/media/rc/keymaps/rc-pv951.o
+  CC      net/ipv4/fib_frontend.o
+  CC      drivers/media/rc/keymaps/rc-hauppauge.o
+  CC      drivers/media/rc/keymaps/rc-rc6-mce.o
+  CC      drivers/power/power_supply_sysfs.o
+  CC      drivers/rtc/hctosys.o
+  LD [M]  drivers/media/video/gspca/gspca_main.o
+  CC      drivers/media/rc/keymaps/rc-real-audio-220-32-keys.o
+  CC      net/ipv6/udplite.o
+  CC      drivers/media/rc/keymaps/rc-streamzap.o
+  CC      fs/nfs/idmap.o
+  CC      drivers/media/video/uvc/uvc_driver.o
+  CC      net/ipv4/fib_semantics.o
+  CC      drivers/net/usb/cdc_ncm.o
+  CC      drivers/power/power_supply_leds.o
+  CC      drivers/media/rc/keymaps/rc-tbs-nec.o
+  CC      drivers/rtc/class.o
+  CC      drivers/media/rc/keymaps/rc-technisat-usb2.o
+  CC      drivers/power/max17040_battery.o
+  CC      drivers/media/rc/keymaps/rc-terratec-cinergy-xs.o
+  CC      net/ipv6/raw.o
+  CC      drivers/media/rc/keymaps/rc-terratec-slim.o
+  CC      drivers/media/rc/keymaps/rc-terratec-slim-2.o
+  CC      drivers/media/video/msm/msm_axi_qos.o
+  CC      fs/nfs/callback.o
+  CC      drivers/rtc/interface.o
+  CC      net/ipv4/fib_trie.o
+  CC      net/ipv4/inet_fragment.o
+  CC      fs/anon_inodes.o
+  CC      drivers/media/rc/keymaps/rc-tevii-nec.o
+  LD      drivers/net/usb/built-in.o
+  CC      drivers/media/video/msm/gemini/msm_gemini_dev.o
+  CC      drivers/power/smb328a_charger.o
+  CC      drivers/media/rc/keymaps/rc-tivo.o
+  CC      fs/signalfd.o
+  CC      drivers/regulator/dummy.o
+  LD      drivers/net/wireless/bcmdhd_samsung/built-in.o
+  CC      drivers/rtc/rtc-dev.o
+/home/ecoco/msm8660/drivers/power/smb328a_charger.c:1234:12: warning: 'smb328a_chgen_bit_control' defined but not used
+  CC      drivers/media/rc/keymaps/rc-total-media-in-hand.o
+  CC      fs/nfs/callback_xdr.o
+  CC [M]  drivers/net/wireless/bcmdhd_samsung/src/bcmsdio/sys/bcmsdh.o
+  CC      drivers/media/video/msm/gemini/msm_gemini_sync.o
+  CC      drivers/media/video/uvc/uvc_queue.o
+  CC      net/ipv4/ping.o
+  CC      drivers/media/rc/keymaps/rc-trekstor.o
+  CC      drivers/regulator/pmic8058-regulator.o
+  CC      drivers/rtc/rtc-proc.o
+  CC      net/ipv6/protocol.o
+  CC      fs/timerfd.o
+  CC      drivers/power/sec_battery.o
+  CC      drivers/media/rc/keymaps/rc-tt-1500.o
+  CC [M]  drivers/net/wireless/bcmdhd_samsung/src/bcmsdio/sys/bcmsdh_linux.o
+  CC      fs/nfs/callback_proc.o
+  CC      drivers/rtc/rtc-sysfs.o
+  CC      drivers/media/rc/keymaps/rc-twinhan1027.o
+/home/ecoco/msm8660/drivers/power/sec_battery.c:455:12: warning: 'event_occur' defined but not used
+/home/ecoco/msm8660/drivers/power/sec_battery.c:1522:12: warning: 'is_over_event_time' defined but not used
+/home/ecoco/msm8660/drivers/power/sec_battery.c:1558:13: warning: 'sec_set_time_for_event' defined but not used
+  CC      net/ipv4/sysctl_net_ipv4.o
+  CC      drivers/media/video/uvc/uvc_v4l2.o
+  CC      drivers/media/video/msm/gemini/msm_gemini_core.o
+  CC      fs/eventfd.o
+  CC      drivers/media/rc/keymaps/rc-videomate-m1f.o
+  CC      drivers/regulator/pmic8901-regulator.o
+  CC      net/ipv6/icmp.o
+  CC      drivers/rtc/alarm.o
+  CC      fs/nfs/nfs4namespace.o
+  CC      net/ipv4/sysfs_net_ipv4.o
+  CC      drivers/media/video/msm/gemini/msm_gemini_hw.o
+  CC      drivers/media/rc/keymaps/rc-videomate-s350.o
+  CC      drivers/media/rc/keymaps/rc-videomate-tv-pvr.o
+  CC [M]  drivers/net/wireless/bcmdhd_samsung/src/bcmsdio/sys/bcmsdh_sdmmc.o
+  LD      drivers/power/power_supply.o
+  CC      fs/aio.o
+  LD      drivers/power/built-in.o
+  CC      drivers/media/video/uvc/uvc_video.o
+  CC      drivers/media/video/msm/gemini/msm_gemini_platform.o
+  CC      drivers/rtc/alarm-dev.o
+  CC      net/ipv4/proc.o
+  CC      drivers/media/rc/keymaps/rc-winfast.o
+  LD      drivers/regulator/built-in.o
+  LD      drivers/sensors/built-in.o
+  CC      drivers/scsi/scsi.o
+  CC      fs/nfs/sysctl.o
+  CC      drivers/spi/spi.o
+  CC      net/ipv4/fib_rules.o
+  CC      drivers/media/rc/keymaps/rc-winfast-usbii-deluxe.o
+  CC      drivers/rtc/rtc-pm8xxx.o
+  LD      drivers/media/video/msm/gemini/built-in.o
+  CC      drivers/media/video/msm/flash.o
+  CC      net/ipv4/esp4.o
+  LD      drivers/media/rc/keymaps/built-in.o
+  LD      fs/nfs/nfs.o
+  CC      drivers/media/video/uvc/uvc_ctrl.o
+  CC      drivers/media/rc/ir-rc5-decoder.o
+  CC      net/ipv6/mcast.o
+  LD      fs/nfs/built-in.o
+  CC      fs/locks.o
+  CC [M]  drivers/net/wireless/bcmdhd_samsung/src/bcmsdio/sys/bcmsdh_sdmmc_linux.o
+  LD      drivers/rtc/rtc-core.o
+  CC      net/ipv4/ipcomp.o
+  LD      drivers/rtc/built-in.o
+  CC      drivers/spi/spi_qsd.o
+  CC      drivers/staging/staging.o
+  CC      drivers/media/rc/ir-rc6-decoder.o
+  CC      drivers/media/video/msm/msm_vfe31.o
+  CC      drivers/staging/android/binder.o
+  CC      net/ipv4/xfrm4_tunnel.o
+  CC      net/ipv4/tunnel4.o
+  CC      drivers/media/rc/ir-jvc-decoder.o
+  CC      net/ipv4/xfrm4_mode_transport.o
+  CC [M]  drivers/net/wireless/bcmdhd_samsung/src/dhd/sys/dhd_bta.o
+  CC      drivers/scsi/hosts.o
+  CC      drivers/media/video/uvc/uvc_status.o
+  CC      drivers/media/rc/ir-sony-decoder.o
+  CC      net/ipv4/xfrm4_mode_tunnel.o
+  CC      drivers/media/rc/ir-rc5-sz-decoder.o
+  CC      net/ipv4/ipconfig.o
+  CC      drivers/media/video/uvc/uvc_isight.o
+  CC      net/ipv4/netfilter.o
+  CC [M]  drivers/net/wireless/bcmdhd_samsung/src/dhd/sys/dhd_cdc.o
+  CC      fs/binfmt_script.o
+  CC      drivers/media/rc/ir-lirc-codec.o
+  CC      drivers/scsi/scsi_ioctl.o
+  CC [M]  drivers/spi/spidev.o
+  CC      net/ipv4/netfilter/nf_nat_rule.o
+  CC      fs/binfmt_elf.o
+  LD      drivers/media/video/uvc/uvcvideo.o
+  LD      drivers/media/video/uvc/built-in.o
+  CC      net/ipv6/reassembly.o
+  CC      drivers/media/video/ir-kbd-i2c.o
+  LD      drivers/media/rc/rc-core.o
+  CC [M]  drivers/net/wireless/bcmdhd_samsung/src/dhd/sys/dhd_common.o
+  LD      drivers/media/rc/built-in.o
+  CC      drivers/net/Space.o
+  CC      net/ipv4/inet_diag.o
+  CC      drivers/scsi/constants.o
+  CC      net/ipv4/netfilter/nf_nat_standalone.o
+  LD      drivers/spi/built-in.o
+  CC      net/ipv4/netfilter/nf_conntrack_l3proto_ipv4_compat.o
+  CC      net/ipv4/tcp_diag.o
+  LD      drivers/media/video/videodev.o
+  CC      drivers/media/video/msm/msm_io_8x60.o
+  CC      net/key/af_key.o
+  CC      drivers/net/loopback.o
+  CC      drivers/staging/android/logger.o
+  CC      net/ipv4/netfilter/nf_conntrack_l3proto_ipv4.o
+  CC      fs/mbcache.o
+  CC      net/ipv4/netfilter/nf_conntrack_proto_icmp.o
+  CC      drivers/media/video/msm/msm_vpe1.o
+  CC      drivers/net/ppp_generic.o
+  CC      drivers/scsi/scsicam.o
+  CC      net/ipv4/tcp_bic.o
+  CC      net/ipv6/tcp_ipv6.o
+  CC      drivers/staging/android/ram_console.o
+  CC      net/ipv4/tcp_cubic.o
+  CC [M]  drivers/net/wireless/bcmdhd_samsung/src/dhd/sys/dhd_custom_gpio.o
+  CC      fs/posix_acl.o
+  CC      net/ipv4/netfilter/nf_nat_core.o
+  CC      net/ipv4/netfilter/nf_nat_helper.o
+  CC      drivers/staging/android/timed_output.o
+  CC      drivers/scsi/scsi_error.o
+  CC      net/ipv4/xfrm4_policy.o
+  CC      drivers/media/video/msm/sec_m5mo.o
+  CC      drivers/media/video/msm/sec_s5k5bafx.o
+  CC [M]  drivers/net/wireless/bcmdhd_samsung/src/dhd/sys/dhd_custom_sec.o
+/home/ecoco/msm8660/drivers/media/video/msm/sec_m5mo.c: In function 'm5mo_set_preview_size':
+/home/ecoco/msm8660/drivers/media/video/msm/sec_m5mo.c:604:6: warning: unused variable 'int_factor'
+  CC      fs/xattr_acl.o
+  CC      drivers/staging/android/timed_gpio.o
+/home/ecoco/msm8660/drivers/media/video/msm/sec_s5k5bafx.c: In function 's5k5bafx_i2c_write_burst_list':  LD      net/key/built-in.o
+
+/home/ecoco/msm8660/drivers/media/video/msm/sec_s5k5bafx.c:271:1: warning: the frame size of 1616 bytes is larger than 1024 bytes
+  CC      net/netfilter/core.o
+  CC      net/ipv4/xfrm4_state.o
+  CC      drivers/net/ppp_async.o
+  CC      fs/dcookies.o
+  CC      drivers/staging/android/lowmemorykiller.o
+  CC      net/ipv6/exthdrs.o
+  CC      net/netfilter/nf_log.o
+  CC      net/ipv4/netfilter/nf_nat_proto_unknown.o
+  CC [M]  drivers/net/wireless/bcmdhd_samsung/src/dhd/sys/dhd_linux.o
+/home/ecoco/msm8660/drivers/staging/android/lowmemorykiller.c:62:1: warning: function declaration isn't a prototype
+/home/ecoco/msm8660/drivers/media/video/msm/sec_m5mo.c: In function 'm5mo_sensor_ext_config':
+/home/ecoco/msm8660/drivers/media/video/msm/sec_m5mo.c:1031:21: warning: 'cb' may be used uninitialized in this function
+/home/ecoco/msm8660/drivers/media/video/msm/sec_m5mo.c:1031:25: warning: 'cr' may be used uninitialized in this function
+  CC      net/ipv4/netfilter/nf_nat_proto_common.o
+  LD      drivers/staging/android/built-in.o
+  CC      net/ipv4/xfrm4_input.o
+  LD      drivers/staging/generic_serial/built-in.o
+  LD      drivers/staging/tty/built-in.o
+  CC      drivers/staging/zcache/zcache-main.o
+  CC      net/netfilter/nf_queue.o
+  CC      drivers/scsi/scsi_lib.o
+  LD      drivers/media/video/msm/built-in.o
+  CC      drivers/net/ppp_deflate.o
+  LD      drivers/media/video/built-in.o
+  LD      fs/built-in.o
+  CC      net/ipv4/netfilter/nf_nat_proto_tcp.o
+  CC      drivers/scsi/scsi_lib_dma.o
+  CC      drivers/staging/zcache/tmem.o
+  CC [M]  drivers/net/wireless/bcmdhd_samsung/src/dhd/sys/dhd_linux_sched.o
+  CC      drivers/scsi/scsi_scan.o
+  CC      drivers/net/bsd_comp.o
+  LD      drivers/staging/zcache/zcache.o
+  LD      drivers/staging/zcache/built-in.o
+  CC      drivers/staging/zram/zram_drv.o
+  CC      drivers/scsi/scsi_sysfs.o
+  CC      net/ipv4/netfilter/nf_nat_proto_udp.o
+  CC      net/ipv4/xfrm4_output.o
+  CC      net/netfilter/nf_sockopt.o
+  CC      drivers/staging/zram/zram_sysfs.o
+  CC      drivers/net/ppp_mppe.o
+  LD      drivers/media/built-in.o
+  CC      drivers/net/pppox.o
+  CC      drivers/staging/zram/xvmalloc.o
+  CC      net/ipv4/netfilter/nf_nat_proto_icmp.o
+  CC      drivers/switch/switch_class.o
+  CC [M]  drivers/net/wireless/bcmdhd_samsung/src/dhd/sys/dhd_cfg80211.o
+  CC      net/ipv4/netfilter/nf_defrag_ipv4.o
+  CC      drivers/scsi/scsi_devinfo.o
+  CC [M]  drivers/net/wireless/bcmdhd_samsung/src/dhd/sys/dhd_sdio.o
+  CC [M]  net/ipv4/tcp_westwood.o
+  CC      drivers/scsi/scsi_sysctl.o
+  CC      net/netfilter/nf_conntrack_core.o
+  CC      net/ipv6/datagram.o
+  LD      drivers/staging/zram/zram.o
+  CC      net/ipv4/netfilter/nf_nat_amanda.o
+  CC      drivers/net/pppolac.o
+  LD      drivers/staging/zram/built-in.o
+  CC      drivers/switch/switch_gpio.o
+  LD      drivers/staging/built-in.o
+  CC      drivers/scsi/scsi_proc.o
+  CC      drivers/thermal/thermal_sys.o
+  CC [M]  net/ipv4/tcp_htcp.o
+  LD      drivers/switch/built-in.o
+  CC      net/ipv4/netfilter/nf_nat_ftp.o
+  CC      drivers/tty/tty_io.o
+  CC [M]  drivers/net/wireless/bcmdhd_samsung/src/shared/aiutils.o
+  CC      drivers/scsi/scsi_trace.o
+  CC      net/ipv4/netfilter/nf_nat_h323.o
+  CC      drivers/net/pppopns.o
+  CC      drivers/scsi/scsi_pm.o
+  CC      net/ipv6/ip6_flowlabel.o
+  CC      drivers/scsi/scsi_tgt_lib.o
+  CC      drivers/scsi/scsi_tgt_if.o
+  CC      net/ipv4/netfilter/nf_nat_irc.o
+  CC [M]  drivers/net/wireless/bcmdhd_samsung/src/shared/bcmevent.o
+  CC      drivers/thermal/msm_tsens.o
+  CC      drivers/net/slip.o
+  CC      net/netfilter/nf_conntrack_standalone.o
+  CC      net/ipv4/netfilter/nf_nat_pptp.o
+  CC      drivers/net/slhc.o
+  CC      drivers/scsi/sd.o
+  CC      net/ipv6/inet6_connection_sock.o
+  CC [M]  drivers/net/wireless/bcmdhd_samsung/src/shared/bcmutils.o
+  LD      drivers/scsi/arm/built-in.o
+  CC      drivers/scsi/sg.o
+  CC      drivers/thermal/pm8xxx-tm.o
+  CC      net/ipv4/netfilter/nf_nat_sip.o
+  CC      drivers/tty/n_tty.o
+  CC      net/ipv4/netfilter/nf_nat_tftp.o
+  CC      drivers/net/dummy.o
+  CC      net/ipv6/sysctl_net_ipv6.o
+  CC      drivers/net/tun.o
+  CC      net/netfilter/nf_conntrack_expect.o
+  CC      net/ipv4/netfilter/nf_nat_proto_dccp.o
+  LD      drivers/thermal/built-in.o
+  CC [M]  drivers/net/wireless/bcmdhd_samsung/src/wl/bcmwifi/src/bcmwifi_channels.o
+  CC      drivers/usb/class/cdc-acm.o
+  CC      drivers/net/smc91x.o
+  CC      net/ipv6/xfrm6_policy.o
+  CC      drivers/usb/core/usb.o
+  CC      net/ipv4/netfilter/nf_nat_proto_gre.o
+  CC [M]  drivers/net/wireless/bcmdhd_samsung/src/shared/hndpmu.o
+  CC      drivers/scsi/ch.o
+  CC [M]  drivers/net/wireless/bcmdhd_samsung/src/shared/linux_osl.o
+  CC [M]  drivers/scsi/scsi_wait_scan.o
+  CC      drivers/tty/tty_ioctl.o
+  CC      net/ipv6/xfrm6_state.o
+  CC      drivers/usb/core/hub.o
+  CC      drivers/usb/class/usblp.o
+  CC      net/ipv4/netfilter/nf_nat_proto_udplite.o
+  CC      net/netfilter/nf_conntrack_helper.o
+In file included from /home/ecoco/msm8660/drivers/usb/core/hub.c:31:0:
+/home/ecoco/msm8660/include/linux/usb/msm_hsusb.h:188:2: warning: function declaration isn't a prototype
+  CC [M]  drivers/net/wireless/bcmdhd_samsung/src/shared/sbutils.o
+  CC      drivers/net/smc911x.o
+  CC      net/ipv4/netfilter/nf_nat_proto_sctp.o
+  LD      drivers/scsi/scsi_mod.o
+  CC [M]  drivers/net/wireless/bcmdhd_samsung/src/shared/siutils.o
+  LD      drivers/scsi/scsi_tgt.o
+  LD      drivers/scsi/sd_mod.o
+  LD      drivers/scsi/built-in.o
+  CC      drivers/net/smsc911x.o
+  CC      net/ipv6/xfrm6_input.o
+  CC      net/ipv4/netfilter/ip_tables.o
+  CC      drivers/video/fb_notify.o
+  CC      drivers/tty/tty_ldisc.o
+  LD      drivers/usb/class/built-in.o
+  CC      drivers/usb/gadget/msm72k_udc.o
+  CC      net/netfilter/nf_conntrack_proto.o
+  CC      net/ipv4/netfilter/iptable_filter.o
+  CC [M]  drivers/net/wireless/bcmdhd_samsung/src/wl/sys/wl_android.o
+In file included from /home/ecoco/msm8660/arch/arm/mach-msm/include/mach/msm72k_otg.h:21:0,
+                 from /home/ecoco/msm8660/drivers/usb/gadget/msm72k_udc.c:36:
+/home/ecoco/msm8660/arch/arm/mach-msm/include/mach/msm_hsusb.h:182:2: warning: function declaration isn't a prototype
+  CC      drivers/video/fbmem.o
+  CC      net/ipv6/xfrm6_output.o
+  CC      drivers/tty/tty_buffer.o
+  CC      net/netfilter/nf_conntrack_l3proto_generic.o
+  CC      net/ipv4/netfilter/iptable_mangle.o
+  CC      drivers/usb/core/hcd.o
+  LD      net/ipv4/netfilter/iptable_nat.o
+  CC      net/ipv4/netfilter/ipt_ah.o
+  CC      drivers/net/msm_rmnet.o
+  CC      drivers/video/fbmon.o
+  CC [M]  drivers/net/wireless/bcmdhd_samsung/src/wl/sys/wl_cfg80211.o
+  CC      net/ipv6/netfilter.o
+  CC      drivers/tty/tty_port.o
+  CC      drivers/usb/gadget/android.o
+  CC      net/netfilter/nf_conntrack_proto_generic.o
+  CC      net/ipv4/netfilter/ipt_ecn.o
+In file included from /home/ecoco/msm8660/arch/arm/mach-msm/include/mach/rpc_hsusb.h:26:0,
+                 from /home/ecoco/msm8660/drivers/usb/gadget/f_diag.c:23,
+                 from /home/ecoco/msm8660/drivers/usb/gadget/android.c:54:
+/home/ecoco/msm8660/arch/arm/mach-msm/include/mach/msm_hsusb.h:182:2: warning: function declaration isn't a prototype
+In file included from /home/ecoco/msm8660/drivers/usb/gadget/android.c:54:0:
+/home/ecoco/msm8660/drivers/usb/gadget/f_diag.c:38:0: warning: "CONFIG_USB_ANDROID_SAMSUNG_COMPOSITE" redefined
+./include/generated/autoconf.h:148:0: note: this is the location of the previous definition
+  CC      net/ipv4/netfilter/ipt_LOG.o
+  CC      drivers/video/fbcmap.o
+  CC      drivers/video/fbsysfs.o
+  CC      net/netfilter/nf_conntrack_proto_tcp.o
+  CC      drivers/net/msm_rmnet_sdio.o
+  CC      drivers/tty/tty_mutex.o
+In file included from /home/ecoco/msm8660/net/ipv4/netfilter/ipt_LOG.c:27:0:
+/home/ecoco/msm8660/include/net/netfilter/xt_log.h: In function 'sb_close':
+/home/ecoco/msm8660/include/net/netfilter/xt_log.h:50:3: warning: value computed is not used
+  CC      net/ipv4/netfilter/ipt_MASQUERADE.o
+  CC      net/ipv6/fib6_rules.o
+  CC      drivers/usb/core/urb.o
+  CC      net/netlink/af_netlink.o
+  CC      net/ipv4/netfilter/ipt_NETMAP.o
+  CC      drivers/tty/pty.o
+  CC      drivers/video/modedb.o
+  CC      drivers/video/fbcvt.o
+  CC      net/ipv4/netfilter/ipt_REDIRECT.o
+  CC      net/ipv6/proc.o
+  CC      drivers/usb/core/message.o
+  CC      net/ipv4/netfilter/ipt_REJECT.o
+  CC      drivers/video/backlight/backlight.o
+  CC      drivers/tty/sysrq.o
+  CC      net/ipv4/netfilter/arp_tables.o
+  CC      net/netfilter/nf_conntrack_proto_udp.o
+  CC      drivers/video/console/dummycon.o
+  CC      drivers/video/console/fbcon.o
+  CC      net/ipv6/ah6.o
+  CC      net/ipv4/netfilter/arpt_mangle.o
+  CC      net/ipv4/netfilter/arptable_filter.o
+  CC      net/netlink/genetlink.o
+  CC      net/ipv6/esp6.o
+  LD      drivers/tty/ipwireless/built-in.o
+  CC      drivers/video/backlight/generic_bl.o
+  LD      net/ipv4/netfilter/nf_conntrack_ipv4.o
+  CC      net/netfilter/nf_conntrack_extend.o
+  CC      drivers/tty/serial/serial_core.o
+  LD      net/ipv4/netfilter/nf_nat.o
+  CC      drivers/usb/core/driver.o
+  CC      drivers/tty/serial/msm_serial_hs.o
+  CC      drivers/tty/serial/msm_serial_hs_lite.o
+  LD      net/ipv4/netfilter/built-in.o
+  CC [M]  drivers/video/backlight/lcd.o
+  LD      net/ipv4/built-in.o
+  CC      net/netfilter/nf_conntrack_acct.o
+  CC      net/packet/af_packet.o
+  CC      drivers/tty/vt/vt_ioctl.o
+  CC      drivers/usb/core/config.o
+  CC      net/ipv6/ipcomp6.o
+  LD      net/netlink/built-in.o
+  LD      drivers/video/backlight/built-in.o
+  CC      net/rfkill/core.o
+  LD      drivers/video/display/built-in.o
+  LD      drivers/tty/serial/built-in.o
+  CC      drivers/usb/gadget/multi_config.o
+  CC      drivers/video/msm/msm_fb.o
+  CC      net/ipv6/xfrm6_tunnel.o
+  CC      net/netfilter/nf_conntrack_ecache.o
+  CC      drivers/video/console/bitblit.o
+  CC      net/ipv6/tunnel6.o
+  CC      drivers/video/console/fonts.o
+  CC      drivers/usb/core/file.o
+  CC      drivers/video/console/font_8x8.o
+  CC      drivers/video/console/font_8x16.o
+  CC      net/netfilter/nf_conntrack_h323_main.o
+  CC      net/ipv6/xfrm6_mode_transport.o
+  LD      net/rfkill/rfkill.o
+  LD      net/rfkill/built-in.o
+  CC      drivers/video/console/softcursor.o
+  CC      net/sched/sch_generic.o
+  CC      drivers/usb/core/buffer.o
+  CC      drivers/tty/vt/vc_screen.o
+  CC      net/ipv6/xfrm6_mode_tunnel.o
+  LD      drivers/video/console/font.o
+  CC [M]  drivers/net/wireless/bcmdhd_samsung/src/wl/sys/wl_cfgp2p.o
+  LD      net/packet/built-in.o
+  CC      drivers/usb/host/ehci-hcd.o
+  LD      drivers/video/console/built-in.o
+  CC      drivers/video/msm/logo.o
+  LD      drivers/video/omap2/displays/built-in.o
+  CC      drivers/usb/core/sysfs.o
+  CC      net/sunrpc/clnt.o
+  LD      drivers/video/omap2/built-in.o
+  CC      drivers/video/cfbfillrect.o
+  CC      drivers/tty/vt/selection.o
+In file included from /home/ecoco/msm8660/arch/arm/mach-msm/include/mach/rpc_hsusb.h:26:0,
+                 from /home/ecoco/msm8660/drivers/usb/host/ehci-msm72k.c:32,
+                 from /home/ecoco/msm8660/drivers/usb/host/ehci-hcd.c:1304:
+/home/ecoco/msm8660/arch/arm/mach-msm/include/mach/msm_hsusb.h:182:2: warning: function declaration isn't a prototype
+  CC      net/ipv6/xfrm6_mode_beet.o
+  CC      net/sched/sch_mq.o
+  CC      drivers/tty/vt/keyboard.o
+  CC      net/netfilter/nf_conntrack_h323_asn1.o
+  CC      drivers/usb/core/endpoint.o
+  CC [M]  drivers/net/wireless/bcmdhd_samsung/src/wl/sys/wldev_common.o
+  CC      drivers/video/msm/mdp.o
+  CC      drivers/video/cfbcopyarea.o
+  CC      drivers/usb/core/devio.o
+  CC      net/ipv6/mip6.o
+  CC      net/netfilter/nfnetlink.o
+  CC      net/sched/sch_api.o
+  CC [M]  drivers/net/wireless/bcmdhd_samsung/src/wl/sys/wl_linux_mon.o
+  CC      drivers/video/cfbimgblt.o
+  CC      net/sunrpc/xprt.o
+  CC [M]  drivers/net/wireless/bcmdhd_samsung/src/wl/sys/wl_roam.o
+  CC      drivers/tty/vt/consolemap.o
+  CC      net/ipv6/netfilter/ip6_tables.o
+  CC      drivers/video/output.o
+  CC      net/ipv6/sit.o
+  CC      net/netfilter/nfnetlink_queue.o
+  CC      drivers/video/msm/mdp_debugfs.o
+  CC      drivers/usb/core/notify.o
+  LD [M]  drivers/net/wireless/bcmdhd_samsung/dhd.o
+  LD      drivers/net/wireless/built-in.o
+  LD      drivers/net/built-in.o
+  LD      drivers/video/fb.o
+  CC      net/sunrpc/socklib.o
+  CC      drivers/video/msm/mdp4_util.o
+  LD      drivers/usb/host/built-in.o
+  CC      net/sched/sch_blackhole.o
+  CC      drivers/usb/core/generic.o
+  CC      net/sunrpc/xprtsock.o
+  CC      drivers/tty/vt/consolemap_deftbl.o
+  CC      drivers/tty/vt/vt.o
+  CC      drivers/usb/core/quirks.o
+  CC      net/sched/cls_api.o
+  CC      net/sched/act_api.o
+  CC      net/netfilter/nfnetlink_log.o
+  CC      drivers/usb/core/devices.o
+  CC      drivers/video/msm/mdp4_video_enhance.o
+  CC      net/sunrpc/sched.o
+  CC      net/ipv6/ip6_tunnel.o
+  CC      net/ipv6/netfilter/ip6table_filter.o
+/home/ecoco/msm8660/drivers/video/msm/mdp4_video_enhance.c: In function 'parse_text':
+/home/ecoco/msm8660/drivers/video/msm/mdp4_video_enhance.c:181:1: warning: the frame size of 1216 bytes is larger than 1024 bytes
+  CC      drivers/video/msm/mdp4_hsic.o
+  CC      net/sunrpc/auth.o
+  LD      drivers/usb/core/usbcore.o
+  LD      drivers/usb/core/built-in.o
+  CC      drivers/video/msm/mdp4_overlay.o
+  CC      net/sched/act_mirred.o
+  CC      drivers/usb/misc/ehset.o
+  LD      net/netfilter/nf_conntrack.o
+  CC      net/ipv6/netfilter/ip6table_mangle.o
+  CC      drivers/video/msm/mdp4_overlay_lcdc.o
+  CC      net/netfilter/nf_conntrack_proto_dccp.o
+In file included from /home/ecoco/msm8660/drivers/usb/gadget/android.c:54:0:
+/home/ecoco/msm8660/drivers/usb/gadget/f_diag.c:38:0: warning: "CONFIG_USB_ANDROID_SAMSUNG_COMPOSITE" redefined
+./include/generated/autoconf.h:148:0: note: this is the location of the previous definition
+  LD      drivers/usb/misc/built-in.o
+  CC      drivers/usb/notify/host_notify_class.o
+  CC      net/sched/sch_fifo.o
+  CC      net/sunrpc/auth_null.o
+  CC      net/sched/sch_htb.o
+/home/ecoco/msm8660/drivers/video/msm/mdp4_overlay_lcdc.c: In function 'mdp4_lcdc_do_blt':  CC      net/ipv6/addrconf_core.o
+
+/home/ecoco/msm8660/drivers/video/msm/mdp4_overlay_lcdc.c:894:13: warning: unused variable 'porch_value_read'
+  LD      drivers/usb/gadget/g_android.o
+  LD      drivers/usb/gadget/built-in.o
+  CC      drivers/usb/otg/otg.o
+  CC      net/ipv6/netfilter/nf_defrag_ipv6_hooks.o
+  LD      drivers/usb/notify/built-in.o
+  CC      net/netfilter/nf_conntrack_proto_gre.o
+  CC      net/sunrpc/auth_unix.o
+  CC      net/netfilter/nf_conntrack_proto_sctp.o
+  CC      drivers/usb/storage/alauda.o
+  CC      drivers/video/msm/mdp4_overlay_mddi.o
+  CC      drivers/usb/otg/otg_id.o
+  CC      net/sched/sch_ingress.o
+  CC      drivers/tty/vt/defkeymap.o
+  CC      drivers/usb/otg/msm72k_otg.o
+  LD      drivers/tty/vt/built-in.o
+  LD      drivers/tty/built-in.o
+  CC      net/ipv6/exthdrs_core.o
+In file included from /home/ecoco/msm8660/arch/arm/mach-msm/include/mach/msm72k_otg.h:21:0,
+                 from /home/ecoco/msm8660/drivers/usb/otg/msm72k_otg.c:29:
+/home/ecoco/msm8660/arch/arm/mach-msm/include/mach/msm_hsusb.h:182:2: warning: function declaration isn't a prototype
+  CC      net/ipv6/netfilter/nf_conntrack_reasm.o
+  CC      net/ipv6/inet6_hashtables.o
+  CC      net/sched/sch_sfq.o
+  CC      drivers/video/msm/mdp4_dtv.o
+  CC      net/sunrpc/auth_generic.o
+  CC      net/netfilter/nf_conntrack_proto_udplite.o
+  CC      net/sched/sch_tbf.o
+  CC      drivers/video/msm/mdp4_overlay_dtv.o
+  CC      net/netfilter/nf_conntrack_netlink.o
+  CC      drivers/usb/storage/cypress_atacb.o
+  LD      net/ipv6/ipv6.o
+  CC      drivers/video/msm/mdp_dma.o
+  CC      drivers/usb/storage/datafab.o
+  LD      net/ipv6/netfilter/nf_defrag_ipv6.o
+  LD      net/ipv6/netfilter/built-in.o
+  CC      drivers/usb/storage/freecom.o
+  CC      drivers/usb/storage/isd200.o
+  CC      net/netfilter/nf_conntrack_amanda.o
+  CC      net/netfilter/nf_conntrack_ftp.o
+  CC      net/sunrpc/svc.o
+  CC      net/sched/sch_prio.o
+  CC      drivers/video/msm/mdp_dma_s.o
+  CC      drivers/video/msm/mdp_vsync.o
+  LD      net/ipv6/built-in.o
+  LD      drivers/usb/otg/built-in.o
+  CC      net/unix/af_unix.o
+  CC      drivers/usb/storage/jumpshot.o
+  CC      drivers/usb/storage/karma.o
+  CC      net/wireless/core.o
+  CC      drivers/usb/storage/onetouch.o
+  CC      drivers/video/msm/mdp_cursor.o
+  CC      net/sched/cls_u32.o
+  LD      net/netfilter/nf_conntrack_h323.o
+  CC      net/netfilter/nf_conntrack_irc.o
+  CC      drivers/video/msm/mdp_dma_tv.o
+  CC      net/netfilter/nf_conntrack_broadcast.o
+  CC      net/netfilter/nf_conntrack_netbios_ns.o
+  CC      net/xfrm/xfrm_policy.o
+  CC      drivers/usb/storage/sddr09.o
+  CC      drivers/usb/storage/sddr55.o
+  CC      drivers/video/msm/msm_dss_io_8x60.o
+  CC      drivers/video/msm/lcdc.o
+  CC      net/sunrpc/svcsock.o
+  CC      net/netfilter/nf_conntrack_pptp.o
+  CC      net/sched/cls_fw.o
+  CC      net/netfilter/nf_conntrack_sane.o
+  CC      drivers/video/msm/msm_fb_panel.o
+  CC      net/netfilter/nf_conntrack_sip.o
+  CC      net/wireless/sysfs.o
+  CC      drivers/usb/storage/shuttle_usbat.o
+  CC      drivers/video/msm/lcdc_panel.o
+  CC      net/unix/garbage.o
+  CC      drivers/usb/storage/scsiglue.o
+  CC      drivers/video/msm/lcdc_ld9040.o
+  CC      drivers/video/msm/smart_dimming_ea8868.o
+  CC      net/wireless/radiotap.o
+  CC      net/netfilter/nf_conntrack_tftp.o
+/home/ecoco/msm8660/drivers/video/msm/smart_dimming_ea8868.c: In function 'calc_voltage_table':
+/home/ecoco/msm8660/drivers/video/msm/smart_dimming_ea8868.c:222:5: warning: missing braces around initializer
+/home/ecoco/msm8660/drivers/video/msm/smart_dimming_ea8868.c:222:5: warning: (near initialization for 'adjust_mtp[0]')
+/home/ecoco/msm8660/drivers/video/msm/smart_dimming_ea8868.c:232:9: warning: initialization from incompatible pointer type
+/home/ecoco/msm8660/drivers/video/msm/smart_dimming_ea8868.c:233:9: warning: initialization from incompatible pointer type
+/home/ecoco/msm8660/drivers/video/msm/smart_dimming_ea8868.c:234:9: warning: initialization from incompatible pointer type
+/home/ecoco/msm8660/drivers/video/msm/smart_dimming_ea8868.c:235:9: warning: initialization from incompatible pointer type
+/home/ecoco/msm8660/drivers/video/msm/smart_dimming_ea8868.c:236:9: warning: initialization from incompatible pointer type
+/home/ecoco/msm8660/drivers/video/msm/smart_dimming_ea8868.c:237:9: warning: initialization from incompatible pointer type
+/home/ecoco/msm8660/drivers/video/msm/smart_dimming_ea8868.c:238:9: warning: initialization from incompatible pointer type
+/home/ecoco/msm8660/drivers/video/msm/smart_dimming_ea8868.c: In function 'init_table_info':
+/home/ecoco/msm8660/drivers/video/msm/smart_dimming_ea8868.c:348:39: warning: assignment discards qualifiers from pointer target type
+/home/ecoco/msm8660/drivers/video/msm/smart_dimming_ea8868.c:352:21: warning: assignment discards qualifiers from pointer target type
+/home/ecoco/msm8660/drivers/video/msm/smart_dimming_ea8868.c:353:25: warning: assignment discards qualifiers from pointer target type
+/home/ecoco/msm8660/drivers/video/msm/smart_dimming_ea8868.c:354:20: warning: assignment discards qualifiers from pointer target type
+/home/ecoco/msm8660/drivers/video/msm/smart_dimming_ea8868.c: In function 'calc_gamma_table':
+/home/ecoco/msm8660/drivers/video/msm/smart_dimming_ea8868.c:614:5: warning: missing braces around initializer
+/home/ecoco/msm8660/drivers/video/msm/smart_dimming_ea8868.c:614:5: warning: (near initialization for 'gamma[0]')
+/home/ecoco/msm8660/drivers/video/msm/smart_dimming_ea8868.c:618:9: warning: initialization from incompatible pointer type
+/home/ecoco/msm8660/drivers/video/msm/smart_dimming_ea8868.c:619:9: warning: initialization from incompatible pointer type
+/home/ecoco/msm8660/drivers/video/msm/smart_dimming_ea8868.c:620:9: warning: initialization from incompatible pointer type
+/home/ecoco/msm8660/drivers/video/msm/smart_dimming_ea8868.c:621:9: warning: initialization from incompatible pointer type
+/home/ecoco/msm8660/drivers/video/msm/smart_dimming_ea8868.c:622:9: warning: initialization from incompatible pointer type
+/home/ecoco/msm8660/drivers/video/msm/smart_dimming_ea8868.c:623:9: warning: initialization from incompatible pointer type
+/home/ecoco/msm8660/drivers/video/msm/smart_dimming_ea8868.c:624:9: warning: initialization from incompatible pointer type
+  CC      net/sched/cls_tcindex.o
+/home/ecoco/msm8660/drivers/video/msm/lcdc_ld9040.c:69:0: warning: "MAPPING_TBL_AUTO_BRIGHTNESS" redefined
+/home/ecoco/msm8660/drivers/video/msm/lcdc_ea8868_seq.h:33:0: note: this is the location of the previous definition
+/home/ecoco/msm8660/drivers/video/msm/lcdc_ld9040.c:83:0: warning: "CONFIG_JPN_MODEL_SC_03D" redefined
+./include/generated/autoconf.h:568:0: note: this is the location of the previous definition
+/home/ecoco/msm8660/drivers/video/msm/lcdc_ld9040.c: In function 'get_gamma_value_from_bl':
+/home/ecoco/msm8660/drivers/video/msm/lcdc_ld9040.c:1481:6: warning: unused variable 'gamma_val_x10'
+/home/ecoco/msm8660/drivers/video/msm/lcdc_ld9040.c: At top level:
+/home/ecoco/msm8660/drivers/video/msm/lcdc_ld9040_seq.h:189:30: warning: 'lcd_brightness_table_2' defined but not used
+/home/ecoco/msm8660/drivers/video/msm/lcdc_ea8868_seq.h:728:29: warning: 'EA8868_M3_GAMMA_22_30_dimming' defined but not used
+  CC      net/netfilter/nf_tproxy_core.o
+  CC      net/unix/sysctl_net_unix.o
+  CC      drivers/video/msm/hdmi_msm.o
+  CC      drivers/usb/storage/protocol.o
+  CC      drivers/usb/storage/transport.o
+  CC      net/sunrpc/svcauth.o
+/home/ecoco/msm8660/drivers/video/msm/hdmi_msm.c: In function 'hdmi_msm_power_off':
+/home/ecoco/msm8660/drivers/video/msm/hdmi_msm.c:4524:27: warning: unused variable 'mfd'
+  LD      net/unix/unix.o
+  LD      net/unix/built-in.o
+  CC      net/sysctl_net.o
+  CC      net/netfilter/x_tables.o
+  CC      net/sched/cls_basic.o
+  CC      drivers/video/msm/external_common.o
+/home/ecoco/msm8660/drivers/video/msm/external_common.c:1248:12: warning: 'hdmi_edid_check_resolution_supported' defined but not used
+  CC      net/sched/ematch.o
+  CC      net/sched/em_cmp.o
+  CC      net/sched/em_nbyte.o
+  CC      net/sunrpc/svcauth_unix.o
+  CC      drivers/usb/storage/usb.o
+  CC      drivers/video/msm/mhl_v2/sii9234.o
+  CC      net/netfilter/xt_tcpudp.o
+  CC      drivers/usb/storage/initializers.o
+  CC      net/wireless/util.o
+/home/ecoco/msm8660/drivers/video/msm/mhl_v2/sii9234.c: In function 'fsa9480_mhl_chg_status_cb':
+/home/ecoco/msm8660/drivers/video/msm/mhl_v2/sii9234.c:157:3: warning: 'return' with no value, in function returning non-void
+/home/ecoco/msm8660/drivers/video/msm/mhl_v2/sii9234.c:163:3: warning: 'return' with no value, in function returning non-void
+/home/ecoco/msm8660/drivers/video/msm/mhl_v2/sii9234.c: In function 'cbus_handle_wrt_stat_recd':
+/home/ecoco/msm8660/drivers/video/msm/mhl_v2/sii9234.c:781:31: warning: unused variable 'value'
+/home/ecoco/msm8660/drivers/video/msm/mhl_v2/sii9234.c: In function 'rsen_state_timer_out':
+/home/ecoco/msm8660/drivers/video/msm/mhl_v2/sii9234.c:1037:2: warning: assignment from incompatible pointer type
+/home/ecoco/msm8660/drivers/video/msm/mhl_v2/sii9234.c: In function 'sii9234_detection_callback':
+/home/ecoco/msm8660/drivers/video/msm/mhl_v2/sii9234.c:1334:3: warning: assignment from incompatible pointer type
+/home/ecoco/msm8660/drivers/video/msm/mhl_v2/sii9234.c: In function 'sii9234_irq_thread':
+/home/ecoco/msm8660/drivers/video/msm/mhl_v2/sii9234.c:1731:5: warning: assignment from incompatible pointer type
+/home/ecoco/msm8660/drivers/video/msm/mhl_v2/sii9234.c:1785:4: warning: assignment from incompatible pointer type
+/home/ecoco/msm8660/drivers/video/msm/mhl_v2/sii9234.c:1911:7: warning: assignment from incompatible pointer type
+/home/ecoco/msm8660/drivers/video/msm/mhl_v2/sii9234.c: At top level:
+/home/ecoco/msm8660/drivers/video/msm/mhl_v2/sii9234.c:2015:8: warning: initialization from incompatible pointer type
+  CC      net/xfrm/xfrm_state.o
+  CC      net/sunrpc/addr.o
+  CC      net/wireless/reg.o
+  CC      drivers/video/msm/vidc/common/init/vidc_init.o
+  CC      net/sched/em_u32.o
+  CC      drivers/usb/storage/sierra_ms.o
+  CC      net/sched/em_meta.o
+  CC      net/sched/em_text.o
+  CC      net/netfilter/xt_mark.o
+  CC      drivers/usb/storage/option_ms.o
+  CC      drivers/usb/storage/usual-tables.o
+  CC      net/wireless/scan.o
+  LD      drivers/video/msm/mhl_v2/built-in.o
+  CC      net/netfilter/xt_connmark.o
+  CC      drivers/video/msm/vidc/common/vcd/vcd_api.o
+  CC      net/netfilter/xt_CLASSIFY.o
+  CC      net/sunrpc/rpcb_clnt.o
+  CC      net/wireless/nl80211.o
+  CC [M]  net/sched/sch_dsmark.o
+  CC      net/wireless/mlme.o
+  CC [M]  net/sched/cls_flow.o
+  LD      drivers/usb/storage/usb-storage.o
+  LD      drivers/usb/storage/ums-alauda.o
+  LD      drivers/usb/storage/ums-cypress.o
+  LD      drivers/usb/storage/ums-datafab.o
+  LD      drivers/usb/storage/ums-freecom.o
+  LD      drivers/usb/storage/ums-isd200.o
+  LD      drivers/usb/storage/ums-jumpshot.o
+  LD      drivers/usb/storage/ums-karma.o
+  LD      drivers/usb/storage/ums-onetouch.o
+  LD      drivers/usb/storage/ums-sddr09.o
+  LD      drivers/usb/storage/ums-sddr55.o
+  CC      net/netfilter/xt_NFLOG.o
+  CC      net/wireless/ibss.o
+  LD      drivers/usb/storage/ums-usbat.o
+  LD      drivers/usb/storage/built-in.o
+  CC      net/activity_stats.o
+  LD      drivers/usb/built-in.o
+  CC      drivers/video/msm/vidc/common/vcd/vcd_power_sm.o
+  CC      net/wireless/sme.o
+  CC      net/xfrm/xfrm_hash.o
+  CC      net/netfilter/xt_NFQUEUE.o
+  CC      net/wireless/chan.o
+  LD      net/sched/built-in.o
+  CC      net/wireless/ethtool.o
+  CC      net/sunrpc/timer.o
+  CC      net/sunrpc/xdr.o
+  CC      net/xfrm/xfrm_input.o
+  CC      net/wireless/mesh.o
+  CC      drivers/video/msm/vidc/common/vcd/vcd_client_sm.o
+  CC      drivers/video/msm/vidc/common/vcd/vcd_device_sm.o
+  CC      drivers/video/msm/vidc/common/vcd/vcd_scheduler.o
+  CC      net/xfrm/xfrm_output.o
+  CC      drivers/video/msm/vidc/common/vcd/vcd_sub.o
+  CC      net/netfilter/xt_TCPMSS.o
+  CC      net/sunrpc/sunrpc_syms.o
+  CC      net/sunrpc/cache.o
+  CC      drivers/video/msm/vidc/1080p/ddl/vcd_ddl_helper.o
+  CC      net/sunrpc/rpc_pipe.o
+  CC      net/xfrm/xfrm_algo.o
+  CC      net/xfrm/xfrm_sysctl.o
+  CC      drivers/video/msm/vidc/1080p/ddl/vcd_ddl_utils.o
+  CC      drivers/video/msm/vidc/1080p/ddl/vcd_ddl_interrupt_handler.o
+  CC      net/sunrpc/svc_xprt.o
+  CC      net/xfrm/xfrm_replay.o
+  CC      net/netfilter/xt_comment.o
+  CC      net/xfrm/xfrm_user.o
+  CC      drivers/video/msm/vidc/1080p/ddl/vcd_ddl_properties.o
+  CC      net/xfrm/xfrm_ipcomp.o
+  CC      net/netfilter/xt_connlimit.o
+  CC      net/sunrpc/stats.o
+  CC      drivers/video/msm/vidc/1080p/ddl/vcd_ddl_errors.o
+  CC      drivers/video/msm/vidc/1080p/ddl/vcd_ddl_shared_mem.o
+  CC      net/sunrpc/sysctl.o
+  CC      drivers/video/msm/vidc/1080p/ddl/vidc.o
+  CC      net/sunrpc/auth_gss/auth_gss.o
+  CC      net/sunrpc/auth_gss/gss_generic_token.o
+  CC      drivers/video/msm/vidc/1080p/ddl/vidc_pix_cache.o
+  CC      net/netfilter/xt_conntrack.o
+  CC      drivers/video/msm/vidc/1080p/ddl/vcd_ddl_vidc.o
+  CC      drivers/video/msm/vidc/1080p/ddl/vcd_ddl.o
+  CC      drivers/video/msm/vidc/1080p/ddl/vcd_ddl_metadata.o
+  CC      drivers/video/msm/vidc/1080p/resource_tracker/vcd_res_tracker.o
+  CC      drivers/video/msm/vidc/common/dec/vdec.o
+  CC      net/sunrpc/auth_gss/gss_mech_switch.o
+  LD      net/sunrpc/sunrpc.o
+  CC      drivers/video/msm/vidc/common/enc/venc.o
+  CC      net/netfilter/xt_hashlimit.o
+  CC      drivers/video/msm/vidc/common/enc/venc_internal.o
+  LD      net/xfrm/built-in.o
+  CC      net/netfilter/xt_helper.o
+  CC      net/netfilter/xt_hl.o
+  CC      net/netfilter/xt_iprange.o
+  CC      net/netfilter/xt_length.o
+  CC      net/sunrpc/auth_gss/svcauth_gss.o
+  CC      net/netfilter/xt_limit.o
+  LD      net/wireless/cfg80211.o
+  LD      net/wireless/built-in.o
+  CC      net/netfilter/xt_mac.o
+  CC      net/netfilter/xt_multiport.o
+  CC      net/netfilter/xt_pkttype.o
+  CC      net/netfilter/xt_policy.o
+  CC      net/netfilter/xt_qtaguid_print.o
+  CC      net/netfilter/xt_qtaguid.o
+  CC      net/netfilter/xt_quota.o
+  CC      net/netfilter/xt_quota2.o
+  CC      net/netfilter/xt_socket.o
+  CC      net/netfilter/xt_state.o
+  CC      net/netfilter/xt_statistic.o
+  CC      net/netfilter/xt_string.o
+  CC      net/netfilter/xt_time.o
+  CC      net/netfilter/xt_u32.o
+  LD      drivers/video/msm/vidc/vidc.o
+  LD      drivers/video/msm/vidc/vidc_vdec.o
+  LD      net/sunrpc/auth_gss/auth_rpcgss.o
+  LD      drivers/video/msm/vidc/vidc_venc.o
+  LD      net/sunrpc/auth_gss/built-in.o
+  LD      net/netfilter/netfilter.o
+  LD      net/sunrpc/built-in.o
+  LD      drivers/video/msm/vidc/built-in.o
+  LD      drivers/video/msm/built-in.o
+  LD      drivers/video/built-in.o
+  LD      net/netfilter/built-in.o
+  LD      net/built-in.o
+  LD      drivers/built-in.o
+  LD      vmlinux.o
+  MODPOST vmlinux.o
+  GEN     .version
+  CHK     include/generated/compile.h
+  LD      .tmp_vmlinux1
+  KSYM    .tmp_kallsyms1.S
+  AS      .tmp_kallsyms1.o
+  LD      .tmp_vmlinux2
+  KSYM    .tmp_kallsyms2.S
+  AS      .tmp_kallsyms2.o
+  LD      vmlinux
+  SYSMAP  System.map
+  SYSMAP  .tmp_System.map
+  OBJCOPY arch/arm/boot/Image
+  Building modules, stage 2.
+  MODPOST 22 modules
+  Kernel: arch/arm/boot/Image is ready
+  AS      arch/arm/boot/compressed/head.o
+  CC      arch/arm/mach-msm/dal_remotetest.mod.o
+  CC      arch/arm/mach-msm/dma_test.mod.o
+  CC      arch/arm/mach-msm/msm-buspm-dev.mod.o
+  CC      arch/arm/perfmon/ksapi.mod.o
+  CC      crypto/ansi_cprng.mod.o
+  CC      drivers/crypto/msm/qce.mod.o
+  CC      drivers/crypto/msm/qcedev.mod.o
+  LZMA    arch/arm/boot/compressed/piggy.lzma
+  CC      arch/arm/boot/compressed/misc.o
+  CC      drivers/crypto/msm/qcrypto.mod.o
+  CC      drivers/input/evbug.mod.o
+  CC      arch/arm/boot/compressed/decompress.o
+  CC      drivers/media/video/gspca/gspca_main.mod.o
+  CC      drivers/misc/msm_tsif.mod.o
+  CC      drivers/misc/tsif_chrdev.mod.o
+  CC      arch/arm/boot/compressed/string.o
+  CC      drivers/misc/vibetonz/vibrator.mod.o
+  CC      drivers/mmc/card/mmc_test.mod.o
+  CC      drivers/net/wireless/bcmdhd_samsung/dhd.mod.o
+  AS      arch/arm/boot/compressed/lib1funcs.o
+  CC      drivers/scsi/scsi_wait_scan.mod.o
+  CC      drivers/spi/spidev.mod.o
+  CC      drivers/video/backlight/lcd.mod.o
+  CC      net/ipv4/tcp_htcp.mod.o
+  CC      net/ipv4/tcp_westwood.mod.o
+  CC      net/sched/cls_flow.mod.o
+  CC      net/sched/sch_dsmark.mod.o
+  LD [M]  arch/arm/mach-msm/dal_remotetest.ko
+  LD [M]  arch/arm/mach-msm/dma_test.ko
+  LD [M]  arch/arm/mach-msm/msm-buspm-dev.ko
+  LD [M]  arch/arm/perfmon/ksapi.ko
+  LD [M]  crypto/ansi_cprng.ko
+  LD [M]  drivers/crypto/msm/qce.ko
+  LD [M]  drivers/crypto/msm/qcedev.ko
+  LD [M]  drivers/crypto/msm/qcrypto.ko
+  LD [M]  drivers/input/evbug.ko
+  LD [M]  drivers/media/video/gspca/gspca_main.ko
+  LD [M]  drivers/misc/msm_tsif.ko
+  LD [M]  drivers/misc/tsif_chrdev.ko
+  LD [M]  drivers/misc/vibetonz/vibrator.ko
+  LD [M]  drivers/mmc/card/mmc_test.ko
+  LD [M]  drivers/net/wireless/bcmdhd_samsung/dhd.ko
+  LD [M]  drivers/scsi/scsi_wait_scan.ko
+  LD [M]  drivers/spi/spidev.ko
+  LD [M]  drivers/video/backlight/lcd.ko
+  LD [M]  net/ipv4/tcp_htcp.ko
+  LD [M]  net/sched/sch_dsmark.ko
+  LD [M]  net/sched/cls_flow.ko
+  LD [M]  net/ipv4/tcp_westwood.ko
+  AS      arch/arm/boot/compressed/piggy.lzma.o
+  LD      arch/arm/boot/compressed/vmlinux
+  OBJCOPY arch/arm/boot/zImage
+  Kernel: arch/arm/boot/zImage is ready

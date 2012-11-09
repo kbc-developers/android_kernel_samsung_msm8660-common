@@ -470,7 +470,11 @@ static struct gpiomux_setting accel_active_cfg = {
 static struct gpiomux_setting accel_suspend_cfg = {
 	.func = GPIOMUX_FUNC_GPIO,
 	.drv = GPIOMUX_DRV_8MA,
+#if defined(CONFIG_JPN_MODEL_SC_05D)
+	.pull = GPIOMUX_PULL_UP,
+#else
 	.pull = GPIOMUX_PULL_DOWN,
+#endif
 };
 #endif
 
@@ -484,7 +488,11 @@ static struct gpiomux_setting gyro_active_cfg = {
 static struct gpiomux_setting gyro_suspend_cfg = {
 	.func = GPIOMUX_FUNC_GPIO,
 	.drv = GPIOMUX_DRV_8MA,
+#if defined(CONFIG_JPN_MODEL_SC_05D)
+	.pull = GPIOMUX_PULL_UP,
+#else
 	.pull = GPIOMUX_PULL_DOWN,
+#endif
 };
 #if defined(CONFIG_KOR_MODEL_SHV_E110S) \
 	||defined(CONFIG_KOR_MODEL_SHV_E120S)||defined(CONFIG_KOR_MODEL_SHV_E120K)||defined(CONFIG_KOR_MODEL_SHV_E120L)
@@ -507,6 +515,11 @@ static struct gpiomux_setting opt_active_cfg = {
 	.func = GPIOMUX_FUNC_GPIO,
 	.drv = GPIOMUX_DRV_8MA,
 	.pull = GPIOMUX_PULL_UP,
+};
+static struct gpiomux_setting opt_suspend_cfg = {
+	.func = GPIOMUX_FUNC_GPIO,
+	.drv = GPIOMUX_DRV_8MA,
+	.pull = GPIOMUX_PULL_DOWN,
 };
 #endif
 
@@ -834,7 +847,7 @@ static struct msm_gpiomux_config msm8x60_ebi2_configs[] __initdata = {
 			[GPIOMUX_SUSPENDED] = &ebi2_a_d,
 		},
 	},
-#if defined(CONFIG_USA_MODEL_SGH_I717)
+#if defined(CONFIG_USA_MODEL_SGH_I717) || defined (CONFIG_JPN_MODEL_SC_05D)
 	{
 		.gpio      = 124,
 		.settings = {
@@ -1080,14 +1093,22 @@ static struct msm_gpiomux_config msm8x60_opt_configs[] __initdata = {
 		.gpio      = 138,
 		.settings = {
 			[GPIOMUX_ACTIVE]    = &opt_active_cfg,
+#if defined(CONFIG_JPN_MODEL_SC_05D)
+			[GPIOMUX_SUSPENDED] = &opt_suspend_cfg,
+#else
 			[GPIOMUX_SUSPENDED] = &opt_active_cfg,
+#endif
 		},
 	},
 	{
 		.gpio      = 139,
 		.settings = {
 			[GPIOMUX_ACTIVE]    = &opt_active_cfg,
+#if defined(CONFIG_JPN_MODEL_SC_05D)
+			[GPIOMUX_SUSPENDED] = &opt_suspend_cfg,
+#else
 			[GPIOMUX_SUSPENDED] = &opt_active_cfg,
+#endif
 		},
 	},
 };
@@ -1733,6 +1754,26 @@ static struct msm_gpiomux_config msm8x60_lcdc_configs[] __initdata = {
 			[GPIOMUX_SUSPENDED] = &lcdc_suspend_cfg,
 		},
 	},
+
+#if defined(CONFIG_JPN_MODEL_SC_05D)
+	/* lcdc_grn2 */
+	{
+		.gpio = 17,
+		.settings = {
+			[GPIOMUX_ACTIVE]    = &nc_cfg,
+			[GPIOMUX_SUSPENDED] = &nc_cfg,
+		},
+	},
+	/* lcdc_grn1 */
+	{
+		.gpio = 18,
+		.settings = {
+			[GPIOMUX_ACTIVE]    = &nc_cfg,
+			[GPIOMUX_SUSPENDED] = &nc_cfg,
+		},
+	},
+
+#else
 	/* lcdc_grn2 */
 	{
 		.gpio = 17,
@@ -1749,6 +1790,7 @@ static struct msm_gpiomux_config msm8x60_lcdc_configs[] __initdata = {
 			[GPIOMUX_SUSPENDED] = &lcdc_suspend_cfg,
 		},
 	},
+#endif
 	/* lcdc_grn0 */
 	{
 		.gpio = 19,
