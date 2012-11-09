@@ -173,6 +173,10 @@ static bool Q1_debug_msg = true;
 static bool Q1_debug_msg = false;
 #endif
 
+#ifdef CONFIG_TWEAK_REPLACE_BACK_MENU
+static int replace_back_menu = 0;
+#endif
+
 static const struct i2c_device_id melfas_touchkey_id[] = {
 	{"melfas_touchkey", 0},
 	{}
@@ -1936,6 +1940,42 @@ static ssize_t brightness_level_show(struct device *dev, struct device_attribute
 	return count;
 }
 
+#ifdef CONFIG_TWEAK_REPLACE_BACK_MENU
+static ssize_t touchkey_replace_back_menu_show(struct device *dev, struct device_attribute *attr, char *buf)
+{
+	return sprintf(buf, "%d\n", replace_back_menu);
+}
+
+static ssize_t touchkey_replace_back_menu_store(struct device *dev, struct device_attribute *attr, const char *buf, size_t size)
+{
+	int key_back, key_menu;
+
+	sscanf(buf, "%d", &replace_back_menu);
+	if (replace_back_menu) {
+		key_back = KEY_MENU;
+		key_menu = KEY_BACK;
+	} else {
+		key_back = KEY_BACK;
+		key_menu = KEY_MENU;
+	}
+
+#if  defined (CONFIG_JPN_MODEL_SC_03D)
+	if (get_hw_rev() == 0x02) {
+	  	touchkey_keycode[1] = key_menu;
+		touchkey_keycode[3] = key_back;
+	} else {
+		touchkey_keycode[1] = key_menu;
+		touchkey_keycode[2] = key_back;
+	}
+#elif defined (CONFIG_JPN_MODEL_SC_05D)
+	touchkey_keycode[1] = key_menu;
+	touchkey_keycode[2] = key_back;
+#endif
+
+	return size;
+}
+#endif
+
 static DEVICE_ATTR(touch_version, S_IRUGO | S_IWUSR | S_IWGRP, touch_version_read, touch_version_write);
 static DEVICE_ATTR(touch_recommend, S_IRUGO | S_IWUSR | S_IWGRP, touch_recommend_read, touch_recommend_write);
 static DEVICE_ATTR(touch_update, S_IRUGO | S_IWUSR | S_IWGRP, touch_update_read, touch_update_write);
@@ -1973,7 +2013,9 @@ static DEVICE_ATTR(touchkey_brightness, S_IRUGO | S_IWUSR | S_IWGRP, brightness_
 static DEVICE_ATTR(autocal_enable, S_IRUGO | S_IWUSR | S_IWGRP, NULL, autocalibration_enable);
 static DEVICE_ATTR(autocal_stat, S_IRUGO | S_IWUSR | S_IWGRP, autocalibration_status, NULL);
 #endif 
-
+#ifdef CONFIG_TWEAK_REPLACE_BACK_MENU
+static DEVICE_ATTR(touchkey_replace_back_menu, 0666, touchkey_replace_back_menu_show, touchkey_replace_back_menu_store);
+#endif
 
 #ifdef CONFIG_BATTERY_SEC
 extern unsigned int is_lpcharging_state(void);
@@ -2142,6 +2184,14 @@ static int __init touchkey_init(void)
 	{
 		printk("%s device_create_file fail dev_attr_melfasevtcntrl\n",__FUNCTION__);
 		pr_err("Failed to create device file(%s)!\n", dev_attr_melfasevtcntrl.attr.name);
+	}
+#endif
+
+#ifdef CONFIG_TWEAK_REPLACE_BACK_MENU
+	if (device_create_file(sec_touchkey, &dev_attr_touchkey_replace_back_menu) < 0)
+	{
+		printk("%s device_create_file fail dev_attr_melfasevtcntrl\n",__FUNCTION__);
+		pr_err("Failed to create device file(%s)!\n", dev_attr_touchkey_replace_back_menu.attr.name);
 	}
 #endif
 
