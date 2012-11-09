@@ -996,8 +996,8 @@ static int msm_hsusb_config_vddcx(int high)
 	return ret;
 }
 
-#define USB_PHY_3P3_VOL_MIN	3050000 /* uV */
-#define USB_PHY_3P3_VOL_MAX	3050000 /* uV */
+#define USB_PHY_3P3_VOL_MIN	3600000 /* uV */
+#define USB_PHY_3P3_VOL_MAX	3600000 /* uV */
 #define USB_PHY_3P3_HPM_LOAD	50000	/* uA */
 #define USB_PHY_3P3_LPM_LOAD	4000	/* uA */
 
@@ -1373,7 +1373,9 @@ static struct msm_otg_platform_data msm_otg_pdata = {
 	 */
 	.pemp_level		 = PRE_EMPHASIS_WITH_20_PERCENT,
 	.cdr_autoreset		 = CDR_AUTO_RESET_DISABLE,
+#if defined(CONFIG_KOR_OPERATOR_LGU)	
 	.drv_ampl		 = HS_DRV_AMPLITUDE_75_PERCENT,
+#endif	
 	.se1_gating		 = SE1_GATING_DISABLE,
 	.bam_disable		 = 1,
 #ifdef CONFIG_USB_EHCI_MSM_72K
@@ -3060,7 +3062,7 @@ static void __init msm8x60_init_dsps(void)
 
 #ifdef CONFIG_FB_MSM_HDMI_MSM_PANEL
 
-#define MSM_FB_EXT_BUF_SIZE  (1920 * 1080 * 4 * 1) /* 32 bpp x 1 page */
+#define MSM_FB_EXT_BUF_SIZE  (1920 * 1080 * 2 * 1) /* 2 bpp x 1 page */
 #elif defined(CONFIG_FB_MSM_TVOUT)
 #define MSM_FB_EXT_BUF_SIZE  (720 * 576 * 2 * 2) /* 2 bpp x 2 pages */
 #else
@@ -11463,7 +11465,7 @@ static int bluetooth_power(int on)
 
 	if (on) {
 		printk(KERN_DEBUG "config_gpio_table bt pwr on\n");
-		msleep(100);
+		//msleep(100);
 		config_gpio_table(bt_config_power_on, ARRAY_SIZE(bt_config_power_on));
 		pr_info("bluetooth_power GPIO_BT_RESET:%d   \n", gpio_get_value(GPIO_BT_RESET));//, gpio_get_value(GPIO_BT_HOST_WAKE), gpio_get_value(GPIO_BT_REG_ON));
 
@@ -11474,16 +11476,22 @@ static int bluetooth_power(int on)
 		msleep(150);   
 		//gpio_direction_output(GPIO_BT_WAKE, GPIO_WLAN_LEVEL_HIGH);		
 		gpio_direction_output(GPIO_BT_RESET, GPIO_WLAN_LEVEL_HIGH);
-		msleep(100);
-		gpio_direction_output(GPIO_BT_RESET, GPIO_WLAN_LEVEL_LOW);
+		
 		pr_info("bluetooth_power 1 GPIO_BT_RESET:%d   \n", gpio_get_value(GPIO_BT_RESET));
 		#else	  
 		gpio_direction_output(GPIO_BT_WAKE, GPIO_WLAN_LEVEL_HIGH);
 		gpio_direction_output(GPIO_BT_REG_ON, GPIO_WLAN_LEVEL_HIGH);
 		#endif	
-
-		msleep(100);	 	 
+		
+		/*
+		gpio_direction_output(GPIO_BT_RESET, GPIO_WLAN_LEVEL_LOW);
+             #if 1 //def CONFIG_TARGET_LOCALE_KOR_SKT
+		msleep(100);	 
+		#else	 
+		msleep(50);
+	       #endif		 
 		gpio_direction_output(GPIO_BT_RESET, GPIO_WLAN_LEVEL_HIGH);
+		*/
 
 		bluesleep_start();
 	} else {

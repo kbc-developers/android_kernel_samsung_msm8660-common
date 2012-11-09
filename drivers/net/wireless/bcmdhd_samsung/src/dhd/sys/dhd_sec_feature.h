@@ -82,7 +82,8 @@
    && defined(CONFIG_JPN_OPERATOR_NTT)
 #undef READ_MACADDR
 #undef RDWR_MACADDR
-#define WRITE_MACADDR
+//#define WRITE_MACADDR
+#define READ_MACADDR
 #endif
 
 /* REGION CODE */

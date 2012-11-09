@@ -2537,7 +2537,7 @@ static int sdio_al_test_debugfs_init(void)
 
 	test_ctx->debug.host_sender_no_lp_diag_rpc_test =
 		debugfs_create_file("170_host_sender_no_lp_diag_rpc_test",
-				     S_IRUGO | S_IWUSR |S_IWGRP,
+				     S_IRUGO | S_IWUGO,
 				     test_ctx->debug.debug_root,
 				     NULL,
 				     &host_sender_no_lp_diag_rpc_test_ops);
