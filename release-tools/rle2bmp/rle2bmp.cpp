@@ -29,8 +29,11 @@
 
 #define _DEBUG
 
-#define IMAGE_WIDTH	(720)
+#define IMAGE_WIDTH	(800)
 #define IMAGE_HEIGHT	(1280)
+
+//#define BITMAP_FORMAT_BGR
+#define BITMAP_FORMAT_BRG
 
 #ifdef _DEBUG
 #define PRINT_VAL(val) printf(#val " = %d(0x%08x)\n", (unsigned int)val, (unsigned int)val)
@@ -186,9 +189,15 @@ int main(int argc, char** argv)
         fileSize -= 4;
         rgb565to888(rgb565, r, g, b);
         while (count--) {
+#if defined(BITMAP_FORMAT_BGR)
             pBmpBuf[out_pos++] = b;
             pBmpBuf[out_pos++] = g;
             pBmpBuf[out_pos++] = r;
+#elif defined(BITMAP_FORMAT_BRG)
+            pBmpBuf[out_pos++] = b;
+            pBmpBuf[out_pos++] = r;
+            pBmpBuf[out_pos++] = g;
+#endif
             cur_x++;
             if (cur_x == IMAGE_WIDTH) {
                 cur_y--;

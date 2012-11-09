@@ -35,6 +35,9 @@
 #define SC03D_IMAGE_WIDTH     (600)
 #define SC03D_IMAGE_HEIGHT    (800)
 
+//#define BITMAP_FORMAT_RGB
+#define BITMAP_FORMAT_BRG
+//#define BITMAP_FORMAT_BGR
 
 #ifdef _DEBUG
 #define PRINT_VAL(val) printf(#val " = %d(0x%08x)\n", (unsigned int)val, (unsigned int)val)
@@ -90,7 +93,13 @@ static inline uint32_t read_4byte(uint8_t* &pData) {
 }
 
 static inline uint16_t rgb888to565(uint8_t r, uint8_t g, uint8_t b) {
+#if defined(BITMAP_FORMAT_RGB)
     return ((((r) >> 3) << 11) | (((g) >> 2) << 5) | ((b) >> 3));
+#elif defined(BITMAP_FORMAT_BRG)
+    return ((((g) >> 3) << 11) | (((r) >> 2) << 5) | ((b) >> 3));
+#elif defined(BITMAP_FORMAT_BGR)
+    return ((((b) >> 3) << 11) | (((g) >> 2) << 5) | ((r) >> 3));
+#endif
 }
 
 
