@@ -79,11 +79,10 @@
 #endif
 
 #if (defined(CONFIG_TARGET_SERIES_Q1) || defined(CONFIG_TARGET_SERIES_CELOX))\
-   && defined(CONFIG_JPN_OPERATOR_NTT)
+	&& defined(CONFIG_JPN_OPERATOR_NTT)
 #undef READ_MACADDR
 #undef RDWR_MACADDR
-//#define WRITE_MACADDR
-#define READ_MACADDR
+#define WRITE_MACADDR
 #endif
 
 /* REGION CODE */
