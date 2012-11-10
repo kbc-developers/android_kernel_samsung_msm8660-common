@@ -39,6 +39,10 @@
 #include <linux/remote_spinlock.h>
 #include <linux/pm_qos_params.h>
 
+#ifdef CONFIG_ISDBTMM
+#include <linux/kthread.h>
+#endif /* CONFIG_ISDBTMM */
+
 #define SPI_DRV_NAME                  "spi_qsd"
 #if defined(CONFIG_SPI_QSD) || defined(CONFIG_SPI_QSD_MODULE)
 
@@ -263,7 +267,16 @@ struct msm_spi {
 	spinlock_t               queue_lock;
 	struct mutex             core_lock;
 	struct list_head         queue;
+
+#ifdef CONFIG_ISDBTMM
+	struct task_struct      *spiQsdThread;
+	wait_queue_head_t        spiQsdThreadWait;
+	int                      spiQsdStatus; // 0:wait 1:run 2:exit
+	struct mutex             spiQsdThread_lock;
+#else
 	struct workqueue_struct *workqueue;
+#endif /* CONFIG_ISDBTMM */
+	
 	struct work_struct       work_data;
 	struct spi_message      *cur_msg;
 	struct spi_transfer     *cur_transfer;
@@ -1837,7 +1850,16 @@ static int msm_spi_transfer(struct spi_device *spi, struct spi_message *msg)
 	dd->transfer_pending = 1;
 	list_add_tail(&msg->queue, &dd->queue);
 	spin_unlock_irqrestore(&dd->queue_lock, flags);
+	
+#ifdef CONFIG_ISDBTMM
+	mutex_lock(&(dd->spiQsdThread_lock));
+	dd->spiQsdStatus = 1;
+	mutex_unlock(&(dd->spiQsdThread_lock));
+	wake_up_interruptible(&(dd->spiQsdThreadWait));
+#else
 	queue_work(dd->workqueue, &dd->work_data);
+#endif /* CONFIG_ISDBTMM */
+
 	return 0;
 }
 
@@ -2210,6 +2232,44 @@ static __init int msm_spi_init_dma(struct msm_spi *dd)
 	return 0;
 }
 
+#ifdef CONFIG_ISDBTMM
+int msm_spi_workq_thread(void *arg){
+	
+	int wRet = 0;
+	struct msm_spi *dd = (struct msm_spi*)arg;
+	dev_err(dd->dev, "msm_spi_workq_thread enter\n");
+
+	while (!kthread_should_stop()) {
+		wRet = wait_event_interruptible(dd->spiQsdThreadWait,
+										dd->spiQsdStatus!=0);
+		dev_err(dd->dev, "msm_spi_workq_thread spiQsdStatus : %d wRet : %d\n",
+				dd->spiQsdStatus,wRet);
+		
+		mutex_lock(&(dd->spiQsdThread_lock));
+		/* Condition NG */
+		if (wRet != 0) {
+			dd->spiQsdStatus = 0;
+			mutex_unlock(&(dd->spiQsdThread_lock));
+			continue;
+		}
+		/* Condition OK */
+		else if (dd->spiQsdStatus == 1) {
+			msm_spi_workq(&(dd->work_data));
+			dd->spiQsdStatus = 0;
+			mutex_unlock(&(dd->spiQsdThread_lock));
+		}
+		else {
+			mutex_unlock(&(dd->spiQsdThread_lock));
+			set_current_state(TASK_INTERRUPTIBLE);
+			schedule();
+		}
+	}
+	dev_err(dd->dev, "msm_spi_workq_thread exit\n");
+	
+	return 0;
+}
+#endif /* CONFIG_ISDBTMM */
+
 static int __init msm_spi_probe(struct platform_device *pdev)
 {
 	struct spi_master      *master;
@@ -2319,10 +2379,32 @@ skip_dma_resources:
 	INIT_LIST_HEAD(&dd->queue);
 	INIT_WORK(&dd->work_data, msm_spi_workq);
 	init_waitqueue_head(&dd->continue_suspend);
+	
+#ifdef CONFIG_ISDBTMM
+{
+	int ret = 0;
+	struct sched_param param = { .sched_priority = 99 };
+	dd->spiQsdStatus = 0;
+	init_waitqueue_head(&dd->spiQsdThreadWait);
+	mutex_init(&(dd->spiQsdThread_lock));
+	dd->spiQsdThread = kthread_run(msm_spi_workq_thread,
+							 	(void*)dd, dev_name(master->dev.parent));
+	if (IS_ERR(dd->spiQsdThread)) {
+		dev_err(dd->dev, "[ERR] kthread_run() : ret=%p", dd->spiQsdThread);
+		goto err_probe_workq;
+	}
+	
+	ret = sched_setscheduler(dd->spiQsdThread, SCHED_FIFO, &param);
+	if ( ret < 0 ) {
+		dev_err(dd->dev, "[ERR] sched_setscheduler() : ret=%d", ret);
+	}
+}
+#else
 	dd->workqueue = create_singlethread_workqueue(
 		dev_name(master->dev.parent));
 	if (!dd->workqueue)
 		goto err_probe_workq;
+#endif /* CONFIG_ISDBTMM */
 
 	if (!request_mem_region(dd->mem_phys_addr, dd->mem_size,
 				SPI_DRV_NAME)) {
@@ -2483,7 +2565,13 @@ err_probe_ioremap2:
 err_probe_ioremap:
 	release_mem_region(dd->mem_phys_addr, dd->mem_size);
 err_probe_reqmem:
+#ifdef CONFIG_ISDBTMM
+	dd->spiQsdStatus = 2;
+	wake_up_interruptible(&(dd->spiQsdThreadWait));
+	kthread_stop(dd->spiQsdThread);
+#else
 	destroy_workqueue(dd->workqueue);
+#endif /* CONFIG_ISDBTMM */
 err_probe_workq:
 	msm_spi_free_gpios(dd);
 err_probe_gpio:
@@ -2565,7 +2653,13 @@ static int __devexit msm_spi_remove(struct platform_device *pdev)
 	msm_spi_release_gsbi(dd);
 	clk_put(dd->clk);
 	clk_put(dd->pclk);
+#ifdef CONFIG_ISDBTMM
+	dd->spiQsdStatus = 2;
+	wake_up_interruptible(&(dd->spiQsdThreadWait));
+	kthread_stop(dd->spiQsdThread);
+#else
 	destroy_workqueue(dd->workqueue);
+#endif /* CONFIG_ISDBTMM */
 	platform_set_drvdata(pdev, 0);
 	spi_unregister_master(master);
 	spi_master_put(master);

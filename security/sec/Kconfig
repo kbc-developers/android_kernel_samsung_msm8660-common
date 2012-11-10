@@ -1,0 +1,8 @@
+config SECURITY_SEC
+	bool "Sec Security Support"
+        depends on SECURITY
+	default n
+	help
+	  This selects Sec Security Linux.
+
+

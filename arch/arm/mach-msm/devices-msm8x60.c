@@ -117,7 +117,8 @@ static void charm_ap2mdm_kpdpwr_off(void)
 	}
 	gpio_direction_output(AP2MDM_ERRFATAL, 0);
 
-#if defined(CONFIG_TARGET_LOCALE_USA)
+#if defined(CONFIG_TARGET_LOCALE_USA) \
+ || (defined(CONFIG_EUR_OPERATOR_OPEN) && defined(CONFIG_TARGET_SERIES_P5LTE))
 	/* When PM8058 has already shut down, PM8028 is still pulsing.
 	 * After shut down the MDM9K by AP2MDM_STATUS , 
 	 * then always turn off the PM8028 by AP2MDM_PMIC_RESET 

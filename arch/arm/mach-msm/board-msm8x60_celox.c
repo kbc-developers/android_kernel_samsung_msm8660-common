@@ -11097,7 +11097,7 @@ pr_err("%s PMIC_GPIO_EAR_DET : OK \n", __func__);
 			pr_err("%s PMIC_GPIO_MHL_RST config failed\n", __func__);
 			return rc;
 		}
-#if defined (CONFIG_KOR_MODEL_SHV_E110S) 
+#if defined (CONFIG_KOR_MODEL_SHV_E110S)
 	if( get_hw_rev() < 7 )
 		rc = pm8xxx_gpio_config(PM8058_GPIO_PM_TO_SYS(PMIC_GPIO_MHL_INT_9), &mhl_int);
 	else
@@ -16715,6 +16715,7 @@ static int atv_dac_power(int on)
 }
 #endif
 
+#ifdef CONFIG_FB_MSM_MIPI_S6D6AA0_WXGA_PANEL
 static struct msm_panel_common_pdata mdp_pdata = {
 	.gpio = MDP_VSYNC_GPIO,
 	.mdp_max_clk = 200000000,
@@ -16728,6 +16729,36 @@ static struct msm_panel_common_pdata mdp_pdata = {
 	.mem_hid = MEMTYPE_EBI1,
 #endif
 };
+#elif defined(CONFIG_FB_MSM_MIPI_S6E8AA0_HD720_PANEL)
+static struct msm_panel_common_pdata mdp_pdata = {
+	.gpio = MDP_VSYNC_GPIO,
+	.mdp_core_max_clk = 200000000,
+#ifdef CONFIG_MSM_BUS_SCALING
+	.mdp_bus_scale_table = &mdp_bus_scale_pdata,
+#endif
+	.mdp_rev = MDP_REV_41,
+#ifdef CONFIG_MSM_MULTIMEDIA_USE_ION
+	.mem_hid = BIT(ION_CP_WB_HEAP_ID),
+#else
+	.mem_hid = MEMTYPE_EBI1,
+#endif
+};
+#else
+#ifdef CONFIG_FB_MSM_MIPI_DSI
+static struct msm_panel_common_pdata mdp_pdata = {
+	.gpio = MDP_VSYNC_GPIO,
+	.mdp_core_max_clk = 200000000,
+#ifdef CONFIG_MSM_BUS_SCALING
+	.mdp_bus_scale_table = &mdp_bus_scale_pdata,
+#endif
+	.mdp_rev = MDP_REV_41,
+#ifdef CONFIG_MSM_MULTIMEDIA_USE_ION
+	.mem_hid = BIT(ION_CP_WB_HEAP_ID),
+#else
+	.mem_hid = MEMTYPE_EBI1,
+#endif
+};
+#endif
 
 static void __init reserve_mdp_memory(void)
 {

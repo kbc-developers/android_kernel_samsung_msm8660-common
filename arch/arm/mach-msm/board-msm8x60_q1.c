@@ -11,7 +11,7 @@
  *
  */
 
-#include <linux/kernel.h> 
+#include <linux/kernel.h>
 #include <linux/platform_device.h>
 #include <linux/gpio.h>
 #include <linux/irq.h>
@@ -8786,9 +8786,7 @@ static void mxt540e_power_off(void)
 
 static void mxt540e_register_callback(void *function)
 {
-#if 0
 	charging_cbs.tsp_set_charging_cable = function;
-#endif
 }
 
 static void mxt540e_read_ta_status(bool *ta_status)
@@ -8867,7 +8865,7 @@ static struct wacom_g5_platform_data wacom_platform_data = {
 	.max_y = WACOM_POSY_MAX,
 	.min_pressure = 0,
 	.max_pressure = WACOM_PRESSURE_MAX,
-#ifdef WACOM_PDCT_WORK_AROUND	
+#ifdef WACOM_PDCT_WORK_AROUND
 	.gpio_pendct = GPIO_PEN_PDCT,
 #endif
 	.init_platform_hw = wacom_init_hw,
@@ -16145,6 +16143,7 @@ static int atv_dac_power(int on)
 }
 #endif
 
+#ifdef CONFIG_FB_MSM_MIPI_S6D6AA0_WXGA_PANEL // test
 static struct msm_panel_common_pdata mdp_pdata = {
 	.gpio = MDP_VSYNC_GPIO,
 	.mdp_max_clk = 200000000,
@@ -16158,6 +16157,49 @@ static struct msm_panel_common_pdata mdp_pdata = {
 	.mem_hid = MEMTYPE_EBI1,
 #endif
 };
+#elif defined(CONFIG_FB_MSM_MIPI_S6E8AA0_HD720_PANEL)
+static struct msm_panel_common_pdata mdp_pdata = {
+	.gpio = MDP_VSYNC_GPIO,
+	.mdp_max_clk = 200000000,
+#ifdef CONFIG_MSM_BUS_SCALING
+	.mdp_bus_scale_table = &mdp_bus_scale_pdata,
+#endif
+	.mdp_rev = MDP_REV_41,
+#ifdef CONFIG_MSM_MULTIMEDIA_USE_ION
+	.mem_hid = BIT(ION_CP_WB_HEAP_ID),
+#else
+	.mem_hid = MEMTYPE_EBI1,
+#endif
+};
+#elif defined(CONFIG_FB_MSM_MIPI_S6E8AA0_WXGA_Q1_PANEL)
+static struct msm_panel_common_pdata mdp_pdata = {
+	.gpio = MDP_VSYNC_GPIO,
+	.mdp_max_clk = 200000000,
+#ifdef CONFIG_MSM_BUS_SCALING
+	.mdp_bus_scale_table = &mdp_bus_scale_pdata,
+#endif
+	.mdp_rev = MDP_REV_41,
+#ifdef CONFIG_MSM_MULTIMEDIA_USE_ION
+	.mem_hid = BIT(ION_CP_WB_HEAP_ID),
+#else
+	.mem_hid = MEMTYPE_EBI1,
+#endif
+};
+#else
+static struct msm_panel_common_pdata mdp_pdata = {
+	.gpio = MDP_VSYNC_GPIO,
+	.mdp_max_clk = 200000000,
+#ifdef CONFIG_MSM_BUS_SCALING
+	.mdp_bus_scale_table = &mdp_bus_scale_pdata,
+#endif
+	.mdp_rev = MDP_REV_41,
+#ifdef CONFIG_MSM_MULTIMEDIA_USE_ION
+	.mem_hid = BIT(ION_CP_WB_HEAP_ID),
+#else
+	.mem_hid = MEMTYPE_EBI1,
+#endif
+};
+#endif
 
 static void __init reserve_mdp_memory(void)
 {

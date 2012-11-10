@@ -18,7 +18,8 @@
  * =====================================================================================
  */
 #include "cmc623.h"
-#if defined (CONFIG_MACH_P4_LTE) && (defined (CONFIG_TARGET_LOCALE_JPN_NTT) || defined(CONFIG_TARGET_LOCALE_KOR_SKT))
+//#if defined (CONFIG_MACH_P4_LTE) && (defined (CONFIG_TARGET_LOCALE_JPN) || defined(CONFIG_TARGET_LOCALE_KOR_SKT))
+#if (defined (CONFIG_MACH_P4_LTE) &&  defined(CONFIG_TARGET_LOCALE_KOR_SKT))|| defined (CONFIG_JPN_MODEL_SC_01D)
 #include "p4lte_cmc623_tune.h"
 #else
 #include "p5lte_cmc623_tune.h"

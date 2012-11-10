@@ -354,16 +354,20 @@ static int __pm8058_reset_pwr_off(struct pm8xxx_misc_chip *chip, int reset)
 		__pm8058_disable_smps_locally_set_pull_down(chip,
 			REG_PM8058_S0_CTRL, REG_PM8058_S0_TEST2,
 			REG_PM8058_VREG_EN_MSM, BIT(7));
+		printk(KERN_CRIT "1\n");
 		__pm8058_disable_smps_locally_set_pull_down(chip,
 			REG_PM8058_S1_CTRL, REG_PM8058_S1_TEST2,
 			REG_PM8058_VREG_EN_MSM, BIT(6));
+		printk(KERN_CRIT "2\n");
 		__pm8058_disable_smps_locally_set_pull_down(chip,
 			REG_PM8058_S3_CTRL, REG_PM8058_S3_TEST2,
 			REG_PM8058_VREG_EN_GRP_5_4, BIT(7) | BIT(4));
+		printk(KERN_CRIT "3\n");
 		/* Disable LDO 21 locally and set pulldown enable bit. */
 		__pm8058_disable_ldo_locally_set_pull_down(chip,
 			REG_PM8058_L21_CTRL, REG_PM8058_VREG_EN_GRP_5_4,
 			BIT(1));
+		printk(KERN_CRIT "4\n");
 	}
 
 	/*
@@ -413,24 +417,29 @@ static int __pm8901_reset_pwr_off(struct pm8xxx_misc_chip *chip, int reset)
 		REG_PM8901_REGULATOR_S4_PMR,
 		REG_PM8901_REGULATOR_S1_PMR,
 	};
-
+	printk(KERN_CRIT "1\n");
 	/* Fix-up: Turn off regulators S1, S2, S3, S4 when shutting down. */
 	if (!reset) {
 		for (i = 0; i < 4; i++) {
 			rc = pm8xxx_misc_masked_write(chip, pmr_addr[i],
 				PM8901_REGULATOR_PMR_STATE_MASK,
 				PM8901_REGULATOR_PMR_STATE_OFF);
+			pr_err("i=%d\n", i);
 			if (rc) {
 				pr_err("pm8xxx_misc_masked_write failed, "
 					"rc=%d\n", rc);
 				goto read_write_err;
 			}
+#if !defined(CONFIG_JPN_MODEL_SC_01E) && !defined(CONFIG_USA_MODEL_SGH_I957)
 			mdelay(PM8901_DELAY_AFTER_REG_DISABLE_MS);
+#endif
 		}
 	}
-
+	printk(KERN_CRIT "2\n");
 read_write_err:
+#if !defined(CONFIG_JPN_MODEL_SC_01E) && !defined(CONFIG_USA_MODEL_SGH_I957)
 	mdelay(PM8901_DELAY_BEFORE_SHUTDOWN_MS);
+#endif
 	return rc;
 }
 
@@ -485,16 +494,24 @@ int pm8xxx_reset_pwr_off(int reset)
 	list_for_each_entry(chip, &pm8xxx_misc_chips, link) {
 		switch (chip->version) {
 		case PM8XXX_VERSION_8018:
+			printk(KERN_CRIT "PM8XXX_VERSION_8018\n");
 			rc = __pm8018_reset_pwr_off(chip, reset);
+			printk(KERN_CRIT "PM8XXX_VERSION_8018_END\n");
 			break;
 		case PM8XXX_VERSION_8058:
+			printk(KERN_CRIT "PM8XXX_VERSION_8058\n");
 			rc = __pm8058_reset_pwr_off(chip, reset);
+			printk(KERN_CRIT "PM8XXX_VERSION_8058_END\n");
 			break;
 		case PM8XXX_VERSION_8901:
+			printk(KERN_CRIT "PM8XXX_VERSION_8901\n");
 			rc = __pm8901_reset_pwr_off(chip, reset);
+			printk(KERN_CRIT "PM8XXX_VERSION_8901_END\n");
 			break;
 		case PM8XXX_VERSION_8921:
+			printk(KERN_CRIT "PM8XXX_VERSION_8921\n");
 			rc = __pm8921_reset_pwr_off(chip, reset);
+			printk(KERN_CRIT "PM8XXX_VERSION_8921_END\n");
 			break;
 		default:
 			/* PMIC doesn't have reset_pwr_off; do nothing. */

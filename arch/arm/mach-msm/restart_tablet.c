@@ -134,6 +134,9 @@ EXPORT_SYMBOL(msm_set_restart_mode);
 
 static void __msm_power_off(int lower_pshold)
 {
+#ifdef CONFIG_JPN_MODEL_SC_01D
+	local_irq_disable();
+#endif
 	printk(KERN_CRIT "Powering off the SoC\n");
 #ifdef CONFIG_MSM_DLOAD_MODE
 	set_dload_mode(0);
@@ -145,6 +148,9 @@ static void __msm_power_off(int lower_pshold)
 		mdelay(10000);
 		printk(KERN_ERR "Powering off has failed\n");
 	}
+#ifdef CONFIG_JPN_MODEL_SC_01D
+	local_irq_enable();
+#endif
 	return;
 }
 
@@ -182,8 +188,21 @@ static void cpu_power_off(void *data)
 		;
 }
 
+#if defined(CONFIG_TARGET_SERIES_P8LTE)
+#ifdef CONFIG_SEC_DEBUG
+extern void sec_debug_disabled(void);
+extern void sec_debug_clear_upload_magic(void);
+#endif
+#endif
+
 static irqreturn_t resout_irq_handler(int irq, void *dev_id)
 {
+#if defined(CONFIG_TARGET_SERIES_P8LTE)
+#ifdef CONFIG_SEC_DEBUG
+	sec_debug_disabled();
+	sec_debug_clear_upload_magic();
+#endif
+#endif
 	pr_warn("%s PMIC Initiated shutdown\n", __func__);
 	oops_in_progress = 1;
 	smp_call_function_many(cpu_online_mask, cpu_power_off, NULL, 0);

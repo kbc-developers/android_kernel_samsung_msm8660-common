@@ -599,6 +599,20 @@ config MACH_MSM8X60_DRAGON
 	help
 	  Support for the Qualcomm MSM8x60 Dragon board.
 
+config MACH_P5_LTE
+	depends on ARCH_MSM8X60
+	default n
+	bool "MSM8x60 Samsung P5 LTE"
+	help
+	  Support for the Samsung P5 LTE device.
+
+config MACH_P4_LTE
+	depends on ARCH_MSM8X60
+	default n
+	bool "MSM8x60 Samsung P4 LTE"
+	help
+	  Support for the Samsung P4 LTE device.
+
 config MACH_MSM8960_SIM
 	depends on ARCH_MSM8960
 	bool "MSM8960 Simulator"
@@ -2144,6 +2158,11 @@ config CLOCK_MAP
 	  clock gets a unique id. If the bitmap has that bit set the clock
 	  is enabled, otherwise the clock is disabled.
 
+config MSM_SLEEP_STATS
+	bool "Enable exporting of MSM sleep stats to userspace"
+	depends on CPU_IDLE
+	default n
+
 config MSM_SLEEP_STATS_DEVICE
 	bool "Enable exporting of MSM sleep device stats to userspace"
 
@@ -2408,6 +2427,15 @@ config Q1_KOR_AUDIO
 	default n
 	help
 	  Support Q1 KOR AUDIO
+
+config MSM_DCVS
+	bool "Use MSM DCVS for CPU/GPU Frequency control"
+	depends on MSM_SCM
+	help
+	  Enable support for MSM DCVS to control all CPU and GPU core frequencies.
+	  The DCVS manager allows idle driver to feed the idle information to the
+	  algorithm and the algorithm returns a frequency for the core which is
+	  passed to the frequency change driver.
 
 config ATHEROS_WIFI
 	bool "ATHEROS WIFI"

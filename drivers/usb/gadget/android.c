@@ -826,15 +826,7 @@ static int rndis_function_bind_config(struct android_usb_function *f,
 		return -1;
 	}
 
-	printk(KERN_DEBUG "usb: %s before MAC:%02X:%02X:%02X:%02X:%02X:%02X\n",
-			__func__, rndis->ethaddr[0], rndis->ethaddr[1],
-			rndis->ethaddr[2], rndis->ethaddr[3], rndis->ethaddr[4],
-			rndis->ethaddr[5]);
 	ret = gether_setup_name(c->cdev->gadget, rndis->ethaddr, "rndis");
-	printk(KERN_DEBUG "usb: %s after MAC:%02X:%02X:%02X:%02X:%02X:%02X\n",
-			__func__, rndis->ethaddr[0], rndis->ethaddr[1],
-			rndis->ethaddr[2], rndis->ethaddr[3], rndis->ethaddr[4],
-			rndis->ethaddr[5]);
 	if (ret) {
 		pr_err("%s: gether_setup failed\n", __func__);
 		return ret;
@@ -916,10 +908,6 @@ static ssize_t rndis_ethaddr_show(struct device *dev,
 {
 	struct android_usb_function *f = dev_get_drvdata(dev);
 	struct rndis_function_config *rndis = f->config;
-	printk(KERN_DEBUG "usb: %s MAC: %02X:%02X:%02X:%02X:%02X:%02X\n",
-			__func__,
-		rndis->ethaddr[0], rndis->ethaddr[1], rndis->ethaddr[2],
-		rndis->ethaddr[3], rndis->ethaddr[4], rndis->ethaddr[5]);
 
 	return snprintf(buf, PAGE_SIZE, "%02x:%02x:%02x:%02x:%02x:%02x\n",
 		rndis->ethaddr[0], rndis->ethaddr[1], rndis->ethaddr[2],
@@ -946,12 +934,6 @@ static ssize_t rndis_ethaddr_store(struct device *dev,
 		/* XOR the USB serial across the remaining bytes */
 		rndis->ethaddr[i % (ETH_ALEN - 1) + 1] ^= *src++;
 	}
-#if !defined(CONFIG_USA_MODEL_SGH_I577)
-	printk(KERN_DEBUG "usb: %s MAC:%02X:%02X:%02X:%02X:%02X:%02X\n",
-			__func__, rndis->ethaddr[0], rndis->ethaddr[1],
-			rndis->ethaddr[2], rndis->ethaddr[3], rndis->ethaddr[4],
-			rndis->ethaddr[5]);
-#endif
 	return size;
 #else
 	if (sscanf(buf, "%02x:%02x:%02x:%02x:%02x:%02x\n",
@@ -959,17 +941,9 @@ static ssize_t rndis_ethaddr_store(struct device *dev,
 		    (int *)&rndis->ethaddr[2], (int *)&rndis->ethaddr[3],
 		    (int *)&rndis->ethaddr[4],
 		    (int *)&rndis->ethaddr[5]) == 6) {
-		printk(KERN_DEBUG "usb: %s MAC:%02X:%02X:%02X:%02X:%02X:%02X\n",
-			__func__, rndis->ethaddr[0], rndis->ethaddr[1],
-			rndis->ethaddr[2], rndis->ethaddr[3], rndis->ethaddr[4],
-			rndis->ethaddr[5]);
 		return size;
 
 	}
-	printk(KERN_DEBUG "usb: %s MAC: %02X:%02X:%02X:%02X:%02X:%02X\n",
-			__func__,
-		rndis->ethaddr[0], rndis->ethaddr[1], rndis->ethaddr[2],
-		rndis->ethaddr[3], rndis->ethaddr[4], rndis->ethaddr[5]);
 	return -EINVAL;
 #endif
 }
@@ -1457,8 +1431,11 @@ functions_show(struct device *pdev, struct device_attribute *attr, char *buf)
 
 	mutex_lock(&dev->mutex);
 
-	list_for_each_entry(f, &dev->enabled_functions, enabled_list)
+	list_for_each_entry(f, &dev->enabled_functions, enabled_list) {
+		printk(KERN_DEBUG "usb: %s enabled_func=%s\n",
+				__func__, f->name);
 		buff += snprintf(buff, PAGE_SIZE, "%s,", f->name);
+	}
 
 	mutex_unlock(&dev->mutex);
 
@@ -1555,6 +1532,15 @@ static ssize_t enable_store(struct device *pdev, struct device_attribute *attr,
 		cdev->desc.bDeviceClass = device_desc.bDeviceClass;
 		cdev->desc.bDeviceSubClass = device_desc.bDeviceSubClass;
 		cdev->desc.bDeviceProtocol = device_desc.bDeviceProtocol;
+		printk(KERN_DEBUG "usb: %s vendor=%x,product=%x,bcdDevice=%x",
+				__func__, cdev->desc.idVendor,
+				cdev->desc.idProduct, cdev->desc.bcdDevice);
+		printk(KERN_DEBUG ",Class=%x,SubClass=%x,Protocol=%x\n",
+				cdev->desc.bDeviceClass,
+				cdev->desc.bDeviceSubClass,
+				cdev->desc.bDeviceProtocol);
+		printk(KERN_DEBUG "usb: %s next cmd : usb_add_config\n",
+				__func__);
 		list_for_each_entry(f, &dev->enabled_functions, enabled_list) {
 			if (f->enable)
 				f->enable(f);
@@ -1562,6 +1548,12 @@ static ssize_t enable_store(struct device *pdev, struct device_attribute *attr,
 		android_enable(dev);
 		dev->enabled = true;
 	} else if (!enabled && dev->enabled) {
+#ifdef CONFIG_USB_ANDROID_SAMSUNG_COMPOSITE
+		/* avoid sending a disconnect switch event
+		 * until after we disconnect.
+		*/
+		cdev->mute_switch = true;
+#endif
 		android_disable(dev);
 		list_for_each_entry(f, &dev->enabled_functions, enabled_list) {
 			if (f->disable)

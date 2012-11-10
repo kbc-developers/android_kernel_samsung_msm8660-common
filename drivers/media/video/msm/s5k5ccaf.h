@@ -21,14 +21,10 @@
 	QXGA: 2048 x 1536
 ********************************************************************************************/
 
-#if defined(CONFIG_TARGET_LOCALE_KOR_SKT) || defined(CONFIG_TARGET_LOCALE_KOR_KT) || defined(CONFIG_TARGET_LOCALE_KOR_LGU) || defined (CONFIG_TARGET_LOCALE_USA)
 #define	S5K5CCAF_DEBUG	0
-#else
-#define	S5K5CCAF_DEBUG	1
-#endif
 
 #if S5K5CCAF_DEBUG
-#define CAM_DEBUG(fmt, arg...)	\
+#define cam_dbg(fmt, arg...)	\
 		do {\
 		printk(KERN_DEBUG "[S5K5CCAF] %s : " fmt "\n", __FUNCTION__, ##arg);}\
 		while(0)
@@ -44,7 +40,7 @@
 		while(0)
 			
 #else
-#define CAM_DEBUG(fmt, arg...)	
+#define cam_dbg(fmt, arg...)	
 #define cam_info(fmt, arg...)
 #define cam_err(fmt, arg...)
 #endif
@@ -183,10 +179,10 @@
 #define PCAM_AF_2ND_CHECK_STATUS	7
 #endif
 
-#define S5K5CCGX_AF_MODE_INFINITY		0
+#define S5K5CCGX_AF_MODE_AUTO		0
 #define S5K5CCGX_AF_MODE_MACRO		1
-#define S5K5CCGX_AF_MODE_AUTO		2
-
+#define S5K5CCGX_AF_MODE_INFINITY		2
+#define S5K5CCGX_AF_MODE_FIXED		3
 
 #define S5K5CCGX_AF_STOP		0
 #define S5K5CCGX_AF_START		1
@@ -242,7 +238,7 @@
 #define S5K5CCGX_DTP_OFF		0
 #define S5K5CCGX_DTP_ON			1
 
-
+#define S5K5CCGX_MODE_INIT		0
 #define S5K5CCGX_MODE_PREVIEW		1
 #define S5K5CCGX_MODE_CAPTURE		2	
 #define S5K5CCGX_MODE_DTP		3
@@ -310,9 +306,6 @@ struct s5k5ccaf_ctrl {
 	int vtcall_mode;	
 	int sensor_mode;
 	int app_mode;
-#if defined(CONFIG_TARGET_SERIES_P8LTE)
-	int first_af_running;
-#endif
 };                                                               
 
 #endif

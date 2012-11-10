@@ -72,6 +72,19 @@
 #define HW_OOB
 #endif
 
+#if defined(CONFIG_TARGET_SERIES_P4LTE) && defined(CONFIG_JPN_OPERATOR_NTT)
+#define READ_MACADDR
+#undef RDWR_MACADDR
+#undef WRITE_MACADDR
+#endif
+
+#if (defined(CONFIG_TARGET_SERIES_Q1) || defined(CONFIG_TARGET_SERIES_CELOX))\
+	&& defined(CONFIG_JPN_OPERATOR_NTT)
+#undef READ_MACADDR
+#undef RDWR_MACADDR
+#define WRITE_MACADDR
+#endif
+
 /* REGION CODE */
 
 #if (WLAN_REGION_CODE >= 100) && (WLAN_REGION_CODE < 200) /*EUR*/
@@ -130,3 +143,5 @@
 #define BCMWAPI_WAI
 #endif
 
+#if (WLAN_REGION_CODE >= 400) && (WLAN_REGION_CODE < 500) /* JPN */
+#endif

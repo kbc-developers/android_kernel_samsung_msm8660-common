@@ -255,7 +255,9 @@ static int k3dh_read_accel_xyz(struct k3dh_data *k3dh, struct k3dh_acc *acc)
 	if(k3dh_read_count++ == 500) // each 10 seconds
 	{
 		k3dh_read_count = 0;
+		#if !defined(CONFIG_USA_MODEL_SGH_I757)
 		printk("%s: data=(%d, %d, %d) cal=(%d, %d, %d)\n", __func__, acc->x, acc->y, acc->z, k3dh->cal_data.x, k3dh->cal_data.y, k3dh->cal_data.z);
+		#endif
 	}
 
 	return err;

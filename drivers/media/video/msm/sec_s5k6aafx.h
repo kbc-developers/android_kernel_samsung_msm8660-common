@@ -24,7 +24,7 @@
 #define S5K6AAFX_H
 
 
-//#define S5K6AAFX_DEBUG
+#define	S5K6AAFX_DEBUG
 #ifdef S5K6AAFX_DEBUG
 #define CAM_DEBUG(fmt, arg...)	\
 		do {\
@@ -42,10 +42,7 @@
 		while(0)
 
 #else
-#define CAM_DEBUG(fmt, arg...)	\
-		do {\
-			printk(KERN_DEBUG "[6AAFX] %s : " fmt "\n", __FUNCTION__, ##arg);}\
-		while(0)
+#define CAM_DEBUG(fmt, arg...)
 #define cam_info(fmt, arg...)
 #define cam_err(fmt, arg...)
 #endif

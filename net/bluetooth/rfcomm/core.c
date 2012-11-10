@@ -2190,8 +2190,9 @@ static int __init rfcomm_init(void)
 	err = rfcomm_init_sockets();
 	if (err < 0)
 		goto cleanup;
-
+#if !defined(CONFIG_USA_MODEL_SGH_I757)
 	BT_INFO("RFCOMM ver %s", VERSION);
+#endif
 
 	return 0;
 
