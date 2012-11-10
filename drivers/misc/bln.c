@@ -9,6 +9,9 @@
  * published by the Free Software Foundation.
  */
 
+// Enable the pr_debug() prints
+//#define DEBUG 1
+
 #include <linux/platform_device.h>
 #include <linux/init.h>
 #include <linux/earlysuspend.h>
@@ -28,6 +31,7 @@ static uint32_t blink_count;
 static uint32_t blink_on_msec = 500;
 static uint32_t blink_off_msec = 500;
 static uint32_t max_blink_count = 300;
+static struct mutex bln_mutex;
 
 static struct bln_implementation *bln_imp = NULL;
 static struct wake_lock bln_wake_lock;
@@ -83,7 +87,7 @@ static void bln_blink_start(void)
 
 		pr_info("%s: complete\n", __FUNCTION__);
 	} else {
-		pr_notice("%s: fail (ongoing=%c, blink_state=%c)\n", __FUNCTION__, bln_ongoing, bln_blink_state);
+		pr_notice("%s: fail (ongoing=%d, blink_state=%d)\n", __FUNCTION__, bln_ongoing, bln_blink_state);
 	}
 }
 
@@ -98,12 +102,9 @@ static void bln_blink_stop(void)
 
 		bln_blink_state = 0;
 
-		if (bln_ongoing)
-			bln_led_on();
-
 		pr_info("%s: complete\n", __FUNCTION__);
 	} else {
-		pr_notice("%s: fail (blink_state=%c)\n", __FUNCTION__, bln_blink_state);
+		pr_notice("%s: fail (blink_state=%d)\n", __FUNCTION__, bln_blink_state);
 	}
 }
 
@@ -120,7 +121,7 @@ static void enable_led_notification(void)
 		}
 	}
 
-	pr_notice("%s: fail (enabled=%c ongoing=%c suspended=%c\n", __FUNCTION__, bln_enabled, bln_ongoing, bln_suspended);
+	pr_notice("%s: fail (enabled=%d ongoing=%d suspended=%d)\n", __FUNCTION__, bln_enabled, bln_ongoing, bln_suspended);
 }
 
 static void disable_led_notification(void)
@@ -134,7 +135,7 @@ static void disable_led_notification(void)
 
 		pr_debug("%s: success\n", __FUNCTION__);
 	} else {
-		pr_notice("%s: fail (ongoing=%c\n", __FUNCTION__, bln_ongoing);
+		pr_notice("%s: fail (ongoing=%d)\n", __FUNCTION__, bln_ongoing);
 	}
 }
 
@@ -150,6 +151,7 @@ static ssize_t enabled_status_write(struct device *dev,
 	unsigned int data;
 	if(sscanf(buf, "%u\n", &data) == 1) {
 		pr_devel("%s: %u \n", __FUNCTION__, data);
+		mutex_lock(&bln_mutex);
 		if (data == 1) {
 			pr_debug("%s: bln support enabled\n", __FUNCTION__);
 			bln_enabled = true;
@@ -161,6 +163,7 @@ static ssize_t enabled_status_write(struct device *dev,
 			pr_err("%s: invalid input %u\n", __FUNCTION__,
 					data);
 		}
+		mutex_unlock(&bln_mutex);
 	} else {
 		pr_err("%s: invalid input\n", __FUNCTION__);
 	}
@@ -180,12 +183,14 @@ static ssize_t notification_led_status_write(struct device *dev,
 	unsigned int data;
 
 	if (sscanf(buf, "%u\n", &data) == 1) {
+		mutex_lock(&bln_mutex);
 		if (data == 1)
 			enable_led_notification();
 		else if (data == 0)
 			disable_led_notification();
 		else
 			pr_err("%s: wrong input %u\n", __FUNCTION__, data);
+		mutex_unlock(&bln_mutex);
 	} else {
 		pr_err("%s: input error\n", __FUNCTION__);
 	}
@@ -207,8 +212,10 @@ static ssize_t blink_interval_status_write(struct device *dev,
 
 	c = sscanf(buf, "%u %u\n", &ms_on, &ms_off);
 	if (c == 1 || c == 2) {
+		mutex_lock(&bln_mutex);
 		blink_on_msec = ms_on;
 		blink_off_msec = (c == 2) ? ms_off : ms_on;
+		mutex_unlock(&bln_mutex);
 	} else {
 		pr_err("%s: invalid input\n", __FUNCTION__);
 	}
@@ -227,10 +234,12 @@ static ssize_t max_blink_count_status_write(struct device *dev,
 {
 	unsigned int data;
 
+	mutex_lock(&bln_mutex);
 	if (sscanf(buf, "%u\n", &data) == 1)
 		max_blink_count = data;
 	else
 		pr_err("%s: invalid input\n", __FUNCTION__);
+	mutex_unlock(&bln_mutex);
 
 	return size;
 }
@@ -247,6 +256,7 @@ static ssize_t blink_control_write(struct device *dev,
 	unsigned int data;
 
 	if (sscanf(buf, "%u\n", &data) == 1) {
+		mutex_lock(&bln_mutex);
 		if (data == 1) {
 			bln_blink_start();
 		} else if (data == 0) {
@@ -254,6 +264,7 @@ static ssize_t blink_control_write(struct device *dev,
 		} else {
 			pr_err("%s: input error %u\n", __FUNCTION__, data);
 		}
+		mutex_unlock(&bln_mutex);
 	} else {
 		pr_err("%s: input error\n", __FUNCTION__);
 	}
@@ -318,22 +329,42 @@ EXPORT_SYMBOL(register_bln_implementation);
 
 void cancel_bln_activity(void)
 {
-	disable_led_notification();
+	mutex_lock(&bln_mutex);
+
+	if (bln_ongoing) {
+		bln_blink_stop();
+		bln_ongoing = false;
+
+		// Since this is only called on early_resume and therefore lights
+		// are about to be turned on, don't bother disabling the regulators.
+		// Also, cypress will need to know that it needs to write the desired
+                // lights state.
+
+		pr_debug("%s: success\n", __FUNCTION__);
+	} else {
+		pr_notice("%s: fail (ongoing=%d)\n", __FUNCTION__, bln_ongoing);
+	}
+
+	mutex_unlock(&bln_mutex);
 }
 EXPORT_SYMBOL(cancel_bln_activity);
 
 static void blink_callback(struct work_struct *blink_work)
 {
+	mutex_lock(&bln_mutex);
 	if (bln_led_state) {
 		if (--blink_count == 0) {
 			pr_notice("%s: notification led time out\n", __FUNCTION__);
 			disable_led_notification();
-			return;
+			goto unlock;
 		}
 		bln_led_off();
 	} else {
 		bln_led_on();
 	}
+
+unlock:
+	mutex_unlock(&bln_mutex);
 }
 
 void bl_timer_callback(unsigned long data)
@@ -353,6 +384,8 @@ static int __init bln_control_init(void)
 				bln_device.name);
 		return 1;
 	}
+
+	mutex_init(&bln_mutex);
 
 	/* add the bln attributes */
 	if (sysfs_create_group(&bln_device.this_device->kobj,

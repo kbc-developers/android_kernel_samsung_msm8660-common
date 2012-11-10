@@ -3806,7 +3806,7 @@ static struct platform_device *snd_devices_samsung[] __initdata = {
 	&device_speaker_voip3_tx,
 	&device_headset_voip3_rx,
 	&device_headset_voip3_tx,
-	
+
 	&device_bt_sco_mono_voip3_rx,
 	&device_bt_sco_mono_voip3_tx,
 	&device_bt_sco_mono_nrec_voip3_rx,
