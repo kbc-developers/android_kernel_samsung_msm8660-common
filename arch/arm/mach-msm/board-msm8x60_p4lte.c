@@ -51,7 +51,7 @@
 #include <mach/subsystem_restart.h>
 #include <mach/mdm.h>
 
-#ifdef CONFIG_OPTICAL_BH1721_P5LTE
+#ifdef CONFIG_OPTICAL_BH1721_I957
 #include <linux/bh1721.h>
 #endif
 #ifdef CONFIG_SENSORS_YDA165
@@ -64,15 +64,15 @@
 #include <linux/i2c/max9879.h>
 #endif
 
-#ifdef CONFIG_SENSORS_K3DH_P5LTE
+#ifdef CONFIG_SENSORS_K3DH_I957
 #include <linux/i2c/k3dh.h>
 #endif
 
-#ifdef CONFIG_GYRO_K3G_P5LTE
+#ifdef CONFIG_GYRO_K3G_I957
 #include <linux/i2c/k3g.h>
 #endif
 
-#ifdef CONFIG_SENSORS_AK8975_P5LTE
+#ifdef CONFIG_SENSORS_AK8975_I957
 #include <linux/i2c/ak8975.h>
 #endif
 
@@ -146,10 +146,6 @@
 #include <linux/ion.h>
 #include <mach/ion.h>
 
-#if defined (CONFIG_JPN_MODEL_SC_01D) && defined (CONFIG_TOUCHSCREEN_QT602240)
-#include <linux/atmel_mxt1386.h>
-#endif
-
 
 #ifdef CONFIG_BROADCOM_WIFI_RESERVED_MEM
 #include <linux/wlan_plat.h>
@@ -160,6 +156,7 @@
 #endif
 #include <mach/sec_switch.h>
 #include <linux/usb/gadget.h>
+#include <../../../drivers/bluetooth/bluesleep.c> //SAMSUNG_BT_CONFIG
 
 #ifdef CONFIG_SEC_DEBUG
 #include <mach/sec_debug.h>
@@ -189,9 +186,9 @@
 #define PMIC_GPIO_EAR_DET		PM8058_GPIO(27)  	/* PMIC GPIO Number 27 */
 #define PMIC_GPIO_SHORT_SENDEND	PM8058_GPIO(30)  	/* PMIC GPIO Number 30 */
 #define PMIC_GPIO_MUTE_CON		PM8058_GPIO(26)  	/* PMIC GPIO Number 26 */
-#define PMIC_GPIO_AMP_EN		PM8058_GPIO(20)  	/* PMIC GPIO Number 20 */
+#define PMIC_GPIO_EAR_MICBIAS_EN PM8058_GPIO(17) /* PMIC GPIO Number 17  */
 #endif   //CONFIG_SAMSUNG_JACK
-
+#define PMIC_GPIO_MAIN_MICBIAS_EN PM8058_GPIO(28)
 
 #define PM8901_GPIO_BASE			(PM8058_GPIO_BASE + \
 						PM8058_GPIOS + PM8058_MPPS)
@@ -211,11 +208,6 @@
 #ifdef CONFIG_ION_MSM
 static struct platform_device ion_dev;
 #endif
-
-static struct mxt_callbacks *charger_callbacks;
-#define GPIO_TOUCH_EN		62
-#define GPIO_TOUCH_RST 	        63
-#define GPIO_TOUCH_INT		125 
 
 #define GPIO_WLAN_HOST_WAKE 105	//WLAN_HOST_WAKE
 #define GPIO_WLAN_REG_ON 45	//WLAN_BT_EN
@@ -246,7 +238,7 @@ static struct mxt_callbacks *charger_callbacks;
 #define SENSOR_ALS_SDA   		138
 #endif
 
-#ifdef CONFIG_OPTICAL_BH1721_P5LTE
+#ifdef CONFIG_OPTICAL_BH1721_I957
 #define SENSOR_ALS_SCL   		139
 #define SENSOR_ALS_SDA   		138
 #endif
@@ -1215,11 +1207,10 @@ static void qc_acc_power(u8 token, bool active)
 	gpio_acc_en = PM8058_GPIO_PM_TO_SYS(PMIC_GPIO_ACCESSORY_EN);
 	gpio_request(gpio_acc_en, "accessory_en");
 
-	if (system_rev < 0x03)
+	if (system_rev < 0x04)
 		gpio_acc_5v = PM8058_GPIO_PM_TO_SYS(PMIC_GPIO_ACCESSORY_CHECK);
 	else
 		gpio_acc_5v = PM8058_GPIO_PM_TO_SYS(PMIC_GPIO_ACCESSORY_CHECK_04);
-
 
 	/*
 		token info
@@ -1304,8 +1295,7 @@ static void qc_usb_ldo_en(int active)
 int get_accessory_irq_gpio()
 {
 	pr_info("Board : %s, %d\n", __func__, system_rev);
-
-	if (system_rev < 0x03)
+	if (system_rev < 0x04)
 		return PM8058_GPIO_PM_TO_SYS(PMIC_GPIO_ACCESSORY_CHECK);
 	else
 		return PM8058_GPIO_PM_TO_SYS(PMIC_GPIO_ACCESSORY_CHECK_04);
@@ -1314,8 +1304,7 @@ int get_accessory_irq_gpio()
 int get_accessory_irq()
 {
 	pr_info("Board : %s, %d\n", __func__, system_rev);
-
-	if (system_rev < 0x03)
+	if (system_rev < 0x04)
 		return PM8058_GPIO_IRQ(PM8058_IRQ_BASE, PMIC_GPIO_ACCESSORY_CHECK);
 	else
 		return PM8058_GPIO_IRQ(PM8058_IRQ_BASE, PMIC_GPIO_ACCESSORY_CHECK_04);
@@ -1329,7 +1318,9 @@ static struct msm_otg_platform_data msm_otg_pdata = {
 	 */
 	.pemp_level		 = PRE_EMPHASIS_WITH_20_PERCENT,
 	.cdr_autoreset		 = CDR_AUTO_RESET_DISABLE,
+#if defined(CONFIG_KOR_OPERATOR_LGU)	
 	.drv_ampl		 = HS_DRV_AMPLITUDE_75_PERCENT,
+#endif	
 	.se1_gating		 = SE1_GATING_DISABLE,
 	.bam_disable		 = 1,
 #ifdef CONFIG_USB_EHCI_MSM_72K
@@ -2492,23 +2483,6 @@ void disable_charging_before_reset(void)
 
 #endif // TEMP for compile
 
-#ifdef CONFIG_KEYPAD_P5LTE
-#define VOLUME_DOWN		PM8058_GPIO(5)
-#define VOLUME_UP		PM8058_GPIO(6)
-
-void p5_key_gpio_init(void)
-{
-	gpio_request(PM8058_GPIO_PM_TO_SYS(VOLUME_DOWN), "volume down");
-	gpio_direction_input(PM8058_GPIO_PM_TO_SYS(VOLUME_DOWN));
-
-	gpio_request(PM8058_GPIO_PM_TO_SYS(VOLUME_UP), "volume up");
-	gpio_direction_input(PM8058_GPIO_PM_TO_SYS(VOLUME_UP));
-	
-	pr_info("key GPIO initialized.\n");
-}
-#endif
-
-
 int64_t PM8058_get_adc(int channel)
 {
 	int ret;
@@ -2633,25 +2607,41 @@ void stmpe811_ldo_en(bool enable)
 
 void stmpe811_init(void)
 {
-	pr_info("%s : gpio i2c init\r\n", __func__);
-
-	if (system_rev ==0x00) {
+	pr_info("%s\r\n", __func__);
+#if defined(CONFIG_USA_OPERATOR_ATT) || defined(CONFIG_KOR_OPERATOR_SKT)
+	if (system_rev == 0x01) {
 		stmpe811_i2c_gpio_data.scl_pin = GPIO_ADC_SCL_OLD;
-		stmpe811_i2c_gpio_data.sda_pin = GPIO_ADC_SDA_OLD;
+		stmpe811_i2c_gpio_data.sda_pin = GPIO_ADC_SDA_OLD;		
+	} 
+#elif defined(CONFIG_KOR_OPERATOR_LGU)
+	if (system_rev < 0x04){
+		stmpe811_i2c_gpio_data.scl_pin = GPIO_ADC_SCL_OLD;
+		stmpe811_i2c_gpio_data.sda_pin = GPIO_ADC_SDA_OLD;	
 	}
+#endif
 }
 
 void stmpe811_gpio_init(void)
 {
 	pr_info("%s\r\n", __func__);
 
-	if (system_rev == 0x00) {
-                gpio_tlmm_config(GPIO_CFG(GPIO_ADC_SCL_OLD,  0, GPIO_CFG_OUTPUT, GPIO_CFG_PULL_UP, GPIO_CFG_2MA),GPIO_CFG_ENABLE);
-                gpio_tlmm_config(GPIO_CFG(GPIO_ADC_SDA_OLD,  0, GPIO_CFG_OUTPUT, GPIO_CFG_PULL_UP, GPIO_CFG_2MA),GPIO_CFG_ENABLE);
-        } else {
+#if defined(CONFIG_USA_OPERATOR_ATT) || defined(CONFIG_KOR_OPERATOR_SKT) 
+	if (system_rev == 0x01) {
+		gpio_tlmm_config(GPIO_CFG(GPIO_ADC_SCL_OLD,  0, GPIO_CFG_OUTPUT, GPIO_CFG_PULL_UP, GPIO_CFG_2MA),GPIO_CFG_ENABLE);
+		gpio_tlmm_config(GPIO_CFG(GPIO_ADC_SDA_OLD,  0, GPIO_CFG_OUTPUT, GPIO_CFG_PULL_UP, GPIO_CFG_2MA),GPIO_CFG_ENABLE);
+	} else if (system_rev >= 0x03) {	
 		gpio_tlmm_config(GPIO_CFG(GPIO_ADC_SCL,  0, GPIO_CFG_OUTPUT, GPIO_CFG_PULL_UP, GPIO_CFG_2MA),GPIO_CFG_ENABLE);
 		gpio_tlmm_config(GPIO_CFG(GPIO_ADC_SDA,  0, GPIO_CFG_OUTPUT, GPIO_CFG_PULL_UP, GPIO_CFG_2MA),GPIO_CFG_ENABLE);
 	}
+#elif defined(CONFIG_KOR_OPERATOR_LGU)
+	if (system_rev >= 0x04) {
+		gpio_tlmm_config(GPIO_CFG(GPIO_ADC_SCL,  0, GPIO_CFG_OUTPUT, GPIO_CFG_PULL_UP, GPIO_CFG_2MA),GPIO_CFG_ENABLE);
+		gpio_tlmm_config(GPIO_CFG(GPIO_ADC_SDA,  0, GPIO_CFG_OUTPUT, GPIO_CFG_PULL_UP, GPIO_CFG_2MA),GPIO_CFG_ENABLE);
+	} else {
+		gpio_tlmm_config(GPIO_CFG(GPIO_ADC_SCL_OLD,  0, GPIO_CFG_OUTPUT, GPIO_CFG_PULL_UP, GPIO_CFG_2MA),GPIO_CFG_ENABLE);
+		gpio_tlmm_config(GPIO_CFG(GPIO_ADC_SDA_OLD,  0, GPIO_CFG_OUTPUT, GPIO_CFG_PULL_UP, GPIO_CFG_2MA),GPIO_CFG_ENABLE);
+	}
+#endif
 	pr_info("init GPIO%d_CONFIG(0x%x),\r\n",stmpe811_i2c_gpio_data.scl_pin, readl(GPIO_CONFIG(stmpe811_i2c_gpio_data.scl_pin)));
 	pr_info("init GPIO%d_CONFIG(0x%x),\r\n",stmpe811_i2c_gpio_data.sda_pin, readl(GPIO_CONFIG(stmpe811_i2c_gpio_data.sda_pin)));
 }
@@ -2661,7 +2651,15 @@ static int check_using_stmpe811(void)
 {
 	int ret =0 ;
 #ifdef CONFIG_STMPE811_ADC
+#if defined(CONFIG_USA_OPERATOR_ATT) || defined(CONFIG_KOR_OPERATOR_SKT) 
 	ret = (system_rev >= 0x0003) ? 1 : 0;
+#elif defined(CONFIG_KOR_OPERATOR_LGU)
+#if 1	/* Using STMPE811 */
+	ret = (system_rev >= 0x0004) ? 1 : 0;
+#else	/* Using PMIC */
+	ret = 0;
+#endif
+#endif
 #endif
 	return ret;
 }
@@ -2679,6 +2677,9 @@ static int usb_connected = 0;
 static struct mutex adc_lock;
 atomic_t charger_checking = ATOMIC_INIT(0);
 
+#if defined(CONFIG_KOR_OPERATOR_LGU)
+static void __init usb_switch_init(void);
+#endif
 static bool check_samsung_charger(void)
 {
 	int i=0;
@@ -2692,6 +2693,14 @@ static bool check_samsung_charger(void)
 	set_usb_path(USB_SEL_ADC);
 	atomic_set(&charger_checking, 1);
 
+#if defined(CONFIG_KOR_OPERATOR_LGU)
+	/* check usb path */
+	if (USB_SEL_ADC != get_usb_path()) {
+		usb_switch_init();
+		set_usb_path(USB_SEL_ADC);
+	}
+#endif
+
 	mdelay(100);
 
 	/* read ADC value */
@@ -2703,7 +2712,9 @@ static bool check_samsung_charger(void)
 		pr_info("++ battery adc sum =%d\r\n",sum);
 		sum =  sum /3 ;
 		pr_info("++ battery adc sum/3=%d\r\n",sum);
-
+#if defined(CONFIG_KOR_OPERATOR_SKT) || defined(CONFIG_KOR_OPERATOR_KT) || defined(CONFIG_KOR_OPERATOR_LGU)
+		cable_adc = sum;
+#endif
 		if ((sum > 800) && (sum < 1800)) {
 			usb_connected = 0;
 			ret=1; //TA charging
@@ -2719,7 +2730,9 @@ static bool check_samsung_charger(void)
 			adc += PM8058_get_adc(CHANNEL_ADC_CABLE_CHECK);
 			pr_debug("[%d]++ battery adc =%lld\r\n", i, adc);
 		}
-
+#if defined(CONFIG_KOR_OPERATOR_SKT) || defined(CONFIG_KOR_OPERATOR_KT) || defined(CONFIG_KOR_OPERATOR_LGU)
+		cable_adc = adc;
+#endif
 		mdelay(30);
 
 		if (adc<=100) {
@@ -2763,11 +2776,14 @@ void p5_bat_gpio_init(void)
 	pr_info("Battery GPIO initialized\n");	
 }
 
-static void  p4lte_inform_charger_connection(int mode)
+#if defined(CONFIG_TOUCHSCREEN_MELFAS)
+static struct tsp_callbacks * charger_callbacks;
+static void  p5_inform_charger_connection(int mode)
 {
-	if (charger_callbacks && charger_callbacks->inform_charger)
-		charger_callbacks->inform_charger(charger_callbacks, mode);
+// TEMP	if (charger_callbacks && charger_callbacks->inform_charger)
+// TEMP		charger_callbacks->inform_charger(charger_callbacks, mode);
 };
+#endif
 
 static struct p5_battery_platform_data p5_battery_platform = {
 	.charger = {
@@ -2778,14 +2794,42 @@ static struct p5_battery_platform_data p5_battery_platform = {
 	},
 	.check_dedicated_charger = check_samsung_charger,
 	.init_charger_gpio = p5_bat_gpio_init,
-	.inform_charger_connection = p4lte_inform_charger_connection,
-	.temp_high_threshold = 48480,	/* P4:48.48c */
-	.temp_high_recovery = 43260,	/* P4:43.26c */
-	.temp_low_recovery = 2715,		/*P4:2.715c */
-	.temp_low_threshold = -1000,		/*P4:-1c */
-	.charge_duration = 10*60*60,	/* 10 hour */
-	.recharge_duration = 1.5*60*60,	/* 1.5 hour */
-	.recharge_voltage = 4150,	/*4.15V */
+#if defined(CONFIG_TOUCHSCREEN_MELFAS)
+	.inform_charger_connection = p5_inform_charger_connection,
+#endif
+#if defined(CONFIG_KOR_OPERATOR_SKT) || defined(CONFIG_KOR_OPERATOR_KT) || defined(CONFIG_KOR_OPERATOR_LGU)
+	.check_stmpe811 = check_using_stmpe811,
+	.cable_adc_check = &cable_adc,
+#if defined(CONFIG_KOR_OPERATOR_SKT) || defined(CONFIG_KOR_OPERATOR_KT)
+	.temp_high_threshold = 58500,
+	.temp_high_recovery = 45200,
+	.temp_low_recovery = 2500,
+	.temp_low_threshold = -2000,
+#else	// CONFIG_KOR_OPERATOR_LGU
+	.temp_high_threshold = 59000,
+	.temp_high_recovery = 45600,
+	.temp_low_recovery = 1700,
+	.temp_low_threshold = -4000,
+#endif
+	.charge_duration = 10*60*60,		/* 10 hour */
+	.recharge_duration = 2*60*60,		/* 2 hour */
+#else
+#if defined(CONFIG_EUR_OPERATOR_OPEN)
+	.temp_high_threshold = 50000,		/* 50 'C */
+	.temp_high_recovery = 43000,		/* 43 'C */
+	.temp_low_recovery = 0,			/* 0 'C */
+	.temp_low_threshold = -5000,			/* -5 'C */
+	.charge_duration = 10*60*60,		/* 10 hour */
+	.recharge_duration = 1.5*60*60,		/* 1.5 hour */
+#else
+	.temp_high_threshold = 50000,		/* 50 'C */
+	.temp_high_recovery = 46000,		/* 46 'C */
+	.temp_low_recovery = 2000,			/* 2 'C */
+	.temp_low_threshold = 0,			/* 0 'C */
+	.charge_duration = 10*60*60,		/* 10 hour */
+	.recharge_duration = 1.5*60*60,		/* 1.5 hour */
+#endif
+#endif
 	.recharge_voltage = 4150,			/*4.15V */
 };
 
@@ -2868,7 +2912,7 @@ static void __init msm8x60_init_dsps(void)
 
 #ifdef CONFIG_FB_MSM_HDMI_MSM_PANEL
 
-#define MSM_FB_EXT_BUF_SIZE  (1920 * 1080 * 4 * 1) /* 32 bpp x 1 page */
+#define MSM_FB_EXT_BUF_SIZE  (1920 * 1080 * 2 * 1) /* 2 bpp x 1 page */
 #elif defined(CONFIG_FB_MSM_TVOUT)
 #define MSM_FB_EXT_BUF_SIZE  (720 * 576 * 2 * 2) /* 2 bpp x 2 pages */
 #else
@@ -2905,12 +2949,9 @@ static void __init msm8x60_init_dsps(void)
 //#define MSM_FB_PHYSICAL_BASE			0x40400000
 #define MSM_PMEM_MDP_BASE			0x40400000
 #define MSM_PMEM_MDP_SIZE				0x01E00000
-#if 0
-#define MSM_ION_AUDIO_BASE			0x42200000
-#endif
-#define MSM_ION_QSECOM_BASE			0x42200000
+#define MSM_ION_AUDIO_BASE			0x42300000
 #define MSM_PMEM_KERNEL_EBI1_SIZE	0x600000
-#define MSM_PMEM_AUDIO_BASE			0x42800000
+#define MSM_PMEM_AUDIO_BASE			0x42700000
 #define MSM_PMEM_AUDIO_SIZE        		0x300000 // 3MB
 
 #define RAM_CONSOLE_BASE_ADDR	0x42D80000
@@ -2932,8 +2973,7 @@ static void __init msm8x60_init_dsps(void)
 #define MSM_ION_MM_FW_SIZE	0x200000 /* (2MB) */
 #define MSM_ION_MM_SIZE		0x3600000 /* (54MB) */
 #define MSM_ION_MFC_SIZE	SZ_8K
-#define MSM_ION_WB_SIZE		0x01E00000 /* 30MB */ 
-#define MSM_ION_QSECOM_SIZE	0x600000 /* (6MB) */
+#define MSM_ION_WB_SIZE		0x1E000000 /* 30MB */ 
 #define MSM_ION_AUDIO_SIZE	MSM_PMEM_AUDIO_SIZE
 
 #ifdef CONFIG_MSM_MULTIMEDIA_USE_ION
@@ -3424,14 +3464,8 @@ static void __init msm8x60_allocate_memory_regions(void)
 	int ret;
 
 #ifdef CONFIG_ANDROID_RAM_CONSOLE
-#if defined(CONFIG_SAMSUNG_MEMORY_LAYOUT_ARRANGE)
 	ram_console_resources[0].start = RAM_CONSOLE_BASE_ADDR;
 	ram_console_resources[0].end = RAM_CONSOLE_BASE_ADDR + SZ_512K - 1;
-#else
- 	addr = alloc_bootmem_align(SZ_512K, 0x1000);
- 	ram_console_resources[0].start = __pa(addr);
- 	ram_console_resources[0].end = ram_console_resources[0].start + SZ_512K - 1;
-#endif
 #endif	
 
 	size = MSM_FB_SIZE;
@@ -3450,264 +3484,29 @@ static void __init msm8x60_allocate_memory_regions(void)
 
 }
 
-#if defined (CONFIG_JPN_MODEL_SC_01D) && defined (CONFIG_TOUCHSCREEN_QT602240)
-static void p4lte_touch_exit_hw(void)
+static void p3_touch_init_hw(void)
 {
 	printk("[TSP] %s, %d\n",__func__,__LINE__);
-	
-	gpio_free(GPIO_TOUCH_INT);
-	gpio_free(GPIO_TOUCH_RST);
-	gpio_free(GPIO_TOUCH_EN);
-
-	gpio_tlmm_config(GPIO_CFG(GPIO_TOUCH_EN,  0, GPIO_CFG_INPUT, GPIO_CFG_PULL_DOWN, GPIO_CFG_2MA), GPIO_CFG_ENABLE);
-	gpio_tlmm_config(GPIO_CFG(GPIO_TOUCH_RST,	0, GPIO_CFG_INPUT, GPIO_CFG_PULL_DOWN, GPIO_CFG_2MA), GPIO_CFG_ENABLE);
-	gpio_tlmm_config(GPIO_CFG(GPIO_TOUCH_INT,  0, GPIO_CFG_INPUT, GPIO_CFG_PULL_DOWN, GPIO_CFG_2MA), GPIO_CFG_ENABLE);
-
-	return;
 }
-
-
-static void p4lte_touch_suspend_hw(void)
+static void p3_touch_exit_hw(void)
 {
 	printk("[TSP] %s, %d\n",__func__,__LINE__);
-	
-	gpio_direction_output(GPIO_TOUCH_RST, 0);
-	gpio_direction_output(GPIO_TOUCH_EN, 0);
-	gpio_tlmm_config(GPIO_CFG(GPIO_TOUCH_INT,  0, GPIO_CFG_INPUT, GPIO_CFG_PULL_DOWN, GPIO_CFG_2MA), GPIO_CFG_ENABLE);
-
-	return;
 }
 
-static void p4lte_touch_resume_hw(void)
+static void p3_touch_suspend_hw(void)
 {
 	printk("[TSP] %s, %d\n",__func__,__LINE__);
-	
-	gpio_direction_output(GPIO_TOUCH_EN, 1);
-	gpio_direction_output(GPIO_TOUCH_RST, 1);
-	gpio_tlmm_config(GPIO_CFG(GPIO_TOUCH_INT,  0, GPIO_CFG_INPUT, GPIO_CFG_NO_PULL, GPIO_CFG_2MA), GPIO_CFG_ENABLE);
-	msleep(120);
-
-	return;
 }
 
-static void p4lte_register_touch_callbacks(struct mxt_callbacks *cb)
+static void p3_touch_resume_hw(void)
 {
 	printk("[TSP] %s, %d\n",__func__,__LINE__);
-
-	charger_callbacks = cb;
-
-	return;
 }
 
-/*p4lte touch : atmel_mxt1386*/
-static void p4lte_touch_init_hw(void)
+static void p3_register_touch_callbacks(struct mxt_callbacks *cb)
 {
-	int ret;
-
 	printk("[TSP] %s, %d\n",__func__,__LINE__);
-	
-	ret = gpio_request(GPIO_TOUCH_EN, "TOUCH_EN");
-	if (ret != 0) 
-		pr_err("[TSP] %s GPIO(%d) request FAIL error = %d", __func__, GPIO_TOUCH_EN, ret);
-	else {
-		gpio_tlmm_config(GPIO_CFG(GPIO_TOUCH_EN,  0, GPIO_CFG_OUTPUT, GPIO_CFG_NO_PULL, GPIO_CFG_2MA), GPIO_CFG_ENABLE);
-		gpio_direction_output(GPIO_TOUCH_EN, 0);
-	}
-	
-	ret = gpio_request(GPIO_TOUCH_RST, "TOUCH_RST");
-	if (ret != 0) 
-		pr_err("[TSP] %s GPIO(%d) request FAIL error = %d", __func__, GPIO_TOUCH_RST, ret);
-	else {
-		gpio_tlmm_config(GPIO_CFG(GPIO_TOUCH_RST,	0, GPIO_CFG_OUTPUT, GPIO_CFG_NO_PULL, GPIO_CFG_2MA), GPIO_CFG_ENABLE);
-		gpio_direction_output(GPIO_TOUCH_RST, 0);
-	}
-	
-	ret = gpio_request(GPIO_TOUCH_INT, "TOUCH_INT");
-	if (ret != 0) 
-		pr_err("[TSP] %s GPIO(%d) request FAIL error = %d", __func__, GPIO_TOUCH_INT, ret);
-	else {
-		gpio_tlmm_config(GPIO_CFG(GPIO_TOUCH_INT,  0, GPIO_CFG_INPUT, GPIO_CFG_NO_PULL, GPIO_CFG_2MA), GPIO_CFG_ENABLE);
-	}
-
-	return;
 }
-
-static struct mxt_platform_data p4lte_touch_platform_data = {
-	.numtouch = 10,
-	.max_x	= 1279,
-	.max_y	= 799,
-	.init_platform_hw  = p4lte_touch_init_hw,
-	.exit_platform_hw  = p4lte_touch_exit_hw,
-	.suspend_platform_hw = p4lte_touch_suspend_hw,
-	.resume_platform_hw = p4lte_touch_resume_hw,
-	.register_cb = p4lte_register_touch_callbacks,
-	/*mxt_power_config*/
-	/* Set Idle Acquisition Interval to 32 ms. */
-	.power_config.idleacqint = 32,
-	.power_config.actvacqint = 255,
-	/* Set Active to Idle Timeout to 4 s (one unit = 200ms). */
-	.power_config.actv2idleto = 50,
-	/*acquisition_config*/
-	/* Atmel: 8 -> 10*/
-	.acquisition_config.chrgtime = 10,
-	.acquisition_config.reserved = 0,
-	.acquisition_config.tchdrift = 5,
-	/* Atmel: 0 -> 10*/
-	.acquisition_config.driftst = 10,
-	/* infinite*/
-	.acquisition_config.tchautocal = 0,
-	/* disabled*/
-	.acquisition_config.sync = 0,
-#ifdef MXT_CALIBRATE_WORKAROUND
-	/*autocal config at wakeup status*/
-	.acquisition_config.atchcalst = 9,
-	.acquisition_config.atchcalsthr = 48,
-	/* Atmel: 50 => 10 : avoid wakeup lockup : 2 or 3 finger*/
-	.acquisition_config.atchcalfrcthr = 10,
-	.acquisition_config.atchcalfrcratio = 215,
-#else
-	/* Atmel: 5 -> 0 -> 9  (to avoid ghost touch problem)*/
-	.acquisition_config.atchcalst = 9,
-	/* Atmel: 50 -> 55 -> 48 ->10 (to avoid ghost touch problem)*/
-	.acquisition_config.atchcalsthr = 10,
-	/* 50-> 20 (To avoid  wakeup touch lockup)	*/
-	.acquisition_config.atchcalfrcthr = 20,
-	/* 25-> 0  (To avoid  wakeup touch lockup */
-	.acquisition_config.atchcalfrcratio = 0,
-#endif
-	/*multitouch_config*/
-	/* enable + message-enable*/
-	.touchscreen_config.ctrl = 0x8b,
-	.touchscreen_config.xorigin = 0,
-	.touchscreen_config.yorigin = 0,
-	.touchscreen_config.xsize = 27,
-	.touchscreen_config.ysize = 42,
-	.touchscreen_config.akscfg = 0,
-	/* Atmel: 0x11 -> 0x21 -> 0x11*/
-	.touchscreen_config.blen = 0x11,
-	/* Atmel: 50 -> 55 -> 48,*/
-	.touchscreen_config.tchthr = 48,
-	.touchscreen_config.tchdi = 2,
-	/* orient : Horizontal flip */
-	.touchscreen_config.orient = 1,
-	.touchscreen_config.mrgtimeout = 0,
-	.touchscreen_config.movhysti = 10,
-	.touchscreen_config.movhystn = 1,
-	 /* Atmel  0x20 ->0x21 -> 0x2e(-2)*/
-	.touchscreen_config.movfilter = 0x50,
-	.touchscreen_config.numtouch = MXT_MAX_NUM_TOUCHES,
-	.touchscreen_config.mrghyst = 5, /*Atmel 10 -> 5*/
-	 /* Atmel 20 -> 5 -> 50 (To avoid One finger Pinch Zoom) */
-	.touchscreen_config.mrgthr = 50,
-	.touchscreen_config.amphyst = 10,
-	.touchscreen_config.xrange = 799,
-	.touchscreen_config.yrange = 1279,
-	.touchscreen_config.xloclip = 0,
-	.touchscreen_config.xhiclip = 0,
-	.touchscreen_config.yloclip = 0,
-	.touchscreen_config.yhiclip = 0,
-	.touchscreen_config.xedgectrl = 0,
-	.touchscreen_config.xedgedist = 0,
-	.touchscreen_config.yedgectrl = 0,
-	.touchscreen_config.yedgedist = 0,
-	.touchscreen_config.jumplimit = 18,
-	.touchscreen_config.tchhyst = 10,
-	.touchscreen_config.xpitch = 1,
-	.touchscreen_config.ypitch = 3,
-	/*noise_suppression_config*/
-	.noise_suppression_config.ctrl = 0x87,
-	.noise_suppression_config.reserved = 0,
-	.noise_suppression_config.reserved1 = 0,
-	.noise_suppression_config.reserved2 = 0,
-	.noise_suppression_config.reserved3 = 0,
-	.noise_suppression_config.reserved4 = 0,
-	.noise_suppression_config.reserved5 = 0,
-	.noise_suppression_config.reserved6 = 0,
-	.noise_suppression_config.noisethr = 40,
-	.noise_suppression_config.reserved7 = 0,/*1;*/
-	.noise_suppression_config.freqhopscale = 0,
-	.noise_suppression_config.freq[0] = 10,
-	.noise_suppression_config.freq[1] = 18,
-	.noise_suppression_config.freq[2] = 23,
-	.noise_suppression_config.freq[3] = 30,
-	.noise_suppression_config.freq[4] = 36,
-	.noise_suppression_config.reserved8 = 0, /* 3 -> 0*/
-	/*cte_config*/
-	.cte_config.ctrl = 0,
-	.cte_config.cmd = 0,
-	.cte_config.mode = 0,
-	/*16 -> 4 -> 8*/
-	.cte_config.idlegcafdepth = 8,
-	/*63 -> 16 -> 54(16ms sampling)*/
-	.cte_config.actvgcafdepth = 54,
-	.cte_config.voltage = 0x3c,
-	/* (enable + non-locking mode)*/
-	.gripsupression_config.ctrl = 0,
-	.gripsupression_config.xlogrip = 0, /*10 -> 0*/
-	.gripsupression_config.xhigrip = 0, /*10 -> 0*/
-	.gripsupression_config.ylogrip = 0, /*10 -> 15*/
-	.gripsupression_config.yhigrip = 0,/*10 -> 15*/
-	.palmsupression_config.ctrl = 1,
-	.palmsupression_config.reserved1 = 0,
-	.palmsupression_config.reserved2 = 0,
-	/* 40 -> 20(For PalmSuppression detect) */
-	.palmsupression_config.largeobjthr = 20,
-	/* 5 -> 50(For PalmSuppression detect) */
-	.palmsupression_config.distancethr = 50,
-	.palmsupression_config.supextto = 5,
-	/*config change for ta connected*/
-	.idleacqint_for_ta_connect = 255,
-	.tchthr_for_ta_connect = 80,
-	.noisethr_for_ta_connect = 50,
-	.idlegcafdepth_ta_connect = 32,
-	.fherr_cnt = 0,
-	.fherr_chg_cnt = 10,
-	.tch_blen_for_fherr = 0x11,
-	.tchthr_for_fherr = 85,
-	.noisethr_for_fherr = 50,
-	.movefilter_for_fherr = 0x57,
-	.jumplimit_for_fherr = 30,
-	.freqhopscale_for_fherr = 1,
-	.freq_for_fherr1[0] = 45,
-	.freq_for_fherr1[1] = 49,
-	.freq_for_fherr1[2] = 55,
-	.freq_for_fherr1[3] = 59,
-	.freq_for_fherr1[4] = 63,
-	.freq_for_fherr2[0] = 10,
-	.freq_for_fherr2[1] = 12,
-	.freq_for_fherr2[2] = 18,
-	.freq_for_fherr2[3] = 40,
-	.freq_for_fherr2[4] = 72,
-	.freq_for_fherr3[0] = 7,
-	.freq_for_fherr3[1] = 33,
-	.freq_for_fherr3[2] = 39,
-	.freq_for_fherr3[3] = 52,
-	.freq_for_fherr3[4] = 64,
-	.fherr_cnt_no_ta = 0,
-	.fherr_chg_cnt_no_ta = 1,
-	.tch_blen_for_fherr_no_ta = 0,
-	.tchthr_for_fherr_no_ta = 45,
-	.movfilter_fherr_no_ta = 0,
-	.noisethr_for_fherr_no_ta = 40,
-#ifdef MXT_CALIBRATE_WORKAROUND
-	/*autocal config at idle status*/
-	.atchcalst_idle = 9,
-	.atchcalsthr_idle = 10,
-	.atchcalfrcthr_idle = 50,
-	/* Atmel: 25 => 55 : avoid idle palm on lockup*/
-	.atchcalfrcratio_idle = 55,
-#endif
-};
-
-static const struct i2c_board_info sec_i2c_touch_info[] = {
-	{
-		I2C_BOARD_INFO("sec_touch", 0x4c),
-		.irq		= MSM_GPIO_TO_INT(GPIO_TOUCH_INT),
-		.platform_data = &p4lte_touch_platform_data,
-
-	},
-};
-#endif
 
 #if defined(CONFIG_TOUCHSCREEN_MELFAS)
 static void register_tsp_callbacks(struct tsp_callbacks *cb)
@@ -3731,6 +3530,20 @@ static struct melfas_tsi_platform_data melfas_touch_platform_data = {
 	.register_cb = register_tsp_callbacks,
 };
 #endif
+
+static const struct i2c_board_info sec_i2c_touch_info[] = {
+	{
+#if defined(CONFIG_USA_OPERATOR_ATT) || defined(CONFIG_KOR_OPERATOR_SKT) || defined(CONFIG_KOR_OPERATOR_LGU) || defined(CONFIG_EUR_OPERATOR_OPEN)
+		I2C_BOARD_INFO("sec_touch", 0x48),
+#endif
+		.irq           =  MSM_GPIO_TO_INT(TOUCHSCREEN_IRQ),			
+//#if defined(CONFIG_TOUCHSCREEN_MELFAS)
+		.platform_data =&melfas_touch_platform_data,
+//#else
+//		.platform_data = &p3_touch_platform_data,
+//#endif
+	},
+};
 
 static struct i2c_gpio_platform_data amp_i2c_gpio_data = {
 	.sda_pin   = GPIO_AMP_I2C_SDA,
@@ -3780,7 +3593,7 @@ static struct platform_device opt_gp2a = {
 };
 #endif
 
-#ifdef CONFIG_OPTICAL_BH1721_P5LTE
+#ifdef CONFIG_OPTICAL_BH1721_I957
 static int __init opt_device_init(void)
 {
 	static struct regulator *pm8058_l2;
@@ -3835,7 +3648,7 @@ static void ambient_light_sensor_reset(void)
 	gpio_request(PM8058_GPIO_PM_TO_SYS(ALC_RST), "alc_rst");
 	gpio_direction_output(PM8058_GPIO_PM_TO_SYS(ALC_RST), 0);
 
-	msleep(20);
+	udelay(10);
 
 	gpio_direction_output(PM8058_GPIO_PM_TO_SYS(ALC_RST), 1);
 	printk("[ALC] %s, %d - end\n", __func__,__LINE__);
@@ -3888,8 +3701,16 @@ void max17042_hw_init(void)
 }
 
 static struct max17042_platform_data max17042_pdata = {
-	.sdi_capacity = 0x340A,
-	.sdi_vfcapacity = 0x478A,
+#if defined(CONFIG_USA_OPERATOR_ATT) || defined(CONFIG_EUR_OPERATOR_OPEN) 
+	.sdi_capacity = 0x3138, //6300*2
+	.sdi_vfcapacity = 0x41A0, //8400*2
+#elif defined(CONFIG_KOR_OPERATOR_SKT) || defined(CONFIG_KOR_OPERATOR_KT) || defined(CONFIG_KOR_OPERATOR_LGU)
+	.sdi_capacity = 0x2FA8, //6100*2
+	.sdi_vfcapacity = 0x3F8A, //8133*2
+#else
+	.sdi_capacity = 0x2EE0,
+	.sdi_vfcapacity = 0x3E80,
+#endif
 	.atl_capacity = 0x3022,
 	.atl_vfcapacity = 0x4024,
 	.fuel_alert_line = GPIO_FG_ALRAM,
@@ -3920,13 +3741,14 @@ static struct platform_device fg_i2c_gpio_device = {
 };
 #endif
 
-#ifdef CONFIG_GYRO_K3G_P5LTE
+#ifdef CONFIG_GYRO_K3G_I957
 #define SENSOR_GYRO_SCL 39
 #define SENSOR_GYRO_SDA 38
 #define GYRO_FIFO_INT 102
 
 struct regulator *k3g_l11;
 struct regulator *k3g_l20;
+struct regulator *k3g_lvs3;
 static int k3g_on(void);
 static int k3g_off(void);
 static struct k3g_platform_data k3g_data;
@@ -3946,8 +3768,29 @@ static int __init gyro_device_init(void)
 				"pm8058_l11\n", __func__);
 		regulator_put(k3g_l11);
 	}
+#if defined(CONFIG_KOR_OPERATOR_LGU)
+	k3g_lvs3 = regulator_get(NULL, "8901_lvs3");
+	if (IS_ERR(k3g_lvs3)) {
+		return PTR_ERR(k3g_lvs3);
+	}
+#elif defined(CONFIG_KOR_OPERATOR_SKT)
+	if(system_rev < 0x07){ 
+		/* rev 0.0, 0.1, 0.2,  VSENSOR_1.8V from VREG_L20A */
+		k3g_l20 = regulator_get(NULL, "8058_l20");
+		if (IS_ERR(k3g_l20)) {
+			return PTR_ERR(k3g_l20);
+		}
 
-	if(system_rev < 0x05){ 
+		err = regulator_set_voltage(k3g_l20, 1800000, 1800000);
+		if (err) {
+			pr_err("%s: unable to set the voltage for regulator"
+					"pm8058_l20\n", __func__);
+			regulator_put(k3g_l20);
+			return err;
+		}
+	}
+#else
+	if(system_rev < 0x06){ 
 		/* rev < 0x06, 
 		   VSENSOR_1.8V from VREG_L20A, VSENSOR_2.85V from VREG_L11A */
 		k3g_l20 = regulator_get(NULL, "8058_l20");
@@ -3963,7 +3806,7 @@ static int __init gyro_device_init(void)
 			return err;
 		}
 	}
-	else if(system_rev >= 0x05){
+	else if(system_rev >= 0x06){
 		/* rev >= 0x06, 
 		   VSENSOR_1.8V from VIO_P3_1.8V, VSENSOR_2.85V from VREG_L11A */
 		printk("[K3G] power_on mapped NULL\n");
@@ -3980,7 +3823,7 @@ static int __init gyro_device_init(void)
 	}
 	else
 		printk("[K3G] unknown rev=%%d\n", system_rev );
-
+#endif	
 	return 0;
 }
 
@@ -3996,6 +3839,25 @@ static int k3g_on(void)
 		goto err_k3g_on;
 	}
 
+#if defined(CONFIG_KOR_OPERATOR_LGU)
+	err = regulator_enable(k3g_lvs3);
+	if (err) {
+		pr_err("%s: unable to enable regulator"
+				"pm8901_lvs3\n", __func__);
+		regulator_put(k3g_lvs3);
+		goto err_k3g_on;
+	}
+#elif defined(CONFIG_KOR_OPERATOR_SKT)	
+	if(system_rev < 0x07){ 
+		err = regulator_enable(k3g_l20);
+		if (err) {
+			pr_err("%s: unable to enable regulator"
+					"pm8058_l20\n", __func__);
+			regulator_put(k3g_l20);
+			goto err_k3g_on;
+		}
+	}
+#else
 	err = regulator_enable(k3g_l20);
 	if (err) {
 		pr_err("%s: unable to enable regulator"
@@ -4003,6 +3865,7 @@ static int k3g_on(void)
 		regulator_put(k3g_l20);
 		goto err_k3g_on;
 	}
+#endif	
 	return err;
 
 err_k3g_on:
@@ -4015,7 +3878,10 @@ static int k3g_off(void)
 {
 	int err = 0;	
 
-	if(system_rev >= 0x05){
+#if defined(CONFIG_KOR_OPERATOR_SKT) || defined(CONFIG_KOR_OPERATOR_LGU)
+	printk("%s Sensor VDD, I2C LDO off\n",__func__);
+#else 
+	if(system_rev >= 0x06){
 		if(gpio_tlmm_config(GPIO_CFG(SENSOR_GYRO_SCL,  0, GPIO_CFG_INPUT, GPIO_CFG_PULL_UP, GPIO_CFG_2MA), 1))
 			printk("%s error in making SENSOR_GYRO_SCL Input with PD\n",__func__);
 		if(gpio_tlmm_config(GPIO_CFG(SENSOR_GYRO_SDA,  0, GPIO_CFG_INPUT, GPIO_CFG_PULL_UP, GPIO_CFG_2MA), 1))
@@ -4025,6 +3891,7 @@ static int k3g_off(void)
 
 		return err;
 	}
+#endif
 
 	err = regulator_disable(k3g_l11);
 	if (err) {
@@ -4034,6 +3901,25 @@ static int k3g_off(void)
 		goto err_k3g_off;
 	}
 	
+#if defined(CONFIG_KOR_OPERATOR_LGU)
+	err = regulator_disable(k3g_lvs3);
+	if (err) {
+		pr_err("%s: unable to disable regulator"
+				"pm8901_lvs3\n", __func__);
+		regulator_put(k3g_lvs3);
+		goto err_k3g_off;
+	}
+#elif defined(CONFIG_KOR_OPERATOR_SKT)	
+	if(system_rev < 0x07){ 
+		err = regulator_disable(k3g_l20);
+		if (err) {
+			pr_err("%s: unable to enable regulator"
+					"pm8058_l20\n", __func__);
+			regulator_put(k3g_l20);
+			goto err_k3g_off;
+		}
+	}
+#else
 	err = regulator_disable(k3g_l20);
 	if (err) {
 		pr_err("%s: unable to enable regulator"
@@ -4041,12 +3927,28 @@ static int k3g_off(void)
 		regulator_put(k3g_l20);
 		goto err_k3g_off;
 	}
+#endif	
 
+#if defined(CONFIG_KOR_OPERATOR_SKT) || defined(CONFIG_KOR_OPERATOR_LGU)
+	if(system_rev >= 0x07){
+		if(gpio_tlmm_config(GPIO_CFG(SENSOR_GYRO_SCL,  0, GPIO_CFG_INPUT, GPIO_CFG_PULL_UP, GPIO_CFG_2MA), 1))
+			printk("%s error in making SENSOR_GYRO_SCL Input with PD\n",__func__);
+		if(gpio_tlmm_config(GPIO_CFG(SENSOR_GYRO_SDA,  0, GPIO_CFG_INPUT, GPIO_CFG_PULL_UP, GPIO_CFG_2MA), 1))
+			printk("%s error in making SENSOR_GYRO_SDA Input with PD\n",__func__);
+		if(gpio_tlmm_config(GPIO_CFG(GYRO_FIFO_INT,  0, GPIO_CFG_INPUT, GPIO_CFG_PULL_DOWN, GPIO_CFG_2MA), 1))
+			printk("%s error in making GYRO_FIFO_INT Input with PD\n",__func__);
+	} else {
+		if(gpio_tlmm_config(GPIO_CFG(SENSOR_GYRO_SCL,  0, GPIO_CFG_INPUT, GPIO_CFG_PULL_DOWN, GPIO_CFG_2MA), 1))
+			printk("%s error in making SENSOR_GYRO_SCL Input with PD\n",__func__);
+		if(gpio_tlmm_config(GPIO_CFG(SENSOR_GYRO_SDA,  0, GPIO_CFG_INPUT, GPIO_CFG_PULL_DOWN, GPIO_CFG_2MA), 1))
+			printk("%s error in making SENSOR_GYRO_SDA Input with PD\n",__func__);
+	}
+#else	
 	if(gpio_tlmm_config(GPIO_CFG(SENSOR_GYRO_SCL,  0, GPIO_CFG_INPUT, GPIO_CFG_PULL_DOWN, GPIO_CFG_2MA), 1))
 		printk("%s error in making SENSOR_GYRO_SCL Input with PD\n",__func__);
 	if(gpio_tlmm_config(GPIO_CFG(SENSOR_GYRO_SDA,  0, GPIO_CFG_INPUT, GPIO_CFG_PULL_DOWN, GPIO_CFG_2MA), 1))
 		printk("%s error in making SENSOR_GYRO_SDA Input with PD\n",__func__);
-
+#endif
 	return err;
 
 err_k3g_off:
@@ -4147,22 +4049,10 @@ static struct platform_device wm8994_p5lte = {
 #ifdef CONFIG_30PIN_CONN
 static void acc_int_init(void)
 {
-	int gpio_acc_check = get_accessory_irq_gpio();
-	int gpio_acc_en = PM8058_GPIO_PM_TO_SYS(PMIC_GPIO_ACCESSORY_EN);
-
 	gpio_tlmm_config(GPIO_CFG(GPIO_ACCESSORY_INT,
 		GPIOMUX_FUNC_GPIO, GPIO_CFG_INPUT,
 		GPIO_CFG_NO_PULL, GPIO_CFG_2MA), GPIO_CFG_ENABLE);
-
-	if ( system_rev < 0x3 ) {
-		gpio_request(gpio_acc_en, "accessory_en");
-		gpio_direction_output(gpio_acc_en, 0);
-		gpio_free(gpio_acc_en);
-		gpio_request(gpio_acc_check, "accessory_check");
-		gpio_direction_input(gpio_acc_check);
-	}
 }
-
 int64_t acc_get_adc_value(void)
 {
 	int64_t value =0;
@@ -4315,7 +4205,6 @@ static int mhl_sii9234_device_init(void)
 	if(!pre_cfg_pw_state){
 		sii9234_pre_cfg_power();
 		pre_cfg_pw_state = 1;
-	        gpio_request(GPIO_MHL_RST, "mhl_rst");
 	}
 	return 0;
 }
@@ -4323,6 +4212,7 @@ static int mhl_sii9234_device_init(void)
 void sii9234_hw_reset(void)
 {
 	sii9234_cfg_power(1);		//Turn On power to SiI9234 
+	gpio_request(GPIO_MHL_RST, "mhl_rst");
 	gpio_tlmm_config(GPIO_CFG(GPIO_MHL_RST, 0, GPIO_CFG_OUTPUT, GPIO_CFG_NO_PULL, GPIO_CFG_2MA), 1);
 	
 	usleep_range(10000, 20000);
@@ -4337,6 +4227,7 @@ void sii9234_hw_reset(void)
 	if(gpio_direction_output(GPIO_MHL_RST, 1))
 		printk("%s error in making GPIO_MHL_RST HIGH\n",__func__);
 	msleep(30);
+	gpio_free(GPIO_MHL_RST);
 }
 
 static void sii9234_hw_off(void)
@@ -4345,8 +4236,10 @@ static void sii9234_hw_off(void)
 	
 	usleep_range(10000, 20000);
 	
+	gpio_request(GPIO_MHL_RST, "mhl_rst");
 	if(gpio_direction_output(GPIO_MHL_RST, 0))
 		printk("%s error in making GPIO_MHL_RST Low\n",__func__);
+	gpio_free(GPIO_MHL_RST);
 }
 
 /*MHL IF*/
@@ -4387,7 +4280,7 @@ static struct i2c_board_info mhl_i2c_board_info[] = {
 };
 #endif /*CONFIG_VIDEO_MHL_TABLET_V1*/
 
-#ifdef CONFIG_SENSORS_AK8975_P5LTE
+#ifdef CONFIG_SENSORS_AK8975_I957
 #define GPIO_MSENSE_INT PM8058_GPIO(33)		
 #define SENSOR_ACCEL_INT	PM8058_GPIO(10)		/* PMIC GPIO Number 32 */
 #define SENSOR_AKM_SDA 51
@@ -4395,6 +4288,7 @@ static struct i2c_board_info mhl_i2c_board_info[] = {
 
 struct regulator *k3dh_akm_l11;
 struct regulator *k3dh_akm_l20;
+struct regulator *k3dh_akm_lvs3;
 
 static int k3dh_akm_on(void)
 {
@@ -4408,6 +4302,25 @@ static int k3dh_akm_on(void)
 		goto err_k3dh_akm_on;
 	}
 	
+#if defined(CONFIG_KOR_OPERATOR_LGU)
+	err = regulator_enable(k3dh_akm_lvs3);
+	if (err) {
+		pr_err("%s: unable to enable regulator"
+				"pm8901_lvs3\n", __func__);
+		regulator_put(k3dh_akm_lvs3);
+		goto err_k3dh_akm_on;
+	}
+#elif defined(CONFIG_KOR_OPERATOR_SKT)
+	if(system_rev < 0x07){
+		err = regulator_enable(k3dh_akm_l20);
+		if (err) {
+			pr_err("%s: unable to enable regulator"
+					"pm8058_l20\n", __func__);
+			regulator_put(k3dh_akm_l20);
+			goto err_k3dh_akm_on;
+		}
+	}
+#else
 	err = regulator_enable(k3dh_akm_l20);
 	if (err) {
 		pr_err("%s: unable to enable regulator"
@@ -4415,6 +4328,7 @@ static int k3dh_akm_on(void)
 		regulator_put(k3dh_akm_l20);
 		goto err_k3dh_akm_on;
 	}
+#endif	
 	return err;
 
 err_k3dh_akm_on:
@@ -4427,7 +4341,10 @@ static int k3dh_akm_off(void)
 {
 	int err = 0;	
 
-	if(system_rev >= 0x05){
+#if defined(CONFIG_KOR_OPERATOR_SKT) || defined(CONFIG_KOR_OPERATOR_LGU)
+		printk("%s Sensor VDD, I2C LDO off\n",__func__);
+#else 
+	if(system_rev >= 0x06){
 		if(gpio_tlmm_config(GPIO_CFG(SENSOR_AKM_SDA,  0, GPIO_CFG_INPUT, GPIO_CFG_PULL_UP, GPIO_CFG_2MA), 1))
 			printk("%s error in making SENSOR_AKM_SDA Low\n",__func__);
 		if(gpio_tlmm_config(GPIO_CFG(SENSOR_AKM_SCL,  0, GPIO_CFG_INPUT, GPIO_CFG_PULL_UP, GPIO_CFG_2MA), 1))
@@ -4435,6 +4352,7 @@ static int k3dh_akm_off(void)
 
 		return err;
 	}
+#endif
 
 	err = regulator_disable(k3dh_akm_l11);
 	if (err) {
@@ -4444,6 +4362,25 @@ static int k3dh_akm_off(void)
 		goto err_k3dh_akm_off;
 	}
 
+#if defined(CONFIG_KOR_OPERATOR_LGU)
+	err = regulator_disable(k3dh_akm_lvs3);
+	if (err) {
+		pr_err("%s: unable to disable regulator"
+				"pm8901_lvs3\n", __func__);
+		regulator_put(k3dh_akm_lvs3);
+		goto err_k3dh_akm_off;
+	}
+#elif defined(CONFIG_KOR_OPERATOR_SKT)
+	if(system_rev < 0x07){
+		err = regulator_disable(k3dh_akm_l20);
+		if (err) {
+			pr_err("%s: unable to enable regulator"
+					"pm8058_l20\n", __func__);
+			regulator_put(k3dh_akm_l20);
+			goto err_k3dh_akm_off;
+		}		
+	}
+#else
 	err = regulator_disable(k3dh_akm_l20);
 	if (err) {
 		pr_err("%s: unable to enable regulator"
@@ -4451,11 +4388,27 @@ static int k3dh_akm_off(void)
 		regulator_put(k3dh_akm_l20);
 		goto err_k3dh_akm_off;
 	}
+#endif	
 
+#if defined(CONFIG_KOR_OPERATOR_SKT) || defined(CONFIG_KOR_OPERATOR_LGU)
+	if(system_rev >= 0x07){
+		if(gpio_tlmm_config(GPIO_CFG(SENSOR_AKM_SDA,  0, GPIO_CFG_INPUT, GPIO_CFG_PULL_UP, GPIO_CFG_2MA), 1))
+			printk("%s error in making SENSOR_AKM_SDA Low\n",__func__);
+		if(gpio_tlmm_config(GPIO_CFG(SENSOR_AKM_SCL,  0, GPIO_CFG_INPUT, GPIO_CFG_PULL_UP, GPIO_CFG_2MA), 1))
+			printk("%s error in making SENSOR_AKM_SCL Low\n",__func__);
+	} else {	
+		if(gpio_tlmm_config(GPIO_CFG(SENSOR_AKM_SDA,  0, GPIO_CFG_INPUT, GPIO_CFG_PULL_DOWN, GPIO_CFG_2MA), 1))
+			printk("%s error in making SENSOR_AKM_SDA Low\n",__func__);
+		if(gpio_tlmm_config(GPIO_CFG(SENSOR_AKM_SCL,  0, GPIO_CFG_INPUT, GPIO_CFG_PULL_DOWN, GPIO_CFG_2MA), 1))
+			printk("%s error in making SENSOR_AKM_SCL Low\n",__func__);
+	}
+#else	
 	if(gpio_tlmm_config(GPIO_CFG(SENSOR_AKM_SDA,  0, GPIO_CFG_INPUT, GPIO_CFG_PULL_DOWN, GPIO_CFG_2MA), 1))
 		printk("%s error in making SENSOR_AKM_SDA Low\n",__func__);
 	if(gpio_tlmm_config(GPIO_CFG(SENSOR_AKM_SCL,  0, GPIO_CFG_INPUT, GPIO_CFG_PULL_DOWN, GPIO_CFG_2MA), 1))
 		printk("%s error in making SENSOR_AKM_SCL Low\n",__func__);
+
+#endif
 
 	return err;
 
@@ -4933,30 +4886,47 @@ static struct rpm_regulator_init_data rpm_regulator_init_data[] = {
 	RPM_LDO(PM8058_L2,  0, 1, 0, 3300000, 3300000, LDO300HMIN),
 	RPM_LDO(PM8058_L3,  0, 1, 0, 1800000, 1800000, LDO150HMIN),
 	RPM_LDO(PM8058_L4,  0, 1, 0, 2850000, 2850000,  LDO50HMIN),
-	RPM_LDO(PM8058_L5,  1, 1, 0, 2850000, 2850000, LDO300HMIN),
+	RPM_LDO(PM8058_L5,  0, 1, 0, 2850000, 2850000, LDO300HMIN),
 	RPM_LDO(PM8058_L6,  0, 1, 0, 3000000, 3600000,  LDO50HMIN),
 	RPM_LDO(PM8058_L7,  0, 1, 0, 1800000, 1800000,  LDO50HMIN),
-#if defined(CONFIG_JPN_OPERATOR_NTT)
+#if defined(CONFIG_USA_OPERATOR_ATT) || defined(CONFIG_KOR_OPERATOR_SKT) || defined(CONFIG_KOR_OPERATOR_LGU) || defined(CONFIG_EUR_OPERATOR_OPEN)
 	RPM_LDO(PM8058_L8,  0, 1, 0, 3300000, 3300000, LDO300HMIN),
 #else
 	RPM_LDO(PM8058_L8,  0, 1, 0, 2900000, 3050000, LDO300HMIN),
 #endif
-	RPM_LDO(PM8058_L9,  0, 1, 0, 1800000, 3000000, LDO300HMIN),
-	RPM_LDO(PM8058_L10, 0, 1, 0, 1500000, 2600000, LDO300HMIN),
+
+#if defined(CONFIG_USA_OPERATOR_ATT) || defined(CONFIG_KOR_OPERATOR_SKT) || defined(CONFIG_KOR_OPERATOR_LGU) || defined(CONFIG_EUR_OPERATOR_OPEN)
+	RPM_LDO(PM8058_L9,  0, 1, 0, 1500000, 3000000, LDO300HMIN),
+#else
+	RPM_LDO(PM8058_L9,  0, 1, 0, 1800000, 1800000, LDO300HMIN),
+#endif
+	RPM_LDO(PM8058_L10, 0, 1, 0, 2600000, 2600000, LDO300HMIN),
+#if defined(CONFIG_USA_MODEL_SGH_I957) || defined(CONFIG_KOR_MODEL_SHV_E140S) || defined(CONFIG_KOR_MODEL_SHV_E140K) || defined(CONFIG_KOR_MODEL_SHV_E140L)
 	RPM_LDO(PM8058_L11, 0, 1, 0, 2850000, 2850000, LDO150HMIN),
+#else
+	RPM_LDO(PM8058_L11, 0, 1, 0, 1500000, 1500000, LDO150HMIN),
+#endif
 	RPM_LDO(PM8058_L12, 0, 1, 0, 2900000, 2900000, LDO150HMIN),
 	RPM_LDO(PM8058_L13, 0, 1, 0, 2050000, 2050000, LDO300HMIN),
 	RPM_LDO(PM8058_L14, 0, 0, 0, 2850000, 2850000, LDO300HMIN),
 	RPM_LDO(PM8058_L15, 0, 1, 0, 2850000, 2850000, LDO300HMIN),
 	RPM_LDO(PM8058_L16, 1, 1, 0, 1800000, 1800000, LDO300HMIN),
+#if defined(CONFIG_USA_OPERATOR_ATT) || defined(CONFIG_KOR_OPERATOR_SKT) || defined(CONFIG_EUR_OPERATOR_OPEN)
 	RPM_LDO(PM8058_L17, 0, 1, 0, 1800000, 2850000, LDO150HMIN),
+#else
+	RPM_LDO(PM8058_L17, 0, 1, 0, 2600000, 2600000, LDO150HMIN),
+#endif
 	RPM_LDO(PM8058_L18, 0, 1, 0, 2200000, 2200000, LDO150HMIN),
 #if defined(CONFIG_EUR_OPERATOR_OPEN)
 	RPM_LDO(PM8058_L19, 0, 1, 0, 3300000, 3300000, LDO150HMIN),
 #else
 	RPM_LDO(PM8058_L19, 0, 1, 0, 2500000, 2500000, LDO150HMIN),
 #endif
+#if defined(CONFIG_KOR_OPERATOR_SKT)
+	RPM_LDO(PM8058_L20, 0, 1, 0, 1800000, 3000000, LDO150HMIN),
+#else	
 	RPM_LDO(PM8058_L20, 0, 1, 0, 1800000, 1800000, LDO150HMIN),
+#endif	
 	RPM_LDO(PM8058_L21, 1, 1, 0, 1200000, 1200000, LDO150HMIN),
 	RPM_LDO(PM8058_L22, 0, 1, 0, 1150000, 1150000, LDO300HMIN),
 	RPM_LDO(PM8058_L23, 0, 1, 0, 1200000, 1200000, LDO300HMIN),
@@ -4980,12 +4950,7 @@ static struct rpm_regulator_init_data rpm_regulator_init_data[] = {
 	RPM_LDO(PM8901_L1,  0, 1, 0, 3300000, 3300000, LDO300HMIN),
 	RPM_LDO(PM8901_L2,  0, 1, 0, 2850000, 3300000, LDO300HMIN),
 	RPM_LDO(PM8901_L3,  0, 1, 0, 3300000, 3300000, LDO300HMIN),
-#if defined (CONFIG_JPN_MODEL_SC_01D)
-       	RPM_LDO(PM8901_L4,  0, 1, 0, 2850000, 2850000, LDO300HMIN),
-#else
-        RPM_LDO(PM8901_L4,  0, 1, 0, 2600000, 2600000, LDO300HMIN),
-#endif
-
+	RPM_LDO(PM8901_L4,  0, 1, 0, 2600000, 2600000, LDO300HMIN),
 #if defined(CONFIG_KOR_OPERATOR_SKT) || defined(CONFIG_KOR_OPERATOR_KT)
 	RPM_LDO(PM8901_L5,  0, 1, 0, 2850000, 2950000, LDO300HMIN),
 #else
@@ -5062,15 +5027,41 @@ static struct platform_device *early_devices[] __initdata = {
 	&msm_device_dmov_adm1,
 };
 
-
-/* Bluetooth */
-#ifdef CONFIG_BT_BCM4330
-static struct platform_device bcm4330_bluetooth_device = {
-	.name = "bcm4330_bluetooth",
-	.id = -1,    
+#if (defined(CONFIG_MARIMBA_CORE)) && \
+	(defined(CONFIG_MSM_BT_POWER) || defined(CONFIG_MSM_BT_POWER_MODULE))
+static struct resource bluesleep_resources[] = {
+	{    
+		.name = "gpio_host_wake",    
+		.start = GPIO_BT_HOST_WAKE,    
+		.end = GPIO_BT_HOST_WAKE,    
+		.flags = IORESOURCE_IO,    
+	},    
+	{    
+		.name = "gpio_ext_wake",    
+		.start = GPIO_BT_WAKE,//81,//35,    
+		.end = GPIO_BT_WAKE,//81, //35,    
+		.flags = IORESOURCE_IO,    
+	},    
+	{    
+		.name = "host_wake",    
+		.start = MSM_GPIO_TO_INT(GPIO_BT_HOST_WAKE),    
+		.end = MSM_GPIO_TO_INT(GPIO_BT_HOST_WAKE),    
+		.flags = IORESOURCE_IRQ,    
+	},
 };
-#endif
 
+static struct platform_device msm_bt_power_device = {
+	.name = "bt_power",
+};
+
+static struct platform_device msm_bluesleep_device = {    
+	.name = "bluesleep",    
+	.id = -1,    
+	.num_resources = ARRAY_SIZE(bluesleep_resources),    
+	.resource = bluesleep_resources,
+};
+
+#endif
 
 static struct platform_device msm_tsens_device = {
 	.name   = "tsens-tm",
@@ -5133,7 +5124,7 @@ static struct msm_adc_channels msm_adc_channels_data[] = {
 	{"cable_check", CHANNEL_ADC_CABLE_CHECK, 0, &xoadc_fn, CHAN_PATH_TYPE7,
 		ADC_CONFIG_TYPE2, ADC_CALIB_CONFIG_TYPE2, scale_default},
 #endif
-	{"acc_detect", CHANNEL_ADC_ACC_CHECK, 0, &xoadc_fn, CHAN_PATH_TYPE9,
+	{"acc_detect", CHANNEL_ADC_ACC_CHECK, 0, &xoadc_fn, CHAN_PATH_TYPE10,
 		ADC_CONFIG_TYPE2, ADC_CALIB_CONFIG_TYPE2, scale_default},
 
 
@@ -5165,9 +5156,11 @@ static void pmic8058_xoadc_mpp_config(void)
 	struct pm8xxx_mpp_init_info xoadc_mpps[] = {
 		PM8901_MPP_INIT(XOADC_MPP_4, D_OUTPUT, PM8901_MPP_DIG_LEVEL_S4,
 							DOUT_CTRL_LOW),
-		PM8058_MPP_INIT(XOADC_MPP_2, A_INPUT, PM8XXX_MPP_AIN_AMUX_CH8,
+		PM8058_MPP_INIT(XOADC_MPP_2, A_INPUT, PM8XXX_MPP_AIN_AMUX_CH9,
 							AOUT_CTRL_DISABLE),
 		PM8058_MPP_INIT(XOADC_MPP_3, A_INPUT, PM8XXX_MPP_AIN_AMUX_CH5,
+							AOUT_CTRL_DISABLE),
+		PM8058_MPP_INIT(XOADC_MPP_8, A_INPUT, PM8XXX_MPP_AIN_AMUX_CH8,
 							AOUT_CTRL_DISABLE),
 		PM8058_MPP_INIT(XOADC_MPP_10, A_INPUT, PM8XXX_MPP_AIN_AMUX_CH7,
 							AOUT_CTRL_DISABLE),
@@ -5277,13 +5270,13 @@ bool earmic_bias = 0;
 
 static struct sec_jack_zone jack_zones[] = {
 	[0] = {
-		.adc_high	= 950, // spec  : 868
+		.adc_high	= 1230, // spec  : 1161
 		.delay_ms	= 10,
 		.check_count	= 5,
 		.jack_type	= SEC_HEADSET_3POLE,
 	},
 	[1] = {
-		.adc_high	= 3000, // spec :  1080
+		.adc_high	= 4000, // spec :  1307
 		.delay_ms	= 10,
 		.check_count	= 5,
 		.jack_type	= SEC_HEADSET_4POLE,
@@ -5293,18 +5286,18 @@ static struct sec_jack_zone jack_zones[] = {
 #if 0 // TEMP
 static struct sec_button_zone button_zones[] = {
 		[0] = {
-			.adc_high	= 120, // spec : 87
+			.adc_high	= 178, // spec : 168
 			.adc_low	= 0,	
 			.key 		= KEY_MEDIA,
 		},
 		[1] = {
-			.adc_high	= 310, // spec : 145
-			.adc_low	= 121, // spec : 250
+			.adc_high	= 415, // spec : 391
+			.adc_low	= 179, // spec : 189
 			.key		= KEY_VOLUMEUP,
 		},	
 		[2] = {
-			.adc_high	= 700, // spec :  284
-			.adc_low	= 311, // spec : 456
+			.adc_high	= 1000, // spec :  832
+			.adc_low	= 416, // spec : 438
 			.key		= KEY_VOLUMEDOWN,
 		},		
 };
@@ -5322,9 +5315,36 @@ static int get_p5lte_send_key_state(void)
 
 static void set_p5lte_micbias_state(bool state)
 {
+#if defined(CONFIG_USA_OPERATOR_ATT) || defined(CONFIG_KOR_OPERATOR_SKT) || defined(CONFIG_KOR_OPERATOR_LGU) || defined(CONFIG_EUR_OPERATOR_OPEN)
+	if(system_rev >= 0x4)
+	{
+		pr_info("sec_jack: ear micbias %s\n", state?"on":"off");
+		gpio_set_value_cansleep(PM8058_GPIO_PM_TO_SYS(PMIC_GPIO_EAR_MICBIAS_EN), state);	
+	}
+        else
+        {
+		int rc;
+			
+		if(state && !earmic_bias)
+		{
+			rc = regulator_enable(vreg_earmic_bias);
+			if (rc) {
+				pr_err("%s: Enable regulator 8901_L4 failed\n", __func__);
+			}
+			earmic_bias = true;
+		}
+		else if(!state && earmic_bias)
+		{
+			rc = regulator_disable(vreg_earmic_bias);
+			if (rc) {
+				pr_err("%s: Disable regulator 8901_L4 failed\n", __func__);
+			}
+			earmic_bias = false;
+		}
+        }
+#else
 	int rc;
-	printk("state :%d, bias : %d\n",state,earmic_bias);
-
+	
 	if(state && !earmic_bias)
 	{
 		rc = regulator_enable(vreg_earmic_bias);
@@ -5341,65 +5361,90 @@ static void set_p5lte_micbias_state(bool state)
 		}
 		earmic_bias = false;
 	}
+#endif
+
 	return;
 }
 
 static int sec_jack_get_adc_value(void)
 {
-	void *adc_handle;
+	//DECLARE_COMPLETION_ONSTACK(sec_adc_wait);
 	struct completion sec_adc_wait;
 	int rc;
 	u32 res = 0;
 	struct adc_chan_result adc_result;
-	
-	rc = adc_channel_open(CHANNEL_ADC_HDSET,&adc_handle); 
-	if (rc) {
-		pr_err("%s: Unable to open ADC channel\n", __func__);
-		return 0;
-	}
-	else
-		pr_info("%s: open ADC channel\n", __func__); 
+#if defined(CONFIG_KOR_OPERATOR_LGU)
+	if(system_rev < 0x6) 
+#else
+	if(system_rev < 0x7) 
+#endif
+	{
+		init_completion(&sec_adc_wait);	
+		rc = adc_channel_request_conv(adc_handle, &sec_adc_wait);
+		if (rc) {
+			pr_err("%s: adc_channel_request_conv failed\n", __func__);
+			return 0;
+		}
+		rc = wait_for_completion_interruptible(&sec_adc_wait);
+		if (rc) {
+			pr_err("%s: wait_for_completion_interruptible failed\n", __func__);
+			return 0;
+		}
+		rc = adc_channel_read_result(adc_handle, &adc_result);
+		if (rc) {
+			pr_err("%s: adc_channel_read_result failed\n", __func__);
+			return 0;
+		}
 
-
-	init_completion(&sec_adc_wait);	
-	
-	rc = adc_channel_request_conv(adc_handle, &sec_adc_wait);
-	if (rc) {
-		pr_err("%s: adc_channel_request_conv failed\n", __func__);
-		return 0;
-	}
-	rc = wait_for_completion_interruptible(&sec_adc_wait);
-	if (rc) {
-		pr_err("%s: wait_for_completion_interruptible failed\n", __func__);
-		return 0;
-	}
-	rc = adc_channel_read_result(adc_handle, &adc_result);
-	if (rc) {
-		pr_err("%s: adc_channel_read_result failed\n", __func__);
-		return 0;
-	}
-
-	rc = adc_channel_close(adc_handle);
-	if (rc) {
-		pr_err("%s: couldnt close channel %d ret=%d\n",
+		/* rc = adc_channel_close(adc_handle);
+		 * if (rc) {
+			 * pr_err("%s: couldnt close channel %d ret=%d\n",
 							 * __func__, CHANNEL_ADC_HDSET, rc);
-		return 0;
-	}
+		 * } */
 		res = adc_result.physical;
-	
-	struct pm8xxx_mpp_config_data pm8058_xoadc_jack = {
-		.type	= PM8XXX_MPP_TYPE_SINK,
-		.level	= PM8XXX_MPP_CS_OUT_5MA,
-		.control	= PM8XXX_MPP_AOUT_CTRL_DISABLE,
-	};
-	pm8xxx_mpp_config(PM8901_MPP_PM_TO_SYS(XOADC_MPP_3), &pm8058_xoadc_jack);
+		
+		mdelay(10);
+	} else {
+#ifdef CONFIG_STMPE811_ADC
+		res = stmpe811_adc_get_value(6);
+		printk("stmpe811 sec_jack adc read : %d\n",res);
+#endif
+	}
 		
 	return res;
 }
 
+
 static void sec_jack_gpio_init(void)
 {
+#if defined(CONFIG_USA_OPERATOR_ATT) || defined(CONFIG_KOR_OPERATOR_SKT) || defined(CONFIG_KOR_OPERATOR_LGU) || defined(CONFIG_EUR_OPERATOR_OPEN)
 	int rc;
+	if(system_rev <= 0x3)
+	{	
+
+		vreg_earmic_bias = regulator_get(NULL, "8901_l4");
+		if (IS_ERR(vreg_earmic_bias)) {
+			pr_err("%s: Unable to get 8901_l4\n", __func__);
+			regulator_put(vreg_earmic_bias);
+			return ;
+		}
+
+		rc = regulator_set_voltage(vreg_earmic_bias, 2850000, 2850000);
+		if (rc) {
+			pr_err("%s: unable to set L4 voltage to 2.8V\n", __func__);
+		}
+	}
+
+	rc = adc_channel_open(CHANNEL_ADC_HDSET,&adc_handle); 
+	if (rc) {
+		pr_err("%s: Unable to open ADC channel\n", __func__);
+	}
+	else{
+		pr_info("%s: open ADC channel\n", __func__); 
+	}
+#else
+	int rc;
+	
 	vreg_earmic_bias = regulator_get(NULL, "8901_l4");
 	if (IS_ERR(vreg_earmic_bias)) {
 		pr_err("%s: Unable to get 8901_l4\n", __func__);
@@ -5412,14 +5457,15 @@ static void sec_jack_gpio_init(void)
 		pr_err("%s: unable to set L4 voltage to 2.8V\n", __func__);
 	}
 
-#if defined (CONFIG_JPN_MODEL_SC_01D)
-	rc = regulator_enable(vreg_earmic_bias);
+	rc = adc_channel_open(CHANNEL_ADC_HDSET,&adc_handle); 
 	if (rc) {
-		pr_err("%s: Enable regulator 8901_L4 failed\n", __func__);
+		pr_err("%s: Unable to open ADC channel\n", __func__);
 	}
-	earmic_bias = true;
-#endif
+	else {
+		pr_info("%s: open ADC channel\n", __func__); 
+	}
 	
+#endif
 	return;
 }
 
@@ -5427,7 +5473,7 @@ static struct sec_jack_platform_data sec_jack_data = {
 	.get_det_jack_state	= get_p5lte_det_jack_state,
 	.get_send_key_state	= get_p5lte_send_key_state,
 	.set_micbias_state	= set_p5lte_micbias_state,
-	.init = sec_jack_gpio_init,
+// TEMP	.init = sec_jack_gpio_init,
 	.get_adc_value	= sec_jack_get_adc_value,
 	.zones		= jack_zones,
 // TEMP	.button_zone = button_zones,
@@ -5605,9 +5651,6 @@ static struct platform_device *surf_devices[] __initdata = {
 	&msm_gsbi12_qup_i2c_device,
 #endif
 #endif
-#if defined(CONFIG_SPI_QUP) || defined(CONFIG_SPI_QUP_MODULE)
-	&msm_gsbi1_qup_spi_device,
-#endif
 #ifdef CONFIG_SERIAL_MSM_HS
 	&msm_device_uart_dm1,
 #endif
@@ -5702,11 +5745,11 @@ static struct platform_device *surf_devices[] __initdata = {
 	&msm_rpm_stat_device,
 #endif
 	&msm_device_vidc,
-	
-#if defined (CONFIG_BT_BCM4330)
-    &bcm4330_bluetooth_device,
+#if (defined(CONFIG_MARIMBA_CORE)) && \
+	(defined(CONFIG_MSM_BT_POWER) || defined(CONFIG_MSM_BT_POWER_MODULE))
+	&msm_bt_power_device,
+	&msm_bluesleep_device, 
 #endif
-
 #ifdef CONFIG_SENSORS_MSM_ADC
 	&msm_adc_device,
 #endif
@@ -5727,12 +5770,11 @@ static struct platform_device *surf_devices[] __initdata = {
 #endif
 	&msm_tsens_device,
 	&msm_rpm_device,
-
 #ifdef CONFIG_OPTICAL_GP2A
-	&opt_i2c_gpio_device,
-	&opt_gp2a,
+// TEMP	&opt_i2c_gpio_device,
+// TEMP	&opt_gp2a,
 #endif
-#ifdef CONFIG_OPTICAL_BH1721_P5LTE
+#ifdef CONFIG_OPTICAL_BH1721_I957
 	&opt_i2c_gpio_device,
 #endif
 
@@ -5740,7 +5782,10 @@ static struct platform_device *surf_devices[] __initdata = {
 	&sec_keyboard,
 #endif
 
-#ifdef CONFIG_SENSORS_AK8975_P5LTE
+#ifdef CONFIG_BROADCOM_WIFI_RESERVED_MEM
+// TEMP	&sec_device_wifi,
+#endif
+#ifdef CONFIG_SENSORS_AK8975_I957
 	&akm_i2c_gpio_device,
 #endif
 #ifdef CONFIG_30PIN_CONN
@@ -5749,7 +5794,7 @@ static struct platform_device *surf_devices[] __initdata = {
 #ifdef CONFIG_VIDEO_MHL_TABLET_V1
 	&mhl_i2c_gpio_device,
 #endif
-#ifdef CONFIG_GYRO_K3G_P5LTE
+#ifdef CONFIG_GYRO_K3G_I957
 	&gyro_i2c_gpio_device,
 #endif
 #ifdef CONFIG_CMC623_P5LTE
@@ -5880,18 +5925,6 @@ static struct ion_platform_data ion_pdata = {
 			.extra_data = (void *) &cp_wb_ion_pdata,
 		},
 		{
-			.id	= ION_QSECOM_HEAP_ID,
-			.type	= ION_HEAP_TYPE_CARVEOUT,
-			.name	= ION_QSECOM_HEAP_NAME,
-#if defined (CONFIG_SAMSUNG_MEMORY_LAYOUT_ARRANGE)
-			.base	= MSM_ION_QSECOM_BASE,		// should be physical addr
-#endif			
-			.size	= MSM_ION_QSECOM_SIZE,
-			.memory_type = ION_EBI_TYPE,
-			.extra_data = (void *) &co_ion_pdata,
-		},
-#if 0
-		{
 			.id	= ION_AUDIO_HEAP_ID,
 			.type	= ION_HEAP_TYPE_CARVEOUT,
 			.name	= ION_AUDIO_HEAP_NAME,
@@ -5902,7 +5935,6 @@ static struct ion_platform_data ion_pdata = {
 			.memory_type = ION_EBI_TYPE,
 			.extra_data = (void *)&co_ion_pdata,
 		},
-#endif
 #endif
 	}
 };
@@ -5964,10 +5996,7 @@ static void reserve_ion_memory(void)
 	msm8x60_reserve_table[MEMTYPE_EBI1].size += MSM_ION_CAMERA_SIZE;
 #if !defined (CONFIG_SAMSUNG_MEMORY_LAYOUT_ARRANGE)
 	msm8x60_reserve_table[MEMTYPE_EBI1].size += MSM_ION_WB_SIZE;
-	msm8x60_reserve_table[MEMTYPE_EBI1].size += MSM_ION_QSECOM_SIZE;
-#if 0
 	msm8x60_reserve_table[MEMTYPE_EBI1].size += MSM_ION_AUDIO_SIZE;
-#endif
 #endif
 #endif
 }
@@ -6040,17 +6069,14 @@ static void __init msm8x60_reserve(void)
 
 static int check_jig_gpio(void)
 {
-	if(system_rev >= 0x1)
+#if defined(CONFIG_USA_OPERATOR_ATT) || defined(CONFIG_KOR_OPERATOR_SKT) || defined(CONFIG_KOR_OPERATOR_LGU) || defined(CONFIG_EUR_OPERATOR_OPEN)
+	if(system_rev >= 0x2)
 		return 1;
+#else
+	if(system_rev >= 0x2)
+		return 1;
+#endif
 	return 0;
-}
-
-int get_jig_gpio_to_sys(void)
-{
-	if(system_rev >= 0x4)
-		return PM8058_GPIO_PM_TO_SYS(PM8058_GPIO(6));
-	else
-		return PM8058_GPIO_PM_TO_SYS(PM8058_GPIO(2));
 }
 
 static int get_jig_gpio(void)
@@ -6069,9 +6095,10 @@ int check_jig_on(void)
 		pr_debug("%s : jig on = %d\r\n", __func__, ret);
 	}
 
+#if defined(CONFIG_USA_OPERATOR_ATT) || defined(CONFIG_KOR_OPERATOR_SKT) || defined(CONFIG_KOR_OPERATOR_LGU) || defined(CONFIG_EUR_OPERATOR_OPEN)
 	if(system_rev>=0x03)
 		return !ret; //jig on=low 
-
+#endif
 	return ret; //jig on=high
 }
 
@@ -6229,7 +6256,7 @@ static int pm8058_gpios_init(void)
 				.inv_int_pol	= 0,
 			}
 		},
-#ifdef CONFIG_SENSORS_AK8975_P5LTE
+#ifdef CONFIG_SENSORS_AK8975_I957
 		{
 			PM8058_GPIO_PM_TO_SYS(GPIO_MSENSE_INT),
 			{
@@ -6241,7 +6268,7 @@ static int pm8058_gpios_init(void)
 			}
 		},
 #endif
-#ifdef CONFIG_GYRO_K3G_P5LTE
+#ifdef CONFIG_GYRO_K3G_I957
 		{
 			PM8058_GPIO_PM_TO_SYS(PM8058_GPIO(11))	/*GYRO_FIFO_INT*/,
 			{
@@ -6253,7 +6280,7 @@ static int pm8058_gpios_init(void)
 			}
 		},
 #endif
-#ifdef CONFIG_OPTICAL_BH1721_P5LTE
+#ifdef CONFIG_OPTICAL_BH1721_I957
 		{
 			PM8058_GPIO_PM_TO_SYS(ALC_RST),
 			{
@@ -6354,39 +6381,20 @@ static int pm8058_gpios_init(void)
 #endif
 	};
 
-#ifdef CONFIG_KEYPAD_P5LTE
-	if ( system_rev < 0x3 ) {
-		struct pm8058_gpio_cfg volume_up = {
-				VOLUME_DOWN,
-				{
-					.direction	= PM_GPIO_DIR_IN,
-					.pull		= PM_GPIO_PULL_UP_31P5,
-					.vin_sel	= 2,
-					.out_strength	= PM_GPIO_STRENGTH_NO,
-					.function	= PM_GPIO_FUNC_NORMAL,
-					.inv_int_pol	= 1,
-				}
-		};
+struct pm_gpio main_micbiase = {
+		.direction      = PM_GPIO_DIR_IN,
+		.pull           = PM_GPIO_PULL_NO,
+		.vin_sel        = 2,
+		.function       = PM_GPIO_FUNC_NORMAL,
+		.inv_int_pol    = 0,
+	};
 
-		struct pm8058_gpio_cfg volume_down = {
-				VOLUME_UP,
-				{
-					.direction	= PM_GPIO_DIR_IN,
-					.pull		= PM_GPIO_PULL_UP_31P5,
-					.vin_sel	= 2,
-					.out_strength	= PM_GPIO_STRENGTH_NO,
-					.function	= PM_GPIO_FUNC_NORMAL,
-					.inv_int_pol	= 1,
-				}
-		};
-
-		rc = pm8058_gpio_config(volume_up.gpio,
-				&volume_up.cfg);
-		rc = pm8058_gpio_config(volume_down.gpio,
-				&volume_down.cfg);
+	rc = pm8xxx_gpio_config(PM8058_GPIO_PM_TO_SYS(PMIC_GPIO_MAIN_MICBIAS_EN), &main_micbiase);
+	if (rc) 
+	{
+		pr_err("%s PMIC_GPIO_MAIN_MICBIAS_EN config failed\n", __func__);
+		return rc;
 	}
-#endif
-
 
 #ifdef CONFIG_SAMSUNG_JACK
 	struct pm_gpio ear_det = {
@@ -6406,7 +6414,7 @@ static int pm8058_gpios_init(void)
 	};
 	struct pm_gpio ear_amp_en = {
 		.direction      = PM_GPIO_DIR_OUT,
-		.output_value	= 0,
+		.output_value	= 1,
 		.output_buffer	= PM_GPIO_OUT_BUF_CMOS,
 		.pull			= PM_GPIO_PULL_NO,
 		.out_strength	= PM_GPIO_STRENGTH_HIGH,
@@ -6414,15 +6422,15 @@ static int pm8058_gpios_init(void)
 		.vin_sel		= 2,
 		.inv_int_pol	= 0,
 	};
-	struct pm_gpio amp_en = {
+	struct pm_gpio ear_micbiase = {
 		.direction      = PM_GPIO_DIR_OUT,
-		.output_value	= 1,
-		.output_buffer	= PM_GPIO_OUT_BUF_CMOS,
 		.pull           = PM_GPIO_PULL_NO,
 		.out_strength   = PM_GPIO_STRENGTH_HIGH,
-		.vin_sel		= 2,
 		.function       = PM_GPIO_FUNC_NORMAL,
 		.inv_int_pol    = 0,
+		.vin_sel        = 2,
+		.output_buffer  = PM_GPIO_OUT_BUF_CMOS,
+		.output_value   = 0,
 	};
 
 	rc = pm8xxx_gpio_config(PM8058_GPIO_PM_TO_SYS(PMIC_GPIO_EAR_DET), &ear_det);
@@ -6435,38 +6443,40 @@ static int pm8058_gpios_init(void)
 		pr_err("%s PMIC_GPIO_SHORT_SENDEND config failed\n", __func__);
 		return rc;
 	}
-	rc = pm8xxx_gpio_config(PM8058_GPIO_PM_TO_SYS(PMIC_GPIO_AMP_EN), &amp_en);
+
+#if defined(CONFIG_USA_OPERATOR_ATT) || defined(CONFIG_KOR_OPERATOR_SKT) || defined(CONFIG_KOR_OPERATOR_LGU) || defined(CONFIG_EUR_OPERATOR_OPEN)
+	if(system_rev >= 0x4)
+        {
+	 	rc = pm8xxx_gpio_config(PM8058_GPIO_PM_TO_SYS(PMIC_GPIO_EAR_MICBIAS_EN), &ear_micbiase);
 		if (rc) {
-		pr_err("%s PMIC_GPIO_AMP_EN config failed\n", __func__);
+			pr_err("%s PMIC_GPIO_EAR_MICBIAS_EN config failed\n", __func__);
 			return rc;
 		}
-	rc =  gpio_request(PM8058_GPIO_PM_TO_SYS(PMIC_GPIO_AMP_EN), "AMP_EN");
-	if (rc) {
-		pr_err("%s:Failed to request GPIO %d\n",
-					__func__, PMIC_GPIO_AMP_EN);
-		return rc;
         } 
-	gpio_direction_output(PM8058_GPIO_PM_TO_SYS(PMIC_GPIO_AMP_EN), 1);
-
-
+#endif
 
 	rc = pm8xxx_gpio_config(PM8058_GPIO_PM_TO_SYS(PMIC_GPIO_MUTE_CON), &ear_amp_en);
 	if (rc) {
 		pr_err("%s PMIC_GPIO_MUTE_CON config failed\n", __func__);
 		return rc;
 	}
+
 	rc =  gpio_request(PM8058_GPIO_PM_TO_SYS(PMIC_GPIO_MUTE_CON), "EAR_AMP_EN");
 	if (rc) {
-		pr_err("%s:Failed to request GPIO %d\n",
-					__func__, PMIC_GPIO_MUTE_CON);
+		pr_err("%s:Failed to request GPIO %d\n", __func__, PMIC_GPIO_MUTE_CON);
 		return rc;
 	} 
-	if(system_rev>=0x03)
+
+	rc = gpio_request(PM8058_GPIO_PM_TO_SYS(PMIC_GPIO_MAIN_MICBIAS_EN), "MAINMIC_BIAS_EN");
+	if (rc) {
+		pr_err("%s:Failed to request GPIO %d\n", __func__, PMIC_GPIO_MAIN_MICBIAS_EN);
+		return rc;
+	} 
+	
+	if(system_rev>=0x04)
 		gpio_direction_output(PM8058_GPIO_PM_TO_SYS(PMIC_GPIO_MUTE_CON), 1);
 	else
 		gpio_direction_output(PM8058_GPIO_PM_TO_SYS(PMIC_GPIO_MUTE_CON), 0);
-
-
 #endif
 
 	for (i = 0; i < ARRAY_SIZE(gpio_cfgs); ++i) {
@@ -6489,7 +6499,7 @@ static int pm8058_gpios_init(void)
 	};
 	int gpio_acc_check;
 
-	if (system_rev < 0x03)
+	if (system_rev < 0x04)
 		gpio_acc_check = PMIC_GPIO_ACCESSORY_CHECK;
 	else
 		gpio_acc_check = PMIC_GPIO_ACCESSORY_CHECK_04;
@@ -6524,8 +6534,8 @@ static int pm8058_gpios_init(void)
 }
 
 static const unsigned int ffa_keymap[] = {
-	KEY(0, 0, KEY_VOLUMEDOWN),
-	KEY(0, 1, KEY_VOLUMEUP),
+	KEY(0, 0, KEY_VOLUMEUP),
+	KEY(0, 1, KEY_VOLUMEDOWN),
 	KEY(0, 2, KEY_RESERVED),		
 	KEY(0, 3, KEY_RESERVED),
 	KEY(0, 4, KEY_RESERVED),
@@ -6576,9 +6586,6 @@ static struct pm8xxx_keypad_platform_data ffa_keypad_data = {
 	.row_hold_ns		= 91500,
 	.wakeup			= 1,
 	.keymap_data		= &ffa_keymap_data,
-#ifdef CONFIG_KEYPAD_P5LTE
-	.init_key_gpio = p5_key_gpio_init,
-#endif	
 };
 
 static struct pm8xxx_rtc_platform_data pm8058_rtc_pdata = {
@@ -7476,7 +7483,7 @@ static struct i2c_registry msm8x60_i2c_devices[] __initdata = {
 		ARRAY_SIZE(opt_i2c_borad_info),
 	},
 #endif
-#ifdef CONFIG_OPTICAL_BH1721_P5LTE
+#ifdef CONFIG_OPTICAL_BH1721_I957
 	{
 		I2C_SURF | I2C_FFA | I2C_DRAGON,
 		MSM_OPT_I2C_BUS_ID,
@@ -7527,7 +7534,7 @@ static struct i2c_registry msm8x60_i2c_devices[] __initdata = {
 		ARRAY_SIZE(msm_marimba_board_info),
 	},
 #endif /* CONFIG_MARIMBA_CORE */
-#ifdef CONFIG_SENSORS_AK8975_P5LTE
+#ifdef CONFIG_SENSORS_AK8975_I957
 	{
 		I2C_SURF | I2C_FFA | I2C_DRAGON,
 		MSM_MAG_I2C_BUS_ID,
@@ -7543,7 +7550,7 @@ static struct i2c_registry msm8x60_i2c_devices[] __initdata = {
 		ARRAY_SIZE(mhl_i2c_board_info),		
 	},
 #endif
-#ifdef CONFIG_GYRO_K3G_P5LTE
+#ifdef CONFIG_GYRO_K3G_I957
 	{
 		I2C_SURF | I2C_FFA | I2C_DRAGON,
 		MSM_GYRO_I2C_BUS_ID,
@@ -7643,7 +7650,7 @@ static void register_i2c_devices(void)
 						msm8x60_i2c_devices[i].len);
 	}
 
-	if ( system_rev >= 2 ) {
+	if ( system_rev >= 3 ) {
 		for (i = 0; i < ARRAY_SIZE(p5lte_rev03_i2c_devices); ++i) {
 			if (p5lte_rev03_i2c_devices[i].machs & mach_mask)
 				i2c_register_board_info(p5lte_rev03_i2c_devices[i].bus,
@@ -8954,7 +8961,7 @@ error:
 
 #endif /* CONFIG_FB_MSM_HDMI_MSM_PANEL */
 
-#ifdef CONFIG_SENSORS_AK8975_P5LTE
+#ifdef CONFIG_SENSORS_AK8975_I957
 struct regulator {
 	struct device *dev;
 	struct list_head list;
@@ -8983,7 +8990,55 @@ static int __init magnetic_device_init(void)
 		regulator_put(k3dh_akm_l11);
 	}
 
-	if(system_rev < 0x05){ 
+#if defined(CONFIG_KOR_OPERATOR_LGU)
+	k3dh_akm_lvs3 = regulator_get(NULL, "8901_lvs3");
+	if (IS_ERR(k3dh_akm_lvs3)) {
+		return PTR_ERR(k3dh_akm_lvs3);
+	}
+#elif defined(CONFIG_KOR_OPERATOR_SKT)
+	if(system_rev < 0x07){ 
+		/* rev 0.0, 0.1, 0.2,  VSENSOR_1.8V from VREG_L20A */	
+		k3dh_akm_l20 = regulator_get(NULL, "8058_l20");
+		if (IS_ERR(k3dh_akm_l20)) {
+			return PTR_ERR(k3dh_akm_l20);
+		}
+
+		err = regulator_set_voltage(k3dh_akm_l20, 1800000, 1800000);
+		if (err) {
+			pr_err("%s: unable to set the voltage for regulator"
+					"pm8058_l20\n", __func__);
+			regulator_put(k3dh_akm_l20);
+			return err;
+		}
+	} else if(system_rev >= 0x07) {
+		printk("[K3DH]magnetic_device_init REV07\n");	
+		/* rev 0.0, 0.1, 0.2,  VSENSOR_1.8V from VREG_L20A */	
+		k3dh_akm_l20 = regulator_get(NULL, "8058_l20");
+		if (IS_ERR(k3dh_akm_l20)) {
+			return PTR_ERR(k3dh_akm_l20);
+		}
+
+		err = regulator_set_voltage(k3dh_akm_l20, 2850000, 2850000);
+		if (err) {
+			pr_err("%s: unable to set the voltage for regulator"
+					"pm8058_l20\n", __func__);
+			regulator_put(k3dh_akm_l20);
+			return err;
+		}
+		
+		err = regulator_enable(k3dh_akm_l20);
+		if (err) {
+			pr_err("%s: unable to enable regulator"
+					"pm8058_l20\n", __func__);
+			regulator_put(k3dh_akm_l20);
+			return err;
+		}
+		
+	} else {
+		printk("[K3DH] unknown rev=%d\n", system_rev );
+	}
+#else
+	if(system_rev < 0x06){ 
 		/* rev < 0x06, 
 		   VSENSOR_1.8V from VREG_L20A, VSENSOR_2.85V from VREG_L11A */
 		k3dh_akm_l20 = regulator_get(NULL, "8058_l20");
@@ -8999,7 +9054,7 @@ static int __init magnetic_device_init(void)
 			return err;
 		}
 	}
-	else if(system_rev >= 0x5){
+	else if(system_rev >= 0x6){
 		/* rev >= 0x06, 
 		   VSENSOR_1.8V from VIO_P3_1.8V, VSENSOR_2.85V from VREG_L11A */
 		printk("[K3DH] power_on mapped NULL\n");
@@ -9035,7 +9090,7 @@ static int __init magnetic_device_init(void)
 	}
 	else
 		printk("[K3DH] unknown rev=%d\n", system_rev );
-
+#endif
 	gpio_tlmm_config(GPIO_CFG(SENSOR_AKM_SDA, 0, GPIO_CFG_INPUT, GPIO_CFG_NO_PULL, GPIO_CFG_2MA), 1);
 	gpio_tlmm_config(GPIO_CFG(SENSOR_AKM_SCL, 0, GPIO_CFG_INPUT, GPIO_CFG_NO_PULL, GPIO_CFG_2MA), 1);
 
@@ -9176,7 +9231,7 @@ usb_path_type get_usb_path(void)
 	usb_path_type curr_usb = USB_SEL_MSM ;
 	int usb_sel2 = gpio_get_value_cansleep(USB_SEL_2);
 	
-#if defined(CONFIG_USA_OPERATOR_ATT) || defined(CONFIG_KOR_OPERATOR_SKT) || defined(CONFIG_KOR_OPERATOR_KT) || defined(CONFIG_KOR_OPERATOR_LGU) || defined(CONFIG_EUR_OPERATOR_OPEN)  || defined(CONFIG_JPN_OPERATOR_NTT)
+#if defined(CONFIG_USA_OPERATOR_ATT) || defined(CONFIG_KOR_OPERATOR_SKT) || defined(CONFIG_KOR_OPERATOR_LGU) || defined(CONFIG_EUR_OPERATOR_OPEN)
 	curr_usb = (usb_sel2 == 0) ? USB_SEL_MSM : USB_SEL_ADC;
 #endif
 
@@ -9189,7 +9244,7 @@ void set_usb_path(usb_path_type usb_path)
 	int val=0;
 	printk("%s : set usb path to %d\r\n", __func__, usb_path);
 	
-#if defined(CONFIG_USA_OPERATOR_ATT) || defined(CONFIG_KOR_OPERATOR_SKT) || defined(CONFIG_KOR_OPERATOR_KT) || defined(CONFIG_KOR_OPERATOR_LGU) || defined(CONFIG_EUR_OPERATOR_OPEN) || defined(CONFIG_JPN_OPERATOR_NTT)
+#if defined(CONFIG_USA_OPERATOR_ATT) || defined(CONFIG_KOR_OPERATOR_SKT) || defined(CONFIG_KOR_OPERATOR_LGU) || defined(CONFIG_EUR_OPERATOR_OPEN)
 	val = (usb_path == USB_SEL_MSM) ? 0: 1 ;
 #endif
 	pr_debug("%s: GPIO37_CONFIG(0x%x),\r\n",  __func__, readl(GPIO_CONFIG(USB_SEL_2)));
@@ -9218,16 +9273,35 @@ static void __init usb_host_init(void)
 	mutex_init(&adc_lock);
 #endif
 }
-static void p4lte_touch_power_on(void)
+static int tsp_power_on(void)
 {
-	printk("[TSP] %s, %d\n",__func__,__LINE__);
-	
-	gpio_direction_output(GPIO_TOUCH_EN, 1);
-	msleep(20);
-	gpio_set_value_cansleep(GPIO_TOUCH_RST , 1);
-	msleep(200);
+	int ret = 0;
 
-	return;
+	gpio_request(62, "tsp_pwr_en");
+	gpio_tlmm_config(GPIO_CFG(62, 0, GPIO_CFG_OUTPUT, GPIO_CFG_NO_PULL, GPIO_CFG_2MA), 1);
+	gpio_direction_output(62, 1);
+	
+#if !defined(CONFIG_USA_OPERATOR_ATT) && \
+	!defined(CONFIG_KOR_OPERATOR_SKT) && \
+	!defined(CONFIG_KOR_OPERATOR_LGU) && \
+	!defined(CONFIG_EUR_OPERATOR_OPEN)
+
+	ret = gpio_request( 63 , "TOUCH_RST");
+	if (ret < 0) {
+		printk(KERN_ERR "%s: TOUCH_RST gpio %d request"
+			"failed\n", __func__, 63 );
+		return ret;
+	}
+	gpio_direction_output(63 , 0);
+	msleep(20);
+	gpio_set_value_cansleep(63 , 1);
+	msleep(100);
+	gpio_set_value_cansleep(63 , 0);
+	msleep(100);
+	gpio_set_value_cansleep(63 , 1);
+	msleep(200);
+#endif
+	return ret;
 }
 
 static int lcdc_panel_power(int on)
@@ -9833,7 +9907,7 @@ int mdp_core_clk_rate_table[] = {
 #else
 int mdp_core_clk_rate_table[] = {
 	128000000, //0922 QC recommend : from 85330000
-	177780000, //0922 QC recommend : from 85330000
+	128000000, //0922 QC recommend : from 85330000
 	177780000, //0922 QC recommend : from -> 177780000
 	200000000,
 };
@@ -9884,6 +9958,131 @@ static void __init msm_fb_add_devices(void)
 	msm_fb_register_device("dtv", &dtv_pdata);
 #endif
 }
+
+extern int bluesleep_start(void);
+extern void bluesleep_stop(void);
+
+/*
+  GPIO_CFG(gpio, func, dir, pull, drvstr) 
+
+  func -  0 : gpio_oe_reg //GPIO Output Enable
+ 		1 : Alternate functional interface
+ 		( gsbi (General Serial Bus Interface) for (HS-UART/UIM/SPI/I2C)
+ 		  GPIO53 : gsbi6(3) : UART_TX
+ 		  GPIO54 : gsbi6(2) : UART_RX
+  		  GPIO55 : gsbi6(1) : UART_CTS
+  		  GPIO56 : gsbi6(0) : UART_RTS
+
+ 		  GPIO111 : audio_pcm_dout
+ 		  GPIO112 : audio_pcm_din
+  		  GPIO113 : audio_pcm_sync
+  		  GPIO114 : audio_pcm_clk
+*/
+
+static uint32_t bt_config_power_on[] = {
+	 GPIO_CFG(GPIO_BT_RESET, 0, GPIO_CFG_OUTPUT, GPIO_CFG_NO_PULL, GPIO_CFG_2MA),
+	 GPIO_CFG(GPIO_BT_REG_ON, 0, GPIO_CFG_OUTPUT, GPIO_CFG_NO_PULL, GPIO_CFG_2MA),
+	 GPIO_CFG(GPIO_BT_WAKE, 0, GPIO_CFG_OUTPUT, GPIO_CFG_NO_PULL, GPIO_CFG_2MA),
+	 GPIO_CFG(GPIO_BT_UART_RTS, 1, GPIO_CFG_OUTPUT, GPIO_CFG_NO_PULL, GPIO_CFG_2MA),
+	 GPIO_CFG(GPIO_BT_UART_CTS, 1, GPIO_CFG_INPUT, GPIO_CFG_NO_PULL, GPIO_CFG_2MA),
+	 GPIO_CFG(GPIO_BT_UART_RXD, 1, GPIO_CFG_INPUT, GPIO_CFG_NO_PULL, GPIO_CFG_2MA),
+	 GPIO_CFG(GPIO_BT_UART_TXD, 1, GPIO_CFG_OUTPUT, GPIO_CFG_NO_PULL, GPIO_CFG_2MA),
+	 GPIO_CFG(GPIO_BT_PCM_DOUT, 1, GPIO_CFG_OUTPUT, GPIO_CFG_NO_PULL, GPIO_CFG_2MA),
+	 GPIO_CFG(GPIO_BT_PCM_DIN, 1, GPIO_CFG_INPUT, GPIO_CFG_NO_PULL, GPIO_CFG_2MA), 
+	 GPIO_CFG(GPIO_BT_PCM_SYNC, 1, GPIO_CFG_OUTPUT, GPIO_CFG_NO_PULL, GPIO_CFG_2MA),
+	 GPIO_CFG(GPIO_BT_PCM_CLK, 1, GPIO_CFG_OUTPUT, GPIO_CFG_NO_PULL, GPIO_CFG_2MA), 
+	 GPIO_CFG(GPIO_BT_HOST_WAKE, 0, GPIO_CFG_INPUT, GPIO_CFG_NO_PULL, GPIO_CFG_2MA),
+};
+
+static uint32_t bt_config_power_off[] = {
+	 GPIO_CFG(GPIO_BT_RESET, 0, GPIO_CFG_INPUT, GPIO_CFG_PULL_DOWN, GPIO_CFG_2MA),
+	 GPIO_CFG(GPIO_BT_REG_ON, 0, GPIO_CFG_INPUT, GPIO_CFG_PULL_DOWN, GPIO_CFG_2MA),
+	 GPIO_CFG(GPIO_BT_WAKE, 0, GPIO_CFG_INPUT, GPIO_CFG_PULL_DOWN, GPIO_CFG_2MA), 
+	 GPIO_CFG(GPIO_BT_UART_RTS, 0, GPIO_CFG_INPUT, GPIO_CFG_PULL_DOWN, GPIO_CFG_2MA),
+	 GPIO_CFG(GPIO_BT_UART_CTS, 0, GPIO_CFG_INPUT, GPIO_CFG_PULL_DOWN, GPIO_CFG_2MA),
+	 GPIO_CFG(GPIO_BT_UART_RXD, 0, GPIO_CFG_INPUT, GPIO_CFG_PULL_DOWN, GPIO_CFG_2MA),
+	 GPIO_CFG(GPIO_BT_UART_TXD, 0, GPIO_CFG_INPUT, GPIO_CFG_PULL_DOWN, GPIO_CFG_2MA),
+	 GPIO_CFG(GPIO_BT_PCM_DOUT, 0, GPIO_CFG_INPUT, GPIO_CFG_PULL_DOWN, GPIO_CFG_2MA),
+	 GPIO_CFG(GPIO_BT_PCM_DIN, 0, GPIO_CFG_INPUT, GPIO_CFG_PULL_DOWN, GPIO_CFG_2MA), 
+	 GPIO_CFG(GPIO_BT_PCM_SYNC, 0, GPIO_CFG_INPUT, GPIO_CFG_PULL_DOWN, GPIO_CFG_2MA),
+	 GPIO_CFG(GPIO_BT_PCM_CLK, 0, GPIO_CFG_INPUT, GPIO_CFG_PULL_DOWN, GPIO_CFG_2MA),
+	 GPIO_CFG(GPIO_BT_HOST_WAKE, 0, GPIO_CFG_INPUT, GPIO_CFG_PULL_DOWN, GPIO_CFG_2MA), 
+};
+
+static int bluetooth_power(int on)
+{
+	printk(KERN_DEBUG "%s\n", __func__);
+
+	if (on) {
+		printk(KERN_DEBUG "config_gpio_table bt pwr on\n");
+		config_gpio_table(bt_config_power_on, ARRAY_SIZE(bt_config_power_on));
+
+		pr_info("bluetooth_power BT_WAKE:%d, HOST_WAKE:%d, REG_ON:%d\n", gpio_get_value(GPIO_BT_WAKE), gpio_get_value(GPIO_BT_HOST_WAKE), gpio_get_value(GPIO_BT_REG_ON));
+		gpio_direction_output(GPIO_BT_WAKE, GPIO_WLAN_LEVEL_HIGH);
+		gpio_direction_output(GPIO_BT_REG_ON, GPIO_WLAN_LEVEL_HIGH);
+
+		msleep(50);
+		gpio_direction_output(GPIO_BT_RESET, GPIO_WLAN_LEVEL_HIGH);
+
+		pr_info("bluetooth_power BT_WAKE:%d, HOST_WAKE:%d, REG_ON:%d\n", gpio_get_value(GPIO_BT_WAKE), gpio_get_value(GPIO_BT_HOST_WAKE), gpio_get_value(GPIO_BT_REG_ON));        
+
+		bluesleep_start();
+	} else {
+		bluesleep_stop();
+		gpio_direction_output(GPIO_BT_RESET, GPIO_WLAN_LEVEL_LOW);/* BT_VREG_CTL */
+
+		gpio_direction_output(GPIO_BT_REG_ON, GPIO_WLAN_LEVEL_LOW);/* BT_RESET */
+		msleep(10);
+		gpio_direction_output(GPIO_BT_WAKE, GPIO_WLAN_LEVEL_LOW);/* BT_VREG_CTL */
+
+		printk(KERN_DEBUG "config_gpio_table bt pwr off\n");
+		config_gpio_table(bt_config_power_off, ARRAY_SIZE(bt_config_power_off));
+	}
+	return 0;
+}
+
+static void __init bt_power_init(void)
+{
+	int rc = 0;
+
+#ifdef CONFIG_SAMSUNG_LPM_MODE
+#if defined(CONFIG_TARGET_LOCALE_KOR_SKT) || defined(CONFIG_TARGET_LOCALE_KOR_KT) || defined(CONFIG_TARGET_LOCALE_KOR_LGU) \
+	|| defined(CONFIG_TARGET_LOCALE_USA_ATT) || defined (CONFIG_TARGET_LOCALE_JPN_NTT) || defined(CONFIG_TARGET_LOCALE_EUR_OPEN)
+	if(charging_mode_from_boot == 1)
+		return;
+#endif
+#endif
+
+	pr_info("bt_power_init \n");
+
+	msm_bt_power_device.dev.platform_data = &bluetooth_power;
+
+	pr_info("bt_gpio_init : low \n");
+
+	config_gpio_table(bt_config_power_off, ARRAY_SIZE(bt_config_power_off));
+	
+	rc = gpio_request(GPIO_BT_RESET, "BT_RST");
+	if (!rc)
+		gpio_direction_output(GPIO_BT_RESET, 0);
+	else {
+		pr_err("%s: gpio_direction_output %d = %d\n", __func__,
+			GPIO_BT_RESET, rc);
+		gpio_free(GPIO_BT_RESET);
+	}
+	
+	rc = gpio_request(GPIO_BT_REG_ON, "BT_REGON");
+	if (!rc)
+		gpio_direction_output(GPIO_BT_REG_ON, 0);
+	else {
+		pr_err("%s: gpio_direction_output %d = %d\n", __func__,
+			GPIO_BT_REG_ON, rc);
+		gpio_free(GPIO_BT_REG_ON);
+	}
+
+	pr_err("%s: gpio_direction_output success (GPIO: %d , %d)\n", __func__,
+			GPIO_BT_RESET, GPIO_BT_REG_ON);
+}
+
 #ifdef CONFIG_MSM_RPM
 static struct msm_rpm_platform_data msm_rpm_data = {
 	.reg_base_addrs = {
@@ -10053,6 +10252,7 @@ static void __init msm8x60_init(struct msm_board_data *board_data)
 
 	msm8x60_init_uart12dm();
 	msm8x60_init_mmc();
+	bt_power_init();
 	usb_switch_init();
 	usb_host_init();
 	samsung_sys_class_init();
@@ -10114,8 +10314,7 @@ static void __init msm8x60_init(struct msm_board_data *board_data)
 	platform_add_devices(asoc_devices,
 		ARRAY_SIZE(asoc_devices));
 
-	p4lte_touch_init_hw();
-	p4lte_touch_power_on();
+	tsp_power_on();
 
 //	if(charging_mode_from_boot == 1)
 //		platform_add_devices(&charm_devices[1], ARRAY_SIZE(charm_devices) - 1);
@@ -10164,16 +10363,16 @@ static void __init msm8x60_init(struct msm_board_data *board_data)
 	msm_fusion_setup_pinctrl();
 #endif
 
-#ifdef CONFIG_SENSORS_AK8975_P5LTE
+#ifdef CONFIG_SENSORS_AK8975_I957
 	magnetic_device_init();
 #endif
-#ifdef CONFIG_GYRO_K3G_P5LTE
+#ifdef CONFIG_GYRO_K3G_I957
 	gyro_device_init();
 #endif
 #ifdef CONFIG_OPTICAL_GP2A
-	opt_device_init();
+// TEMP	opt_device_init();
 #endif
-#ifdef CONFIG_OPTICAL_BH1721_P5LTE
+#ifdef CONFIG_OPTICAL_BH1721_I957
 	opt_device_init();
 #endif
 

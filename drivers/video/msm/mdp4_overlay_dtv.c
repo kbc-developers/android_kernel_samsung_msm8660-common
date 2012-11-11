@@ -55,14 +55,6 @@ static void __mdp_outp(uint32 port, uint32 value)
 static int first_pixel_start_x;
 static int first_pixel_start_y;
 
-void mdp4_dtv_base_swap(int cndx, struct mdp4_overlay_pipe *pipe)
-{
-#ifdef BYPASS4
-	if (hdmi_prim_display)
-		dtv_pipe = pipe;
-#endif
-}
-
 #define MAX_CONTROLLER	1
 
 static struct vsycn_ctrl {
@@ -367,6 +359,24 @@ void mdp4_dtv_vsync_init(int cndx)
 	atomic_set(&vctrl->suspend, 0);
 	atomic_set(&vctrl->vsync_resume, 1);
 	spin_lock_init(&vctrl->spin_lock);
+}
+
+void mdp4_dtv_base_swap(int cndx, struct mdp4_overlay_pipe *pipe)
+{
+	struct vsycn_ctrl *vctrl;
+
+	if (!hdmi_prim_display) {
+		pr_err("%s: failed, hdmi is not primary\n", __func__);
+		return;
+	}
+
+	if (cndx >= MAX_CONTROLLER) {
+		pr_err("%s: out or range: cndx=%d\n", __func__, cndx);
+		return;
+	}
+
+	vctrl = &vsync_ctrl_db[cndx];
+	vctrl->base_pipe = pipe;
 }
 
 static int mdp4_dtv_start(struct msm_fb_data_type *mfd)
@@ -1050,8 +1060,11 @@ void mdp4_dtv_overlay(struct msm_fb_data_type *mfd)
 	struct vsycn_ctrl *vctrl;
 	struct mdp4_overlay_pipe *pipe;
 
-	if (!mfd->panel_power_on)
+	mutex_lock(&mfd->dma->ov_mutex);
+	if (!mfd->panel_power_on) {
+		mutex_unlock(&mfd->dma->ov_mutex);
 		return;
+	}
 
 	vctrl = &vsync_ctrl_db[cndx];
 	if (vctrl->base_pipe == NULL)
@@ -1061,6 +1074,7 @@ void mdp4_dtv_overlay(struct msm_fb_data_type *mfd)
 
 	if (pipe == NULL) {
 		pr_warn("%s: dtv_pipe == NULL\n", __func__);
+		mutex_unlock(&mfd->dma->ov_mutex);
 		return;
 	}
 
@@ -1076,7 +1090,6 @@ void mdp4_dtv_overlay(struct msm_fb_data_type *mfd)
 		mdp4_dtv_pipe_queue(0, pipe);
 	}
 
-	mutex_lock(&mfd->dma->ov_mutex);
 	mdp4_overlay_mdp_perf_upd(mfd, 1);
 	mdp4_dtv_pipe_commit(cndx, 0);
 	mdp4_overlay_mdp_perf_upd(mfd, 0);

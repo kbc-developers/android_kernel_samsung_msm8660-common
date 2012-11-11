@@ -729,7 +729,7 @@ int isx012_mode_transition_OM(void)
 				pr_info("factory test1 error(%d)\n", ret);
 				return -EIO; /*factory test*/
 			}
-			
+
 		}
 		if (timeout_cnt > ISX012_DELAY_RETRIES_OM) {
 			pr_err("%s: %d :Entering OM_1 delay timed out \n", __func__, __LINE__);

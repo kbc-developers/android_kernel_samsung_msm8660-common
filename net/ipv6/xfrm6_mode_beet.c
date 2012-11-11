@@ -89,7 +89,6 @@ static int xfrm6_beet_input(struct xfrm_state *x, struct sk_buff *skb)
 
 	__skb_push(skb, size);
 	skb_reset_network_header(skb);
-
 	skb_mac_header_rebuild(skb);
 
 	xfrm6_beet_make_header(skb);
