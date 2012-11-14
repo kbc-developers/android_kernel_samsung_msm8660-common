@@ -32,7 +32,7 @@
 #define SC05D_IMAGE_WIDTH     (800)
 #define SC05D_IMAGE_HEIGHT    (1280)
 
-#define SC03D_IMAGE_WIDTH     (600)
+#define SC03D_IMAGE_WIDTH     (480)
 #define SC03D_IMAGE_HEIGHT    (800)
 
 //#define BITMAP_FORMAT_RGB
