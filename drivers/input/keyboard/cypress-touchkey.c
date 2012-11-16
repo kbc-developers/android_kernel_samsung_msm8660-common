@@ -1491,7 +1491,7 @@ static ssize_t touch_led_control(struct device *dev, struct device_attribute *at
 		#endif
 		
 		errnum = i2c_touchkey_write((u8*)&int_data, 1);
-		if(errnum==-ENODEV) {
+		if (errnum < 0) {
 			touchled_cmd_reversed = 1;
 		}		
 		touchkey_led_status = int_data;
