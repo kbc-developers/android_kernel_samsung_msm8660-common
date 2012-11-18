@@ -1,6 +1,6 @@
 #!/bin/bash
 
-INITRAMFS_SRC_DIR=../sc06d_boot_ramdisk
+INITRAMFS_SRC_DIR=../sc03d_boot_ramdisk
 
 if [ ! -e ./release-tools/bmp2splash/bmp2splash ]; then
     echo "make bmp2splash..."
