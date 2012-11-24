@@ -11,7 +11,7 @@ BUILD_RECOVERY_VER=CWM-V6.0.1.2_r12
 # set build user and host
 ###########################################################
 export KBUILD_BUILD_VERSION="1"
-export KBUILD_BUILD_USER="Homura,Sakuramilk"
+export KBUILD_BUILD_USER="Homura,Coosee,Sakuramilk"
 export KBUILD_BUILD_HOST="KBC"
 
 
