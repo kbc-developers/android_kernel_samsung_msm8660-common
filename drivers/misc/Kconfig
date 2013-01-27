@@ -682,6 +682,11 @@ menuconfig VIBETONZ
         help
           Say Y to enable Vibetonz support.
 	  
+config KBC_VIB_CTRL
+	bool "Enable vib control interface"
+	default y
+	help
+	 This option enables vib control interface.
 
 config PN544
         bool "NXP PN544 NFC Controller Driver"

@@ -110,6 +110,7 @@ long int freq_count = FREQ_COUNT;
 
 int vibe_set_pwm_freq(int nForce)
 {
+	printk("vibe_set_pwm_freq nFoce=%d\n", nForce);
 	/* Put the MND counter in reset mode for programming */
 	HWIO_OUTM(GP_NS_REG, HWIO_GP_NS_REG_MNCNTR_EN_BMSK, 0);
 //	HWIO_OUTM(GP_NS_REG, HWIO_GP_NS_REG_GP_CLK_BRANCH_ENA_BMSK, 1<<HWIO_GP_NS_REG_GP_CLK_BRANCH_ENA_SHFT);	
