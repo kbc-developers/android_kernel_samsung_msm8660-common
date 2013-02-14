@@ -134,6 +134,9 @@ EXPORT_SYMBOL(msm_set_restart_mode);
 
 static void __msm_power_off(int lower_pshold)
 {
+#ifdef CONFIG_JPN_MODEL_SC_01D
+	local_irq_disable();
+#endif
 	printk(KERN_CRIT "Powering off the SoC\n");
 #ifdef CONFIG_MSM_DLOAD_MODE
 	set_dload_mode(0);
@@ -145,6 +148,9 @@ static void __msm_power_off(int lower_pshold)
 		mdelay(10000);
 		printk(KERN_ERR "Powering off has failed\n");
 	}
+#ifdef CONFIG_JPN_MODEL_SC_01D
+	local_irq_enable();
+#endif
 	return;
 }
 
