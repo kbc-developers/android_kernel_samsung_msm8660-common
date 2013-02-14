@@ -85,7 +85,10 @@ DECLARE_COMPLETION(charm_needs_reload);
 DECLARE_COMPLETION(charm_boot);
 DECLARE_COMPLETION(charm_ram_dumps);
 
-#if defined(CONFIG_USA_OPERATOR_ATT) && (defined(CONFIG_TARGET_SERIES_P5LTE) || defined(CONFIG_TARGET_SERIES_P8LTE))
+#if (defined(CONFIG_USA_OPERATOR_ATT) && (defined(CONFIG_TARGET_SERIES_P5LTE) \
+ || defined(CONFIG_TARGET_SERIES_P8LTE))) \
+ || (defined(CONFIG_JPN_OPERATOR_NTT) && defined (CONFIG_TARGET_SERIES_P4LTE)) \
+ || (defined(CONFIG_EUR_OPERATOR_OPEN) && defined(CONFIG_TARGET_SERIES_P5LTE))
 int get_charm_ready(void)
 {
 	return charm_ready;

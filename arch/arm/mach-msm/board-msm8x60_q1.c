@@ -178,7 +178,9 @@ static struct wacom_g5_callbacks *wacom_callbacks;
 #endif
 
 #ifdef CONFIG_FB_MSM_MIPI_DSI_ESD_REFRESH
-#include <linux/video/sec_mipi_lcd_esd_refresh.h>
+	#if !defined(CONFIG_JPN_MODEL_SC_05D)
+		#include <linux/video/sec_mipi_lcd_esd_refresh.h>
+	#endif
 #endif
 
 #define MSM_SHARED_RAM_PHYS 0x40000000
@@ -237,6 +239,9 @@ static struct wacom_g5_callbacks *wacom_callbacks;
 #define PMIC_GPIO_EAR_DET		PM8058_GPIO(27)  	/* PMIC GPIO Number 27 */
 #define PMIC_GPIO_SHORT_SENDEND	PM8058_GPIO(28)  	/* PMIC GPIO Number 28 */
 #define PMIC_GPIO_EAR_MICBIAS_EN PM8058_GPIO(29) /* PMIC GPIO Number 29  */
+#if defined (CONFIG_JPN_MODEL_SC_05D)
+#define PMIC_GPIO_EAR_SEND_END PM8058_GPIO(25) /* PMIC GPIO Number 25  */
+#endif
 #ifdef CONFIG_KOR_MODEL_SHV_E160L	// add EAR_VOL_KEY
 #define PMIC_GPIO_EAR_SENDEND_STATE PM8058_GPIO(28)
 #define PMIC_GPIO_VOLUME_KEY	PM8058_GPIO(25)
@@ -2115,6 +2120,10 @@ static int camera_power_maincam(int onoff)
 				gpio_set_value_cansleep(GPIO_FLASH_SEL, 1);
 			usleep(1*1000);
 		}
+#elif defined(CONFIG_JPN_MODEL_SC_05D)
+			if (gpio_get_value(62)==0)
+				gpio_set_value_cansleep(GPIO_FLASH_SEL, 1);
+			usleep(1*1000);
 #endif
 
 		//DVDD 1.5V (sub)
@@ -3888,8 +3897,10 @@ static struct sec_bat_platform_data sec_bat_pdata = {
 	.fuel_gauge_name	= "fuelgauge",
 	.charger_name 		= "sec-charger",
 	.get_lpcharging_state	= sec_bat_get_lpcharging_state,
-#if defined (CONFIG_KOR_MODEL_SHV_E160S) || defined (CONFIG_KOR_MODEL_SHV_E160K) || defined (CONFIG_KOR_MODEL_SHV_E160L) || defined (CONFIG_JPN_MODEL_SC_05D)
+#if defined (CONFIG_KOR_MODEL_SHV_E160S) || defined (CONFIG_KOR_MODEL_SHV_E160K) || defined (CONFIG_KOR_MODEL_SHV_E160L)
 	.hwrev_has_2nd_therm	= 0x7,
+#elif defined(CONFIG_JPN_MODEL_SC_05D)
+       .hwrev_has_2nd_therm	= 0,
 #else
 	.hwrev_has_2nd_therm	= -1,
 #endif
@@ -4099,7 +4110,12 @@ unsigned char hdmi_is_primary;
     && !defined (CONFIG_USA_MODEL_SGH_T879)
 #define MSM_ION_SF_BASE		0x7a000000
 #endif
+#if defined(CONFIG_JPN_MODEL_SC_05D)
+#define MSM_ION_SF_BASE 0x7b000000
+#define MSM_ION_SF_SIZE 0x05000000
+#else
 #define MSM_ION_SF_SIZE		0x06000000 /* 64MB -> 96MB same as Gingerbread of ATT Quincy */
+#endif
 #define MSM_ION_CAMERA_SIZE     MSM_PMEM_ADSP_SIZE
 #define MSM_ION_MM_FW_SIZE	0x200000 /* (2MB) */
 #define MSM_ION_MM_SIZE		0x3600000 /* (54MB) */
@@ -5750,7 +5766,7 @@ static struct i2c_board_info cy8ctma340_dragon_board_info[] = {
 };
 #endif
 
-#if defined(CONFIG_USA_MODEL_SGH_I717)
+#if defined(CONFIG_USA_MODEL_SGH_I717) || defined(CONFIG_JPN_MODEL_SC_05D)
 #define JACK_WATERPROOF
 #endif
 
@@ -5774,12 +5790,16 @@ static struct sec_jack_zone jack_zones[] = {
         },
         [2] = {
 #if defined(JACK_WATERPROOF)
-                .adc_high       = 1900,
-                .delay_ms       = 10,
-                .check_count    = 10,
-                .jack_type      = SEC_HEADSET_4POLE,
-        },
-        [3] = {
+#if defined (CONFIG_JPN_MODEL_SC_05D)
+		.adc_high       = 2780,
+#else
+		.adc_high       = 1900,
+#endif
+		.delay_ms       = 10,
+		.check_count    = 10,
+		.jack_type      = SEC_HEADSET_4POLE,
+	},
+	[3] = {
 #endif
                 .adc_high       = 9999,
                 .delay_ms       = 10,
@@ -9183,7 +9203,9 @@ static struct platform_device *surf_devices[] __initdata = {
 	&sec_device_jack,
 #endif
 #ifdef CONFIG_FB_MSM_MIPI_DSI_ESD_REFRESH
-	&sec_device_mipi_esd,
+	#if !defined(CONFIG_JPN_MODEL_SC_05D)
+		&sec_device_mipi_esd,
+	#endif
 #endif
 #if defined (CONFIG_OPTICAL_GP2A)
 	&opt_i2c_gpio_device,
@@ -9292,6 +9314,9 @@ static struct ion_platform_data ion_pdata = {
     && !defined (CONFIG_USA_MODEL_SGH_T879)
 			.base = MSM_ION_SF_BASE,
 #endif
+#if defined(CONFIG_JPN_MODEL_SC_05D)
+			.base = MSM_ION_SF_BASE,
+#endif
 			.size	= MSM_ION_SF_SIZE,
 			.memory_type = ION_EBI_TYPE,
 			.extra_data = (void *)&co_ion_pdata,
@@ -9382,6 +9407,7 @@ static void reserve_ion_memory(void)
 #if defined(CONFIG_ION_MSM) && defined(CONFIG_MSM_MULTIMEDIA_USE_ION)
 #if !defined (CONFIG_SEC_KERNEL_REBASE_FOR_PMEM_OPTIMIZATION) || !defined(CONFIG_USA_MODEL_SGH_I717) \
     || defined (CONFIG_USA_MODEL_SGH_T879)
+#if !defined(CONFIG_JPN_MODEL_SC_05D)
 	unsigned int i;
 
 	if (hdmi_is_primary) {
@@ -9738,6 +9764,17 @@ static struct pm_gpio ear_det_new = {
 		.function       = PM_GPIO_FUNC_NORMAL,
 		.inv_int_pol    = 0,
 };
+
+#if defined (CONFIG_JPN_MODEL_SC_05D)
+static struct pm_gpio ear_send_end = {
+		.direction      = PM_GPIO_DIR_IN,
+		.pull           = PM_GPIO_PULL_NO,
+		.vin_sel        = PM8058_GPIO_VIN_L5,
+		.function       = PM_GPIO_FUNC_NORMAL,
+		.inv_int_pol    = 0,
+};
+#endif
+
 static struct pm_gpio short_sendend = {
 	.direction      = PM_GPIO_DIR_IN,
 	.pull           = PM_GPIO_PULL_NO,
@@ -10223,6 +10260,11 @@ static struct pm_gpio chg_stat = {
 	{
 		pr_info("%s PMIC_GPIO_EAR_DET : ear_det_new\n", __func__);
 		rc = pm8xxx_gpio_config(PM8058_GPIO_PM_TO_SYS(PMIC_GPIO_EAR_DET), &ear_det_new);
+
+#if defined (CONFIG_JPN_MODEL_SC_05D)
+		pr_info("%s PMIC_GPIO_EAR_SEND_END: ear_send_end\n", __func__);
+		rc = pm8xxx_gpio_config(PM8058_GPIO_PM_TO_SYS(PMIC_GPIO_EAR_SEND_END), &ear_send_end);
+#endif
 	}
 #else
 	rc = pm8xxx_gpio_config(PM8058_GPIO_PM_TO_SYS(PMIC_GPIO_EAR_DET), &ear_det);
@@ -10261,11 +10303,13 @@ static struct pm_gpio chg_stat = {
 #endif
 
 #ifdef CONFIG_FB_MSM_MIPI_DSI_ESD_REFRESH
-	rc = pm8xxx_gpio_config(PM8058_GPIO_PM_TO_SYS(PMIC_GPIO_ESD_DET), &sec_mipi_esd_det_gpio_cfg);
-	if (rc) {
-		pr_err("%s PMIC_GPIO_ESD_DET config failed\n", __func__);
-		return rc;
-	}
+	#if !defined(CONFIG_JPN_MODEL_SC_05D)
+		rc = pm8xxx_gpio_config(PM8058_GPIO_PM_TO_SYS(PMIC_GPIO_ESD_DET), &sec_mipi_esd_det_gpio_cfg);
+		if (rc) {
+			pr_err("%s PMIC_GPIO_ESD_DET config failed\n", __func__);
+			return rc;
+		}
+	#endif
 #endif
 
 #if defined (CONFIG_USA_MODEL_SGH_I717)
@@ -12998,6 +13042,10 @@ static unsigned int msm8x60_sdcc_slot_status(struct device *dev)
 				PM8058_GPIO_PM_TO_SYS(PMIC_GPIO_SDC3_DET - 1)));
 		gpio_free(PM8058_GPIO_PM_TO_SYS(PMIC_GPIO_SDC3_DET - 1));
 	}
+
+#if defined(CONFIG_JPN_MODEL_SC_05D)
+        return (unsigned int) status;
+#endif
 
 #if defined (CONFIG_USA_MODEL_SGH_I717)
 	if (HWREV < 0x04)
@@ -16071,7 +16119,11 @@ void yda165_avdd_power_on(void)
 			amp_reg = regulator_get(NULL, "8058_l2");
 #endif /* CONFIG_KOR_MODEL_SHV_E160S */
 #else
+#if defined (CONFIG_JPN_MODEL_SC_05D)
+			amp_reg = regulator_get(NULL, "8901_l3");
+#else
 			amp_reg = regulator_get(NULL, "8058_l2");
+#endif
 #endif
 			if (IS_ERR(amp_reg)) {
 				pr_err("%s: regulator get failed (%ld)\n", __func__, PTR_ERR(amp_reg));
