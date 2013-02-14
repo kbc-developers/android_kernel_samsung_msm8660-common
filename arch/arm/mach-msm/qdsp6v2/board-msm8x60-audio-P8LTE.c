@@ -76,6 +76,8 @@
 #include "timpani_profile_p5lte_lgt.h"
 #elif defined(CONFIG_KOR_MODEL_SHV_E150S)  //P8LTE-SKT
 #include "timpani_profile_p8lte_skt.h"
+#elif defined(CONFIG_JPN_MODEL_SC_01E)	//P8LTE-NTT
+#include "timpani_profile_p8lte_ntt.h"
 #else
 #include "timpani_profile_celox_kor.h"
 #endif
@@ -1998,7 +2000,14 @@ ADIE_SPEAKER_CALL_RX_48000_256;
 static struct adie_codec_action_unit speaker_call_tx_48KHz_osr256_actions[] =
 ADIE_SPEAKER_CALL_TX_48000_256;
 
-#if defined (CONFIG_KOR_MODEL_SHV_E110S)|| defined (CONFIG_KOR_MODEL_SHV_E120S) || defined (CONFIG_KOR_MODEL_SHV_E120K) || defined (CONFIG_Q1_KOR_AUDIO)
+#if defined (CONFIG_KOR_MODEL_SHV_E110S)|| defined (CONFIG_KOR_MODEL_SHV_E120S) || defined (CONFIG_KOR_MODEL_SHV_E120K) \
+	|| defined (CONFIG_Q1_KOR_AUDIO) || defined(CONFIG_KOR_MODEL_SHV_E150S) || defined(CONFIG_JPN_MODEL_SC_01E)
+static struct adie_codec_action_unit handset_loopback_rx_48KHz_osr256_actions[] =
+ADIE_HANDSET_LOOPBACK_RX_48000_256; // byeongguk.kim_120618
+static struct adie_codec_action_unit handset_loopback_tx_48KHz_osr256_actions[] =
+ADIE_HANDSET_LOOPBACK_TX_48000_256; // byeongguk.kim_120618
+static struct adie_codec_action_unit speaker_loopback_rx_48KHz_osr256_actions[] =
+ADIE_SPEAKER_LOOPBACK_RX_48000_256; // byeongguk.kim_120618
 static struct adie_codec_action_unit speaker_loopback_tx_48KHz_osr256_actions[] =
 ADIE_SPEAKER_LOOPBACK_TX_48000_256;
 #endif 
@@ -2008,7 +2017,11 @@ ADIE_HEADSET_CALL_RX_48000_256;
 static struct adie_codec_action_unit headset_call_tx_48KHz_osr256_actions[] =
 ADIE_HEADSET_CALL_TX_48000_256;
 
-#if defined (CONFIG_KOR_MODEL_SHV_E110S) || defined (CONFIG_KOR_MODEL_SHV_E120S) || defined (CONFIG_KOR_MODEL_SHV_E120K) || defined (CONFIG_Q1_KOR_AUDIO) || defined(CONFIG_USA_MODEL_SGH_I727) || defined (CONFIG_USA_MODEL_SGH_I757)
+#if defined (CONFIG_KOR_MODEL_SHV_E110S) || defined (CONFIG_KOR_MODEL_SHV_E120S) || defined (CONFIG_KOR_MODEL_SHV_E120K) \
+	|| defined (CONFIG_Q1_KOR_AUDIO) || defined(CONFIG_USA_MODEL_SGH_I727) || defined (CONFIG_USA_MODEL_SGH_I757) \
+	|| defined(CONFIG_KOR_MODEL_SHV_E150S) || defined(CONFIG_JPN_MODEL_SC_01E)
+static struct adie_codec_action_unit headset_loopback_rx_48KHz_osr256_actions[] =
+ADIE_HEADSET_LOOPBACK_RX_48000_256; // byeongguk.kim_120618
 static struct adie_codec_action_unit headset_loopback_tx_48KHz_osr256_actions[] =
 ADIE_HEADSET_LOOPBACK_TX_48000_256;
 #endif 
@@ -2398,7 +2411,32 @@ static struct adie_codec_hwsetting_entry speaker_call_tx_settings[] = {
 	}
 };
 
-#if defined (CONFIG_KOR_MODEL_SHV_E110S)||defined (CONFIG_KOR_MODEL_SHV_E120S) || defined (CONFIG_KOR_MODEL_SHV_E120K) || defined (CONFIG_Q1_KOR_AUDIO)
+#if defined (CONFIG_KOR_MODEL_SHV_E110S)||defined (CONFIG_KOR_MODEL_SHV_E120S) || defined (CONFIG_KOR_MODEL_SHV_E120K) \
+	|| defined (CONFIG_Q1_KOR_AUDIO) || defined(CONFIG_KOR_MODEL_SHV_E150S) || defined(CONFIG_JPN_MODEL_SC_01E)
+static struct adie_codec_hwsetting_entry handset_loopback_rx_settings[] = { // byeongguk.kim_120618
+	{
+		.freq_plan = AUDIO_FREQUENCY,
+		.osr = 256,
+		.actions = handset_loopback_rx_48KHz_osr256_actions,
+		.action_sz = ARRAY_SIZE(handset_loopback_rx_48KHz_osr256_actions),
+	}
+};
+static struct adie_codec_hwsetting_entry handset_loopback_tx_settings[] = { // byeongguk.kim_120618
+	{
+		.freq_plan = AUDIO_FREQUENCY,
+		.osr = 256,
+		.actions = handset_loopback_tx_48KHz_osr256_actions,
+		.action_sz = ARRAY_SIZE(handset_loopback_tx_48KHz_osr256_actions),
+	}
+};
+static struct adie_codec_hwsetting_entry speaker_loopback_rx_settings[] = { // byeongguk.kim_120618
+	{
+		.freq_plan = AUDIO_FREQUENCY,
+		.osr = 256,
+		.actions = speaker_loopback_rx_48KHz_osr256_actions,
+		.action_sz = ARRAY_SIZE(speaker_loopback_rx_48KHz_osr256_actions),
+	}
+};
 static struct adie_codec_hwsetting_entry speaker_loopback_tx_settings[] = {
 	{
 		.freq_plan = AUDIO_FREQUENCY,
@@ -2427,7 +2465,16 @@ static struct adie_codec_hwsetting_entry headset_call_tx_settings[] = {
 	}
 };
 
-#if defined (CONFIG_KOR_MODEL_SHV_E110S) || defined (CONFIG_KOR_MODEL_SHV_E120S) || defined (CONFIG_KOR_MODEL_SHV_E120K)|| defined (CONFIG_Q1_KOR_AUDIO) || defined(CONFIG_USA_MODEL_SGH_I727) 
+#if defined (CONFIG_KOR_MODEL_SHV_E110S) || defined (CONFIG_KOR_MODEL_SHV_E120S) || defined (CONFIG_KOR_MODEL_SHV_E120K) \
+	|| defined (CONFIG_Q1_KOR_AUDIO) || defined(CONFIG_USA_MODEL_SGH_I727) || defined(CONFIG_KOR_MODEL_SHV_E150S) || defined(CONFIG_JPN_MODEL_SC_01E)
+static struct adie_codec_hwsetting_entry headset_loopback_rx_settings[] = { // byeongguk.kim_120618
+	{
+		.freq_plan = AUDIO_FREQUENCY,
+		.osr = 256,
+		.actions = headset_loopback_rx_48KHz_osr256_actions,
+		.action_sz = ARRAY_SIZE(headset_loopback_rx_48KHz_osr256_actions),
+	}
+};
 static struct adie_codec_hwsetting_entry headset_loopback_tx_settings[] = {
 	{
 		.freq_plan = AUDIO_FREQUENCY,
@@ -2436,7 +2483,7 @@ static struct adie_codec_hwsetting_entry headset_loopback_tx_settings[] = {
 		.action_sz = ARRAY_SIZE(headset_loopback_tx_48KHz_osr256_actions),
 	}
 };
-#endif 
+#endif
 
 
 // ------- DEFINITION OF SPECIAL DEVICES ------ 
@@ -2738,13 +2785,29 @@ static struct adie_codec_dev_profile speaker_call_tx_profile = {
 	.setting_sz = ARRAY_SIZE(speaker_call_tx_settings),
 };
 
-#if defined (CONFIG_KOR_MODEL_SHV_E110S)|| defined (CONFIG_KOR_MODEL_SHV_E120S) || defined (CONFIG_KOR_MODEL_SHV_E120K) || defined (CONFIG_Q1_KOR_AUDIO)
+#if defined (CONFIG_KOR_MODEL_SHV_E110S)|| defined (CONFIG_KOR_MODEL_SHV_E120S) || defined (CONFIG_KOR_MODEL_SHV_E120K) \
+	|| defined (CONFIG_Q1_KOR_AUDIO) || defined(CONFIG_KOR_MODEL_SHV_E150S) || defined(CONFIG_JPN_MODEL_SC_01E)
+static struct adie_codec_dev_profile handset_loopback_rx_profile = { // byeongguk.kim_120618
+	.path_type = ADIE_CODEC_RX,
+	.settings = handset_loopback_rx_settings,
+	.setting_sz = ARRAY_SIZE(handset_loopback_rx_settings),
+};
+static struct adie_codec_dev_profile handset_loopback_tx_profile = { // byeongguk.kim_120618
+	.path_type = ADIE_CODEC_TX,
+	.settings = handset_loopback_tx_settings,
+	.setting_sz = ARRAY_SIZE(handset_loopback_tx_settings),
+};
+static struct adie_codec_dev_profile speaker_loopback_rx_profile = { // byeongguk.kim_120618
+	.path_type = ADIE_CODEC_RX,
+	.settings = speaker_loopback_rx_settings,
+	.setting_sz = ARRAY_SIZE(speaker_loopback_rx_settings),
+};
 static struct adie_codec_dev_profile speaker_loopback_tx_profile = {
 	.path_type = ADIE_CODEC_TX,
 	.settings = speaker_loopback_tx_settings,
 	.setting_sz = ARRAY_SIZE(speaker_loopback_tx_settings),
 };
-#endif 
+#endif
 
 static struct adie_codec_dev_profile headset_call_rx_profile = {
 	.path_type = ADIE_CODEC_RX,
@@ -2757,14 +2820,19 @@ static struct adie_codec_dev_profile headset_call_tx_profile = {
 	.setting_sz = ARRAY_SIZE(headset_call_tx_settings),
 };
 
-#if defined (CONFIG_KOR_MODEL_SHV_E110S) || defined (CONFIG_KOR_MODEL_SHV_E120S) || defined (CONFIG_KOR_MODEL_SHV_E120K) || defined (CONFIG_Q1_KOR_AUDIO) || defined(CONFIG_USA_MODEL_SGH_I727)
+#if defined (CONFIG_KOR_MODEL_SHV_E110S) || defined (CONFIG_KOR_MODEL_SHV_E120S) || defined (CONFIG_KOR_MODEL_SHV_E120K) \
+	|| defined (CONFIG_Q1_KOR_AUDIO) || defined(CONFIG_USA_MODEL_SGH_I727) || defined(CONFIG_KOR_MODEL_SHV_E150S) || defined(CONFIG_JPN_MODEL_SC_01E)
+static struct adie_codec_dev_profile headset_loopback_rx_profile = { // byeongguk.kim_120618
+	.path_type = ADIE_CODEC_RX,
+	.settings = headset_loopback_rx_settings,
+	.setting_sz = ARRAY_SIZE(headset_loopback_rx_settings),
+};
 static struct adie_codec_dev_profile headset_loopback_tx_profile = {
 	.path_type = ADIE_CODEC_TX,
 	.settings = headset_loopback_tx_settings,
 	.setting_sz = ARRAY_SIZE(headset_loopback_tx_settings),
 };
-#endif 
-
+#endif
 
 // ------- DEFINITION OF SPECIAL DEVICES ------ 
 static struct adie_codec_dev_profile dualmic_handset_tx_profile = {
@@ -3464,7 +3532,12 @@ static struct snddev_icodec_data headset_loopback_rx_data = {
 	.capability = (SNDDEV_CAP_RX | SNDDEV_CAP_VOICE),
 	.name = "headset_loopback_rx",
 	.copp_id = 0,
+#if defined (CONFIG_KOR_MODEL_SHV_E110S)|| defined (CONFIG_KOR_MODEL_SHV_E120S) || defined (CONFIG_KOR_MODEL_SHV_E120K) \
+	|| defined (CONFIG_Q1_KOR_AUDIO) || defined(CONFIG_KOR_MODEL_SHV_E150S) || defined(CONFIG_JPN_MODEL_SC_01E)
+	.profile = &headset_loopback_rx_profile, // byeongguk.kim_120618
+#else
 	.profile = &headset_call_rx_profile,
+#endif
 	.channel_mode = 2,
 	.default_sample_rate = AUDIO_FREQUENCY,
 #ifdef CONFIG_VP_A2220
@@ -3488,7 +3561,9 @@ static struct snddev_icodec_data headset_loopback_tx_data = {
 	.name = "headset_loopback_tx",
 	.copp_id = PRIMARY_I2S_TX,
 
-	#if defined (CONFIG_KOR_MODEL_SHV_E110S) || defined (CONFIG_KOR_MODEL_SHV_E120S) || defined (CONFIG_KOR_MODEL_SHV_E120K) || (defined (CONFIG_Q1_KOR_AUDIO) && !defined(CONFIG_KOR_MODEL_SHV_E160L)) || defined(CONFIG_USA_MODEL_SGH_I727)
+	#if defined (CONFIG_KOR_MODEL_SHV_E110S) || defined (CONFIG_KOR_MODEL_SHV_E120S) || defined (CONFIG_KOR_MODEL_SHV_E120K) \
+		|| (defined (CONFIG_Q1_KOR_AUDIO) && !defined(CONFIG_KOR_MODEL_SHV_E160L)) || defined(CONFIG_USA_MODEL_SGH_I727) \
+		|| defined(CONFIG_KOR_MODEL_SHV_E150S) || defined(CONFIG_JPN_MODEL_SC_01E)
 	.profile = &headset_loopback_tx_profile,
 	#else
 	.profile = &headset_call_tx_profile,
@@ -4331,7 +4406,12 @@ static struct snddev_icodec_data handset_loopback_rx_data = {
 	.capability = (SNDDEV_CAP_RX | SNDDEV_CAP_VOICE),
 	.name = "handset_loopback_rx",
 	.copp_id = 0,
+#if defined (CONFIG_KOR_MODEL_SHV_E110S)|| defined (CONFIG_KOR_MODEL_SHV_E120S) || defined (CONFIG_KOR_MODEL_SHV_E120K) \
+	|| defined (CONFIG_Q1_KOR_AUDIO) || defined(CONFIG_KOR_MODEL_SHV_E150S) || defined(CONFIG_JPN_MODEL_SC_01E)
+	.profile = &handset_loopback_rx_profile, // byeongguk.kim_120618
+#else
 	.profile = &handset_call_rx_profile,
+#endif
 	.channel_mode = 1,
 	.default_sample_rate = AUDIO_FREQUENCY,
 #ifdef CONFIG_VP_A2220
@@ -4354,7 +4434,12 @@ static struct snddev_icodec_data handset_loopback_tx_data = {
 	.capability = (SNDDEV_CAP_TX | SNDDEV_CAP_VOICE),
 	.name = "handset_loopback_tx",
 	.copp_id = 1,
+#if defined (CONFIG_KOR_MODEL_SHV_E110S)|| defined (CONFIG_KOR_MODEL_SHV_E120S) || defined (CONFIG_KOR_MODEL_SHV_E120K) \
+	|| defined (CONFIG_Q1_KOR_AUDIO) || defined(CONFIG_KOR_MODEL_SHV_E150S) || defined(CONFIG_JPN_MODEL_SC_01E)
+	.profile = &handset_loopback_tx_profile, // byeongguk.kim_120618
+#else
 	.profile = &handset_call_tx_profile,
+#endif
 	.channel_mode = 1,
 	.default_sample_rate = 48000,
 	.pamp_on = msm_snddev_enable_amic_power,
@@ -4366,7 +4451,12 @@ static struct snddev_icodec_data speaker_loopback_rx_data = {
 	.capability = (SNDDEV_CAP_RX | SNDDEV_CAP_VOICE),
 	.name = "speaker_loopback_rx",
 	.copp_id = 0,
-	.profile = &speaker_call_rx_profile,
+#if defined (CONFIG_KOR_MODEL_SHV_E110S)|| defined (CONFIG_KOR_MODEL_SHV_E120S) || defined (CONFIG_KOR_MODEL_SHV_E120K) \
+	|| defined (CONFIG_Q1_KOR_AUDIO) || defined(CONFIG_KOR_MODEL_SHV_E150S) || defined(CONFIG_JPN_MODEL_SC_01E)
+	.profile = &speaker_loopback_rx_profile, // byeongguk.kim_120618	
+#else
+	.profile = &speaker_call_rx_profile,			
+#endif
 	.channel_mode = 2,
 	.default_sample_rate = AUDIO_FREQUENCY,
 #ifdef CONFIG_VP_A2220
@@ -4382,16 +4472,12 @@ static struct snddev_icodec_data speaker_loopback_tx_data = {
 	.capability = (SNDDEV_CAP_TX | SNDDEV_CAP_VOICE),
 	.name = "speaker_loopback_tx",
 	.copp_id = PRIMARY_I2S_TX,
-
-#if defined (CONFIG_KOR_MODEL_SHV_E110S)|| defined (CONFIG_KOR_MODEL_SHV_E120S) || defined (CONFIG_KOR_MODEL_SHV_E120K) || defined (CONFIG_Q1_KOR_AUDIO)
-	.profile = &speaker_loopback_tx_profile,
-
+#if defined (CONFIG_KOR_MODEL_SHV_E110S)|| defined (CONFIG_KOR_MODEL_SHV_E120S) || defined (CONFIG_KOR_MODEL_SHV_E120K) \
+	|| defined (CONFIG_Q1_KOR_AUDIO) || defined(CONFIG_KOR_MODEL_SHV_E150S) || defined(CONFIG_JPN_MODEL_SC_01E)
+	.profile = &speaker_loopback_tx_profile, // byeongguk.kim_1020618
 #else
-
-    .profile = &speaker_call_tx_profile,
-    
-#endif 
-
+	.profile = &speaker_call_tx_profile,
+#endif
 	.channel_mode = 1,
 	.default_sample_rate = AUDIO_FREQUENCY,
 #ifdef CONFIG_USA_MODEL_SGH_T769
