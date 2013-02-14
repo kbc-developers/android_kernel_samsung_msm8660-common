@@ -209,7 +209,7 @@
 #define PMIC_GPIO_EAR_MICBIAS_EN PM8058_GPIO(17) /* PMIC GPIO Number 17  */
 #endif   //CONFIG_SAMSUNG_JACK || CONFIG_SAMSUNG_EARJACK
 #define PMIC_GPIO_MAIN_MICBIAS_EN PM8058_GPIO(28)
-#if defined(CONFIG_KOR_MODEL_SHV_E150S) //kth_1100922
+#if defined(CONFIG_KOR_MODEL_SHV_E150S) || defined(CONFIG_JPN_MODEL_SC_01E)//kth_1100922
 #define PMIC_GPIO_SUB_MICBIAS_EN PM8058_GPIO(37)
 #endif
 
@@ -5565,8 +5565,9 @@ static struct rpm_regulator_init_data rpm_regulator_init_data[] = {
 	RPM_LDO(PM8058_L5,  0, 1, 0, 2850000, 2850000, LDO300HMIN),
 	RPM_LDO(PM8058_L6,  0, 1, 0, 3000000, 3600000,  LDO50HMIN),
 	RPM_LDO(PM8058_L7,  0, 1, 0, 1800000, 1800000,  LDO50HMIN),
-#if defined(CONFIG_USA_OPERATOR_ATT) || defined(CONFIG_KOR_OPERATOR_SKT) || defined(CONFIG_KOR_OPERATOR_KT) || defined(CONFIG_KOR_OPERATOR_LGU) || defined(CONFIG_EUR_OPERATOR_OPEN)
-#if defined(CONFIG_KOR_MODEL_SHV_E150S)
+#if defined(CONFIG_USA_OPERATOR_ATT) || defined(CONFIG_KOR_OPERATOR_SKT) || defined(CONFIG_KOR_OPERATOR_KT) \
+	|| defined(CONFIG_KOR_OPERATOR_LGU) || defined(CONFIG_EUR_OPERATOR_OPEN) || defined(CONFIG_JPN_OPERATOR_NTT)
+#if defined(CONFIG_KOR_MODEL_SHV_E150S) || defined(CONFIG_JPN_MODEL_SC_01E)
 	RPM_LDO(PM8058_L8,  0, 1, 0, 1800000, 1800000, LDO300HMIN),
 #else
 	RPM_LDO(PM8058_L8,  0, 1, 0, 3300000, 3300000, LDO300HMIN),
@@ -5575,19 +5576,21 @@ static struct rpm_regulator_init_data rpm_regulator_init_data[] = {
 	RPM_LDO(PM8058_L8,  0, 1, 0, 2900000, 3050000, LDO300HMIN),
 #endif
 
-#if defined(CONFIG_USA_OPERATOR_ATT) || defined(CONFIG_KOR_OPERATOR_SKT) || defined(CONFIG_KOR_OPERATOR_KT) || defined(CONFIG_KOR_OPERATOR_LGU) || defined(CONFIG_EUR_OPERATOR_OPEN)
+#if defined(CONFIG_USA_OPERATOR_ATT) || defined(CONFIG_KOR_OPERATOR_SKT) || defined(CONFIG_KOR_OPERATOR_KT) \
+	|| defined(CONFIG_KOR_OPERATOR_LGU) || defined(CONFIG_EUR_OPERATOR_OPEN) || defined(CONFIG_JPN_OPERATOR_NTT)
 	RPM_LDO(PM8058_L9,  0, 1, 0, 1500000, 3000000, LDO300HMIN),
 #else
 	RPM_LDO(PM8058_L9,  0, 1, 0, 1800000, 1800000, LDO300HMIN),
 #endif
 //	RPM_LDO(PM8058_L10, 0, 1, 0, 2600000, 2600000, LDO300HMIN),
 	RPM_LDO(PM8058_L10, 0, 1, 0, 1500000, 2600000, LDO300HMIN),
-#if defined(CONFIG_USA_MODEL_SGH_I957) || defined(CONFIG_KOR_MODEL_SHV_E140S) || defined(CONFIG_KOR_MODEL_SHV_E140K) || defined(CONFIG_KOR_MODEL_SHV_E140L) || defined(CONFIG_KOR_MODEL_SHV_E150S)
+#if defined(CONFIG_USA_MODEL_SGH_I957) || defined(CONFIG_KOR_MODEL_SHV_E140S) || defined(CONFIG_KOR_MODEL_SHV_E140K) \
+	|| defined(CONFIG_KOR_MODEL_SHV_E140L) || defined(CONFIG_KOR_MODEL_SHV_E150S) || defined(CONFIG_JPN_MODEL_SC_01E)
 	RPM_LDO(PM8058_L11, 0, 1, 0, 2850000, 2850000, LDO150HMIN),
 #else
 	RPM_LDO(PM8058_L11, 0, 1, 0, 1500000, 1500000, LDO150HMIN),
 #endif
-#if defined(CONFIG_KOR_MODEL_SHV_E150S)
+#if defined(CONFIG_KOR_MODEL_SHV_E150S) || defined(CONFIG_JPN_MODEL_SC_01E)
 	RPM_LDO(PM8058_L12, 0, 1, 0, 1800000, 1800000, LDO150HMIN),
 #else
 	RPM_LDO(PM8058_L12, 0, 1, 0, 2900000, 2900000, LDO150HMIN),
@@ -5596,8 +5599,9 @@ static struct rpm_regulator_init_data rpm_regulator_init_data[] = {
 	RPM_LDO(PM8058_L14, 0, 0, 0, 2850000, 2850000, LDO300HMIN),
 	RPM_LDO(PM8058_L15, 0, 1, 0, 2850000, 2850000, LDO300HMIN),
 	RPM_LDO(PM8058_L16, 1, 1, 0, 1800000, 1800000, LDO300HMIN),
-#if defined(CONFIG_USA_OPERATOR_ATT) || defined(CONFIG_KOR_OPERATOR_SKT) || defined(CONFIG_KOR_OPERATOR_KT) || defined(CONFIG_EUR_OPERATOR_OPEN)
-#if defined(CONFIG_KOR_MODEL_SHV_E150S)
+#if defined(CONFIG_USA_OPERATOR_ATT) || defined(CONFIG_KOR_OPERATOR_SKT) || defined(CONFIG_KOR_OPERATOR_KT) \
+	|| defined(CONFIG_EUR_OPERATOR_OPEN) || defined(CONFIG_JPN_OPERATOR_NTT)
+#if defined(CONFIG_KOR_MODEL_SHV_E150S) || defined(CONFIG_JPN_MODEL_SC_01E)
 	RPM_LDO(PM8058_L17, 0, 1, 0, 3000000, 3000000, LDO150HMIN),
 #else
 	RPM_LDO(PM8058_L17, 0, 1, 0, 1800000, 2850000, LDO150HMIN),
@@ -5609,13 +5613,13 @@ static struct rpm_regulator_init_data rpm_regulator_init_data[] = {
 #if defined(CONFIG_EUR_OPERATOR_OPEN)
 	RPM_LDO(PM8058_L19, 0, 1, 0, 3300000, 3300000, LDO150HMIN),
 #else
-#if defined(CONFIG_KOR_MODEL_SHV_E150S)
+#if defined(CONFIG_KOR_MODEL_SHV_E150S) || defined(CONFIG_JPN_MODEL_SC_01E)
 	RPM_LDO(PM8058_L19, 0, 1, 0, 3000000, 3000000, LDO150HMIN),
 #else
 	RPM_LDO(PM8058_L19, 0, 1, 0, 2500000, 2500000, LDO150HMIN),
 #endif
 #endif
-#if defined(CONFIG_KOR_OPERATOR_SKT) || defined(CONFIG_KOR_OPERATOR_KT)
+#if defined(CONFIG_KOR_OPERATOR_SKT) || defined(CONFIG_KOR_OPERATOR_KT) || defined(CONFIG_JPN_OPERATOR_NTT)
 	RPM_LDO(PM8058_L20, 0, 1, 0, 1800000, 3000000, LDO150HMIN),
 #else	
 	RPM_LDO(PM8058_L20, 0, 1, 0, 1800000, 1800000, LDO150HMIN),
@@ -5640,7 +5644,7 @@ static struct rpm_regulator_init_data rpm_regulator_init_data[] = {
 
 	/*	ID        a_on pd ss min_uV   max_uV   init_ip */
 	RPM_LDO(PM8901_L0,  0, 1, 0, 1200000, 1200000, LDO300HMIN),
-#if defined(CONFIG_KOR_MODEL_SHV_E150S)
+#if defined(CONFIG_KOR_MODEL_SHV_E150S) || defined(CONFIG_JPN_MODEL_SC_01E)
 	RPM_LDO(PM8901_L1,  0, 1, 0, 3000000, 3300000, LDO300HMIN),
 #else
 	RPM_LDO(PM8901_L1,  0, 1, 0, 3300000, 3300000, LDO300HMIN),
@@ -5648,7 +5652,7 @@ static struct rpm_regulator_init_data rpm_regulator_init_data[] = {
 	RPM_LDO(PM8901_L2,  0, 1, 0, 2850000, 3300000, LDO300HMIN),
 	RPM_LDO(PM8901_L3,  0, 1, 0, 3300000, 3300000, LDO300HMIN),
 	RPM_LDO(PM8901_L4,  0, 1, 0, 2600000, 2600000, LDO300HMIN),
-#if defined(CONFIG_KOR_OPERATOR_SKT) || defined(CONFIG_KOR_OPERATOR_KT)
+#if defined(CONFIG_KOR_OPERATOR_SKT) || defined(CONFIG_KOR_OPERATOR_KT) || defined(CONFIG_JPN_OPERATOR_NTT)
 	RPM_LDO(PM8901_L5,  0, 1, 0, 2850000, 2950000, LDO300HMIN),
 #else
 	RPM_LDO(PM8901_L5,  0, 1, 0, 2850000, 2850000, LDO300HMIN),
@@ -5827,7 +5831,7 @@ static struct msm_adc_channels msm_adc_channels_data[] = {
 #endif
 	{"acc_detect", CHANNEL_ADC_ACC_CHECK, 0, &xoadc_fn, CHAN_PATH_TYPE10,
 		ADC_CONFIG_TYPE2, ADC_CALIB_CONFIG_TYPE2, scale_default},
-#if defined(CONFIG_KOR_MODEL_SHV_E150S)
+#if defined(CONFIG_KOR_MODEL_SHV_E150S) || defined(CONFIG_JPN_MODEL_SC_01E)
 	{"light_lux", CHANNEL_ADC_LIGHT_LUX, 0, &xoadc_fn, CHAN_PATH_TYPE7,	
 		ADC_CONFIG_TYPE2, ADC_CALIB_CONFIG_TYPE2, scale_default},
 #endif		
@@ -5862,7 +5866,7 @@ static void pmic8058_xoadc_mpp_config(void)
 							AOUT_CTRL_DISABLE),
 		PM8058_MPP_INIT(XOADC_MPP_3, A_INPUT, PM8XXX_MPP_AIN_AMUX_CH5,
 							AOUT_CTRL_DISABLE),
-#if defined(CONFIG_KOR_MODEL_SHV_E150S)
+#if defined(CONFIG_KOR_MODEL_SHV_E150S) || defined(CONFIG_JPN_MODEL_SC_01E)
 		PM8058_MPP_INIT(XOADC_MPP_6, A_INPUT, PM8XXX_MPP_AIN_AMUX_CH6,
 							AOUT_CTRL_DISABLE),
 #endif
@@ -5974,6 +5978,34 @@ void *adc_handle;
 static struct regulator *vreg_earmic_bias;
 bool earmic_bias = 0;
 
+#if defined(CONFIG_TARGET_LOCALE_KOR) || defined(CONFIG_TARGET_LOCALE_JPN)
+#define JACK_WATERPROOF
+#endif
+
+#if defined(JACK_WATERPROOF)
+#if defined(CONFIG_TARGET_LOCALE_KOR) || defined(CONFIG_TARGET_LOCALE_JPN)
+static struct sec_jack_zone jack_zones[] = {
+	[0] = {
+		.adc_high	= 1220, // spec  : 920
+		.delay_ms	= 10,
+		.check_count	= 5,
+		.jack_type	= SEC_HEADSET_3POLE,
+	},
+	[1] = {
+		.adc_high	= 3090,
+		.delay_ms	= 10,
+		.check_count	= 5,
+		.jack_type	= SEC_HEADSET_4POLE,
+	},
+       [2] = {
+		.adc_high	= 9999, // spec :  1038
+		.delay_ms	= 10,
+		.check_count	= 5,
+		.jack_type	= SEC_HEADSET_4POLE,
+	},
+};
+#endif
+#else
 static struct sec_jack_zone jack_zones[] = {
 	[0] = {
 		.adc_high	= 1230, // spec  : 1161
@@ -5988,9 +6020,29 @@ static struct sec_jack_zone jack_zones[] = {
 		.jack_type	= SEC_HEADSET_4POLE,
 	},
 };
+#endif
 
 #ifdef CONFIG_SAMSUNG_EARJACK
 /* To support 3-buttons earjack */
+#if defined(CONFIG_TARGET_LOCALE_KOR) || defined(CONFIG_TARGET_LOCALE_JPN)
+static struct sec_jack_buttons_zone jack_buttons_zones[] = {
+	{
+		.code		= KEY_MEDIA,
+		.adc_low		= 0,
+		.adc_high		= 185,  // spec : 168
+	},
+	{
+		.code		= KEY_VOLUMEUP,
+		.adc_low		= 186, // spec : 189
+		.adc_high		= 417, // spec : 391
+	},
+	{
+		.code		= KEY_VOLUMEDOWN,
+		.adc_low		= 418, // spec : 438
+		.adc_high		= 880, // spec :  832
+	},
+};
+#else
 static struct sec_jack_buttons_zone jack_buttons_zones[] = {
 	{
 		.code		= KEY_MEDIA,
@@ -6008,6 +6060,7 @@ static struct sec_jack_buttons_zone jack_buttons_zones[] = {
 		.adc_high		= 850, // spec :  832
 	},
 };
+#endif
 #endif
 
 static int get_p8lte_det_jack_state(void)
@@ -6077,9 +6130,10 @@ static int sec_jack_get_adc_value(void)
 
 static void sec_jack_gpio_init(void)
 {
-#if defined(CONFIG_USA_OPERATOR_ATT) || defined(CONFIG_KOR_OPERATOR_SKT) || defined(CONFIG_KOR_OPERATOR_KT) || defined(CONFIG_KOR_OPERATOR_LGU) || defined(CONFIG_EUR_OPERATOR_OPEN)
+#if defined(CONFIG_USA_OPERATOR_ATT) || defined(CONFIG_KOR_OPERATOR_SKT) || defined(CONFIG_KOR_OPERATOR_KT) \
+	|| defined(CONFIG_KOR_OPERATOR_LGU) || defined(CONFIG_EUR_OPERATOR_OPEN) || defined(CONFIG_JPN_OPERATOR_NTT)
 	int rc;
-#ifdef CONFIG_KOR_OPERATOR_SKT
+#ifdef CONFIG_KOR_OPERATOR_SKT || defined(CONFIG_JPN_OPERATOR_NTT)
 	rc = adc_channel_open(CHANNEL_ADC_HDSET,&adc_handle); 
 	if (rc) {
 		pr_err("%s: Unable to open ADC channel\n", __func__);
@@ -6985,7 +7039,8 @@ static void __init msm8x60_reserve(void)
 
 static int check_jig_gpio(void)
 {
-#if defined(CONFIG_USA_OPERATOR_ATT) || defined(CONFIG_KOR_OPERATOR_SKT) || defined(CONFIG_KOR_OPERATOR_KT) || defined(CONFIG_KOR_OPERATOR_LGU) || defined(CONFIG_EUR_OPERATOR_OPEN)
+#if defined(CONFIG_USA_OPERATOR_ATT) || defined(CONFIG_KOR_OPERATOR_SKT) || defined(CONFIG_KOR_OPERATOR_KT) \
+	|| defined(CONFIG_KOR_OPERATOR_LGU) || defined(CONFIG_EUR_OPERATOR_OPEN) || defined(CONFIG_JPN_OPERATOR_NTT)
 	if(system_rev >= 0x2)
 		return 1;
 #else
@@ -7019,7 +7074,8 @@ int check_jig_on(void)
 		pr_debug("%s : jig on = %d\r\n", __func__, ret);
 	}
 
-#if defined(CONFIG_USA_OPERATOR_ATT) || defined(CONFIG_KOR_OPERATOR_SKT) || defined(CONFIG_KOR_OPERATOR_KT) || defined(CONFIG_KOR_OPERATOR_LGU) || defined(CONFIG_EUR_OPERATOR_OPEN)
+#if defined(CONFIG_USA_OPERATOR_ATT) || defined(CONFIG_KOR_OPERATOR_SKT) || defined(CONFIG_KOR_OPERATOR_KT) \
+	|| defined(CONFIG_KOR_OPERATOR_LGU) || defined(CONFIG_EUR_OPERATOR_OPEN) || defined(CONFIG_JPN_OPERATOR_NTT)
 	if(system_rev>=0x03)
 		return !ret; //jig on=low 
 #endif
@@ -7027,7 +7083,8 @@ int check_jig_on(void)
 }
 
 // P5 KOR : sh1.back 11. 11. 21  - add commercial dump fuctionality
-#if defined(CONFIG_KOR_OPERATOR_SKT) || defined(CONFIG_KOR_OPERATOR_KT) || defined(CONFIG_KOR_OPERATOR_LGU)	
+#if defined(CONFIG_KOR_OPERATOR_SKT) || defined(CONFIG_KOR_OPERATOR_KT) || defined(CONFIG_KOR_OPERATOR_LGU) \
+	|| defined(CONFIG_JPN_OPERATOR_NTT)
 EXPORT_SYMBOL(check_jig_on);
 #endif
 
@@ -7333,7 +7390,7 @@ struct pm_gpio main_micbiase = {
 		.function       = PM_GPIO_FUNC_NORMAL,
 		.inv_int_pol    = 0,
 	};
-#if defined(CONFIG_KOR_MODEL_SHV_E150S)  //kth_1100922
+#if defined(CONFIG_KOR_MODEL_SHV_E150S) || defined(CONFIG_JPN_MODEL_SC_01E)  //kth_1100922
 struct pm_gpio sub_micbiase = {
 		.direction      = PM_GPIO_DIR_IN,
 		.pull           = PM_GPIO_PULL_NO,
@@ -7348,7 +7405,7 @@ struct pm_gpio sub_micbiase = {
 		pr_err("%s PMIC_GPIO_MAIN_MICBIAS_EN config failed\n", __func__);
 		return rc;
 	}
-#if defined(CONFIG_KOR_MODEL_SHV_E150S) //kth_1100922
+#if defined(CONFIG_KOR_MODEL_SHV_E150S) || defined(CONFIG_JPN_MODEL_SC_01E) //kth_1100922
 	rc = pm8xxx_gpio_config(PM8058_GPIO_PM_TO_SYS(PMIC_GPIO_SUB_MICBIAS_EN), &sub_micbiase);
 	if (rc) 
 	{
@@ -7404,8 +7461,9 @@ struct pm_gpio sub_micbiase = {
 		return rc;
 	}
 
-#if defined(CONFIG_USA_OPERATOR_ATT) || defined(CONFIG_KOR_OPERATOR_SKT)  || defined(CONFIG_KOR_OPERATOR_KT) || defined(CONFIG_KOR_OPERATOR_LGU) || defined(CONFIG_EUR_OPERATOR_OPEN)
-#if defined(CONFIG_KOR_MODEL_SHV_E150S) 
+#if defined(CONFIG_USA_OPERATOR_ATT) || defined(CONFIG_KOR_OPERATOR_SKT)  || defined(CONFIG_KOR_OPERATOR_KT) \
+	|| defined(CONFIG_KOR_OPERATOR_LGU) || defined(CONFIG_EUR_OPERATOR_OPEN) || defined(CONFIG_JPN_OPERATOR_NTT)
+#if defined(CONFIG_KOR_MODEL_SHV_E150S) || defined(CONFIG_JPN_MODEL_SC_01E)
         rc = pm8xxx_gpio_config(PM8058_GPIO_PM_TO_SYS(PMIC_GPIO_EAR_MICBIAS_EN), &ear_micbiase);
         if (rc) {
 	 	pr_err("%s PMIC_GPIO_EAR_MICBIAS_EN config failed\n", __func__);
@@ -7439,7 +7497,7 @@ struct pm_gpio sub_micbiase = {
 		pr_err("%s:Failed to request GPIO %d\n", __func__, PMIC_GPIO_MAIN_MICBIAS_EN);
 		return rc;
 	} 
-#if defined(CONFIG_KOR_MODEL_SHV_E150S)  //kth_1100922
+#if defined(CONFIG_KOR_MODEL_SHV_E150S) || defined(CONFIG_JPN_MODEL_SC_01E) //kth_1100922
 	rc = gpio_request(PM8058_GPIO_PM_TO_SYS(PMIC_GPIO_SUB_MICBIAS_EN), "SUB_MICBIAS_EN");
 	if (rc) {
 		pr_err("%s:Failed to request GPIO %d\n", __func__, PMIC_GPIO_SUB_MICBIAS_EN);
@@ -7471,7 +7529,7 @@ struct pm_gpio sub_micbiase = {
 		.inv_int_pol    = 0,
 	};
 	int gpio_acc_check;
-#ifdef 	CONFIG_KOR_OPERATOR_SKT
+#if defined(CONFIG_KOR_OPERATOR_SKT) || defined(CONFIG_JPN_OPERATOR_NTT)
 	gpio_acc_check = PMIC_GPIO_ACCESSORY_CHECK;
 #else
 	if (system_rev < 0x04)
@@ -8914,7 +8972,7 @@ static struct msm_sdcc_pad_drv_cfg sdc4_pad_off_drv_cfg[] = {
 	{TLMM_HDRV_SDC4_DATA, GPIO_CFG_2MA}
 };
 
-#if defined(CONFIG_KOR_OPERATOR_SKT)
+#if defined(CONFIG_KOR_OPERATOR_SKT) || defined(CONFIG_JPN_OPERATOR_NTT)
 static struct msm_sdcc_pad_pull_cfg sdc4_pad_off_pull_cfg[] = {
 	{TLMM_PULL_SDC4_CMD, GPIO_CFG_PULL_UP},
 	{TLMM_PULL_SDC4_DATA, GPIO_CFG_PULL_UP}
@@ -10069,7 +10127,7 @@ static int __init magnetic_device_init(void)
 	if (IS_ERR(k3dh_akm_lvs3)) {
 		return PTR_ERR(k3dh_akm_lvs3);
 	}
-#elif defined(CONFIG_KOR_OPERATOR_SKT) || defined(CONFIG_KOR_OPERATOR_KT)
+#elif defined(CONFIG_KOR_OPERATOR_SKT) || defined(CONFIG_KOR_OPERATOR_KT) || defined(CONFIG_JPN_OPERATOR_NTT)
 	if(system_rev < 0x07){ 
 		/* rev 0.0, 0.1, 0.2,  VSENSOR_1.8V from VREG_L20A */	
 		k3dh_akm_l20 = regulator_get(NULL, "8058_l20");
@@ -10305,7 +10363,8 @@ usb_path_type get_usb_path(void)
 	usb_path_type curr_usb = USB_SEL_MSM ;
 	int usb_sel2 = gpio_get_value_cansleep(USB_SEL_2);
 	
-#if defined(CONFIG_USA_OPERATOR_ATT) || defined(CONFIG_KOR_OPERATOR_SKT) || defined(CONFIG_KOR_OPERATOR_KT) || defined(CONFIG_KOR_OPERATOR_LGU) || defined(CONFIG_EUR_OPERATOR_OPEN)
+#if defined(CONFIG_USA_OPERATOR_ATT) || defined(CONFIG_KOR_OPERATOR_SKT) || defined(CONFIG_KOR_OPERATOR_KT) \
+	|| defined(CONFIG_KOR_OPERATOR_LGU) || defined(CONFIG_EUR_OPERATOR_OPEN) || defined(CONFIG_JPN_OPERATOR_NTT)
 	curr_usb = (usb_sel2 == 0) ? USB_SEL_MSM : USB_SEL_ADC;
 #endif
 
@@ -10318,7 +10377,8 @@ void set_usb_path(usb_path_type usb_path)
 	int val=0;
 	printk("%s : set usb path to %d\r\n", __func__, usb_path);
 	
-#if defined(CONFIG_USA_OPERATOR_ATT) || defined(CONFIG_KOR_OPERATOR_SKT) || defined(CONFIG_KOR_OPERATOR_KT) || defined(CONFIG_KOR_OPERATOR_LGU) || defined(CONFIG_EUR_OPERATOR_OPEN)
+#if defined(CONFIG_USA_OPERATOR_ATT) || defined(CONFIG_KOR_OPERATOR_SKT) || defined(CONFIG_KOR_OPERATOR_KT) \
+	|| defined(CONFIG_KOR_OPERATOR_LGU) || defined(CONFIG_EUR_OPERATOR_OPEN) || defined(CONFIG_JPN_OPERATOR_NTT)
 	val = (usb_path == USB_SEL_MSM) ? 0: 1 ;
 #endif
 	pr_debug("%s: GPIO37_CONFIG(0x%x),\r\n",  __func__, readl(GPIO_CONFIG(USB_SEL_2)));
@@ -10348,7 +10408,7 @@ static void __init usb_host_init(void)
 #endif
 }
 
-#if defined(CONFIG_KOR_OPERATOR_SKT)
+#if defined(CONFIG_KOR_OPERATOR_SKT) || defined(CONFIG_JPN_OPERATOR_NTT)
 #if !defined(CONFIG_FB_MSM_TVOUT)
 static struct regulator *reg_8058_l13;
 static int atv_dac_power_off(void)
@@ -10390,7 +10450,8 @@ static int tsp_power_on(void)
 	!defined(CONFIG_KOR_OPERATOR_SKT) && \
 	!defined(CONFIG_KOR_OPERATOR_KT) && \
 	!defined(CONFIG_KOR_OPERATOR_LGU) && \
-	!defined(CONFIG_EUR_OPERATOR_OPEN)
+	!defined(CONFIG_EUR_OPERATOR_OPEN) && \
+	!defined(CONFIG_JPN_OPERATOR_NTT)
 
 	ret = gpio_request( 63 , "TOUCH_RST");
 	if (ret < 0) {
@@ -11722,6 +11783,10 @@ static void __init msm8x60_init(struct msm_board_data *board_data)
 	tdmb_dev_init();
 #endif
 
+#ifdef CONFIG_ISDBTMM
+	tmm_dev_init();
+#endif
+
 	msm_pm_set_platform_data(msm_pm_data, ARRAY_SIZE(msm_pm_data));
 	msm_pm_set_rpm_wakeup_irq(RPM_SCSS_CPU0_WAKE_UP_IRQ);
 	msm_cpuidle_set_states(msm_cstates, ARRAY_SIZE(msm_cstates),
@@ -11752,7 +11817,7 @@ static void __init msm8x60_init(struct msm_board_data *board_data)
 #ifdef CONFIG_KOR_OPERATOR_LGU
 	msm_fusion_setup_pinctrl();
 #endif
-#if defined(CONFIG_KOR_OPERATOR_SKT)
+#if defined(CONFIG_KOR_OPERATOR_SKT) || defined(CONFIG_JPN_OPERATOR_NTT)
 	sensor_power_init();
 #endif
 #ifdef CONFIG_SENSORS_AK8975_P5LTE
@@ -11782,7 +11847,7 @@ static void __init msm8x60_init(struct msm_board_data *board_data)
 
 	vibrator_device_gpio_init();
 
-#if defined(CONFIG_KOR_OPERATOR_SKT)
+#if defined(CONFIG_KOR_OPERATOR_SKT) || defined(CONFIG_JPN_OPERATOR_NTT)
 	atv_dac_power_off();
 #endif
 
