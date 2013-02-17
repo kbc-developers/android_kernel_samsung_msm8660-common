@@ -52,6 +52,16 @@
 #include "mdp.h"
 #include "mdp4.h"
 
+#ifdef CONFIG_FB_MSM_LOGO
+#define INIT_IMAGE_FILE "/initlogo.rle"
+extern int load_565rle_image(char *filename, bool bf_supported);
+#define LPM_INIT_IMAGE_FILE "/lpminitlogo.rle"
+#if (defined(CONFIG_TARGET_SERIES_P5LTE) || defined(CONFIG_TARGET_SERIES_P8LTE) || defined(CONFIG_TARGET_SERIES_P4LTE)) && (defined(CONFIG_TARGET_LOCALE_KOR) || defined(CONFIG_TARGET_LOCALE_JPN))
+#define CHARGING_IMAGE_FILE "/charging_image.rle"
+#endif
+extern unsigned int is_lpcharging_state(void);
+#endif
+
 #ifdef CONFIG_FB_MSM_TRIPLE_BUFFER
 #define MSM_FB_NUM	3
 #endif
@@ -1528,7 +1538,7 @@ static int msm_fb_register(struct msm_fb_data_type *mfd)
 	if(mfd->index == 0)
     {
 		if (is_lpcharging_state() == 1) {
-#if (defined(CONFIG_TARGET_SERIES_P5LTE) || defined(CONFIG_TARGET_SERIES_P8LTE)) && defined(CONFIG_TARGET_LOCALE_KOR)
+#if (defined(CONFIG_TARGET_SERIES_P5LTE) || defined(CONFIG_TARGET_SERIES_P8LTE) || defined(CONFIG_TARGET_SERIES_P4LTE)) && (defined(CONFIG_TARGET_LOCALE_KOR) || defined(CONFIG_TARGET_LOCALE_JPN))
 			logofilename = CHARGING_IMAGE_FILE;
 #else
 			//logofilename = LPM_INIT_IMAGE_FILE;

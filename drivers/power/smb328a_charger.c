@@ -1116,8 +1116,10 @@ static unsigned int smb328a_get_float_voltage(struct i2c_client *client)
 		data = (u8)val;
 		float_voltage = 3460 + ((data&0x7F)/2)*20;
 		chip->float_voltage = float_voltage;
+#if !defined(CONFIG_USA_MODEL_SGH_I757)
 		dev_info(&client->dev, "%s : reg (0x%x) = 0x%x, float vol = %d\n",
 			__func__, reg, data, float_voltage);
+#endif
 	} else {
 		/* for re-setting, set to zero */
 		chip->float_voltage = 0;
@@ -1593,9 +1595,9 @@ static irqreturn_t smb328a_int_work_func(int irq, void *smb_chip)
 	//u8 intr_b = 0;
 	u8 intr_c = 0;
 	u8 chg_status = 0;
-	
+#if !defined(CONFIG_USA_MODEL_SGH_I757)
 	printk("%s\n", __func__);
-
+#endif
 	/*
 	reg = SMB328A_INTERRUPT_STATUS_A;
 	val = smb328a_read_reg(chip->client, reg);
