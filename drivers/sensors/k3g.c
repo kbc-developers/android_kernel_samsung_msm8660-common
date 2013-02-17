@@ -297,10 +297,18 @@ static int k3g_report_gyro_values(struct k3g_data *k3g_data)
 	data.y -= k3g_data->cal_data.y;
 	data.z -= k3g_data->cal_data.z;
 
-	input_report_rel(k3g_data->input_dev, REL_RX, data.x);
-	input_report_rel(k3g_data->input_dev, REL_RY, data.y);
-	input_report_rel(k3g_data->input_dev, REL_RZ, data.z);
-	input_sync(k3g_data->input_dev);
+#if defined(CONFIG_JPN_MODEL_SC_01E)
+		input_report_rel(k3g_data->input_dev, REL_RX, -data.y);
+		input_report_rel(k3g_data->input_dev, REL_RY, data.x);
+		input_report_rel(k3g_data->input_dev, REL_RZ, data.z);
+		input_sync(k3g_data->input_dev);
+#else
+		input_report_rel(k3g_data->input_dev, REL_RX, data.x);
+		input_report_rel(k3g_data->input_dev, REL_RY, data.y);
+		input_report_rel(k3g_data->input_dev, REL_RZ, data.z);
+		input_sync(k3g_data->input_dev);
+#endif
+
 
 //	printk(KERN_INFO "k3g report gyro value x=%d, y=%d, z=%d\n", data.x, data.y, data.z);
 	return res;

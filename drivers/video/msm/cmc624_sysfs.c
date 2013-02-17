@@ -589,7 +589,7 @@ int cmc624_sysfs_init(void)
         printk("[CMC624:ERROR] device_crate_filed(%s) \n", dev_attr_mode.attr.name);
         ret = -1;
     }
-#if defined(CONFIG_TARGET_LOCALE_KOR_SKT)
+#if defined(CONFIG_TARGET_LOCALE_KOR_SKT) || defined(CONFIG_JPN_MODEL_SC_01E)
 		if (device_create_file(tune_cmc624_dev, &dev_attr_mdnie_roi) < 0){
 		pr_err("[CMC624:ERROR] device_crate_filed(%s) \n", dev_attr_mdnie_roi.attr.name);
 		 ret = -1;

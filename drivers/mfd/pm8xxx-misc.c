@@ -425,12 +425,16 @@ static int __pm8901_reset_pwr_off(struct pm8xxx_misc_chip *chip, int reset)
 					"rc=%d\n", rc);
 				goto read_write_err;
 			}
+#if !defined(CONFIG_JPN_MODEL_SC_01E) && !defined(CONFIG_USA_MODEL_SGH_I957)
 			mdelay(PM8901_DELAY_AFTER_REG_DISABLE_MS);
+#endif
 		}
 	}
 
 read_write_err:
+#if !defined(CONFIG_JPN_MODEL_SC_01E) && !defined(CONFIG_USA_MODEL_SGH_I957)
 	mdelay(PM8901_DELAY_BEFORE_SHUTDOWN_MS);
+#endif
 	return rc;
 }
 
