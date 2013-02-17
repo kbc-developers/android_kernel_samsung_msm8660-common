@@ -67,10 +67,10 @@ Melfas touchkey register
 extern struct class *sec_class;
 struct device *sec_touchkey;
 
-
-static int touchkey_keycode[5] = {0,KEY_MENU , KEY_HOMEPAGE, KEY_BACK, KEY_SEARCH};
-#if defined (CONFIG_USA_MODEL_SGH_T989) || defined (CONFIG_USA_MODEL_SGH_T769) //new touchkey fpcb
-static int touchkey_pba_revision = TOUCHKEY_PBA_REV_NA;
+#if defined (CONFIG_JPN_MODEL_SC_03D)
+static int touchkey_keycode[5] = {0,KEY_MENU , KEY_HOME, KEY_BACK, KEY_SEARCH};
+#elif defined (CONFIG_JPN_MODEL_SC_05D)
+static int touchkey_keycode[5] = {0,KEY_MENU , KEY_HOME, KEY_BACK, 0};
 #endif
 static int vol_mv_level = 33;
 

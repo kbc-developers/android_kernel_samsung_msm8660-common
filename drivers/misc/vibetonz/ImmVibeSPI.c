@@ -110,6 +110,7 @@ long int freq_count = FREQ_COUNT;
 
 int vibe_set_pwm_freq(int nForce)
 {
+	printk("vibe_set_pwm_freq nFoce=%d\n", nForce);
 	/* Put the MND counter in reset mode for programming */
 	HWIO_OUTM(GP_NS_REG, HWIO_GP_NS_REG_MNCNTR_EN_BMSK, 0);
 //	HWIO_OUTM(GP_NS_REG, HWIO_GP_NS_REG_GP_CLK_BRANCH_ENA_BMSK, 1<<HWIO_GP_NS_REG_GP_CLK_BRANCH_ENA_SHFT);	
@@ -298,7 +299,9 @@ IMMVIBESPIAPI VibeStatus ImmVibeSPI_ForceOut_AmpDisable(VibeUInt8 nActuatorIndex
 		vibtonz_pwm(0);
 		vibtonz_en(false);
 
+#if !defined(CONFIG_USA_MODEL_SGH_I757)
 		printk("[VIBETONZ] %s \n",__func__);
+#endif
 #if defined (CONFIG_KOR_MODEL_SHV_E110S)		
 		if (get_hw_rev() > 0x00){
 			vibrator_write_register(0x30, 0x09);			
@@ -351,8 +354,9 @@ IMMVIBESPIAPI VibeStatus ImmVibeSPI_ForceOut_AmpEnable(VibeUInt8 nActuatorIndex)
 
     if (!g_bAmpEnabled)
     {
+#if !defined(CONFIG_USA_MODEL_SGH_I757)
     	printk("[VIBETONZ] %s \n",__func__);
-		
+#endif
 		vibtonz_en(true);
 		g_bAmpEnabled = true;
 

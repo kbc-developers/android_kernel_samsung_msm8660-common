@@ -45,8 +45,12 @@ static unsigned int ar6k_clock = 26000000;
 #else
 static unsigned int ar6k_clock = 19200000;
 #endif
+#if defined(CONFIG_JPN_MODEL_SC_01E)
+static unsigned short reg_domain = 0x0088;
+#else
 static unsigned short reg_domain = 0xffff;
 static unsigned short lrssi = 10;
+#endif
 
 static unsigned short en_ani = 1;
 module_param(debug_mask, uint, 0644);

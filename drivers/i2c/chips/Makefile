@@ -29,6 +29,10 @@ else ifdef CONFIG_KOR_MODEL_SHV_E140L
 obj-$(CONFIG_WM8994_AMP)        += wm8994_amp.o
 else ifdef CONFIG_KOR_MODEL_SHV_E150S
 obj-$(CONFIG_WM8994_AMP)        += wm8994_amp.o
+else ifdef CONFIG_JPN_MODEL_SC_01E
+obj-$(CONFIG_WM8994_AMP)        += wm8994_amp.o
+else ifdef CONFIG_JPN_MODEL_SC_01D
+obj-$(CONFIG_WM8994_AMP)        += wm8994_amp.o
 else
 obj-$(CONFIG_SENSORS_YDA165)    += yda165.o
 

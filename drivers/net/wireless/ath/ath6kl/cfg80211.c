@@ -26,7 +26,7 @@
 #include "cfg80211_btcoex.h"
 #include "pm.h"
 
-#ifdef CONFIG_KOR_MODEL_SHV_E150S   // CONFIG_MACH_PX
+#if defined(CONFIG_KOR_MODEL_SHV_E150S) || defined(CONFIG_JPN_MODEL_SC_01E)   // CONFIG_MACH_PX
 #include <mach/gpio.h>
 #define GPIO_WLAN_nRST   158   //WLAN_nRST   //EXYNOS4_GPL0(4)
 #else
