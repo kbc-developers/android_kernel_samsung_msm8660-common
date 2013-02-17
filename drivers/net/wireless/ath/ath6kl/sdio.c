@@ -805,7 +805,7 @@ static int ath6kl_set_sdio_pm_caps(struct ath6kl *ar)
 	flags = sdio_get_host_pm_caps(func);
 
 	ath6kl_dbg(ATH6KL_DBG_SUSPEND, "sdio suspend pm_caps 0x%x\n", flags);
-#ifdef CONFIG_KOR_MODEL_SHV_E150S
+#if defined(CONFIG_KOR_MODEL_SHV_E150S) || defined(CONFIG_JPN_MODEL_SC_01E)
 	if (!(flags & MMC_PM_WAKE_SDIO_IRQ) ||
 	    !(flags & MMC_PM_KEEP_POWER))
 		return -EINVAL;
@@ -886,7 +886,7 @@ deep_sleep:
 	if (ar->suspend_mode == WLAN_POWER_STATE_DEEP_SLEEP ||
 	    !ar->suspend_mode || try_deepsleep) {
 
-#ifndef CONFIG_KOR_MODEL_SHV_E150S   // #ifdef CONFIG_MACH_PX
+#if !defined(CONFIG_KOR_MODEL_SHV_E150S) && !defined(CONFIG_JPN_MODEL_SC_01E)   // #ifdef CONFIG_MACH_PX
 		ret = ath6kl_set_sdio_pm_caps(ar);
 		if (ret)
 			return ret;

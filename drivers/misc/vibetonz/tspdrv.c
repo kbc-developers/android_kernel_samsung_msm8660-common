@@ -117,6 +117,35 @@ static VibeInt8 g_nForceLog[FORCE_LOG_BUFFER_SIZE];
 #define VIBRATOR_PERIOD	87084/2
 #define VIBRATOR_DUTY	87000/2
 
+#ifdef CONFIG_KBC_VIB_CTRL
+#define KBC_VIB_LEVEL_MAX 10
+#define KBC_VIB_LEVEL_MIN 0
+static int kbc_vib_level = 5;
+static int kbc_vib_duty_table[] = { 208, 218, 228, 238, 248, 258, 268, 278, 288, 298, 308 };
+#define KBC_VIB_DUTY kbc_vib_duty_table[kbc_vib_level]
+
+static ssize_t show_vib_level(struct device *dev, struct device_attribute *attr, char *buf)
+{
+	return sprintf(buf,"%d\n", kbc_vib_level);
+}
+
+static ssize_t store_vib_level(struct device *dev, struct device_attribute *attr, const char *buf, size_t len)
+{
+	int data = 0;
+	if (sscanf(buf, "%d\n", &data) > 0) {
+		if (data > KBC_VIB_LEVEL_MAX) data = KBC_VIB_LEVEL_MAX;
+		else if (data < KBC_VIB_LEVEL_MIN) data = KBC_VIB_LEVEL_MIN;
+		kbc_vib_level = data;
+		printk("[TSPDRV] %s set kbc_vib_level=%d", __func__, kbc_vib_level);
+	}
+	return len;
+}
+
+static DEVICE_ATTR(vib_level, S_IRUGO | S_IWUGO, show_vib_level, store_vib_level);
+#else
+#define KBC_VIB_DUTY 258
+#endif // CONFIG_KBC_VIB_TWEAK
+
 static struct hrtimer timer;
 
 static int max_timeout = 5000;
@@ -174,7 +203,7 @@ static int set_vibetonz(int timeout)
 #if defined (CONFIG_KOR_MODEL_SHV_E110S)		
 		if (get_hw_rev() > 0x00 ){
 			vibtonz_en(1);
-			vibe_set_pwm_freq(258);
+			vibe_set_pwm_freq(KBC_VIB_DUTY);
 			vib_isa1200_onoff(1);							
 		} else {
 			gpio_set_value(VIB_EN, VIBRATION_ON);			
@@ -182,12 +211,12 @@ static int set_vibetonz(int timeout)
 #elif defined (CONFIG_KOR_SHV_E120L_HD720) || defined(CONFIG_KOR_MODEL_SHV_E120K) || defined(CONFIG_KOR_MODEL_SHV_E120S) || defined(CONFIG_KOR_MODEL_SHV_E160S)\
  || defined(CONFIG_KOR_MODEL_SHV_E160K) || defined(CONFIG_KOR_MODEL_SHV_E160L) ||  defined (CONFIG_KOR_MODEL_SHV_E120L) || defined (CONFIG_JPN_MODEL_SC_05D)
 		vibtonz_en(1);
-		vibe_set_pwm_freq(258);
+		vibe_set_pwm_freq(KBC_VIB_DUTY);
 		vib_isa1200_onoff(1);							
 #elif defined (CONFIG_USA_MODEL_SGH_T989)|| defined (CONFIG_USA_MODEL_SGH_I727) || defined (CONFIG_USA_MODEL_SGH_T769)
 		if (get_hw_rev() > 0x04 ){
 			vibtonz_en(1);
-			vibe_set_pwm_freq(258);
+			vibe_set_pwm_freq(KBC_VIB_DUTY);
 			vib_isa1200_onoff(1);	
 		} else {
 			gpio_set_value(VIB_EN, VIBRATION_ON);			
@@ -195,14 +224,14 @@ static int set_vibetonz(int timeout)
 #elif defined (CONFIG_USA_MODEL_SGH_I717) || defined(CONFIG_USA_MODEL_SGH_I757) || defined(CONFIG_USA_MODEL_SGH_I577)
 
         vibtonz_en(1);
-        vibe_set_pwm_freq(258);
+        vibe_set_pwm_freq(KBC_VIB_DUTY);
         vib_isa1200_onoff(1);   
 
 
 #elif defined (CONFIG_JPN_MODEL_SC_03D)
 		if (get_hw_rev() > 0x00 ){
 			vibtonz_en(1);
-			vibe_set_pwm_freq(258);
+			vibe_set_pwm_freq(KBC_VIB_DUTY);
 			vib_isa1200_onoff(1);							
 		} else {
 			gpio_set_value(VIB_EN, VIBRATION_ON);			
@@ -412,6 +441,12 @@ int init_module(void)
     {
         DbgOut((KERN_ERR "tspdrv: platform_device_register failed.\n"));
     }
+
+#ifdef CONFIG_KBC_VIB_CTRL
+	if (device_create_file(&platdev.dev, &dev_attr_vib_level) < 0) {
+		printk(KERN_ERR "Failed to create device file(%s)!\n", dev_attr_vib_level.attr.name);
+	}
+#endif
 
 	android_vib_clk = clk_get(NULL,"sfpb_clk");
 	
