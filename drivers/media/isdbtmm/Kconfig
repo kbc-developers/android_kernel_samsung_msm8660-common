@@ -1,0 +1,10 @@
+#
+# ISDB-TMM tuner driver
+#
+
+config ISDBTMM
+	bool "ISDB-TMM tuner"
+	default n
+	---help---
+	  Enable the ISDB-TMM tuner driver for mmbi/DTV
+
