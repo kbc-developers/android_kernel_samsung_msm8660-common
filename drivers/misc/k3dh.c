@@ -133,7 +133,7 @@ static int k3dh_read_accel_xyz(struct k3dh_data *k3dh, struct k3dh_acc *acc)
 	acc->y -= k3dh->cal_data.y;
 	acc->z -= k3dh->cal_data.z;
 
-#if defined (CONFIG_TARGET_LOCALE_KOR) || defined (CONFIG_TARGET_LOCALE_JPN)
+#if defined (CONFIG_TARGET_LOCALE_KOR)
 #if defined (CONFIG_KOR_MODEL_SHV_E110S)
 	if (get_hw_rev() >= 0x06 )
 	{
@@ -162,7 +162,7 @@ static int k3dh_read_accel_xyz(struct k3dh_data *k3dh, struct k3dh_acc *acc)
 		acc->y = temp;
 		acc->z = -(acc->z);
 	}
-#elif defined (CONFIG_KOR_MODEL_SHV_E160S) || defined(CONFIG_KOR_MODEL_SHV_E160K) || defined(CONFIG_KOR_MODEL_SHV_E160L)	
+#elif defined (CONFIG_KOR_MODEL_SHV_E160S) || defined(CONFIG_KOR_MODEL_SHV_E160K) || defined(CONFIG_KOR_MODEL_SHV_E160L)
 	if (get_hw_rev() >= 0x02 )
 	{
 		acc->x = -(acc->x);
@@ -190,6 +190,12 @@ static int k3dh_read_accel_xyz(struct k3dh_data *k3dh, struct k3dh_acc *acc)
 		acc->x = -(acc->x);
 		acc->y = (acc->y);
 		acc->z = -(acc->z);
+	}
+#elif defined (CONFIG_JPN_MODEL_SC_05D)
+	if (get_hw_rev() >= 0x02 )
+	{
+		acc->x = -(acc->x);
+		acc->y = -(acc->y);
 	}
 #elif defined(CONFIG_EUR_MODEL_GT_I9210)
 	{
@@ -249,7 +255,9 @@ static int k3dh_read_accel_xyz(struct k3dh_data *k3dh, struct k3dh_acc *acc)
 	if(k3dh_read_count++ == 500) // each 10 seconds
 	{
 		k3dh_read_count = 0;
+		#if !defined(CONFIG_USA_MODEL_SGH_I757)
 		printk("%s: data=(%d, %d, %d) cal=(%d, %d, %d)\n", __func__, acc->x, acc->y, acc->z, k3dh->cal_data.x, k3dh->cal_data.y, k3dh->cal_data.z);
+		#endif
 	}
 
 	return err;
