@@ -516,6 +516,11 @@ static struct gpiomux_setting opt_active_cfg = {
 	.drv = GPIOMUX_DRV_8MA,
 	.pull = GPIOMUX_PULL_UP,
 };
+static struct gpiomux_setting opt_suspend_cfg = {
+	.func = GPIOMUX_FUNC_GPIO,
+	.drv = GPIOMUX_DRV_8MA,
+	.pull = GPIOMUX_PULL_DOWN,
+};
 #endif
 
 #ifdef CONFIG_KEYPAD_CYPRESS_TOUCH
