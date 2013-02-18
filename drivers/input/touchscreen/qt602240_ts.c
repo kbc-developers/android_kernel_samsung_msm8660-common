@@ -1019,6 +1019,7 @@ void check_chip_calibration(unsigned char one_touch_input_flag)
 
 					}
 				#if defined(CONFIG_USA_MODEL_SGH_I577) || defined(CONFIG_CAN_MODEL_SGH_I577R) || defined (CONFIG_USA_MODEL_SGH_I727) || defined (CONFIG_USA_MODEL_SGH_T989) \
+				|| defined (CONFIG_JPN_MODEL_SC_03D)
 					if (copy_data->read_ta_status) {
 						copy_data->read_ta_status(&ta_status_check);
 						if(!ta_status_check)
