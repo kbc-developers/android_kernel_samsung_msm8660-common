@@ -291,12 +291,9 @@ static int msm_ion_probe(struct platform_device *pdev)
 					"with size %x\n", heap_data->name,
 							  heap_data->base,
 							  heap_data->size);
-			else{
-#if !defined(CONFIG_USA_MODEL_SGH_I757)
-				pr_info("ION heap %s created\n", 
+			else
+				pr_info("ION heap %s created\n",
 							  heap_data->name);
-#endif
-			}
 		}
 
 		ion_device_add_heap(idev, heaps[i]);

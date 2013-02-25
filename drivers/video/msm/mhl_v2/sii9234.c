@@ -120,7 +120,7 @@ EXPORT_SYMBOL(mhl_switch_for_test);
 unsigned long storedval=0;
 
 static ssize_t check_MHL_command(struct device *dev, struct device_attribute *attr, char *buf)
-{	
+{
 	int retval=0;
 	printk("check_MHL_command:%ld\n",storedval);
 	return retval;
@@ -130,13 +130,13 @@ static ssize_t check_MHL_command(struct device *dev, struct device_attribute *at
 static ssize_t change_switch_store(struct device *dev, struct device_attribute *attr, const char *buf, size_t size)
 {
 	char *after;
-	
+
 	unsigned long value = simple_strtoul(buf, &after, 10);
 
 	printk("change_switch_store: %ld\n", value);
-	
+
 	storedval=value;
-	
+
 	return size;;
 }
 
@@ -1714,7 +1714,7 @@ static irqreturn_t sii9234_irq_thread(int irq, void *data)
 	cbus_read_reg(sii9234, CBUS_INT_STATUS_1_REG, &cbus_intr1);
 	cbus_read_reg(sii9234, CBUS_INT_STATUS_2_REG, &cbus_intr2);
 
-#if defined(CONFIG_JPN_MODEL_SC_05D)	
+#if defined(CONFIG_JPN_MODEL_SC_05D)
 	//Fix for MHL connected (only MHL and no HDMI and Power), Sleep mode - Kernel Panic issue
 	msleep(100);
 #endif
@@ -2299,7 +2299,7 @@ static int __init sii9234_init(void)
 #endif
 
 #if defined(CONFIG_JPN_MODEL_SC_05D)
-#ifdef MHL_SWITCH_TEST	
+#ifdef MHL_SWITCH_TEST
 	sec_mhl_for_test = class_create(THIS_MODULE, "sec_mhl");
 	if (IS_ERR(sec_mhl_for_test))
 		printk(KERN_ERR "[MHL] Failed to create class (sec_mhl)\n");

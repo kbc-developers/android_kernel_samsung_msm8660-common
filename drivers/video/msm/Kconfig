@@ -924,11 +924,4 @@ config FB_MSM_EBI2_PANEL_DETECT
 	default n
 	---help---
 	  Support for EBI2 panel auto detect
-
-config TWEAK_MDNIE_CTRL
-	bool "Enable Tweak mDNIe control"
-	default y
-	help
-	 This option enables Tweak mDNIe control.
-
 endif

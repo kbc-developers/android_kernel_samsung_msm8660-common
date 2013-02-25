@@ -1489,7 +1489,7 @@ static int get_gamma_value_from_bl(int bl)
 #ifdef MAPPING_TBL_AUTO_BRIGHTNESS
 #if !defined(CONFIG_JPN_MODEL_SC_03D)
 	if (unlikely(!lcd.auto_brightness && bl > 250))	bl = 250;
-#endif  
+#endif
         	switch (bl) {
 		case 0 ... 29:
 		gamma_value = 0; // 30cd
@@ -2237,7 +2237,7 @@ static int __devinit ld9040_probe(struct platform_device *pdev)
 #ifdef CONFIG_HAS_EARLYSUSPEND
 	lcd.early_suspend.suspend = ld9040_early_suspend;
 	lcd.early_suspend.resume = ld9040_late_resume;
-	lcd.early_suspend.level = EARLY_SUSPEND_LEVEL_DISABLE_FB - 10;
+	lcd.early_suspend.level = EARLY_SUSPEND_LEVEL_BLANK_SCREEN;
 	register_early_suspend(&lcd.early_suspend);
 #endif
 
@@ -2320,7 +2320,7 @@ static int __init lcdc_ld9040_panel_init(void)
 	pinfo->bpp = 24;
 	pinfo->fb_num = 2;
 #if defined (CONFIG_JPN_MODEL_SC_03D)
-	if (get_hw_rev() < 0x03 ) 
+	if (get_hw_rev() < 0x03 )
 #elif defined (CONFIG_KOR_MODEL_SHV_E110S)
 	if (get_hw_rev() < 0x05 ) 
 #elif defined(CONFIG_EUR_MODEL_GT_I9210)

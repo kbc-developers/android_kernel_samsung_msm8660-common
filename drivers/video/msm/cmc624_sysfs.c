@@ -416,10 +416,10 @@ static ssize_t mdnie_bg_show(struct device *dev,
         struct device_attribute *attr, char *buf)
 {
     const char background_name[MAX_BACKGROUND_MODE][16] = {
-        "DYNAMIC",
         "STANDARD",
-        "NATURAL",
+        "DYNAMIC",
         "MOVIE",
+        "NATURAL",
     };
 
     if(cmc624_state.background >= MAX_BACKGROUND_MODE) {
