@@ -1908,17 +1908,13 @@ static irqreturn_t mxt224_irq_thread(int irq, void *ptr)
 	u8 msg[data->msg_object_size];
 	u8 touch_message_flag = 0;
 	
-	#if defined (CONFIG_USA_MODEL_SGH_I577) || defined(CONFIG_CAN_MODEL_SGH_I577R)	|| defined (CONFIG_USA_MODEL_SGH_I727) || defined (CONFIG_USA_MODEL_SGH_T989)		
+	#if defined (CONFIG_USA_MODEL_SGH_I577) || defined(CONFIG_CAN_MODEL_SGH_I577R)	|| defined (CONFIG_USA_MODEL_SGH_I727) || defined (CONFIG_USA_MODEL_SGH_T989) || defined (CONFIG_JPN_MODEL_SC_03D)
 	#else
 	#ifdef CLEAR_MEDIAN_FILTER_ERROR
 	u16 size_one;
 	u8 value, ret;
 	bool ta_status=0;
 	u16 obj_address = 0;
-	
-	#if defined (CONFIG_USA_MODEL_SGH_I577) || defined(CONFIG_CAN_MODEL_SGH_I577R)	|| defined (CONFIG_USA_MODEL_SGH_I727) || defined (CONFIG_USA_MODEL_SGH_T989) \
-		|| defined (CONFIG_JPN_MODEL_SC_03D)
-	unsigned int register_address = 0;
 	#else
 	unsigned int register_address = 0;
 	#endif
