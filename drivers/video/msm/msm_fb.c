@@ -1528,7 +1528,7 @@ static int msm_fb_register(struct msm_fb_data_type *mfd)
 	if(mfd->index == 0)
     {
 		if (is_lpcharging_state() == 1) {
-#if (defined(CONFIG_TARGET_SERIES_P5LTE) || defined(CONFIG_TARGET_SERIES_P8LTE) || defined(CONFIG_TARGET_SERIES_P4LTE)) && (defined(CONFIG_TARGET_LOCALE_KOR) || defined(CONFIG_TARGET_LOCALE_JPN))
+#if (defined(CONFIG_TARGET_SERIES_P5LTE) || defined(CONFIG_TARGET_SERIES_P8LTE)) && defined(CONFIG_TARGET_LOCALE_KOR)
 			logofilename = CHARGING_IMAGE_FILE;
 #else
 			//logofilename = LPM_INIT_IMAGE_FILE;
