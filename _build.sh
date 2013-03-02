@@ -43,6 +43,7 @@ elif [ "$BUILD_DEVICE" = 'SC03D' ]; then
   RECOVERY_RAMDISK_NAME=sc03d_recovery_ramdisk
   KERNEL_BASE_ADDRESS=0x40400000
   KERNEL_RAMDISK_ADDRESS=0x41800000
+  KERNEL_RAMDISK_OFFSET=0x01400000
 
 else
   echo "error: not found BUILD_DEVICE"
@@ -148,7 +149,7 @@ echo "----- Making uncompressed $IMAGE_NAME ramdisk ------"
 echo "----- Making $IMAGE_NAME ramdisk ------"
 ./release-tools/minigzip < $BIN_DIR/ramdisk-$IMAGE_NAME.cpio > $BIN_DIR/ramdisk-$IMAGE_NAME.img
 echo "----- Making $IMAGE_NAME image ------"
-./release-tools/mkbootimg --cmdline "androidboot.hardware=qcom usb_id_pin_rework=true zcache" --kernel $BIN_DIR/kernel  --ramdisk $BIN_DIR/ramdisk-$IMAGE_NAME.img --base $KERNEL_BASE_ADDRESS --pagesize 2048 --ramdiskaddr $KERNEL_RAMDISK_ADDRESS --output $BIN_DIR/$IMAGE_NAME.img
+./release-tools/mkbootimg --cmdline "androidboot.hardware=qcom usb_id_pin_rework=true no_console_suspend=true zcache" --kernel $BIN_DIR/kernel  --ramdisk $BIN_DIR/ramdisk-$IMAGE_NAME.img --base $KERNEL_BASE_ADDRESS --pagesize 2048 --ramdisk_offset $KERNEL_RAMDISK_OFFSET --output $BIN_DIR/$IMAGE_NAME.img
 
 # create odin image
 cd $BIN_DIR
