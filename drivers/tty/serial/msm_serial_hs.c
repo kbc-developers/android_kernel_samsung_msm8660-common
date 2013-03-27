@@ -1853,6 +1853,7 @@ static int __init msm_hs_probe(struct platform_device *pdev)
 	uport = &msm_uport->uport;
 
 	uport->dev = &pdev->dev;
+	platform_set_drvdata(pdev, uport);
 
 	platform_set_drvdata(pdev, uport);
 
