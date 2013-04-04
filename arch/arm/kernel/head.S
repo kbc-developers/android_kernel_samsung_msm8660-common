@@ -348,10 +348,10 @@ __secondary_data:
  *  r13 = *virtual* address to jump to upon completion
  */
 __enable_mmu:
-#if defined(CONFIG_ALIGNMENT_TRAP) && __LINUX_ARM_ARCH__ < 6
-	orr	r0, r0, #CR_A
-#else
+#ifdef CONFIG_ALLOW_CPU_ALIGNMENT
 	bic	r0, r0, #CR_A
+#else
+	orr  r0, r0, #CR_A
 #endif
 #ifdef CONFIG_CPU_DCACHE_DISABLE
 	bic	r0, r0, #CR_C
@@ -398,17 +398,6 @@ __turn_mmu_on:
 	mcr	p15, 0, r0, c1, c0, 0		@ write control reg
 	mrc	p15, 0, r3, c0, c0, 0		@ read id reg
 	mov	r3, r3
-#ifdef CONFIG_ARCH_MSM_KRAIT
-	movw	r3, 0xfc00
-	movt	r3, 0xff00
-	and	r3, r9, r3
-	movw	r4, 0x0400
-	movt 	r4, 0x5100
-	cmp	r3, r4
-	mrceq	p15, 7, r3, c15, c0, 2
-	biceq	r3, r3, #0x400
-	mcreq	p15, 7, r3, c15, c0, 2
-#endif
 	mov	r3, r13
 	mov	pc, r3
 __enable_mmu_end:
