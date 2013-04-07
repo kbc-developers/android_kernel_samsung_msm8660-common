@@ -63,10 +63,6 @@ else
 obj-$(CONFIG_SENSOR_M5MO) += sec_m5mo.o
 endif
 endif
-ifeq ($(CONFIG_CAMERA_VE),y)
-  obj-$(CONFIG_SENSOR_S5K5BAFX) += sec_s5k5bafx.o
-  obj-$(CONFIG_SENSOR_SR200PC20M) += sec_sr200pc20m.o
-else
 ifeq ($(CONFIG_SENSOR_SR200PC20M),y)
   obj-$(CONFIG_SENSOR_SR200PC20M) += sec_sr200pc20m.o
 else ifeq ($(CONFIG_SENSOR_S5K6AAFX),y)
@@ -75,7 +71,6 @@ else ifeq ($(CONFIG_SENSOR_S5K5BAFX_P5),y)
   obj-$(CONFIG_SENSOR_S5K5BAFX_P5) += sec_s5k5bafx_p5.o
 else
   obj-$(CONFIG_SENSOR_S5K5BAFX) += sec_s5k5bafx.o
-endif
 endif
 obj-$(CONFIG_FLASH_TORCH_MODE) += ledflash_torch.o
 obj-$(CONFIG_MSM_V4L2_VIDEO_OVERLAY_DEVICE) += msm_v4l2_video.o

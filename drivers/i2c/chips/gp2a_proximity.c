@@ -17,7 +17,7 @@
  * MA  02110-1301, USA.
  */
 
-#include <linux/interrupt.h>  
+#include <linux/interrupt.h>
 #include <linux/irq.h>
 #include <linux/i2c.h>
 #include <linux/fs.h>
@@ -116,7 +116,7 @@ static u8 gp2a_original_image[8] =
 	0x04,
 	0x01,
 #else
-#if defined(CONFIG_KOR_MODEL_SHV_E150S) || defined(CONFIG_JPN_MODEL_SC_01E)
+#if defined(CONFIG_KOR_MODEL_SHV_E150S)
 	0x00,  
 	0x00,  
 	0x40,  
@@ -185,6 +185,8 @@ proximity_delay_store(struct device *dev,
 
     data->delay = delay;
 
+    input_report_abs(data->input_dev, ABS_CONTROL_REPORT, (data->enabled<<16) | delay);
+	input_sync(data->input_dev);
     return count;
 }
 
@@ -215,11 +217,6 @@ proximity_enable_store(struct device *dev, struct device_attribute *attr, const 
         return count;
     }
 
-#if defined(CONFIG_JPN_MODEL_SC_05D)
-    if (data)
-        mutex_lock(&data->enable_mutex);
-#endif
-
     if (data->enabled && !value) { 			/* Proximity power off */
         disable_irq(IRQ_GP2A_INT);
 
@@ -247,24 +244,17 @@ proximity_enable_store(struct device *dev, struct device_attribute *attr, const 
 		input_report_abs(data->input_dev, ABS_DISTANCE,  input);
 		input_sync(data->input_dev);
 		gprintk("[PROX] Start proximity = %d\n",input); //Temp
-#ifndef CONFIG_JPN_MODEL_SC_05D
 		spin_lock_irqsave(&prox_lock, flags);
-#endif
 		input = 0x03;
 		opt_i2c_write((u8)(REGS_OPMOD),&input);
 
-                enable_irq(IRQ_GP2A_INT);
-#ifndef CONFIG_JPN_MODEL_SC_05D
+        enable_irq(IRQ_GP2A_INT);
 		spin_unlock_irqrestore(&prox_lock, flags);
-#endif
     }
 
-#if defined(CONFIG_JPN_MODEL_SC_05D)
-    if (data)
-        mutex_unlock(&data->enable_mutex);
-#endif
-
 	data->enabled = value;
+    input_report_abs(data->input_dev, ABS_CONTROL_REPORT, (value<<16) | data->delay);
+	input_sync(data->input_dev);
     return count;
 }
 
@@ -324,7 +314,7 @@ static ssize_t proximity_avg_show(struct device *dev, struct device_attribute *a
 
 static ssize_t proximity_avg_store(struct device *dev, struct device_attribute *attr, const char *buf, size_t size)
 {
-	return size;
+	return proximity_enable_store(dev, attr, buf, size);
 }
 
 static DEVICE_ATTR(delay, S_IRUGO|S_IWUSR|S_IWGRP,   proximity_delay_show, proximity_delay_store);
@@ -403,7 +393,7 @@ static void gp2a_work_func_prox(struct work_struct *work)
     }
     else
     {
-#if defined(CONFIG_KOR_MODEL_SHV_E150S) || defined(CONFIG_JPN_MODEL_SC_01E)
+#if defined(CONFIG_KOR_MODEL_SHV_E150S)
 		reg = 0x20;
 #else
 		reg = 0x27;

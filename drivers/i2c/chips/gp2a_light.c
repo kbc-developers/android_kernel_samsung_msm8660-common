@@ -54,8 +54,7 @@
 #define ABS_WAKE                        (ABS_MISC)
 #define ABS_CONTROL_REPORT              (ABS_THROTTLE)
 
-#if defined(CONFIG_KOR_MODEL_SHV_E160S) || defined(CONFIG_KOR_MODEL_SHV_E160K) || defined(CONFIG_KOR_MODEL_SHV_E160L) \
-	|| defined (CONFIG_JPN_MODEL_SC_05D) || defined(CONFIG_KOR_MODEL_SHV_E150S) || defined(CONFIG_JPN_MODEL_SC_01E)
+#if defined(CONFIG_KOR_MODEL_SHV_E160S) || defined(CONFIG_KOR_MODEL_SHV_E160K) || defined(CONFIG_KOR_MODEL_SHV_E160L) || defined (CONFIG_JPN_MODEL_SC_05D) || defined(CONFIG_KOR_MODEL_SHV_E150S)
 #define LIGHT_BUFFER_NUM	7
 #else
 #define LIGHT_BUFFER_UP	5
@@ -82,8 +81,7 @@ struct sensor_data {
 	int testmode;
 	int light_buffer;
 	int light_count;
-#if !defined(CONFIG_KOR_MODEL_SHV_E160S) && !defined(CONFIG_KOR_MODEL_SHV_E160K) && !defined(CONFIG_KOR_MODEL_SHV_E160L) \
-	&& !defined (CONFIG_JPN_MODEL_SC_05D) && !defined(CONFIG_KOR_MODEL_SHV_E150S) && !defined(CONFIG_JPN_MODEL_SC_01E)
+#if !defined(CONFIG_KOR_MODEL_SHV_E160S) && !defined(CONFIG_KOR_MODEL_SHV_E160K) && !defined(CONFIG_KOR_MODEL_SHV_E160L) && !defined (CONFIG_JPN_MODEL_SC_05D) && !defined(CONFIG_KOR_MODEL_SHV_E150S)
 	int light_level_state;
 	bool light_first_level;
 #endif
@@ -530,8 +528,7 @@ lightsensor_resume(struct platform_device *pdev)
 	int rt = 0;
 	data->light_count = 0;
 	data->light_buffer = 0;
-#if !defined(CONFIG_KOR_MODEL_SHV_E160S) && !defined(CONFIG_KOR_MODEL_SHV_E160K) && !defined(CONFIG_KOR_MODEL_SHV_E160L) \
-	&& !defined (CONFIG_JPN_MODEL_SC_05D) && !defined(CONFIG_KOR_MODEL_SHV_E150S) && !defined(CONFIG_JPN_MODEL_SC_01E)
+#if !defined(CONFIG_KOR_MODEL_SHV_E160S) && !defined(CONFIG_KOR_MODEL_SHV_E160K) && !defined(CONFIG_KOR_MODEL_SHV_E160L)  && !defined (CONFIG_JPN_MODEL_SC_05D) && !defined(CONFIG_KOR_MODEL_SHV_E150S)
 	data->light_first_level =true;
 #endif
 	mutex_lock(&data->mutex);
@@ -613,8 +610,7 @@ static void gp2a_work_func_light(struct work_struct *work)
 			break;
 
 	if (data->light_buffer == i) {
-#if defined(CONFIG_KOR_MODEL_SHV_E160S) || defined(CONFIG_KOR_MODEL_SHV_E160K) || defined(CONFIG_KOR_MODEL_SHV_E160L) \
-	|| defined (CONFIG_JPN_MODEL_SC_05D) || defined(CONFIG_KOR_MODEL_SHV_E150S) || defined(CONFIG_JPN_MODEL_SC_01E)
+#if defined(CONFIG_KOR_MODEL_SHV_E160S) || defined(CONFIG_KOR_MODEL_SHV_E160K) || defined(CONFIG_KOR_MODEL_SHV_E160L) || defined (CONFIG_JPN_MODEL_SC_05D) || defined(CONFIG_KOR_MODEL_SHV_E150S)
 		if (data->light_count++ == LIGHT_BUFFER_NUM) {
 			input_report_abs(this_data, ABS_MISC, adc);
 			input_sync(this_data);
@@ -678,9 +674,7 @@ lightsensor_probe(struct platform_device *pdev)
 	data->enabled = 0;
 	data->delay = SENSOR_DEFAULT_DELAY;
 	data->testmode = 0;
-#if !defined(CONFIG_JPN_MODEL_SC_05D) && !defined(CONFIG_USA_MODEL_SGH_I717) && !defined(CONFIG_KOR_MODEL_SHV_E160S) \
-	&& !defined(CONFIG_KOR_MODEL_SHV_E160K) && !defined(CONFIG_KOR_MODEL_SHV_E160L) && !defined(CONFIG_KOR_MODEL_SHV_E150S) \
-	&& !defined(CONFIG_JPN_MODEL_SC_01E)
+#if !defined(CONFIG_JPN_MODEL_SC_05D) && !defined(CONFIG_USA_MODEL_SGH_I717) && !defined(CONFIG_KOR_MODEL_SHV_E160S) && !defined(CONFIG_KOR_MODEL_SHV_E160K) && !defined(CONFIG_KOR_MODEL_SHV_E160L) && !defined(CONFIG_KOR_MODEL_SHV_E150S)
 	data->light_level_state =0;
 #endif
 

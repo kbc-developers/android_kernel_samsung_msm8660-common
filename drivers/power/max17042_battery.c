@@ -170,7 +170,7 @@ static void fg_test_print(void)
 	pr_info("AVG_VCELL(%d)\n", average_vcell);
 
 	pr_info("FULLCAP(%d), VFSOC_REG(%d)\n", fg_read_register(FULLCAP_REG)/2, fg_read_register(VFSOC_REG)/2);
-	pr_info("REMCAP_REP(%d), REMCAP_MIX(%d), REMCAP_AV(%d)\n",
+	pr_info("REMCAP_REP(%d), REMCAP_MIX(%d), REMCAP_AV(%d)\n", 
 		fg_read_register(REMCAP_REP_REG)/2, fg_read_register(REMCAP_MIX_REG)/2, fg_read_register(REMCAP_AV_REG)/2);
 
 	reg_data = fg_read_register(CGAIN_REG);
@@ -316,7 +316,7 @@ static int fg_compensation_temp(int temp)
 			}
 		}
 
-		// normal
+		// normal 
 		if (temp_table[i][1] <= temp && temp_table[i+1][1] > temp) {
 			offset = temp_table[i][0] - temp_table[i][1] + ((temp - temp_table[i][1]) * (temp_table[i+1][0] - temp_table[i][0])) / (temp_table[i+1][1] - temp_table[i][1]);
 			break;
@@ -379,36 +379,21 @@ static int fg_read_soc(void)
 
 	soc = data[1];
 
-#if defined(CONFIG_KOR_OPERATOR_SKT) || defined(CONFIG_KOR_OPERATOR_KT) || defined(CONFIG_KOR_OPERATOR_LGU) || defined(CONFIG_JPN_OPERATOR_NTT)
+#if defined(CONFIG_KOR_OPERATOR_SKT) || defined(CONFIG_KOR_OPERATOR_KT) || defined(CONFIG_KOR_OPERATOR_LGU)  || defined(CONFIG_JPN_OPERATOR_NTT)
 	soc_lsb = (data[0] * 100) / 256;
 	chip->info.psoc = (soc * 100) + soc_lsb;
-#if defined(CONFIG_TARGET_SERIES_P5LTE) || defined(CONFIG_TARGET_SERIES_P8LTE)
-	soc = chip->info.psoc / 99;
 #endif
-#endif
-
-#if defined(CONFIG_TARGET_SERIES_P5LTE) && defined(CONFIG_TARGET_LOCALE_EUR)
-#define U8_MAX ((u8)~0)
-	/*
-	 * data[0] represents a fraction after value of data[1]
-	 * use data[0] for decimal approximation of data[1]
-	 * data[0] goes from 0 to U8_MAX (usually 0xFF)
-	 */
-	soc += ((U8_MAX / 2) < data[0]) ? 1 : 0;
-	soc = (100 < soc) ? 100 : soc;
-#endif /* defined(CONFIG_TARGET_SERIES_P5LTE) && defined(CONFIG_TARGET_LOCALE_EUR) */
-
 //	if (!(chip->info.pr_cnt % PRINT_COUNT))
 		pr_info("%s : SOC(%d), data(0x%04x)\n", __func__, soc, (data[1]<<8) | data[0]);
 
 	return soc;
 }
 
-#if defined (CONFIG_TARGET_SERIES_P8LTE) && (defined (CONFIG_KOR_OPERATOR_SKT) || defined(CONFIG_JPN_OPERATOR_NTT))
+#if defined (CONFIG_TARGET_SERIES_P8LTE) && defined (CONFIG_KOR_OPERATOR_SKT)
 static int fg_read_avsoc(void)
 {
 	struct i2c_client *client = fg_i2c_client;
-#if defined(CONFIG_KOR_OPERATOR_SKT) || defined(CONFIG_KOR_OPERATOR_KT) || defined(CONFIG_KOR_OPERATOR_LGU) || defined(CONFIG_JPN_OPERATOR_NTT)
+#if defined(CONFIG_KOR_OPERATOR_SKT) || defined(CONFIG_KOR_OPERATOR_KT) || defined(CONFIG_KOR_OPERATOR_LGU)
 	struct max17042_chip *chip = i2c_get_clientdata(client);
 	u32 soc_lsb = 0;
 #endif
@@ -421,7 +406,7 @@ static int fg_read_avsoc(void)
 	}
 
 	avsoc = data[1];
-
+	
 //	if (!(chip->info.pr_cnt % PRINT_COUNT))
 		pr_info("%s : AVSOC(%d), data(0x%04x)\n", __func__, avsoc, (data[1]<<8) | data[0]);
 
@@ -560,7 +545,7 @@ int fg_reset_soc(void)
 	u8 data[2];
 	u32 fg_vfsoc, new_soc, new_remcap, fullcap;
 	u16 temp = 0;
-#if defined (CONFIG_TARGET_SERIES_P8LTE) && (defined (CONFIG_KOR_OPERATOR_SKT) || defined(CONFIG_JPN_OPERATOR_NTT))
+#if defined (CONFIG_TARGET_SERIES_P8LTE) && defined (CONFIG_KOR_OPERATOR_SKT)
 	int vfocv = 0;
 #endif
 
@@ -595,7 +580,7 @@ int fg_reset_soc(void)
 
 /* P8 is not turned off by Quickstart @3.4V(It's not a problem, depend on mode data
  * Power off for factory test(File system, etc..) */
-#if defined (CONFIG_TARGET_SERIES_P8LTE) && (defined (CONFIG_KOR_OPERATOR_SKT) || defined(CONFIG_JPN_OPERATOR_NTT))
+#if defined (CONFIG_TARGET_SERIES_P8LTE) && defined (CONFIG_KOR_OPERATOR_SKT)
 #define QUICKSTART_POWER_OFF_VOLTAGE	3400
 	vfocv = fg_read_vfocv();
 	if (vfocv < QUICKSTART_POWER_OFF_VOLTAGE) {
@@ -669,7 +654,7 @@ void fg_prevent_early_poweroff(int vcell, int fg_soc)
 	static u16 RemCapMix =0;
 	static u16 RemCapRep =0;
 	static bool is_first_time = 1;
-
+		
 	pr_debug("%s : vcell=%d, fg_soc=%d\r\n", __func__, vcell, fg_soc);
 
 	if (fg_i2c_read(client, SOCREP_REG, data, 2) < 0) {
@@ -687,7 +672,7 @@ void fg_prevent_early_poweroff(int vcell, int fg_soc)
 		RemCapRep = 0;
 		return;
 	}
-
+	
 	pr_info("%s : fg_soc=%d, soc=%d (0x%04x), vcell=%d\n", __func__, fg_soc, repsoc, repsoc_data, vcell);
 
 	if(vcell > POWER_OFF_VOLTAGE_HIGH_MARGIN) {
@@ -697,13 +682,13 @@ void fg_prevent_early_poweroff(int vcell, int fg_soc)
 			is_first_time = 0;
 			RemCapMix = fg_read_register(REMCAP_MIX_REG);
 			RemCapRep = fg_read_register(REMCAP_REP_REG);
-			pr_info("%s : 1. save RemCapMix=0x%x, RemCapRep=0x%x\n", __func__, RemCapMix, RemCapRep);
+			pr_info("%s : 1. save RemCapMix=0x%x, RemCapRep=0x%x\n", __func__, RemCapMix, RemCapRep);			
 		} else {
 			/* keep 1.5% by writing RemCapMix_1, RemCapRep_1 */
 			fg_write_register(REMCAP_MIX_REG, (u16)RemCapMix);
 			fg_write_register(REMCAP_REP_REG, (u16)RemCapRep);
-			pr_info("%s : 2. writing RemCapMix =0x%x, RemCapRep=0x%x\n", __func__, RemCapMix, RemCapRep);
-			msleep(200);
+			pr_info("%s : 2. writing RemCapMix =0x%x, RemCapRep=0x%x\n", __func__, RemCapMix, RemCapRep);			
+			msleep(200);	
 		}
 	}
 }
@@ -754,12 +739,7 @@ void fg_periodic_read(void)
 	pr_info("[MAX17042] %d/%d/%d %02d:%02d,",
 		tm.tm_mday, tm.tm_mon + 1, tm.tm_year + 1900, tm.tm_hour, tm.tm_min);
 
-#if (defined(CONFIG_TARGET_SERIES_P8LTE) && \
-		(defined(CONFIG_KOR_OPERATOR_SKT) || defined(CONFIG_JPN_OPERATOR_NTT))) || \
-	(defined(CONFIG_TARGET_SERIES_P5LTE) && \
-		(defined(CONFIG_KOR_OPERATOR_SKT) || defined(CONFIG_KOR_OPERATOR_KT) || defined(CONFIG_KOR_OPERATOR_LGU)))
-	/* Do nothing for Resolving BT Mute*/
-#else
+#if 1
 	for (i = 0; i < 16; i++) {
 		for (reg = 0; reg < 0x10; reg++) {
 			data[reg] = fg_read_register(reg + i * 0x10);
@@ -1123,7 +1103,7 @@ int fg_check_cap_corruption(void)
 	pr_vfocv += (temp2 << 4);
 
 	/* MixCap differ is greater than 265mAh */
-#if defined (CONFIG_TARGET_SERIES_P8LTE) && (defined (CONFIG_KOR_OPERATOR_SKT) || defined(CONFIG_JPN_OPERATOR_NTT))
+#if defined (CONFIG_TARGET_SERIES_P8LTE) && defined (CONFIG_KOR_OPERATOR_SKT)
 	if ((((vfsoc+5) < chip->info.previous_vfsoc) || (vfsoc > (chip->info.previous_vfsoc+5)))
 		|| (((mixcap+530) < chip->info.previous_mixcap) || (mixcap > (chip->info.previous_mixcap+530)))) {
 #else
@@ -1197,7 +1177,7 @@ void fg_set_full_charged(void)
 }
 
 
-#if defined (CONFIG_TARGET_SERIES_P8LTE) && (defined (CONFIG_KOR_OPERATOR_SKT) || defined(CONFIG_JPN_OPERATOR_NTT))
+#if defined (CONFIG_TARGET_SERIES_P8LTE) && defined (CONFIG_KOR_OPERATOR_SKT)
 void fg_recovery_adjust_repsoc(u32 level)
 {
 	struct i2c_client *client = fg_i2c_client;
@@ -1215,7 +1195,7 @@ void fg_recovery_adjust_repsoc(u32 level)
 		return;
 	pr_info("%s : Read Fullcap(%d)\n", __func__,read_val);
 	temp = (read_val * level) /100;
-
+	
 	fg_write_and_verify_register(REMCAP_REP_REG, (u16)temp);
 	//fg_write_register(REMCAP_REP_REG, (u16)temp);
 
@@ -1224,11 +1204,11 @@ void fg_recovery_adjust_repsoc(u32 level)
 	fg_write_and_verify_register(SOCREP_REG, tempVal);
 	//fg_write_register(SOCREP_REG, tempVal);
 	pr_info("%s : Write Remcap(%d), RepSOC(%d)\n", __func__,temp, tempVal);
-
+	
 	mutex_unlock(&chip->fg_lock);
 	msleep(200);
 
-	pr_info("[fg_recovery_adjust_REPSOC] (B) REPSOC(%d)\n", fg_read_soc());
+	pr_info("[fg_recovery_adjust_REPSOC] (B) REPSOC(%d)\n", fg_read_soc());	
 
 }
 #endif
@@ -1287,7 +1267,7 @@ void reset_low_batt_comp_cnt(void)
 #ifdef INTENSIVE_LOW_COMPENSATION
 	chip->pre_cond_ok = 0;
 	chip->low_comp_pre_cond = 0;
-#endif
+#endif	
 }
 
 static int check_low_batt_comp_condtion(int *nLevel)
@@ -1303,7 +1283,7 @@ static int check_low_batt_comp_condtion(int *nLevel)
 #ifdef INTENSIVE_LOW_COMPENSATION
 			if(chip->info.low_batt_comp_cnt[i][j]!=0)
 				pr_info("BAT %s: chip->info.low_batt_comp_cnt[%d][%d] = %d \n", __func__, i, j, chip->info.low_batt_comp_cnt[i][j]);
-#endif
+#endif		
 			if (chip->info.low_batt_comp_cnt[i][j] >= MAX_LOW_BATT_CHECK_CNT) {
 				display_low_batt_comp_cnt();
 				ret = 1;
@@ -1328,7 +1308,7 @@ static int get_low_batt_threshold(int range, int level, int nCurrent)
 			else if (level == 3)
 				ret = SDI_Range5_3_Offset + ((nCurrent * SDI_Range5_3_Slope) / 1000);
 			break;
-
+			
 		case 4:
 			if (level == 1)
 				ret = SDI_Range4_1_Offset + ((nCurrent * SDI_Range4_1_Slope) / 1000);
@@ -1368,7 +1348,7 @@ static int get_low_batt_threshold(int range, int level, int nCurrent)
 			else if (level == 3)
 				ret = ATL_Range5_3_Offset + ((nCurrent * ATL_Range5_3_Slope) / 1000);
 			break;
-
+			
 		case 4:
 			if (level == 1)
 				ret = ATL_Range4_1_Offset + ((nCurrent * ATL_Range4_1_Slope) / 1000);
@@ -1497,7 +1477,7 @@ int p5_low_batt_compensation(int fg_soc, int fg_vcell, int fg_current)
 #endif
 
 		if (check_low_batt_comp_condtion(&new_level)) {
-#if defined (CONFIG_TARGET_SERIES_P8LTE) && (defined (CONFIG_KOR_OPERATOR_SKT) || defined(CONFIG_JPN_OPERATOR_NTT))
+#if defined (CONFIG_TARGET_SERIES_P8LTE) && defined (CONFIG_KOR_OPERATOR_SKT)
 			/* Disable 3% low battery compensation (only for P8s) */
 			/* duplicated action with 1% low battery compensation */
 			if (new_level < 2)
@@ -1520,7 +1500,7 @@ int p5_low_batt_compensation(int fg_soc, int fg_vcell, int fg_current)
 		if (chip->info.low_batt_comp_flag) {
 			pr_info("%s : MIN_CURRENT(%d), AVG_CURRENT(%d), CURRENT(%d), SOC(%d), VCELL(%d)\n",
 				__func__, fg_min_current, fg_avg_current, fg_current, fg_soc, fg_vcell);
-#if defined (CONFIG_TARGET_SERIES_P8LTE) && (defined (CONFIG_KOR_OPERATOR_SKT) || defined(CONFIG_JPN_OPERATOR_NTT))
+#if defined (CONFIG_TARGET_SERIES_P8LTE) && defined (CONFIG_KOR_OPERATOR_SKT)
 	/* Do not update soc right after low battery compensation */
 	/* to prevent from powering-off suddenly (only for P8s) */
 			pr_info("%s : SOC is set to %d\n",
@@ -1589,37 +1569,6 @@ static void fg_set_battery_type(void)
 
 }
 
-#ifdef ENABLE_SYSFS_FG_CAPACITY
-int get_fuelgauge_capacity(enum capacity_type type)
-{
-	int cap = -1;
-	pr_debug("%s\n", __func__);
-
-	switch (type) {
-	case CAPACITY_TYPE_FULL:
-		cap = fg_read_register(FULLCAP_REG);
-		break;
-	case CAPACITY_TYPE_MIX:
-		cap = fg_read_register(REMCAP_MIX_REG);
-		break;
-	case CAPACITY_TYPE_AV:
-		cap = fg_read_register(REMCAP_AV_REG);
-		break;
-	case CAPACITY_TYPE_REP:
-		cap = fg_read_register(REMCAP_REP_REG);
-		break;
-	default:
-		pr_info("%s: invalid type(%d)\n", __func__, type);
-		cap = -EINVAL;
-		break;
-	}
-
-	pr_debug("%s: type(%d), cap(0x%x, %d)\n", __func__,
-					type, cap, (cap / 2));
-	return cap;
-}
-#endif
-
 int get_fuelgauge_value(int data)
 {
 	int ret;
@@ -1687,7 +1636,7 @@ int get_fuelgauge_value(int data)
 		break;
 #endif
 
-#if defined (CONFIG_TARGET_SERIES_P8LTE) && (defined (CONFIG_KOR_OPERATOR_SKT) || defined(CONFIG_JPN_OPERATOR_NTT))
+#if defined (CONFIG_TARGET_SERIES_P8LTE) && defined (CONFIG_KOR_OPERATOR_SKT)
 	case FG_AVSOC:
 		ret = fg_read_avsoc();
 		break;
@@ -1704,7 +1653,7 @@ int get_fuelgauge_value(int data)
 int set_fuelgauge_value(int data, u16 value)
 {
 	int ret = 0;
-
+	
 	switch (data) {
 	case FG_FILTERCFG:
 		ret = fg_write_register(FILTERCFG_REG, value);
@@ -1803,42 +1752,42 @@ static ssize_t max17042_show_property(struct device *dev,
 	case MAX17042_VFSOC:
 		val = fg_read_register(VFSOC_REG);
 		val = val >> 8; /* % */
-		if (val >= 0)
+		if (val >= 0) 
 			i += scnprintf(buf + i, PAGE_SIZE - i, "%d\n", val);
 		else
 			i = -EINVAL;
 		break;
 	case MAX17042_FULLCAP:
 		val = fg_read_register(FULLCAP_REG);
-		if (val >= 0)
+		if (val >= 0) 
 			i += scnprintf(buf + i, PAGE_SIZE - i, "%d\n", val);
 		else
 			i = -EINVAL;
 		break;
 	case MAX17042_FULLCAP_NOM:
 		val = fg_read_register(FULLCAP_NOM_REG);
-		if (val >= 0)
+		if (val >= 0) 
 			i += scnprintf(buf + i, PAGE_SIZE - i, "%d\n", val);
 		else
 			i = -EINVAL;
 		break;
 	case MAX17042_REMCAP_REP:
 		val = fg_read_register(REMCAP_REP_REG);
-		if (val >= 0)
+		if (val >= 0) 
 			i += scnprintf(buf + i, PAGE_SIZE - i, "%d\n", val);
 		else
 			i = -EINVAL;
 		break;
 	case MAX17042_REMCAP_MIX:
 		val = fg_read_register(REMCAP_MIX_REG);
-		if (val >= 0)
+		if (val >= 0) 
 			i += scnprintf(buf + i, PAGE_SIZE - i, "%d\n", val);
 		else
 			i = -EINVAL;
 		break;
 	case MAX17042_REMCAP_AV:
 		val = fg_read_register(REMCAP_AV_REG);
-		if (val >= 0)
+		if (val >= 0) 
 			i += scnprintf(buf + i, PAGE_SIZE - i, "%d\n", val);
 		else
 			i = -EINVAL;
@@ -1846,21 +1795,21 @@ static ssize_t max17042_show_property(struct device *dev,
 	case MAX17042_VFOCV:
 		val = fg_read_register(VFOCV_REG);
 		val = ((val >> 3) * 625) / 1000; /* mV */
-		if (val >= 0)
+		if (val >= 0) 
 			i += scnprintf(buf + i, PAGE_SIZE - i, "%d\n", val);
 		else
 			i = -EINVAL;
 		break;
 	case MAX17042_FILTERCFG:
 		val = fg_read_register(FILTERCFG_REG);
-		if (val >= 0)
+		if (val >= 0) 
 			i += scnprintf(buf + i, PAGE_SIZE - i, "0x%x\n", val);
 		else
 			i = -EINVAL;
 		break;
 	case MAX17042_CGAIN:
 		val = fg_read_register(CGAIN_REG);
-		if (val >= 0)
+		if (val >= 0) 
 			i += scnprintf(buf + i, PAGE_SIZE - i, "0x%x, psoc = %d\n",
 					val, chip->info.psoc);
 		else

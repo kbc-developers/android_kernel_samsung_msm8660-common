@@ -606,7 +606,3 @@ config KEYPAD_CYPRESS_TOUCH
 	  To compile this driver as a module, choose M here: the
 	  module will be called melfas-touchkey.
 
-config TWEAK_REPLACE_BACK_MENU
-	bool "Keycode replace back / menu"
-	default y
-

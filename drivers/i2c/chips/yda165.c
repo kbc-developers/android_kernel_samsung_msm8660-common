@@ -1259,7 +1259,7 @@ void D4Hp3_PowerOn(D4HP3_SETTING_INFO *pstSettingInfo)
 					| (pstSettingInfo->bLine1Balance << (D4HP3_DIFA & 0xFF))
 					| (pstSettingInfo->bLine2Balance << (D4HP3_DIFB & 0xFF))
 
-#if defined (CONFIG_KOR_MODEL_SHV_E110S) || defined (CONFIG_KOR_MODEL_SHV_E120S) || defined (CONFIG_KOR_MODEL_SHV_E120K) || defined (CONFIG_JPN_MODEL_SC_03D) || defined(CONFIG_USA_MODEL_SGH_I757)
+#if defined (CONFIG_KOR_MODEL_SHV_E110S) || defined (CONFIG_KOR_MODEL_SHV_E120S) || defined (CONFIG_KOR_MODEL_SHV_E120K) || defined (CONFIG_JPN_MODEL_SC_03D)
 					| (0x00 << (D4HP3_HIZ_HP & 0xFF))
 #elif defined (HP_HIZ_ON)
 					| (0x01 << (D4HP3_HIZ_HP & 0xFF))

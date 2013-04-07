@@ -400,10 +400,9 @@ static ssize_t ath6kl_fwlog_block_read(struct file *file,
 
 		ret = wait_for_completion_interruptible(
 			&ar->debug.fwlog_completion);
-		if (ret == -ERESTARTSYS){
-			vfree(buf);
+		if (ret == -ERESTARTSYS)
 			return ret;
-		}
+
 		spin_lock(&ar->debug.fwlog_queue.lock);
 	}
 

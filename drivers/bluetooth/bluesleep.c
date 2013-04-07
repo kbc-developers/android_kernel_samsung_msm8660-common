@@ -68,7 +68,7 @@
 
 #define WAKE_GPIO_ACTIVE_HIGH
 
-#if defined(CONFIG_KOR_MODEL_SHV_E150S) || defined(CONFIG_JPN_MODEL_SC_01E)
+#ifdef CONFIG_KOR_MODEL_SHV_E150S
 struct bluesleep_info {
 	unsigned host_wake;
 	unsigned host_wake_irq;
@@ -152,22 +152,15 @@ struct proc_dir_entry *bluetooth_dir, *sleep_dir;
 
 static void hsuart_power(int on)
 {
-       BT_INFO("hsuart_power  isOn(%d)\n",on);
-	   
 	if (bsi->uport == NULL )
 	{
 		BT_INFO("hsuart_power...but bsi->uport == NULL , so return");
 		return ;
 	}
-
-	#if defined(CONFIG_KOR_MODEL_SHV_E150S) || defined(CONFIG_JPN_MODEL_SC_01E)
-	if (on)   
-		bt_enter_sleep_mode_cnt = 0;
-	#endif
-	
+	BT_INFO("hsuart_power  isOn(%d)\n",on);
 	if (on) {
 		msm_hs_request_clock_on(bsi->uport);
-		msm_hs_set_mctrl(bsi->uport, TIOCM_RTS);		
+		msm_hs_set_mctrl(bsi->uport, TIOCM_RTS);
 	} else {
 		msm_hs_set_mctrl(bsi->uport, 0);
 		msm_hs_request_clock_off(bsi->uport);
@@ -182,7 +175,7 @@ static inline int bluesleep_can_sleep(void)
 {
 	/* check if MSM_WAKE_BT_GPIO and BT_WAKE_MSM_GPIO are both deasserted */
 #ifdef WAKE_GPIO_ACTIVE_HIGH
-	#if defined(CONFIG_KOR_MODEL_SHV_E150S) || defined(CONFIG_JPN_MODEL_SC_01E)
+      #ifdef CONFIG_KOR_MODEL_SHV_E150S
 	return (ext_wake_active == 0) &&
 		!gpio_get_value(bsi->host_wake) &&
 		(bsi->uport != NULL);   
@@ -203,7 +196,7 @@ void bluesleep_sleep_wakeup(void)
         /* Start the timer */
         mod_timer(&tx_timer, jiffies + (TX_TIMER_INTERVAL * HZ));
 #ifdef WAKE_GPIO_ACTIVE_HIGH
-	#if defined(CONFIG_KOR_MODEL_SHV_E150S) || defined(CONFIG_JPN_MODEL_SC_01E)
+        #ifdef CONFIG_KOR_MODEL_SHV_E150S
 	 ext_wake_active = 1 ;	
 	 #else	
         gpio_set_value(bsi->ext_wake , 1);
@@ -215,7 +208,7 @@ void bluesleep_sleep_wakeup(void)
 		BT_INFO("waking up...");
         wake_lock(&bsi->wake_lock);
 #ifdef WAKE_GPIO_ACTIVE_HIGH
-	#if defined(CONFIG_KOR_MODEL_SHV_E150S) || defined(CONFIG_JPN_MODEL_SC_01E)
+        #ifdef CONFIG_KOR_MODEL_SHV_E150S
 	 ext_wake_active = 1 ;	
 	 #else	
         gpio_set_value(bsi->ext_wake , 1);
@@ -242,7 +235,7 @@ static void bluesleep_sleep_work(struct work_struct *work)
 			return;
 		}
 
-		#if defined(CONFIG_KOR_MODEL_SHV_E150S) || defined(CONFIG_JPN_MODEL_SC_01E)
+             #ifdef CONFIG_KOR_MODEL_SHV_E150S
 		if (msm_hs_tx_empty(bsi->uport)) {
 			bt_enter_sleep_mode_cnt ++ ;
 			BT_INFO("hsuart_power...  bt_enter_sleep_mode_cnt ++ " );
@@ -255,12 +248,12 @@ static void bluesleep_sleep_work(struct work_struct *work)
 		#endif
 		
 		if (msm_hs_tx_empty(bsi->uport)
-			#if defined(CONFIG_KOR_MODEL_SHV_E150S) || defined(CONFIG_JPN_MODEL_SC_01E)
+		    #ifdef CONFIG_KOR_MODEL_SHV_E150S
                  && bt_enter_sleep_mode_cnt > 1
                  #endif
 		) {
 			BT_INFO("going to sleep...");
-			#if defined(CONFIG_KOR_MODEL_SHV_E150S) || defined(CONFIG_JPN_MODEL_SC_01E)
+			#ifdef CONFIG_KOR_MODEL_SHV_E150S
 			bt_enter_sleep_mode_cnt = 0;
 			#endif
 			set_bit(BT_ASLEEP, &flags);
@@ -276,7 +269,7 @@ static void bluesleep_sleep_work(struct work_struct *work)
                         return;
 		}
 	} else {
-		#if defined(CONFIG_KOR_MODEL_SHV_E150S) || defined(CONFIG_JPN_MODEL_SC_01E)
+	       #ifdef CONFIG_KOR_MODEL_SHV_E150S
 	       bt_enter_sleep_mode_cnt = 0;
 		#endif
 		bluesleep_sleep_wakeup();
@@ -365,11 +358,6 @@ static int bluesleep_hci_event(struct notifier_block *this,
 	case HCI_DEV_WRITE:
 		bluesleep_outgoing_data();
 		break;
-	#if defined(CONFIG_KOR_MODEL_SHV_E150S) || defined(CONFIG_JPN_MODEL_SC_01E)
-	case HCI_DEV_READ:
-		mod_timer(&tx_timer, jiffies + (TX_TIMER_INTERVAL * HZ));
-		break;
-	#endif	
 	}
 
 	return NOTIFY_DONE;
@@ -392,9 +380,9 @@ static void bluesleep_tx_timer_expire(unsigned long data)
         BT_DBG("bluesleep_tx_timer_expire-Tx has been idle");
 
 			#ifdef WAKE_GPIO_ACTIVE_HIGH
-				#if defined(CONFIG_KOR_MODEL_SHV_E150S) || defined(CONFIG_JPN_MODEL_SC_01E)
-             		ext_wake_active = 0 ;	
-             		#else  
+			    #ifdef CONFIG_KOR_MODEL_SHV_E150S
+             		    ext_wake_active = 0 ;	
+             		    #else  
 			    gpio_set_value(bsi->ext_wake, 0 );
 			    #endif			
 			#else
@@ -455,7 +443,7 @@ static int bluesleep_start(void)
 	mod_timer(&tx_timer, jiffies + (TX_TIMER_INTERVAL*HZ));
 
 	/* assert BT_WAKE */
-	#if defined(CONFIG_KOR_MODEL_SHV_E150S) || defined(CONFIG_JPN_MODEL_SC_01E)
+       #ifdef CONFIG_KOR_MODEL_SHV_E150S
        ext_wake_active = 0;
        #else
 	gpio_set_value(bsi->ext_wake, 0);
@@ -501,7 +489,7 @@ static void bluesleep_stop(void)
 	}
 
 	    /* deny BT_WAKE */
-	#if defined(CONFIG_KOR_MODEL_SHV_E150S) || defined(CONFIG_JPN_MODEL_SC_01E)
+	#ifdef CONFIG_KOR_MODEL_SHV_E150S
 	ext_wake_active = 0 ;	
 	#else	
 	gpio_set_value(bsi->ext_wake, 0);
@@ -532,7 +520,7 @@ static void bluesleep_stop(void)
  * @param data Not used.
  * @return The number of bytes written.
  */
-#if defined(CONFIG_KOR_MODEL_SHV_E150S) || defined(CONFIG_JPN_MODEL_SC_01E)
+ #ifdef CONFIG_KOR_MODEL_SHV_E150S
 static int bluepower_read_proc_btwake(char *page, char **start, off_t offset,
 					int count, int *eof, void *data)
 {
@@ -744,7 +732,7 @@ static int __init bluesleep_probe(struct platform_device *pdev)
 	if (ret)
 		goto free_bt_host_wake;
 
-	#if defined(CONFIG_KOR_MODEL_SHV_E150S) || defined(CONFIG_JPN_MODEL_SC_01E)
+       #ifdef CONFIG_KOR_MODEL_SHV_E150S
 	ext_wake_active = 0;
 	#else
 	res = platform_get_resource_byname(pdev, IORESOURCE_IO,
@@ -777,7 +765,7 @@ static int __init bluesleep_probe(struct platform_device *pdev)
 	return 0;
 
 free_bt_ext_wake:
-	#if !defined(CONFIG_KOR_MODEL_SHV_E150S) && !defined(CONFIG_JPN_MODEL_SC_01E)
+	#ifndef CONFIG_KOR_MODEL_SHV_E150S
 	gpio_free(bsi->ext_wake);
 	#endif
 free_bt_host_wake:
@@ -791,7 +779,7 @@ static int bluesleep_remove(struct platform_device *pdev)
 {
 
 	gpio_free(bsi->host_wake);
-	#if !defined(CONFIG_KOR_MODEL_SHV_E150S) && !defined(CONFIG_JPN_MODEL_SC_01E)
+	#ifndef CONFIG_KOR_MODEL_SHV_E150S
 	gpio_free(bsi->ext_wake);
 	#endif
     wake_lock_destroy(&bsi->wake_lock);
@@ -887,7 +875,7 @@ static int __init bluesleep_init(void)
 	/* initialize host wake tasklet */
 	tasklet_init(&hostwake_task, bluesleep_hostwake_task, 0);
     /* assert bt wake */
-	#if defined(CONFIG_KOR_MODEL_SHV_E150S) || defined(CONFIG_JPN_MODEL_SC_01E)
+	#ifdef CONFIG_KOR_MODEL_SHV_E150S
 	ext_wake_active = 0;
 	#else
        gpio_set_value(bsi->ext_wake, 0);
@@ -913,7 +901,7 @@ fail:
 static void __exit bluesleep_exit(void)
 {
     /* assert bt wake */
-	#if defined(CONFIG_KOR_MODEL_SHV_E150S) || defined(CONFIG_JPN_MODEL_SC_01E)
+    #ifdef CONFIG_KOR_MODEL_SHV_E150S
     ext_wake_active = 0;
     #else
     gpio_set_value(bsi->ext_wake, 0);

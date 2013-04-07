@@ -24,7 +24,7 @@
 #define UK_KEYBOARD     0xec
 
 #define KEYBOARD_MIN   0x4
-#define KEYBOARD_MAX   0x80
+#define KEYBOARD_MAX   0x7f
 
 enum KEY_LAYOUT {
 	UNKOWN_KEYLAYOUT = 0,

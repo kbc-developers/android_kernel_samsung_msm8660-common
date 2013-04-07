@@ -353,10 +353,10 @@ struct sdio_al {
 	void *subsys_notif_handle;
 	int sdioc_major;
 	int skip_print_info;
-#ifdef SDIO_AL_FD
+#ifdef SDIO_AL_FD	
 	unsigned int wakelock_time;
 #endif
-
+	
 };
 
 struct sdio_al_work {
@@ -494,10 +494,7 @@ module_param(debug_data_on, int, 0);
 static int debug_close_on = 1;
 module_param(debug_close_on, int, 0);
 
-#if (defined(CONFIG_USA_OPERATOR_ATT) && (defined(CONFIG_TARGET_SERIES_P5LTE) \
- || defined(CONFIG_TARGET_SERIES_P8LTE))) \
- || (defined(CONFIG_JPN_OPERATOR_NTT) && defined (CONFIG_TARGET_SERIES_P4LTE)) \
- || (defined(CONFIG_EUR_OPERATOR_OPEN) && defined(CONFIG_TARGET_SERIES_P5LTE))
+#if defined(CONFIG_USA_OPERATOR_ATT) && (defined(CONFIG_TARGET_SERIES_P5LTE) || defined(CONFIG_TARGET_SERIES_P8LTE))
 int mdm_bootloader_done = 0;
 EXPORT_SYMBOL(mdm_bootloader_done);
 #endif
@@ -689,7 +686,7 @@ static ssize_t store_waketime(struct device *d,
 {
 	int r;
 	unsigned long msec;
-
+	
 	if (!sdioal_dev)
 		return count;
 
@@ -1487,9 +1484,7 @@ static void boot_worker(struct work_struct *work)
 done:
 	pr_debug(MODULE_NAME ":Boot Worker for card %d Exit!\n",
 		sdio_al_dev->host->index);
-#if defined(CONFIG_USA_OPERATOR_ATT) && (defined(CONFIG_TARGET_SERIES_P5LTE) \
- || defined(CONFIG_TARGET_SERIES_P8LTE)) \
- || (defined(CONFIG_EUR_OPERATOR_OPEN) && defined(CONFIG_TARGET_SERIES_P5LTE))
+#if defined(CONFIG_USA_OPERATOR_ATT) && (defined(CONFIG_TARGET_SERIES_P5LTE) || defined(CONFIG_TARGET_SERIES_P8LTE))
 	mdm_bootloader_done = 1;
 #endif
 }
@@ -4382,7 +4377,7 @@ static int __init sdio_al_init(void)
 	if (IS_ERR(sdioal_dev))
 		printk("[sdio_al] Failed to create device(sdioal_dev)! \n");
 	if (device_create_file(sdioal_dev, &dev_attr_waketime) < 0)
-		printk("[sdio_al] Failed to create device file(%s)!\n", dev_attr_waketime.attr.name);
+		printk("[sdio_al] Failed to create device file(%s)!\n", dev_attr_waketime.attr.name);	
 #endif
 
 exit:

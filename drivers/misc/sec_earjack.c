@@ -246,12 +246,7 @@ static void determine_jack_type(struct sec_jack_info *hi)
 				if (++count[i] > zones[i].check_count) {
 					pr_debug(MODULE_NAME "determine_jack_type %d, %d, %d\n",
 						zones[i].adc_high, count[i], zones[i].check_count);
-#if defined(CONFIG_TARGET_LOCALE_KOR) || defined(CONFIG_TARGET_LOCALE_JPN)
-					if(recheck_jack == true && i == 2)
-#else
-					if(recheck_jack == true && i == 3) 
-#endif
-					{
+						if(recheck_jack == true && i == 3) {
 						pr_info(MODULE_NAME "something worng connection!\n");
 						handle_jack_not_inserted(hi);
 

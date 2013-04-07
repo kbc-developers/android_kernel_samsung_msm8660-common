@@ -62,8 +62,8 @@ config AD525X_DPOT_SPI
 	  module will be called ad525x_dpot-spi.
 
 config ANDROID_PMEM
-	bool "Android pmem allocator"
-	default y
+        bool "Android pmem allocator"
+        default y
 
 config ATMEL_PWM
 	tristate "Atmel AT32/AT91 PWM support"
@@ -697,7 +697,7 @@ config STMPE811_ADC
           
 config GENERIC_BLN
     bool "Generic BLN support for backlight notification"
-    default y
+    default n
     help
       Say Y here to enable the backlight notification
       for android led-notification (modified liblight needed)

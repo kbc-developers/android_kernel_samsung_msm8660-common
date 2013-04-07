@@ -69,10 +69,8 @@ static void disconnect_work(struct work_struct *work)
 {
 	if (!cfg80211_is_all_idle())
 		return;
-#ifdef CONFIG_MACH_PX
-#else
+
 	regulatory_hint_disconnect();
-#endif
 }
 
 static DECLARE_WORK(cfg80211_disconnect_work, disconnect_work);

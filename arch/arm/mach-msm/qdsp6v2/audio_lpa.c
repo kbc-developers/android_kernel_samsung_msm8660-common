@@ -1009,8 +1009,6 @@ static long audio_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
 	case AUDIO_DEREGISTER_PMEM: {
 			struct msm_audio_pmem_info info;
 			pr_debug("%s: AUDIO_DEREGISTER_PMEM\n", __func__);
-			if(arg==NULL)
-				return -1;
 			if (copy_from_user(&info, (void *) arg, sizeof(info)))
 				rc = -EFAULT;
 			else
@@ -1161,8 +1159,8 @@ static int audio_release(struct inode *inode, struct file *file)
 	if (audio->out_enabled)
 		audlpa_async_flush(audio);
 	audio->wflush = 0;
-	audlpa_unmap_pmem_region(audio);
 	audio_disable(audio);
+	audlpa_unmap_pmem_region(audio);
 	msm_clear_session_id(audio->ac->session);
 	auddev_unregister_evt_listner(AUDDEV_CLNT_DEC, audio->ac->session);
 	q6asm_audio_client_free(audio->ac);

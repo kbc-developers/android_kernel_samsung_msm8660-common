@@ -181,7 +181,7 @@ static struct gpiomux_setting sdcc1_suspend_config = {
 };
 
 #if defined(CONFIG_KOR_MODEL_SHV_E110S) || defined(CONFIG_KOR_MODEL_SHV_E120L) \
- || defined(CONFIG_KOR_MODEL_SHV_E120S) || defined(CONFIG_KOR_MODEL_SHV_E120K) || defined(CONFIG_JPN_MODEL_SC_03D)
+ || defined(CONFIG_KOR_MODEL_SHV_E120S) || defined(CONFIG_KOR_MODEL_SHV_E120K)
 static struct gpiomux_setting sdcc2_dat_0_3_cmd_actv_cfg = {
 	.func = GPIOMUX_FUNC_2,
 	.drv = GPIOMUX_DRV_6MA,
@@ -269,7 +269,7 @@ static struct gpiomux_setting sdcc2_suspend_config = {
 	.pull = GPIOMUX_PULL_UP,
 };
 
-#if defined(CONFIG_KOR_MODEL_SHV_E110S) || defined(CONFIG_JPN_MODEL_SC_03D)
+#if defined(CONFIG_KOR_MODEL_SHV_E110S) 
 static struct gpiomux_setting sdcc5_dat_0_3_cmd_actv_cfg = {
 	.func = GPIOMUX_FUNC_2,
 	.drv = GPIOMUX_DRV_6MA,
@@ -410,16 +410,9 @@ static struct gpiomux_setting hdmi_suspend_cfg = {
 };
 
 static struct gpiomux_setting mdm2ap_status_active_cfg = {
-#if defined(CONFIG_USA_MODEL_SGH_I757)
 	.func = GPIOMUX_FUNC_GPIO,
 	.drv = GPIOMUX_DRV_2MA,
 	.pull = GPIOMUX_PULL_NONE,
-	.dir = GPIOMUX_OUT_LOW,
-#else
-	.func = GPIOMUX_FUNC_GPIO,
-	.drv = GPIOMUX_DRV_2MA,
-	.pull = GPIOMUX_PULL_NONE,
-#endif
 };
 
 static struct gpiomux_setting mdm2ap_status_suspend_cfg = {
@@ -564,7 +557,7 @@ static struct gpiomux_setting gyro_suspend_cfg = {
 	.drv = GPIOMUX_DRV_8MA,
 	.pull = GPIOMUX_PULL_DOWN,
 };
-#if defined(CONFIG_KOR_MODEL_SHV_E110S) || defined(CONFIG_JPN_MODEL_SC_03D)\
+#if defined(CONFIG_KOR_MODEL_SHV_E110S) \
 	||defined(CONFIG_KOR_MODEL_SHV_E120S)||defined(CONFIG_KOR_MODEL_SHV_E120K)||defined(CONFIG_KOR_MODEL_SHV_E120L)
 static struct gpiomux_setting gyro_fifo_int_active_cfg = {
 	.func = GPIOMUX_FUNC_GPIO,
@@ -665,13 +658,6 @@ static struct gpiomux_setting mdm2ap_vddmin_suspend_cfg = {
 	.pull = GPIOMUX_PULL_NONE,
 };
 
-static struct gpiomux_setting wlan_en_init_cfg = {
-	.func = GPIOMUX_FUNC_GPIO,
-	.drv = GPIOMUX_DRV_2MA,
-	.pull = GPIOMUX_PULL_NONE,
-	.dir = GPIOMUX_OUT_LOW,
-};
-
 static struct gpiomux_setting wlan_en_active_cfg = {
 	.func = GPIOMUX_FUNC_GPIO,
 	.drv = GPIOMUX_DRV_2MA,
@@ -731,7 +717,7 @@ static struct gpiomux_setting boot_config_cfg = {
 };
 
 static struct msm_gpiomux_config msm8x60_gsbi_configs[] __initdata = {
-#if defined(CONFIG_USA_MODEL_SGH_T769) || defined(CONFIG_JPN_MODEL_SC_03D)
+#if defined(CONFIG_USA_MODEL_SGH_T769)
 	{
 		.gpio      = 33,
 		.settings = {
@@ -780,8 +766,8 @@ static struct msm_gpiomux_config msm8x60_gsbi_configs[] __initdata = {
 		.settings = {
 			[GPIOMUX_SUSPENDED] = &gsbi1,
 		},
-	},
-#endif	
+	},	
+#endif
 	{
 		.gpio      = 43,
 		.settings = {
@@ -830,21 +816,21 @@ static struct msm_gpiomux_config msm8x60_gsbi_configs[] __initdata = {
 			[GPIOMUX_SUSPENDED] = &gsbi8,
 		},
 	},
-#if defined(CONFIG_USA_MODEL_SGH_T769) || defined(CONFIG_USA_MODEL_SGH_I577) 
+#if defined(CONFIG_USA_MODEL_SGH_T769) || defined(CONFIG_USA_MODEL_SGH_I577)
 	{
 		.gpio      = 65,
 		.settings = {
 			[GPIOMUX_SUSPENDED] = &nc_cfg,
 		},
 	},
-#else	
+#else
 	{
 		.gpio      = 65,
 		.settings = {
 			[GPIOMUX_SUSPENDED] = &gsbi8,
 		},
 	},
-#endif	
+#endif
 #if defined(CONFIG_PN544_NFC)
 	{
 		.gpio      = 72,
@@ -1114,7 +1100,7 @@ static struct msm_gpiomux_config msm8x60_gyro_configs[] __initdata = {
 			[GPIOMUX_SUSPENDED] = &gyro_suspend_cfg,
 		},
 	},
-#if defined(CONFIG_KOR_MODEL_SHV_E110S) || defined(CONFIG_JPN_MODEL_SC_03D) \
+#if defined(CONFIG_KOR_MODEL_SHV_E110S) \
 	||defined(CONFIG_KOR_MODEL_SHV_E120S)||defined(CONFIG_KOR_MODEL_SHV_E120K)||defined(CONFIG_KOR_MODEL_SHV_E120L)
 	{
 		.gpio	   = 102,

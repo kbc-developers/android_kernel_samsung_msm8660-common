@@ -1018,7 +1018,6 @@ static ssize_t pm8xxx_adc_show(struct device *dev,
 	int rc = -1;
 
 	rc = pm8xxx_adc_read(attr->index, &result);
-		rc = pm8xxx_adc_read(attr->index, &result);
 
 	if (rc)
 		return 0;
