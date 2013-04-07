@@ -1760,7 +1760,7 @@ fail:
 }
 
 #ifdef CONFIG_USB_HOST_NOTIFY
-static void msm_hsusb_set_autosw_pba()
+static void msm_hsusb_set_autosw_pba(void)
 {
 #ifdef CONFIG_USB_SWITCH_FSA9480
 	fsa9480_otg_set_autosw_pba();
@@ -16574,7 +16574,9 @@ void yda165_avdd_power_on(void)
 #endif
 
 	amp_reg_ref_cnt++;
+	#if !defined(CONFIG_USA_MODEL_SGH_I757)
 	pr_info("%s : amp_reg_ref_cnt = %d\n", __func__, amp_reg_ref_cnt);
+	#endif
 	
 #if defined (CONFIG_KOR_MODEL_SHV_E120S) || defined (CONFIG_KOR_MODEL_SHV_E120K)
 	if(get_hw_rev()>=0x01)
@@ -16645,7 +16647,9 @@ void yda165_avdd_power_off(void)
 	int ret;
 
 	amp_reg_ref_cnt--;
+	#if !defined(CONFIG_USA_MODEL_SGH_I757)
 	pr_info("%s : amp_reg_ref_cnt = %d\n", __func__, amp_reg_ref_cnt);
+	#endif
 		
 #if defined (CONFIG_KOR_MODEL_SHV_E120S) || defined (CONFIG_KOR_MODEL_SHV_E120K)
 	if(get_hw_rev()>=0x01)

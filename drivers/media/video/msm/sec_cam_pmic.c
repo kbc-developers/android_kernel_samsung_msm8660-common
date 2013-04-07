@@ -83,7 +83,7 @@ void cam_ldo_power_on(const char *sensor_name)
 	if(system_rev>0x03)
 #endif
 	{
-printk("[1] %s: system_rev %d\n", __func__, system_rev);
+		printk("[1] %s: system_rev %d\n", __func__, system_rev);
 		l9 = regulator_get(NULL, "8058_l9"); 
 		ret = regulator_set_voltage(l9, 1500000, 1500000);
 		if (ret) {
@@ -96,7 +96,7 @@ printk("[1] %s: system_rev %d\n", __func__, system_rev);
 	} else
 #endif	
 	{
-printk("[2] %s: system_rev %d\n", __func__, system_rev);
+		printk("[2] %s: system_rev %d\n", __func__, system_rev);
 		l10 = regulator_get(NULL, "8058_l10"); 
 		ret = regulator_set_voltage(l10, 1500000, 1500000);
 		if (ret) {
@@ -186,7 +186,7 @@ void cam_ldo_power_off(void)
 	if(system_rev>0x03)
 #endif
 	{
-		 printk("%s: L9   \n", __func__);
+		printk("%s: L9   \n", __func__);
 		if (l9) {
 			ret=regulator_disable(l9);
 			if (ret) {

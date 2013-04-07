@@ -516,7 +516,7 @@ static struct tdmb_drv_func *tdmb_get_drv_func(void)
 		func = fc8050_drv_func;
 	else
 		func = t3900_drv_func;
-#elif defined(CONFIG_KOR_MODEL_SHV_E110S)
+#elif defined(CONFIG_KOR_MODEL_SHV_E110S) || defined(CONFIG_JPN_MODEL_SC_03D)
 	if (get_hw_rev() > 9)
 		func = fc8050_drv_func;
 	else

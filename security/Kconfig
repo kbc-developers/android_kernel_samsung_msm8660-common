@@ -188,6 +188,9 @@ source security/apparmor/Kconfig
 
 source security/integrity/ima/Kconfig
 
+## FSI TmmSecure
+source security/sec/Kconfig
+
 choice
 	prompt "Default security module"
 	default DEFAULT_SECURITY_SELINUX if SECURITY_SELINUX

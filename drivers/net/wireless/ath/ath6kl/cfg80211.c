@@ -138,6 +138,10 @@ static struct ieee80211_supported_band ath6kl_band_5ghz = {
 
 #define CCKM_KRK_CIPHER_SUITE 0x004096ff /* use for KRK */
 
+#ifdef CONFIG_MACH_PX
+u8 g_nw_type = 0x01;
+#endif
+
 /* returns true if scheduled scan was stopped */
 static bool __ath6kl_cfg80211_sscan_stop(struct ath6kl_vif *vif)
 {
@@ -506,6 +510,11 @@ static int ath6kl_cfg80211_connect(struct wiphy *wiphy, struct net_device *dev,
 	memset(vif->ssid, 0, sizeof(vif->ssid));
 	vif->ssid_len = sme->ssid_len;
 	memcpy(vif->ssid, sme->ssid, sme->ssid_len);
+		
+#ifdef CONFIG_MACH_PX
+	if (sme->ssid_len != 0)
+		ar->connect_ctrl_flags |= CONNECT_IGNORE_BSSID_HINT;	
+#endif	
 
 	if (sme->channel)
 		vif->ch_hint = sme->channel->center_freq;
@@ -869,6 +878,33 @@ void ath6kl_cfg80211_disconnect_event(struct ath6kl_vif *vif, u8 reason,
 	vif->sme_state = SME_DISCONNECTED;
 }
 
+static int ath6kl_set_probed_ssids(struct ath6kl *ar,
+           struct ath6kl_vif *vif,
+          struct cfg80211_ssid *ssids, int n_ssids)
+{
+	u8 i;
+
+	if (n_ssids > MAX_PROBED_SSIDS)
+		return -EINVAL;
+
+	for (i = 0; i < n_ssids; i++) {
+		ath6kl_wmi_probedssid_cmd(ar->wmi, vif->fw_vif_idx, i,
+				ssids[i].ssid_len ?
+				SPECIFIC_SSID_FLAG : ANY_SSID_FLAG,
+				ssids[i].ssid_len,
+				ssids[i].ssid);
+	}
+
+	/* Make sure no old entries are left behind */
+	for (i = n_ssids; i < MAX_PROBED_SSIDS; i++) {
+		ath6kl_wmi_probedssid_cmd(ar->wmi, vif->fw_vif_idx, i,
+				DISABLE_SSID_FLAG, 0, NULL);
+	}
+
+	return 0;
+}
+
+
 static int ath6kl_cfg80211_scan(struct wiphy *wiphy, struct net_device *ndev,
 				struct cfg80211_scan_request *request)
 {
@@ -896,18 +932,10 @@ static int ath6kl_cfg80211_scan(struct wiphy *wiphy, struct net_device *ndev,
 		}
 	}
 
-	if (request->n_ssids && request->ssids[0].ssid_len) {
-		u8 i;
-
-		if (request->n_ssids > (MAX_PROBED_SSID_INDEX - 1))
-			request->n_ssids = MAX_PROBED_SSID_INDEX - 1;
-
-		for (i = 0; i < request->n_ssids; i++)
-			ath6kl_wmi_probedssid_cmd(ar->wmi, vif->fw_vif_idx,
-						  i + 1, SPECIFIC_SSID_FLAG,
-						  request->ssids[i].ssid_len,
-						  request->ssids[i].ssid);
-	}
+	ret = ath6kl_set_probed_ssids(ar, vif, request->ssids,
+						request->n_ssids);
+	if (ret < 0)
+		return ret;
 
 	/* this also clears IE in fw if it's not set */
 	ret = ath6kl_wmi_set_appie_cmd(ar->wmi, vif->fw_vif_idx,
@@ -943,6 +971,9 @@ static int ath6kl_cfg80211_scan(struct wiphy *wiphy, struct net_device *ndev,
 		}
 
 		for (i = 0; i < n_channels; i++) {
+#if 0
+			ath6kl_err("channel: %d \n",request->channels[i]->center_freq);
+#endif
 			if (ath6kl_first_2g_only
 				&& request->channels[i]->center_freq > 5000) {
 				ath6kl_err("skip 5ghz channel %d %d\n",
@@ -1916,8 +1947,10 @@ static int ath6kl_wow_ap(struct ath6kl *ar, struct ath6kl_vif *vif)
 static int ath6kl_wow_sta(struct ath6kl *ar, struct ath6kl_vif *vif)
 {
 	struct net_device *ndev = vif->ndev;
-	static const u8 discvr_pattern[] = { 0xe0, 0x00, 0x00, 0xf8 };
-	static const u8 discvr_mask[] = { 0xf0, 0x00, 0x00, 0xf8 };
+	static const u8 discvr_lmnr_pattern[] = { 0xe0, 0x00, 0x00, 0xf8 };
+	static const u8 discvr_lmnr_mask[] = { 0xff, 0xff, 0xff, 0xf8 };
+	static const u8 discvr_ssdp_pattern[] = { 0xef, 0xff, 0xff, 0xfa };
+	static const u8 discvr_ssdp_mask[] = { 0xff, 0xff, 0xff, 0xff };
 	u8 discvr_offset = 38;
 	u8 mac_mask[ETH_ALEN];
 	int ret;
@@ -1941,11 +1974,18 @@ static int ath6kl_wow_sta(struct ath6kl *ar, struct ath6kl_vif *vif)
 	    (ndev->flags & IFF_MULTICAST && netdev_mc_count(ndev) > 0)) {
 		ret = ath6kl_wmi_add_wow_pattern_cmd(ar->wmi,
 				vif->fw_vif_idx, WOW_LIST_ID,
-				sizeof(discvr_pattern), discvr_offset,
-				discvr_pattern, discvr_mask);
+				sizeof(discvr_lmnr_pattern), discvr_offset,
+				discvr_lmnr_pattern, discvr_lmnr_mask);
 		if (ret) {
-			ath6kl_err("failed to add WOW mDNS/SSDP/LLMNR "
-				   "pattern\n");
+			ath6kl_err("failed to add WOW mDNS/LMNR pattern\n");
+			return ret;
+		}
+		ret = ath6kl_wmi_add_wow_pattern_cmd(ar->wmi,
+				vif->fw_vif_idx, WOW_LIST_ID,
+				sizeof(discvr_ssdp_pattern), discvr_offset,
+				discvr_ssdp_pattern, discvr_ssdp_mask);
+		if (ret) {
+			ath6kl_err("failed to add WOW SSDP pattern\n");
 			return ret;
 		}
 	}
@@ -1980,6 +2020,7 @@ static int ath6kl_cfg80211_host_sleep(struct ath6kl *ar, struct ath6kl_vif *vif)
 	if (left == 0) {
 		ath6kl_warn("timeout, didn't get host sleep cmd processed event\n");
 		ret = -ETIMEDOUT;
+		panic("ath6kl_cfg80211_host_sleep timeout!!!");
 	} else if (left < 0) {
 		ath6kl_warn("error while waiting for host sleep cmd processed event %d\n",
 			    left);
@@ -2140,7 +2181,7 @@ static int ath6kl_wow_resume(struct ath6kl *ar)
 	ar->state = ATH6KL_STATE_RESUMING;
 
 #ifdef CONFIG_HAS_WAKELOCK
-	wake_lock_timeout(&ar->wake_lock, 5 * HZ);
+	wake_lock_timeout(&ar->wake_lock, 1 * HZ);  
 #endif
 	if (ar->wmi->pwr_mode != ar->wmi->saved_pwr_mode) {
 		ret = ath6kl_wmi_powermode_cmd(ar->wmi, 0,
@@ -2264,6 +2305,11 @@ int ath6kl_cfg80211_suspend(struct ath6kl *ar,
 	int ret;
 	struct ath6kl_vif *vif;
 	
+	vif = ath6kl_vif_first(ar);	
+	if (!vif)
+	return -EIO;
+	ath6kl_cfg80211_scan_complete_event(vif, true);
+	
 	switch (mode) {
 	case ATH6KL_CFG_SUSPEND_WOW:
 
@@ -2271,10 +2317,6 @@ int ath6kl_cfg80211_suspend(struct ath6kl *ar,
 
 		/* Flush all non control pkts in TX path */
 		ath6kl_tx_data_cleanup(ar);
-
-		vif = ath6kl_vif_first(ar);
-		if (!vif)
-			return -EIO;
 
 		ret = ath6kl_wmi_mcast_filter_cmd(vif->ar->wmi, vif->fw_vif_idx,
 							false);
@@ -2769,6 +2811,9 @@ static int ath6kl_ap_beacon(struct wiphy *wiphy, struct net_device *dev,
 
 	p.nw_type = AP_NETWORK;
 	vif->nw_type = vif->next_mode;
+#ifdef CONFIG_MACH_PX
+	g_nw_type = AP_NETWORK;
+#endif
 
 	p.ssid_len = vif->ssid_len;
 	memcpy(p.ssid, vif->ssid, vif->ssid_len);
@@ -3145,7 +3190,6 @@ static int ath6kl_cfg80211_sscan_start(struct wiphy *wiphy,
 	struct ath6kl_vif *vif = netdev_priv(dev);
 	u16 interval;
 	int ret;
-	u8 i;
 
 	if (ar->state != ATH6KL_STATE_ON)
 		return -EIO;
@@ -3155,11 +3199,11 @@ static int ath6kl_cfg80211_sscan_start(struct wiphy *wiphy,
 
 	ath6kl_cfg80211_scan_complete_event(vif, true);
 
-	for (i = 0; i < ar->wiphy->max_sched_scan_ssids; i++) {
-		ath6kl_wmi_probedssid_cmd(ar->wmi, vif->fw_vif_idx,
-					  i, DISABLE_SSID_FLAG,
-					  0, NULL);
-	}
+	ret = ath6kl_set_probed_ssids(ar, vif, request->ssids,
+					request->n_ssids);
+	if (ret < 0)
+		return ret;
+
 
 	/* fw uses seconds, also make sure that it's >0 */
 	interval = max_t(u16, 1, request->interval / 1000);
@@ -3167,15 +3211,6 @@ static int ath6kl_cfg80211_sscan_start(struct wiphy *wiphy,
 	ath6kl_wmi_scanparams_cmd(ar->wmi, vif->fw_vif_idx,
 				  interval, interval,
 				  10, 0, 0, 0, 3, 0, 0, 0);
-
-	if (request->n_ssids && request->ssids[0].ssid_len) {
-		for (i = 0; i < request->n_ssids; i++) {
-			ath6kl_wmi_probedssid_cmd(ar->wmi, vif->fw_vif_idx,
-						  i, SPECIFIC_SSID_FLAG,
-						  request->ssids[i].ssid_len,
-						  request->ssids[i].ssid);
-		}
-	}
 
 	ret = ath6kl_wmi_set_wow_mode_cmd(ar->wmi, vif->fw_vif_idx,
 					  ATH6KL_WOW_MODE_ENABLE,
@@ -3458,7 +3493,7 @@ int ath6kl_register_ieee80211_hw(struct ath6kl *ar)
 	}
 
 	/* max num of ssids that can be probed during scanning */
-	wiphy->max_scan_ssids = MAX_PROBED_SSID_INDEX;
+	wiphy->max_scan_ssids = MAX_PROBED_SSIDS;
 	wiphy->max_scan_ie_len = 1000; /* FIX: what is correct limit? */
 	wiphy->bands[IEEE80211_BAND_2GHZ] = &ath6kl_band_2ghz;
 	wiphy->bands[IEEE80211_BAND_5GHZ] = &ath6kl_band_5ghz;
@@ -3477,7 +3512,7 @@ int ath6kl_register_ieee80211_hw(struct ath6kl *ar)
 	wiphy->wowlan.pattern_min_len = 1;
 	wiphy->wowlan.pattern_max_len = WOW_PATTERN_SIZE;
 
-	wiphy->max_sched_scan_ssids = 10;
+	wiphy->max_sched_scan_ssids = MAX_PROBED_SSIDS;
 
 	ath6kl_setup_android_resource(ar);
 
@@ -3554,11 +3589,16 @@ struct net_device *ath6kl_interface_add(struct ath6kl *ar, char *name,
 	vif->wdev.iftype = type;
 	vif->fw_vif_idx = fw_vif_idx;
 	vif->nw_type = vif->next_mode = nw_type;
+#ifdef CONFIG_MACH_PX
+	g_nw_type = nw_type;
+	ath6kl_dbg(ATH6KL_DBG_WLAN_CFG,
+			   "nw_type (STA:1, AP:16) %d\n", g_nw_type);
+#endif
 	vif->bg_scan_period = 0;
 	vif->scan_ctrl_flag = 0;
 	vif->listen_intvl_t = ATH6KL_DEFAULT_LISTEN_INTVAL;
 	vif->bmiss_time_t = ATH6KL_DEFAULT_BMISS_TIME;
-	
+
 	memset((u8 *)&vif->scparams, 0, sizeof(vif->scparams));
 	vif->scparams.bg_period = WLAN_CONFIG_BG_SCAN_INTERVAL;
 	vif->scparams.maxact_chdwell_time = WLAN_CONFIG_MAXACT_CHDWELL_TIME;
@@ -3568,6 +3608,8 @@ struct net_device *ath6kl_interface_add(struct ath6kl *ar, char *name,
 
 	vif->pspoll_num = WLAN_CONFIG_PSPOLL_NUM;
 	vif->mcastrate = WLAN_CONFIG_MCAST_RATE;
+    vif->force_reload = false;
+	vif->sdio_remove = false;
 	
 	memcpy(ndev->dev_addr, ar->mac_addr, ETH_ALEN);
 	if (fw_vif_idx != 0)

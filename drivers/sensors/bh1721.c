@@ -324,9 +324,9 @@ static int bh1721_get_luxvalue(struct bh1721_data *bh1721, u16 *value)
 		if  (i2c_master_recv( bh1721->i2c_client, (u8 *)value, 2) == 2) {
 			be16_to_cpus(value);
 			break;
-		}			
+		}
 	}
-	
+
 	if(retry == 10)
 	{
 		printk("I2C read failed.. retry %d\n", retry);
@@ -359,7 +359,7 @@ static int bh1721_get_luxvalue(struct bh1721_data *bh1721, u16 *value)
 
 	if (bh1721->als_index_count >= ALS_BUFFER_NUM)
 		bh1721->als_index_count = 0;
-	
+#endif
 	return 0;
 }
 
@@ -380,7 +380,7 @@ static void bh1721_work_func_light(struct work_struct *work)
 		result = (lux * 10) / 12;
 		result = result * 139 / 13;
 		if(result > 89999) result = 89999;
-			
+
 		//printk("[Light sensor] lux 0x%0X (%d)\n", result, result);
 #if	defined(CONFIG_USA_MODEL_SGH_I957) || defined(CONFIG_EUR_MODEL_GT_P7320) || defined(CONFIG_JPN_MODEL_SC_01D)
 		input_report_rel(bh1721->light_input_dev, REL_MISC, result + 1);

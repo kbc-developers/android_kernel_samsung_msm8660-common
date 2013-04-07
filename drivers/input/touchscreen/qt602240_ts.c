@@ -98,14 +98,11 @@
 
 #define MXT224_AUTOCAL_WAIT_TIME		2000
 
-#if defined (CONFIG_USA_MODEL_SGH_I577) || defined(CONFIG_CAN_MODEL_SGH_I577R)
-#define T48_CALCFG_TA     0x72
-#else
+
 #define T48_CALCFG_TA     0x52
-#endif
 
 #if defined (CONFIG_USA_MODEL_SGH_I577) || defined(CONFIG_CAN_MODEL_SGH_I577R)
-#define	T48_CALCFG                0x72
+#define	T48_CALCFG                0x42
 #else
 #if defined (CONFIG_USA_MODEL_SGH_I727) || defined (CONFIG_USA_MODEL_SGH_T989) || defined (CONFIG_JPN_MODEL_SC_03D)
 #define	T48_CALCFG                0x72 //20120418
@@ -390,8 +387,7 @@ static int __devinit calculate_infoblock_crc(struct mxt224_data *data,
 	return 0;
 }
 
-#if defined (CONFIG_USA_MODEL_SGH_I577) || defined(CONFIG_CAN_MODEL_SGH_I577R) || defined (CONFIG_USA_MODEL_SGH_I727) || defined (CONFIG_USA_MODEL_SGH_T989) \
-	|| defined (CONFIG_JPN_MODEL_SC_03D)
+#if defined (CONFIG_USA_MODEL_SGH_I577) || defined(CONFIG_CAN_MODEL_SGH_I577R) || defined (CONFIG_USA_MODEL_SGH_I727) || defined (CONFIG_USA_MODEL_SGH_T989) || defined (CONFIG_JPN_MODEL_SC_03D)
 void NoiseEntryStartFunc(void)
 {
 	u16 obj_address=0;
@@ -648,9 +644,9 @@ static void mxt224_ta_probe(int ta_status)
 		active_depth = 26;//20120418
 		charge_time = 22;
 		#elif defined (CONFIG_USA_MODEL_SGH_T989)
-		active_depth = 24;
+		active_depth = 24; 
 		#elif defined (CONFIG_USA_MODEL_SGH_T769) //20120704
-		active_depth = 20;
+		active_depth = 20; 
 		#else
 		active_depth = 56;
 		#endif
@@ -667,7 +663,6 @@ static void mxt224_ta_probe(int ta_status)
 	}
 	
 	if (copy_data->family_id==0x81) {
-
 		#if !defined (CONFIG_USA_MODEL_SGH_I727) || !defined (CONFIG_USA_MODEL_SGH_T989) ||  !defined (CONFIG_JPN_MODEL_SC_03D)
 		#ifdef CLEAR_MEDIAN_FILTER_ERROR
 		if(!ta_status)
@@ -694,7 +689,11 @@ static void mxt224_ta_probe(int ta_status)
 		#endif
 		#endif
 
+		#if defined (CONFIG_USA_MODEL_SGH_I577) || defined(CONFIG_CAN_MODEL_SGH_I577R)
+		value = 26;
+		#else
 		value = active_depth;
+		#endif
 		ret = get_object_info(copy_data, SPT_CTECONFIG_T46, &size_one, &obj_address);
 		write_mem(copy_data, obj_address+3, 1, &value);
 		
@@ -735,7 +734,7 @@ static void mxt224_ta_probe(int ta_status)
 	       size = size_one;
 		size_one = 1;
 		write_mem(copy_data, obj_address+(u16)register_address, size_one, &value);
-#endif
+#endif		
 		if (ta_status)
 		write_config(copy_data, PROCG_NOISESUPPRESSION_T48, copy_data->noise_suppression_cfg_ta);
 		else
@@ -746,7 +745,7 @@ static void mxt224_ta_probe(int ta_status)
 		write_mem(copy_data, obj_address+(u16)register_address, size_one, &value);
 		read_mem(copy_data, obj_address+(u16)register_address, (u8)size_one, &val);
 		printk(KERN_ERR"[TSP]TA_probe MXT224E T%d Byte%d is %d\n",48,register_address,val);
-#endif
+#endif		
 
 		if(is_inputmethod == 1)   /* T48 Config change for TA connection */
 		{
@@ -1018,8 +1017,7 @@ void check_chip_calibration(unsigned char one_touch_input_flag)
 						write_mem(copy_data, object_address+9, 1, &atchfrccalratio);
 
 					}
-				#if defined(CONFIG_USA_MODEL_SGH_I577) || defined(CONFIG_CAN_MODEL_SGH_I577R) || defined (CONFIG_USA_MODEL_SGH_I727) || defined (CONFIG_USA_MODEL_SGH_T989) \
-				|| defined (CONFIG_JPN_MODEL_SC_03D)
+				#if defined(CONFIG_USA_MODEL_SGH_I577) || defined(CONFIG_CAN_MODEL_SGH_I577R) || defined (CONFIG_USA_MODEL_SGH_I727) || defined (CONFIG_USA_MODEL_SGH_T989) || defined (CONFIG_JPN_MODEL_SC_03D)
 					if (copy_data->read_ta_status) {
 						copy_data->read_ta_status(&ta_status_check);
 						if(!ta_status_check)
@@ -1890,7 +1888,7 @@ static int median_err_setting(void)
 	   }
 	   noise_median.mferr_setting = true;
 	  }
-	 }	
+	 }
 #if !defined (CONFIG_USA_MODEL_SGH_I577) || !defined(CONFIG_CAN_MODEL_SGH_I577R) || !defined (CONFIG_USA_MODEL_SGH_I727) || !defined (CONFIG_USA_MODEL_SGH_T989) \
 	|| !defined (CONFIG_JPN_MODEL_SC_03D)
 	return 0;

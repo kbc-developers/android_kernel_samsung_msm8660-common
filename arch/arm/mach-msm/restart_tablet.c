@@ -188,8 +188,21 @@ static void cpu_power_off(void *data)
 		;
 }
 
+#if defined(CONFIG_TARGET_SERIES_P8LTE)
+#ifdef CONFIG_SEC_DEBUG
+extern void sec_debug_disabled(void);
+extern void sec_debug_clear_upload_magic(void);
+#endif
+#endif
+
 static irqreturn_t resout_irq_handler(int irq, void *dev_id)
 {
+#if defined(CONFIG_TARGET_SERIES_P8LTE)
+#ifdef CONFIG_SEC_DEBUG
+	sec_debug_disabled();
+	sec_debug_clear_upload_magic();
+#endif
+#endif
 	pr_warn("%s PMIC Initiated shutdown\n", __func__);
 	oops_in_progress = 1;
 	smp_call_function_many(cpu_online_mask, cpu_power_off, NULL, 0);

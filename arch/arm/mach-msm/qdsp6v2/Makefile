@@ -13,7 +13,7 @@ obj-y += board-msm8x60-audio-CELOXHD.o
 else ifdef CONFIG_EUR_MODEL_GT_P7320
 obj-y += board-msm8x60-audio-P5LTE.o
 else ifdef CONFIG_USA_MODEL_SGH_I957
-obj-y += board-msm8x60-audio-P5LTE.o
+obj-y += board-msm8x60-audio-P5LTE_ATT.o
 else ifdef CONFIG_KOR_MODEL_SHV_E140S
 obj-y += board-msm8x60-audio-P5LTE.o
 else ifdef CONFIG_KOR_MODEL_SHV_E140K

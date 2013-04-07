@@ -410,9 +410,16 @@ static struct gpiomux_setting hdmi_suspend_cfg = {
 };
 
 static struct gpiomux_setting mdm2ap_status_active_cfg = {
+#if defined(CONFIG_USA_MODEL_SGH_I757)
 	.func = GPIOMUX_FUNC_GPIO,
 	.drv = GPIOMUX_DRV_2MA,
 	.pull = GPIOMUX_PULL_NONE,
+	.dir = GPIOMUX_OUT_LOW,
+#else
+	.func = GPIOMUX_FUNC_GPIO,
+	.drv = GPIOMUX_DRV_2MA,
+	.pull = GPIOMUX_PULL_NONE,
+#endif
 };
 
 static struct gpiomux_setting mdm2ap_status_suspend_cfg = {
@@ -658,6 +665,13 @@ static struct gpiomux_setting mdm2ap_vddmin_suspend_cfg = {
 	.pull = GPIOMUX_PULL_NONE,
 };
 
+static struct gpiomux_setting wlan_en_init_cfg = {
+	.func = GPIOMUX_FUNC_GPIO,
+	.drv = GPIOMUX_DRV_2MA,
+	.pull = GPIOMUX_PULL_NONE,
+	.dir = GPIOMUX_OUT_LOW,
+};
+
 static struct gpiomux_setting wlan_en_active_cfg = {
 	.func = GPIOMUX_FUNC_GPIO,
 	.drv = GPIOMUX_DRV_2MA,
@@ -766,8 +780,8 @@ static struct msm_gpiomux_config msm8x60_gsbi_configs[] __initdata = {
 		.settings = {
 			[GPIOMUX_SUSPENDED] = &gsbi1,
 		},
-	},	
-#endif
+	},
+#endif	
 	{
 		.gpio      = 43,
 		.settings = {
@@ -816,21 +830,21 @@ static struct msm_gpiomux_config msm8x60_gsbi_configs[] __initdata = {
 			[GPIOMUX_SUSPENDED] = &gsbi8,
 		},
 	},
-#if defined(CONFIG_USA_MODEL_SGH_T769) || defined(CONFIG_USA_MODEL_SGH_I577)
+#if defined(CONFIG_USA_MODEL_SGH_T769) || defined(CONFIG_USA_MODEL_SGH_I577) 
 	{
 		.gpio      = 65,
 		.settings = {
 			[GPIOMUX_SUSPENDED] = &nc_cfg,
 		},
 	},
-#else
+#else	
 	{
 		.gpio      = 65,
 		.settings = {
 			[GPIOMUX_SUSPENDED] = &gsbi8,
 		},
 	},
-#endif
+#endif	
 #if defined(CONFIG_PN544_NFC)
 	{
 		.gpio      = 72,

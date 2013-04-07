@@ -3022,7 +3022,9 @@ buffhds_first_it:
 	init_waitqueue_head(&common->fsg_wait);
 
 	/* Information */
+	#if !defined(CONFIG_USA_MODEL_SGH_I757)
 	INFO(common, FSG_DRIVER_DESC ", version: " FSG_DRIVER_VERSION "\n");
+	#endif
 	INFO(common, "Number of LUNs=%d\n", common->nluns);
 
 	pathbuf = kmalloc(PATH_MAX, GFP_KERNEL);

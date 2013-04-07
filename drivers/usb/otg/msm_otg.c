@@ -2765,7 +2765,9 @@ static int __init msm_otg_probe(struct platform_device *pdev)
 		dev_err(&pdev->dev, "Failed to host_notify_dev_register\n");
 		goto remove_otg;
 	} else {
+		#if !defined(CONFIG_USA_MODEL_SGH_I757)
 		dev_info(&pdev->dev, "success to host_notify_dev_register\n");
+		#endif
 	}
 	INIT_WORK(&motg->notify_work, msm_otg_notify_work);
 	motg->notify_state = ACC_POWER_OFF;

@@ -399,7 +399,7 @@ static void melfas_ts_get_data(struct work_struct *work)
 	#if !defined(CONFIG_USA_MODEL_SGH_I757)
 		printk(KERN_ERR "[TSP] ID: %d, State : %d, x: %d, y: %d, z: %d w: %d\n", 
 			i, (g_Mtouch_info[i].strength>0), g_Mtouch_info[i].posX, g_Mtouch_info[i].posY, g_Mtouch_info[i].strength, g_Mtouch_info[i].width);
-	#endif
+	#endif	
 #else
 		#if !defined(CONFIG_USA_MODEL_SGH_I757)
 		printk(KERN_ERR "[TSP] ID: %d, State : %d\n",

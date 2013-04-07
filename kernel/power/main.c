@@ -135,6 +135,11 @@ power_attr(pm_test);
 
 #endif /* CONFIG_PM_SLEEP */
 
+#if defined(CONFIG_TARGET_SERIES_P8LTE) && defined(CONFIG_TARGET_LOCALE_KOR)
+int msm_pm_mode_active_power_collapse(void);
+int msm_pm_mode_deactive_power_collapse(void);
+#endif
+
 struct kobject *power_kobj;
 
 /**
@@ -360,6 +365,7 @@ int set_freq_limit(unsigned long id, unsigned int freq)
 	if (freq != 0 && freq != -1 && verify_cpufreq_target(freq))
 		return -EINVAL;
 
+
 	mutex_lock(&dvfs_mutex);
 
 	if (freq == -1)
@@ -396,8 +402,10 @@ int set_freq_limit(unsigned long id, unsigned int freq)
 	/* update */
 	set_min_lock(min);
 	set_max_lock(max);
-
+	
+	#if !defined(CONFIG_USA_MODEL_SGH_I757)
 	printk("%s: 0x%x %d, min %d, max %d\n", __FUNCTION__, id, freq, min, max);
+	#endif
 
 	/* need to update now */
 	if (id & UPDATE_NOW_BITS)

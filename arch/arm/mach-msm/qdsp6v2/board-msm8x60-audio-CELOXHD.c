@@ -544,7 +544,7 @@ static int msm_snddev_poweramp_on(void)
 	pr_debug("%s: enable stereo spkr amp\n", __func__);
 #ifdef CONFIG_SENSORS_YDA165
 	yda165_speaker_onoff(1);
-	return 0;
+	//return 0;
 #else
 	rc = config_class_d0_gpio(1);
 	if (rc) {
@@ -561,6 +561,8 @@ static int msm_snddev_poweramp_on(void)
 config_gpio_fail:
 	return rc;
 #endif
+	fsa9480_audiopath_control(1);
+	return 0;
 }
 
 static void msm_snddev_poweramp_off(void)
@@ -577,6 +579,7 @@ static void msm_snddev_poweramp_off(void)
 			config_class_d1_gpio(0);
 		msleep(30);
 #endif
+	fsa9480_audiopath_control(0);
 	}
 }
 
@@ -731,6 +734,7 @@ int msm_snddev_vpsamp_on_headset(void)
 	yda165_headset_onoff(1);
 	pr_info("%s: power on amp headset\n", __func__);
 #endif
+	fsa9480_audiopath_control(1);
 
 	return 0;
 }
@@ -741,6 +745,7 @@ void msm_snddev_vpsamp_off_headset(void)
 	yda165_headset_onoff(0);
 	pr_info("%s: power off amp headset\n", __func__);
 #endif
+	fsa9480_audiopath_control(0);
 
 	return 0;
 }

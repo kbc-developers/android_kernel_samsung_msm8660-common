@@ -1393,27 +1393,7 @@ static int msm_fb_register(struct msm_fb_data_type *mfd)
 	var->yres_virtual = panel_info->yres * mfd->fb_page +
 		((PAGE_SIZE - remainder)/fix->line_length) * mfd->fb_page;
 	var->bits_per_pixel = bpp * 8;	/* FrameBuffer color depth */
-	if (mfd->dest == DISPLAY_LCD) {
-		if (panel_info->type == MDDI_PANEL && panel_info->mddi.is_type1)
-			var->reserved[4] = panel_info->lcd.refx100 / (100 * 2);
-		else
-			var->reserved[4] = panel_info->lcd.refx100 / 100;
-	} else {
-		if (panel_info->type == MIPI_VIDEO_PANEL) {
-			var->reserved[4] = panel_info->mipi.frame_rate;
-		} else {
-			var->reserved[4] = panel_info->clk_rate /
-				((panel_info->lcdc.h_back_porch +
-				  panel_info->lcdc.h_front_porch +
-				  panel_info->lcdc.h_pulse_width +
-				  panel_info->xres) *
-				 (panel_info->lcdc.v_back_porch +
-				  panel_info->lcdc.v_front_porch +
-				  panel_info->lcdc.v_pulse_width +
-				  panel_info->yres));
-		}
-	}
-	pr_debug("reserved[4] %u\n", var->reserved[4]);
+	var->reserved[3] = mdp_get_panel_framerate(mfd);
 
 		/*
 		 * id field for fb app
@@ -1855,45 +1835,59 @@ static int msm_fb_pan_idle(struct msm_fb_data_type *mfd)
 	}
 	return ret;
 }
-static int msm_fb_pan_display_ex(struct fb_var_screeninfo *var,
-			      struct fb_info *info, u32 wait_for_finish)
+static int msm_fb_pan_display_ex(struct fb_info *info,
+		struct mdp_display_commit *disp_commit)
 {
 	struct msm_fb_data_type *mfd = (struct msm_fb_data_type *)info->par;
 	struct msm_fb_backup_type *fb_backup;
+	struct fb_var_screeninfo *var = &disp_commit->var;
+	u32 wait_for_finish = disp_commit->wait_for_finish;
 	int ret = 0;
-	/*
-	 * If framebuffer is 2, io pen display is not allowed.
-	 */
-	if (bf_supported && info->node == 2) {
-		pr_err("%s: no pan display for fb%d!",
-		       __func__, info->node);
-		return -EPERM;
-	}
 
-	if (info->node != 0 || mfd->cont_splash_done)	/* primary */
-		if ((!mfd->op_enable) || (!mfd->panel_power_on))
+	if (disp_commit->flags &
+		MDP_DISPLAY_COMMIT_OVERLAY) {
+		if (!mfd->panel_power_on) /* suspended */
 			return -EPERM;
+	} else {
+		/*
+		 * If framebuffer is 2, io pan display is not allowed.
+		 */
+		if (bf_supported && info->node == 2) {
+			pr_err("%s: no pan display for fb%d!",
+				   __func__, info->node);
+			return -EPERM;
+		}
 
-	if (var->xoffset > (info->var.xres_virtual - info->var.xres))
-		return -EINVAL;
+		if (info->node != 0 || mfd->cont_splash_done)	/* primary */
+			if ((!mfd->op_enable) || (!mfd->panel_power_on))
+				return -EPERM;
 
-	if (var->yoffset > (info->var.yres_virtual - info->var.yres))
-		return -EINVAL;
+		if (var->xoffset > (info->var.xres_virtual - info->var.xres))
+			return -EINVAL;
+
+		if (var->yoffset > (info->var.yres_virtual - info->var.yres))
+			return -EINVAL;
+	}
 	msm_fb_pan_idle(mfd);
 
 	mutex_lock(&mfd->sync_mutex);
 
-	if (info->fix.xpanstep)
-		info->var.xoffset =
-		    (var->xoffset / info->fix.xpanstep) * info->fix.xpanstep;
+	if (!(disp_commit->flags &
+		MDP_DISPLAY_COMMIT_OVERLAY)) {
+		if (info->fix.xpanstep)
+			info->var.xoffset =
+				(var->xoffset / info->fix.xpanstep) *
+					info->fix.xpanstep;
 
-	if (info->fix.ypanstep)
-		info->var.yoffset =
-		    (var->yoffset / info->fix.ypanstep) * info->fix.ypanstep;
-
+		if (info->fix.ypanstep)
+			info->var.yoffset =
+				(var->yoffset / info->fix.ypanstep) *
+					info->fix.ypanstep;
+	}
 	fb_backup = (struct msm_fb_backup_type *)mfd->msm_fb_backup;
 	memcpy(&fb_backup->info, info, sizeof(struct fb_info));
-	memcpy(&fb_backup->var, var, sizeof(struct fb_var_screeninfo));
+	memcpy(&fb_backup->disp_commit, disp_commit,
+		sizeof(struct mdp_display_commit));
 	mfd->is_committing = 1;
 	INIT_COMPLETION(mfd->commit_comp);
 	schedule_work(&mfd->commit_work);
@@ -1906,12 +1900,11 @@ static int msm_fb_pan_display_ex(struct fb_var_screeninfo *var,
 static int msm_fb_pan_display(struct fb_var_screeninfo *var,
 			      struct fb_info *info)
 {
-	int ret;
-	struct msm_fb_data_type *mfd = (struct msm_fb_data_type *)info->par;
-	mutex_lock(&mfd->entry_mutex);
-	ret = msm_fb_pan_display_ex(var, info, TRUE);
-	mutex_unlock(&mfd->entry_mutex);
-	return ret;
+	struct mdp_display_commit disp_commit;
+	memset(&disp_commit, 0, sizeof(disp_commit));
+	disp_commit.wait_for_finish = TRUE;
+	memcpy(&disp_commit.var, var, sizeof(struct fb_var_screeninfo));
+	return msm_fb_pan_display_ex(info, &disp_commit);
 }
 
 static int msm_fb_pan_display_sub(struct fb_var_screeninfo *var,
@@ -2030,9 +2023,14 @@ static void msm_fb_commit_wq_handler(struct work_struct *work)
 
 	mfd = container_of(work, struct msm_fb_data_type, commit_work);
 	fb_backup = (struct msm_fb_backup_type *)mfd->msm_fb_backup;
-	var = &fb_backup->var;
 	info = &fb_backup->info;
-	msm_fb_pan_display_sub(var, info);
+	if (fb_backup->disp_commit.flags &
+		MDP_DISPLAY_COMMIT_OVERLAY) {
+			mdp4_overlay_commit(info);
+	} else {
+		var = &fb_backup->disp_commit.var;
+		msm_fb_pan_display_sub(var, info);
+	}
 	mutex_lock(&mfd->sync_mutex);
 	mfd->is_committing = 0;
 	complete_all(&mfd->commit_comp);
@@ -3176,20 +3174,6 @@ static int msmfb_overlay_play_wait(struct fb_info *info, unsigned long *argp)
 	return ret;
 }
 
-static int msmfb_overlay_commit(struct fb_info *info, unsigned long *argp)
-{
-	int ret, ndx;
-
-	ret = copy_from_user(&ndx, argp, sizeof(ndx));
-	if (ret) {
-		printk(KERN_ERR "%s:msmfb_overlay_commit ioctl failed\n",
-			__func__);
-		return ret;
-	}
-
-	return mdp4_overlay_commit(info, ndx);
-}
-
 static int msmfb_overlay_play(struct fb_info *info, unsigned long *argp)
 {
 	int	ret;
@@ -3501,7 +3485,8 @@ static int msmfb_notify_update(struct fb_info *info, unsigned long *argp)
 	return (ret > 0) ? 0 : ret;
 }
 
-static int msmfb_handle_pp_ioctl(struct msmfb_mdp_pp *pp_ptr)
+static int msmfb_handle_pp_ioctl(struct msm_fb_data_type *mfd,
+					struct msmfb_mdp_pp *pp_ptr)
 {
 	int ret = -1;
 #ifdef CONFIG_FB_MSM_MDP40
@@ -3557,6 +3542,10 @@ static int msmfb_handle_pp_ioctl(struct msmfb_mdp_pp *pp_ptr)
 						&pp_ptr->data.qseed_cfg_data);
 		break;
 #endif
+	case mdp_bl_scale_cfg:
+		ret = mdp_bl_scale_config(mfd, (struct mdp_bl_scale_data *)
+						&pp_ptr->data.bl_scale_data);
+		break;
 	default:
 		pr_warn("Unsupported request to MDP_PP IOCTL.\n");
 		ret = -EINVAL;
@@ -3565,24 +3554,7 @@ static int msmfb_handle_pp_ioctl(struct msmfb_mdp_pp *pp_ptr)
 
 	return ret;
 }
-static int msmfb_handle_metadata_ioctl(struct msm_fb_data_type *mfd,
-				struct msmfb_metadata *metadata_ptr)
-{
-	int ret;
-	switch (metadata_ptr->op) {
-#ifdef CONFIG_FB_MSM_MDP40
-	case metadata_op_base_blend:
-		ret = mdp4_update_base_blend(mfd,
-						&metadata_ptr->data.blend_cfg);
-		break;
-#endif
-	default:
-		pr_warn("Unsupported request to MDP META IOCTL.\n");
-		ret = -EINVAL;
-		break;
-	}
-	return ret;
-}
+
 static int msmfb_handle_buf_sync_ioctl(struct msm_fb_data_type *mfd,
 						struct mdp_buf_sync *buf_sync)
 {
@@ -3756,8 +3728,7 @@ static int msmfb_display_commit(struct fb_info *info,
 	if ((!ret) && (buf_fence->rel_fen_fd[0] > 0))
 		copy_back = TRUE;
 
-	ret = msm_fb_pan_display_ex(&disp_commit.var,
-			      info, disp_commit.wait_for_finish);
+	ret = msm_fb_pan_display_ex(info, &disp_commit);
 
 	if (copy_back) {
 		ret = copy_to_user(argp,
@@ -3767,6 +3738,24 @@ static int msmfb_display_commit(struct fb_info *info,
 	}
 	return ret;
 }
+
+static int msmfb_get_metadata(struct msm_fb_data_type *mfd,
+				struct msmfb_metadata *metadata_ptr)
+{
+	int ret = 0;
+	switch (metadata_ptr->op) {
+	case metadata_op_frame_rate:
+		metadata_ptr->data.panel_frame_rate =
+			mdp_get_panel_framerate(mfd);
+		break;
+	default:
+		pr_warn("Unsupported request to MDP META IOCTL.\n");
+		ret = -EINVAL;
+		break;
+	}
+	return ret;
+}
+
 static int msm_fb_ioctl(struct fb_info *info, unsigned int cmd,
 			unsigned long arg)
 {
@@ -3800,11 +3789,6 @@ static int msm_fb_ioctl(struct fb_info *info, unsigned int cmd,
 		break;
 	case MSMFB_OVERLAY_UNSET:
 		ret = msmfb_overlay_unset(info, argp);
-		break;
-	case MSMFB_OVERLAY_COMMIT:
-		down(&msm_fb_ioctl_ppp_sem);
-		ret = msmfb_overlay_commit(info, argp);
-		up(&msm_fb_ioctl_ppp_sem);
 		break;
 	case MSMFB_OVERLAY_PLAY:
 		ret = msmfb_overlay_play(info, argp);
@@ -4090,7 +4074,7 @@ static int msm_fb_ioctl(struct fb_info *info, unsigned int cmd,
 		if (ret)
 			goto msm_fb_ioctl_exit;
 
-		ret = msmfb_handle_pp_ioctl(&mdp_pp);
+		ret = msmfb_handle_pp_ioctl(mfd, &mdp_pp);
 		break;
 	case MSMFB_BUFFER_SYNC:
 		ret = copy_from_user(&buf_sync, argp, sizeof(buf_sync));
@@ -4103,13 +4087,19 @@ static int msm_fb_ioctl(struct fb_info *info, unsigned int cmd,
 			ret = copy_to_user(argp, &buf_sync, sizeof(buf_sync));
 		break;
 
-	case MSMFB_METADATA_SET:
+	case MSMFB_DISPLAY_COMMIT:
+		ret = msmfb_display_commit(info, argp);
+		break;
+
+	case MSMFB_METADATA_GET:
 		ret = copy_from_user(&mdp_metadata, argp, sizeof(mdp_metadata));
 		if (ret)
 			return ret;
-		ret = msmfb_handle_metadata_ioctl(mfd, &mdp_metadata);
-	case MSMFB_DISPLAY_COMMIT:
-		ret = msmfb_display_commit(info, argp);
+		ret = msmfb_get_metadata(mfd, &mdp_metadata);
+		if (!ret)
+			ret = copy_to_user(argp, &mdp_metadata,
+				sizeof(mdp_metadata));
+
 		break;
 
 	default:

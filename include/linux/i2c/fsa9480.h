@@ -38,6 +38,7 @@ struct fsa9480_platform_data {
 	void (*cfg_gpio) (void);
 	void (*otg_cb) (bool attached);
 	void (*usb_cb) (bool attached);
+	void (*usb_cdp_cb) (bool attached);
 	void (*uart_cb) (bool attached);
 	void (*charger_cb) (bool attached);
 	void (*jig_cb) (bool attached);

@@ -799,6 +799,12 @@ unsigned int msm_hs_tx_empty(struct uart_port *uport)
 	#endif
 
 	clk_disable(msm_uport->clk);
+	#if defined(CONFIG_KOR_MODEL_SHV_E150S) || defined(CONFIG_JPN_MODEL_SC_01E)
+	if(ret == TIOCSER_TEMT && (data & UARTDM_SR_RXRDY_BMSK) == 0)
+             ret = TIOCSER_TEMT;
+	else
+	      ret = 0;
+	#endif
 
 	return ret;
 }
@@ -1866,6 +1872,7 @@ static int __init msm_hs_probe(struct platform_device *pdev)
 	uport = &msm_uport->uport;
 
 	uport->dev = &pdev->dev;
+	platform_set_drvdata(pdev, uport);
 
 	resource = platform_get_resource(pdev, IORESOURCE_MEM, 0);
 	if (unlikely(!resource))

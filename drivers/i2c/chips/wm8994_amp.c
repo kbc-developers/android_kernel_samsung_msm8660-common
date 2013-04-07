@@ -2077,10 +2077,10 @@ void wm8994_set_headset(int onoff)
 		wm8994_reg_write(amp, 0x28, 0x0044);
 		wm8994_reg_write(amp, 0x29, 0x0100);
 		wm8994_reg_write(amp, 0x2A, 0x0100);
-
+		
 		wm8994_reg_write(amp, 0x20, 0x0131);
 		wm8994_reg_write(amp, 0x21, 0x0131);
-
+		
 		wm8994_reg_write(amp, 0x36, 0x00C0);
 		
 		wm8994_reg_write(amp, 0x2D, 0x0010);
@@ -2884,7 +2884,7 @@ void wm8994_set_headset(int onoff)
 			wm8994_reg_write(amp, 0x60, 0x00EE);
 			wm8994_reg_write(amp, 0x01, 0x3303);
 			CompensationCAL = 1;
-		}	
+		}
 		wm8994_reg_write(amp, 0x420, 0x0000);
 	} else {
 		printk("%s: headset amp off\n",__func__);

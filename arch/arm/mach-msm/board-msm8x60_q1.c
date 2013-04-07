@@ -544,6 +544,7 @@ typedef struct _hw_rev_mapping {
 } hw_rev_mapping;
 #endif
 
+
 unsigned int get_hw_rev(void)
 {
 	int i = 0;
@@ -1823,7 +1824,7 @@ fail:
 }
 
 #ifdef CONFIG_USB_HOST_NOTIFY
-static void msm_hsusb_set_autosw_pba()
+static void msm_hsusb_set_autosw_pba(void)
 {
 #ifdef CONFIG_USB_SWITCH_FSA9480
 	fsa9480_otg_set_autosw_pba();
@@ -2134,7 +2135,7 @@ static int camera_power_maincam(int onoff)
 				gpio_set_value_cansleep(GPIO_FLASH_SEL, 1);
 			usleep(1*1000);
 		}
-#elif defined(CONFIG_JPN_MODEL_SC_05D)
+#elif defined(CONFIG_JPN_MODEL_SC_05D)		
 			if (gpio_get_value(62)==0)
 				gpio_set_value_cansleep(GPIO_FLASH_SEL, 1);
 			usleep(1*1000);
@@ -3440,7 +3441,60 @@ static struct platform_device msm_camera_sensor_s5k5bafx = {
 };
 #endif
 
+///
+#ifdef CONFIG_SENSOR_SR200PC20M
+static struct msm_camera_sensor_platform_info sr200pc20m_sensor_8660_info = {
+	.mount_angle 	= 0,
+	.sensor_reset	= GPIO_CAM_SUB_RST,
+	.sensor_pwd	= GPIO_CAM_IO_EN,
+	.vcm_pwd	= 0,
+	.vcm_enable	= 0,
+	.sensor_power_control = camera_power_vtcam,
+};
 
+static struct msm_camera_sensor_flash_data flash_sr200pc20m = {
+//	.flash_type = MSM_CAMERA_FLASH_LED,
+	.flash_type = MSM_CAMERA_FLASH_NONE,
+	.flash_src  = &msm_flash_src
+};
+
+#ifndef CONFIG_CAMERA_VE
+struct msm_camera_device_platform_data msm_camera_device_data_sub_cam = {
+	.camera_gpio_on  = config_camera_on_gpios,
+	.camera_gpio_off = config_camera_off_gpios,
+	.ioext.csiphy = 0x04900000,
+	.ioext.csisz  = 0x00000400,
+	.ioext.csiirq = CSI_1_IRQ,
+	.ioclk.mclk_clk_rate = 24000000,
+	.ioclk.vfe_clk_rate  = 228570000,
+#ifdef CONFIG_MSM_BUS_SCALING
+	.cam_bus_scale_table = &cam_bus_client_pdata,
+#endif
+};
+#endif
+
+static struct msm_camera_sensor_info msm_camera_sensor_sr200pc20m_data = {
+	.sensor_name    = "sr200pc20m",
+	.sensor_reset   = 41,
+	.sensor_pwd     = 37,
+	.vcm_pwd        = 1,
+	.vcm_enable	= 0,
+	.mclk		= 24000000,
+	.pdata          = &msm_camera_device_data_sub_cam,
+	.resource       = msm_camera_resources,
+	.num_resources  = ARRAY_SIZE(msm_camera_resources),
+	.flash_data     = &flash_sr200pc20m,
+	.sensor_platform_info = &sr200pc20m_sensor_8660_info,
+	.csi_if         = 1
+};
+static struct platform_device msm_camera_sensor_sr200pc20m = {
+	.name  	= "msm_camera_sr200pc20m",
+	.dev   	= {
+		.platform_data = &msm_camera_sensor_sr200pc20m_data,
+	},
+};
+#endif
+///
 
 static struct i2c_board_info msm_camera_boardinfo[] __initdata = {
 	#ifdef CONFIG_SENSOR_M5MO
@@ -3458,6 +3512,13 @@ static struct i2c_board_info msm_camera_boardinfo[] __initdata = {
 		I2C_BOARD_INFO("s5k5bafx_i2c", 0x5A>>1),
 	},
 	#endif
+///
+	#ifdef CONFIG_SENSOR_SR200PC20M
+	{
+		I2C_BOARD_INFO("sr200pc20m_i2c", 0x40>>1),
+	},
+	#endif
+///
 };
 
 static struct i2c_board_info msm_camera_dragon_boardinfo[] __initdata = {
@@ -5931,15 +5992,15 @@ static struct sec_jack_zone jack_zones[] = {
         [2] = {
 #if defined(JACK_WATERPROOF)
 #if defined (CONFIG_JPN_MODEL_SC_05D)
-		.adc_high       = 2780,
+		.adc_high       = 2780,	
 #else
-		.adc_high       = 1900,
+                .adc_high       = 1900,
 #endif
-		.delay_ms       = 10,
-		.check_count    = 10,
-		.jack_type      = SEC_HEADSET_4POLE,
-	},
-	[3] = {
+                .delay_ms       = 10,
+                .check_count    = 10,
+                .jack_type      = SEC_HEADSET_4POLE,
+        },
+        [3] = {
 #endif
                 .adc_high       = 9999,
                 .delay_ms       = 10,
@@ -7581,6 +7642,11 @@ static struct platform_device *rumi_sim_devices[] __initdata = {
 #ifdef CONFIG_SENSOR_S5K5BAFX
 	&msm_camera_sensor_s5k5bafx,
 #endif
+///
+#ifdef CONFIG_SENSOR_SR200PC20M
+	&msm_camera_sensor_sr200pc20m,
+#endif
+///
 #endif
 #ifdef CONFIG_MSM_GEMINI
 	&msm_gemini_device,
@@ -8432,7 +8498,7 @@ static struct platform_device opt_gp2a = {
 #define MXT540E_CHRGTIME_BATT		48
 #define MXT540E_CHRGTIME_CHRG		48
 
-#if 0
+#if defined(CONFIG_USA_MODEL_SGH_I717)
 #define MXT540E_THRESHOLD_BATT		35
 #else
 #define MXT540E_THRESHOLD_BATT		50
@@ -8442,7 +8508,7 @@ static struct platform_device opt_gp2a = {
 #define MXT540E_ACTVSYNCSPERX_BATT	24
 #define MXT540E_ACTVSYNCSPERX_CHRG	28
 
-#if 0
+#if defined(CONFIG_USA_MODEL_SGH_I717)
 #define MXT540E_CALCFG_BATT		242
 #else
 #define MXT540E_CALCFG_BATT		98
@@ -8725,9 +8791,7 @@ static void mxt540e_power_off(void)
 
 static void mxt540e_register_callback(void *function)
 {
-#if 0
 	charging_cbs.tsp_set_charging_cable = function;
-#endif
 }
 
 static void mxt540e_read_ta_status(bool *ta_status)
@@ -9283,6 +9347,11 @@ static struct platform_device *surf_devices[] __initdata = {
 #ifdef CONFIG_SENSOR_S5K5BAFX
 	&msm_camera_sensor_s5k5bafx,
 #endif
+///
+#ifdef CONFIG_SENSOR_SR200PC20M
+	&msm_camera_sensor_sr200pc20m,
+#endif
+///
 #endif
 #ifdef CONFIG_MSM_GEMINI
 	&msm_gemini_device,
@@ -16114,6 +16183,7 @@ static int atv_dac_power(int on)
 }
 #endif
 
+#ifdef CONFIG_FB_MSM_MIPI_S6D6AA0_WXGA_PANEL // test
 static struct msm_panel_common_pdata mdp_pdata = {
 	.gpio = MDP_VSYNC_GPIO,
 	.mdp_max_clk = 200000000,
@@ -16127,6 +16197,49 @@ static struct msm_panel_common_pdata mdp_pdata = {
 	.mem_hid = MEMTYPE_EBI1,
 #endif
 };
+#elif defined(CONFIG_FB_MSM_MIPI_S6E8AA0_HD720_PANEL)
+static struct msm_panel_common_pdata mdp_pdata = {
+	.gpio = MDP_VSYNC_GPIO,
+	.mdp_max_clk = 200000000,
+#ifdef CONFIG_MSM_BUS_SCALING
+	.mdp_bus_scale_table = &mdp_bus_scale_pdata,
+#endif
+	.mdp_rev = MDP_REV_41,
+#ifdef CONFIG_MSM_MULTIMEDIA_USE_ION
+	.mem_hid = BIT(ION_CP_WB_HEAP_ID),
+#else
+	.mem_hid = MEMTYPE_EBI1,
+#endif
+};
+#elif defined(CONFIG_FB_MSM_MIPI_S6E8AA0_WXGA_Q1_PANEL)
+static struct msm_panel_common_pdata mdp_pdata = {
+	.gpio = MDP_VSYNC_GPIO,
+	.mdp_max_clk = 200000000,
+#ifdef CONFIG_MSM_BUS_SCALING
+	.mdp_bus_scale_table = &mdp_bus_scale_pdata,
+#endif
+	.mdp_rev = MDP_REV_41,
+#ifdef CONFIG_MSM_MULTIMEDIA_USE_ION
+	.mem_hid = BIT(ION_CP_WB_HEAP_ID),
+#else
+	.mem_hid = MEMTYPE_EBI1,
+#endif
+};
+#else
+static struct msm_panel_common_pdata mdp_pdata = {
+	.gpio = MDP_VSYNC_GPIO,
+	.mdp_max_clk = 200000000,
+#ifdef CONFIG_MSM_BUS_SCALING
+	.mdp_bus_scale_table = &mdp_bus_scale_pdata,
+#endif
+	.mdp_rev = MDP_REV_41,
+#ifdef CONFIG_MSM_MULTIMEDIA_USE_ION
+	.mem_hid = BIT(ION_CP_WB_HEAP_ID),
+#else
+	.mem_hid = MEMTYPE_EBI1,
+#endif
+};
+#endif
 
 static void __init reserve_mdp_memory(void)
 {
@@ -16247,7 +16360,9 @@ void yda165_avdd_power_on(void)
 #endif
 
 	amp_reg_ref_cnt++;
+	#if !defined(CONFIG_USA_MODEL_SGH_I757)
 	pr_info("%s : amp_reg_ref_cnt = %d\n", __func__, amp_reg_ref_cnt);
+	#endif
 
 	{
 		if(!amp_reg) {
@@ -16296,7 +16411,9 @@ void yda165_avdd_power_off(void)
 	int ret;
 
 	amp_reg_ref_cnt--;
+	#if !defined(CONFIG_USA_MODEL_SGH_I757)
 	pr_info("%s : amp_reg_ref_cnt = %d\n", __func__, amp_reg_ref_cnt);
+	#endif
 
 	{
 		if (!amp_reg)

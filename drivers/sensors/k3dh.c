@@ -108,7 +108,6 @@ static int k3dh_read_accel_raw_xyz(struct k3dh_data *k3dh,
 #if defined(CONFIG_JPN_MODEL_SC_01D)
 	acc->z = -(acc->z);
 #endif
-
 	return 0;
 }
 

@@ -32,7 +32,7 @@
 //============================================================
 
 #include "Master_bin_V43.c"
-#include "Master_bin_V62.c"
+#include "Master_bin_V63.c"
 
 
 UINT8  ucVerifyBuffer[MELFAS_TRANSFER_LENGTH];		//	You may melloc *ucVerifyBuffer instead of this

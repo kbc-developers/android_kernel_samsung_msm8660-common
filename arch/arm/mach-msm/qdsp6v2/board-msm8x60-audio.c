@@ -62,13 +62,17 @@
 #include "timpani_profile_dali_kt.h"
 #elif defined(CONFIG_KOR_MODEL_SHV_E120L)  //DALI-LGT
 #include "timpani_profile_dali_lgt.h"
-#elif defined(CONFIG_KOR_MODEL_SHV_E160S)  || defined (CONFIG_JPN_MODEL_SC_05D) //QUINCY-SKT
+#elif defined(CONFIG_KOR_MODEL_SHV_E160S) //QUINCY-SKT
 #include "timpani_profile_quincy_skt.h"
+#elif defined(CONFIG_JPN_MODEL_SC_05D)  //QUINCY-JPN
+#include "timpani_profile_quincy_ntt.h"
 #elif defined(CONFIG_KOR_MODEL_SHV_E160K)  //QUINCY-KT
 #include "timpani_profile_quincy_kt.h"
 #elif defined(CONFIG_KOR_MODEL_SHV_E160L)  //QUINCY-LGT
 #include "timpani_profile_quincy_lgt.h"
 #elif defined(CONFIG_USA_MODEL_SGH_I957)  //P5LTE-ATT
+#include "timpani_profile_p5lte_att.h"
+#elif defined(CONFIG_JPN_MODEL_SC_01D)  //P4LTE-NTT
 #include "timpani_profile_p5lte_att.h"
 #elif defined (CONFIG_EUR_MODEL_GT_P7320)  //P5LTE-EUR-OPEN //SHOULD BE CHECKED
 #include "timpani_profile_p5lte_att.h"
@@ -3492,7 +3496,7 @@ static struct snddev_hdmi_data speaker_hdmi_rx_data = {
 	.default_sample_rate = 48000,
 };
 
-#if defined(CONFIG_USA_MODEL_SGH_T989) || defined (CONFIG_USA_MODEL_SGH_T769)
+#if defined(CONFIG_USA_MODEL_SGH_T989) || defined (CONFIG_USA_MODEL_SGH_T769) 
 static struct snddev_icodec_data hac_handset_call_rx_data = {
 	.capability = (SNDDEV_CAP_RX | SNDDEV_CAP_VOICE),
 	.name = "hac_handset_call_rx",

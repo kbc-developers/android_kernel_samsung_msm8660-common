@@ -1,4 +1,3 @@
-
 /* Qualcomm Secure Execution Environment Communicator (QSEECOM) driver
  *
  * Copyright (c) 2012, Code Aurora Forum. All rights reserved.

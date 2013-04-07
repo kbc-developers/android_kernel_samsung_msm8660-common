@@ -193,6 +193,7 @@ enum wl_prof_list {
 	WL_PROF_SEC,
 	WL_PROF_IBSS,
 	WL_PROF_BAND,
+	WL_PROF_CHAN,
 	WL_PROF_BSSID,
 	WL_PROF_ACT,
 	WL_PROF_BEACONINT,
@@ -292,6 +293,7 @@ struct wl_ibss {
 struct wl_profile {
 	u32 mode;
 	s32 band;
+	u32 channel;
 	struct wlc_ssid ssid;
 	struct wl_security sec;
 	struct wl_ibss ibss;
@@ -796,4 +798,5 @@ extern s32 wl_update_wiphybands(struct wl_priv *wl);
 extern s32 wl_cfg80211_scan_abort(struct wl_priv *wl, struct net_device *ndev);
 
 extern s32 wl_cfg80211_if_is_group_owner(void);
+extern s32 wl_add_remove_eventmsg(struct net_device *ndev, u16 event, bool add);
 #endif				/* _wl_cfg80211_h_ */

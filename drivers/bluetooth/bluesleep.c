@@ -161,13 +161,13 @@ static void hsuart_power(int on)
 	}
 
 	#if defined(CONFIG_KOR_MODEL_SHV_E150S) || defined(CONFIG_JPN_MODEL_SC_01E)
-	if (on)
+	if (on)   
 		bt_enter_sleep_mode_cnt = 0;
 	#endif
-
+	
 	if (on) {
 		msm_hs_request_clock_on(bsi->uport);
-		msm_hs_set_mctrl(bsi->uport, TIOCM_RTS);
+		msm_hs_set_mctrl(bsi->uport, TIOCM_RTS);		
 	} else {
 		msm_hs_set_mctrl(bsi->uport, 0);
 		msm_hs_request_clock_off(bsi->uport);
@@ -393,8 +393,8 @@ static void bluesleep_tx_timer_expire(unsigned long data)
 
 			#ifdef WAKE_GPIO_ACTIVE_HIGH
 				#if defined(CONFIG_KOR_MODEL_SHV_E150S) || defined(CONFIG_JPN_MODEL_SC_01E)
-			ext_wake_active = 0 ;
-			#else
+             		ext_wake_active = 0 ;	
+             		#else  
 			    gpio_set_value(bsi->ext_wake, 0 );
 			    #endif			
 			#else

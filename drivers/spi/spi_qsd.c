@@ -2388,7 +2388,7 @@ skip_dma_resources:
 	init_waitqueue_head(&dd->spiQsdThreadWait);
 	mutex_init(&(dd->spiQsdThread_lock));
 	dd->spiQsdThread = kthread_run(msm_spi_workq_thread,
-								(void*)dd, dev_name(master->dev.parent));
+							 	(void*)dd, dev_name(master->dev.parent));
 	if (IS_ERR(dd->spiQsdThread)) {
 		dev_err(dd->dev, "[ERR] kthread_run() : ret=%p", dd->spiQsdThread);
 		goto err_probe_workq;
