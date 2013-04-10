@@ -3440,7 +3440,60 @@ static struct platform_device msm_camera_sensor_s5k5bafx = {
 };
 #endif
 
+///
+#ifdef CONFIG_SENSOR_SR200PC20M
+static struct msm_camera_sensor_platform_info sr200pc20m_sensor_8660_info = {
+	.mount_angle 	= 0,
+	.sensor_reset	= GPIO_CAM_SUB_RST,
+	.sensor_pwd	= GPIO_CAM_IO_EN,
+	.vcm_pwd	= 0,
+	.vcm_enable	= 0,
+	.sensor_power_control = camera_power_vtcam,
+};
 
+static struct msm_camera_sensor_flash_data flash_sr200pc20m = {
+//	.flash_type = MSM_CAMERA_FLASH_LED,
+	.flash_type = MSM_CAMERA_FLASH_NONE,
+	.flash_src  = &msm_flash_src
+};
+
+#ifndef CONFIG_CAMERA_VE
+struct msm_camera_device_platform_data msm_camera_device_data_sub_cam = {
+	.camera_gpio_on  = config_camera_on_gpios,
+	.camera_gpio_off = config_camera_off_gpios,
+	.ioext.csiphy = 0x04900000,
+	.ioext.csisz  = 0x00000400,
+	.ioext.csiirq = CSI_1_IRQ,
+	.ioclk.mclk_clk_rate = 24000000,
+	.ioclk.vfe_clk_rate  = 228570000,
+#ifdef CONFIG_MSM_BUS_SCALING
+	.cam_bus_scale_table = &cam_bus_client_pdata,
+#endif
+};
+#endif
+
+static struct msm_camera_sensor_info msm_camera_sensor_sr200pc20m_data = {
+	.sensor_name    = "sr200pc20m",
+	.sensor_reset   = 41,
+	.sensor_pwd     = 37,
+	.vcm_pwd        = 1,
+	.vcm_enable	= 0,
+	.mclk		= 24000000,
+	.pdata          = &msm_camera_device_data_sub_cam,
+	.resource       = msm_camera_resources,
+	.num_resources  = ARRAY_SIZE(msm_camera_resources),
+	.flash_data     = &flash_sr200pc20m,
+	.sensor_platform_info = &sr200pc20m_sensor_8660_info,
+	.csi_if         = 1
+};
+static struct platform_device msm_camera_sensor_sr200pc20m = {
+	.name  	= "msm_camera_sr200pc20m",
+	.dev   	= {
+		.platform_data = &msm_camera_sensor_sr200pc20m_data,
+	},
+};
+#endif
+///
 
 static struct i2c_board_info msm_camera_boardinfo[] __initdata = {
 	#ifdef CONFIG_SENSOR_M5MO
@@ -3458,6 +3511,13 @@ static struct i2c_board_info msm_camera_boardinfo[] __initdata = {
 		I2C_BOARD_INFO("s5k5bafx_i2c", 0x5A>>1),
 	},
 	#endif
+///
+	#ifdef CONFIG_SENSOR_SR200PC20M
+	{
+		I2C_BOARD_INFO("sr200pc20m_i2c", 0x40>>1),
+	},
+	#endif
+///
 };
 
 static struct i2c_board_info msm_camera_dragon_boardinfo[] __initdata = {
@@ -7581,6 +7641,11 @@ static struct platform_device *rumi_sim_devices[] __initdata = {
 #ifdef CONFIG_SENSOR_S5K5BAFX
 	&msm_camera_sensor_s5k5bafx,
 #endif
+///
+#ifdef CONFIG_SENSOR_SR200PC20M
+	&msm_camera_sensor_sr200pc20m,
+#endif
+///
 #endif
 #ifdef CONFIG_MSM_GEMINI
 	&msm_gemini_device,
@@ -9283,6 +9348,11 @@ static struct platform_device *surf_devices[] __initdata = {
 #ifdef CONFIG_SENSOR_S5K5BAFX
 	&msm_camera_sensor_s5k5bafx,
 #endif
+///
+#ifdef CONFIG_SENSOR_SR200PC20M
+	&msm_camera_sensor_sr200pc20m,
+#endif
+///
 #endif
 #ifdef CONFIG_MSM_GEMINI
 	&msm_gemini_device,
@@ -16114,6 +16184,7 @@ static int atv_dac_power(int on)
 }
 #endif
 
+#ifdef CONFIG_FB_MSM_MIPI_S6D6AA0_WXGA_PANEL // test
 static struct msm_panel_common_pdata mdp_pdata = {
 	.gpio = MDP_VSYNC_GPIO,
 	.mdp_max_clk = 200000000,
@@ -16127,6 +16198,49 @@ static struct msm_panel_common_pdata mdp_pdata = {
 	.mem_hid = MEMTYPE_EBI1,
 #endif
 };
+#elif defined(CONFIG_FB_MSM_MIPI_S6E8AA0_HD720_PANEL)
+static struct msm_panel_common_pdata mdp_pdata = {
+	.gpio = MDP_VSYNC_GPIO,
+	.mdp_max_clk = 200000000,
+#ifdef CONFIG_MSM_BUS_SCALING
+	.mdp_bus_scale_table = &mdp_bus_scale_pdata,
+#endif
+	.mdp_rev = MDP_REV_41,
+#ifdef CONFIG_MSM_MULTIMEDIA_USE_ION
+	.mem_hid = BIT(ION_CP_WB_HEAP_ID),
+#else
+	.mem_hid = MEMTYPE_EBI1,
+#endif
+};
+#elif defined(CONFIG_FB_MSM_MIPI_S6E8AA0_WXGA_Q1_PANEL)
+static struct msm_panel_common_pdata mdp_pdata = {
+	.gpio = MDP_VSYNC_GPIO,
+	.mdp_max_clk = 200000000,
+#ifdef CONFIG_MSM_BUS_SCALING
+	.mdp_bus_scale_table = &mdp_bus_scale_pdata,
+#endif
+	.mdp_rev = MDP_REV_41,
+#ifdef CONFIG_MSM_MULTIMEDIA_USE_ION
+	.mem_hid = BIT(ION_CP_WB_HEAP_ID),
+#else
+	.mem_hid = MEMTYPE_EBI1,
+#endif
+};
+#else
+static struct msm_panel_common_pdata mdp_pdata = {
+	.gpio = MDP_VSYNC_GPIO,
+	.mdp_max_clk = 200000000,
+#ifdef CONFIG_MSM_BUS_SCALING
+	.mdp_bus_scale_table = &mdp_bus_scale_pdata,
+#endif
+	.mdp_rev = MDP_REV_41,
+#ifdef CONFIG_MSM_MULTIMEDIA_USE_ION
+	.mem_hid = BIT(ION_CP_WB_HEAP_ID),
+#else
+	.mem_hid = MEMTYPE_EBI1,
+#endif
+};
+#endif
 
 static void __init reserve_mdp_memory(void)
 {
