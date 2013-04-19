@@ -48,6 +48,7 @@
 #define RESTART_REASON_ADDR 0x65C
 #define DLOAD_MODE_ADDR     0x0
 
+#define RESET_REASON_LPM            0x1A2B3C10
 #define RESTART_LPM_BOOT_MODE		0x77665506
 #define RESTART_ARM11FOTA_MODE          0x77665503
 #define RESTART_RECOVERY_MODE           0x77665502
@@ -333,10 +334,11 @@ void msm_restart(char mode, const char *cmd)
 			__raw_writel(RESTART_OTHERBOOT_MODE, restart_reason);
 		}
 	} else {
-#ifdef CONFIG_SEC_DEBUG
+#if defined (CONFIG_ARCH_MSM8X60) && !defined(CONFIG_TARGET_SERIES_DUMMY)
 		writel(0x12345678, restart_reason);    /* clear abnormal reset flag */
-#endif
+#else
 		__raw_writel(0x77665501, restart_reason);
+#endif
 	}
 #ifdef CONFIG_LGE_CRASH_HANDLER
 	if (in_panic == 1)
@@ -376,6 +378,19 @@ static int dload_mode_normal_reboot_handler(struct notifier_block *nb,
 static struct notifier_block dload_reboot_block = {
 	.notifier_call = dload_mode_normal_reboot_handler
 };
+#endif
+
+#ifndef CONFIG_SEC_DEBUG
+unsigned int sec_get_lpm_mode(void)
+{
+	unsigned int ret = 0;
+
+	pr_info("(%s) %x\n", __func__, (unsigned int)restart_reason);
+	if((unsigned int)restart_reason == RESET_REASON_LPM)
+		ret = 1;
+	pr_emerg("(%s) %x\n", __func__, ret);
+	return ret;
+}
 #endif
 
 static int __init msm_pmic_restart_init(void)
