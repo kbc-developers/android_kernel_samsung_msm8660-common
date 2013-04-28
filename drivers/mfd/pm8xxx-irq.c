@@ -23,7 +23,7 @@
 #include <linux/slab.h>
 
 
-#if defined (CONFIG_KOR_MODEL_SHV_E120L) || defined(CONFIG_KOR_MODEL_SHV_E160S) || defined(CONFIG_KOR_MODEL_SHV_E160K) || defined(CONFIG_KOR_MODEL_SHV_E160L) || defined (CONFIG_USA_MODEL_SGH_I957)
+#if defined (CONFIG_KOR_MODEL_SHV_E120L) || defined(CONFIG_KOR_MODEL_SHV_E160S) || defined(CONFIG_KOR_MODEL_SHV_E160K) || defined(CONFIG_KOR_MODEL_SHV_E160L) || defined (CONFIG_USA_MODEL_SGH_I957) || defined (CONFIG_JPN_MODEL_SC_05D)
 // This function clears hw revision gpio's irq configuration set incorrectly by sbl3 bootloader.
 // Only E120L and E160(S/K/L)'s sbl3 bootloader uses hw revision gpio for irq, even though it is ueseless actually.
 // (In other words, it' a sort of bug.) Originally I should've changed the bootloader, but the bootloader

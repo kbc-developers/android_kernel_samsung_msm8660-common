@@ -81,6 +81,8 @@ static int touchkey_keycode[5] = {0,KEY_MENU , KEY_HOME, KEY_BACK, KEY_SEARCH};
 	|| defined (CONFIG_USA_MODEL_SGH_T769) || defined(CONFIG_USA_MODEL_SGH_I577) || defined(CONFIG_CAN_MODEL_SGH_I577R)\
 	|| defined(CONFIG_USA_MODEL_SGH_I757) || defined(CONFIG_CAN_MODEL_SGH_I757M)
 static int touchkey_keycode[5] = {0,KEY_MENU , KEY_HOMEPAGE, KEY_BACK, KEY_SEARCH};
+#elif defined (CONFIG_JPN_MODEL_SC_05D)
+static int touchkey_keycode[5] = {0,KEY_MENU , KEY_HOME, KEY_BACK, 0};
 #else
 static int touchkey_keycode[3] = { 0, KEY_BACK, KEY_MENU };
 #endif
@@ -689,6 +691,12 @@ static void sec_touchkey_early_suspend(struct early_suspend *h)
 		gpio_direction_output(GPIO_TOUCHKEY_SDA, 0);
 		gpio_free(GPIO_TOUCHKEY_SDA);
 		}
+#elif defined(CONFIG_JPN_MODEL_SC_05D)
+		tkey_vdd_enable(0);
+		gpio_direction_output(GPIO_TOUCHKEY_SCL, 0);
+		gpio_free(GPIO_TOUCHKEY_SCL);
+		gpio_direction_output(GPIO_TOUCHKEY_SDA, 0);
+		gpio_free(GPIO_TOUCHKEY_SDA);
 #endif
 	for (index = 1; index< sizeof(touchkey_keycode)/sizeof(*touchkey_keycode); index++)
 	{
@@ -799,6 +807,12 @@ static void sec_touchkey_early_resume(struct early_suspend *h)
 		gpio_request(GPIO_TOUCHKEY_SDA, "TKEY_SDA");
 		gpio_direction_input(GPIO_TOUCHKEY_SDA);
 		}
+#elif defined(CONFIG_JPN_MODEL_SC_05D)
+		tkey_vdd_enable(1);
+		gpio_request(GPIO_TOUCHKEY_SCL, "TKEY_SCL");
+		gpio_direction_input(GPIO_TOUCHKEY_SCL);
+		gpio_request(GPIO_TOUCHKEY_SDA, "TKEY_SDA");
+		gpio_direction_input(GPIO_TOUCHKEY_SDA);
 #endif // defined (CONFIG_USA_MODEL_SGH_T989)||defined (CONFIG_USA_MODEL_SGH_I727)
 	init_hw();
 
@@ -967,6 +981,10 @@ static int i2c_touchkey_probe(struct i2c_client *client, const struct i2c_device
 		touchkey_keycode[1] = KEY_MENU;
 		touchkey_keycode[2] = KEY_BACK;
 	}
+#elif defined (CONFIG_JPN_MODEL_SC_05D)
+//TODO Check HW REV for JPN
+		touchkey_keycode[1] = KEY_MENU;
+		touchkey_keycode[2] = KEY_BACK;
 #endif
 
 	set_bit(EV_SYN, input_dev->evbit);
@@ -1128,6 +1146,10 @@ static void init_hw(void)
 	}
 #elif defined(CONFIG_KOR_MODEL_SHV_E160L)
 	irq_set_irq_type(IRQ_TOUCHKEY_INT, IRQ_TYPE_EDGE_FALLING);
+
+#elif defined (CONFIG_JPN_MODEL_SC_05D)
+	irq_set_irq_type(IRQ_TOUCHKEY_INT, IRQ_TYPE_EDGE_FALLING);
+
 #else
 	irq_set_irq_type(IRQ_TOUCHKEY_INT, IRQ_TYPE_LEVEL_LOW);
 #endif
@@ -1307,6 +1329,11 @@ static ssize_t touch_led_control(struct device *dev, struct device_attribute *at
 #else
 
 #endif
+
+#if defined (CONFIG_JPN_MODEL_SC_05D)
+	int_data = int_data * 0x10;
+#endif
+
 		if(g_debug_switch)
 			printk(KERN_DEBUG "touch_led_control int_data: %d  \n", int_data);
 
@@ -1362,7 +1389,7 @@ static ssize_t touchkey_menu_show(struct device *dev, struct device_attribute *a
 
     ret = i2c_touchkey_read(KEYCODE_REG, data, 18);
 
-    #if defined(CONFIG_KOR_MODEL_SHV_E160L)
+    #if defined(CONFIG_KOR_MODEL_SHV_E160L) || defined(CONFIG_JPN_MODEL_SC_05D)
     printk("[TKEY] %s data[12] =%d,data[13] = %d\n",__func__,data[12],data[13]);
     menu_sensitivity = ((0x00FF&data[12])<<8)|data[13];
     #else
@@ -1399,7 +1426,7 @@ static ssize_t touchkey_back_show(struct device *dev, struct device_attribute *a
 		printk("called %s data[14] =%d,data[15] = %d\n",__func__,data[14],data[15]);
 		back_sensitivity = ((0x00FF&data[14])<<8)|data[15];
 	}
-#elif defined(CONFIG_KOR_MODEL_SHV_E160L)
+#elif defined(CONFIG_KOR_MODEL_SHV_E160L) || defined(CONFIG_JPN_MODEL_SC_05D)
     {
         printk("[TKEY] %s data[10] =%d,data[11] = %d\n",__func__,data[10],data[11]);
         back_sensitivity = ((0x00FF&data[10])<<8)|data[11];
@@ -1615,7 +1642,7 @@ static ssize_t touch_sensitivity_control(struct device *dev, struct device_attri
 
 #if defined (CONFIG_USA_MODEL_SGH_T989) || defined(CONFIG_USA_MODEL_SGH_I727) || defined(CONFIG_USA_MODEL_SGH_I717) \
 || defined (CONFIG_KOR_MODEL_SHV_E110S)|| defined(CONFIG_KOR_MODEL_SHV_E160L) || defined(CONFIG_CAN_MODEL_SGH_I757M)\
-|| defined(CONFIG_USA_MODEL_SGH_I757) || defined (CONFIG_USA_MODEL_SGH_T769) || defined(CONFIG_USA_MODEL_SGH_I577) || defined(CONFIG_CAN_MODEL_SGH_I577R)
+|| defined(CONFIG_USA_MODEL_SGH_I757) || defined(CONFIG_USA_MODEL_SGH_T769) || defined(CONFIG_USA_MODEL_SGH_I577) || defined(CONFIG_CAN_MODEL_SGH_I577R) || defined(CONFIG_JPN_MODEL_SC_03D) || defined(CONFIG_JPN_MODEL_SC_05D)
 static ssize_t touch_recommend_read(struct device *dev, struct device_attribute *attr, char *buf)
 {
 	char data[3] = { 0, };
@@ -1679,7 +1706,7 @@ static ssize_t touch_recommend_read(struct device *dev, struct device_attribute 
 	printk("touch_recommend_read 0x%x\n", data[1]);
 	return count;
 }
-#else
+#endif
 static ssize_t set_touchkey_firm_version_show(struct device *dev, struct device_attribute *attr, char *buf)
 {
 	/*TO DO IT */
@@ -1693,7 +1720,6 @@ static ssize_t set_touchkey_firm_version_show(struct device *dev, struct device_
 #endif
 	return count;
 }
-#endif
 
 static ssize_t set_touchkey_update_show(struct device *dev, struct device_attribute *attr, char *buf)
 {
@@ -2085,6 +2111,8 @@ static int __init touchkey_init(void)
 	} else {
 		irq_set_irq_type(IRQ_TOUCHKEY_INT, IRQ_TYPE_EDGE_FALLING);
 	}
+#elif defined (CONFIG_JPN_MODEL_SC_05D)
+	irq_set_irq_type(IRQ_TOUCHKEY_INT, IRQ_TYPE_EDGE_FALLING);
 #else
 		irq_set_irq_type(IRQ_TOUCHKEY_INT, IRQ_TYPE_LEVEL_LOW);
 #endif
@@ -2101,7 +2129,7 @@ static int __init touchkey_init(void)
         return 0;
 #endif
 
-	printk("[TKEY] %s F/W version: 0x%x, Module version:0x%x, HW_REV: 0x%x\n", __FUNCTION__, data[1], data[2], get_hw_rev());
+//	printk("[TKEY] %s F/W version: 0x%x, Module version:0x%x, HW_REV: 0x%x\n", __FUNCTION__, data[1], data[2], get_hw_rev());
 	touch_version = data[1];
 	retry = 3;
 
@@ -2410,7 +2438,7 @@ printk("%s : update SHV_E120L_WXGA tkey...\n",__func__);
 		   printk("%s : Touch Key version is latest. E110S %d!!!...\n",__func__, get_hw_rev());
 		}*/
 #elif defined (CONFIG_JPN_MODEL_SC_03D)
-		if (get_hw_rev() ==0x01 ){
+/*		if (get_hw_rev() ==0x01 ){
 			firm_version = 0x02;
 			if ((data[1] != 0x02) || (data[2] != 0x00))
 			{
@@ -2499,7 +2527,7 @@ printk("%s : update SHV_E120L_WXGA tkey...\n",__func__);
 				get_touchkey_firmware(data);
 				printk("%s change to F/W version: 0x%x, Module version:0x%x\n", __FUNCTION__, data[1], data[2]);
 			}
-		}
+		} */
 #endif
 	ret = i2c_add_driver(&touchkey_i2c_driver);
 

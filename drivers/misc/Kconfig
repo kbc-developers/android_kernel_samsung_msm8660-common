@@ -695,5 +695,5 @@ config STMPE811_ADC
 	default n
 	help
 	  stmpe811 adc driver
-          
+
 endif # MISC_DEVICES
