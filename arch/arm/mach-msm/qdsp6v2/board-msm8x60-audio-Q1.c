@@ -55,7 +55,7 @@
 #elif defined(CONFIG_KOR_MODEL_SHV_E160L)/*QUINCY-LGT */
 #include "timpani_profile_quincy_lgt.h"
 #elif defined(CONFIG_JPN_MODEL_SC_05D)/*QUINCY-JPN equal to SKT*/
-#include "timpani_profile_quincy_skt.h"
+#include "timpani_profile_quincy_ntt.h"
 #elif defined(CONFIG_USA_MODEL_SGH_I717) /*QUINCY-ATT */
 #include "timpani_profile_quincy_att.h"
 #endif
@@ -470,7 +470,9 @@ static void msm_snddev_poweramp_off_call(void)
 }
 
 int msm_snddev_poweramp_on_headset_call(void)
-{	fsa9480_audiopath_control(0);
+{
+
+	fsa9480_audiopath_control(0);
 #ifdef CONFIG_SENSORS_YDA165
 	yda165_headset_call_onoff(1);
 #endif
@@ -534,7 +536,24 @@ void msm_snddev_vpsamp_off_headset(void)
 #endif
 	fsa9480_audiopath_control(0);
 }
-int msm_snddev_spkvpsamp_on_together(void){	pr_info("%s\n", __func__);#ifdef CONFIG_SENSORS_YDA165	yda165_speaker_headset_onoff(1);#endif	fsa9480_audiopath_control(1);	return 0;}void msm_snddev_spkvpsamp_off_together(void){	pr_info("%s\n", __func__);#ifdef CONFIG_SENSORS_YDA165	yda165_speaker_headset_onoff(0);#endif	fsa9480_audiopath_control(0);}
+int msm_snddev_spkvpsamp_on_together(void)
+{
+	pr_info("%s\n", __func__);
+#ifdef CONFIG_SENSORS_YDA165
+	yda165_speaker_headset_onoff(1);
+#endif
+	fsa9480_audiopath_control(1);
+	return 0;
+}
+
+void msm_snddev_spkvpsamp_off_together(void)
+{
+	pr_info("%s\n", __func__);
+#ifdef CONFIG_SENSORS_YDA165
+	yda165_speaker_headset_onoff(0);
+#endif
+	fsa9480_audiopath_control(0);
+}
 int msm_snddev_poweramp_on_together(void)
 {
 #ifdef CONFIG_SENSORS_YDA165

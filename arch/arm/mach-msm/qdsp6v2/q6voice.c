@@ -2731,7 +2731,8 @@ defined(CONFIG_KOR_MODEL_SHV_E120K) ||\
 defined(CONFIG_KOR_MODEL_SHV_E120L) ||\
 defined (CONFIG_KOR_MODEL_SHV_E160S) ||\
 defined (CONFIG_KOR_MODEL_SHV_E160K) ||\
-defined(CONFIG_KOR_MODEL_SHV_E160L)
+defined(CONFIG_KOR_MODEL_SHV_E160L) ||\
+defined (CONFIG_JPN_MODEL_SC_05D)
 		/* kks_111020 */
 		/*
 		 * Qualcomm Gon's workaround code to solve the sound mute problem

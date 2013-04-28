@@ -370,7 +370,8 @@ signed char fPowerCycleInitializeTargetForISSP(void)
     SetSDATAHiZ();
 
     // Turn on power to the target device before other signals
-    SetTargetVDDStrong();    
+    SetTargetVDDStrong();
+    
     ApplyTargetVDD();
 
     // wait 1msec for the power to stabilize
