@@ -955,6 +955,12 @@ static void sec_touchkey_early_resume(struct early_suspend *h)
 		gpio_request(GPIO_TOUCHKEY_SDA, "TKEY_SDA");
 		gpio_direction_input(GPIO_TOUCHKEY_SDA);
 		}
+#elif defined(CONFIG_JPN_MODEL_SC_05D)
+		tkey_vdd_enable(1);
+		gpio_request(GPIO_TOUCHKEY_SCL, "TKEY_SCL");
+		gpio_direction_input(GPIO_TOUCHKEY_SCL);
+		gpio_request(GPIO_TOUCHKEY_SDA, "TKEY_SDA");
+		gpio_direction_input(GPIO_TOUCHKEY_SDA);
 #endif // defined (CONFIG_USA_MODEL_SGH_T989)||defined (CONFIG_USA_MODEL_SGH_I727)
 	init_hw();
 
@@ -1881,7 +1887,7 @@ static ssize_t touch_sensitivity_control(struct device *dev, struct device_attri
 
 #if defined (CONFIG_USA_MODEL_SGH_T989) || defined(CONFIG_USA_MODEL_SGH_I727) || defined(CONFIG_USA_MODEL_SGH_I717) \
 || defined (CONFIG_KOR_MODEL_SHV_E110S)|| defined(CONFIG_KOR_MODEL_SHV_E160L) || defined(CONFIG_CAN_MODEL_SGH_I757M)\
-|| defined(CONFIG_USA_MODEL_SGH_I757) || defined (CONFIG_USA_MODEL_SGH_T769) || defined(CONFIG_USA_MODEL_SGH_I577) || defined(CONFIG_CAN_MODEL_SGH_I577R) || defined(CONFIG_JPN_MODEL_SC_05D)
+|| defined(CONFIG_USA_MODEL_SGH_I757) || defined(CONFIG_USA_MODEL_SGH_T769) || defined(CONFIG_USA_MODEL_SGH_I577) || defined(CONFIG_CAN_MODEL_SGH_I577R) || defined(CONFIG_JPN_MODEL_SC_03D) || defined(CONFIG_JPN_MODEL_SC_05D)
 static ssize_t touch_recommend_read(struct device *dev, struct device_attribute *attr, char *buf)
 {
 	char data[3] = { 0, };
@@ -1961,7 +1967,6 @@ static ssize_t set_touchkey_firm_version_show(struct device *dev, struct device_
 #endif
 	return count;
 }
-#endif
 
 #if defined(CONFIG_JPN_MODEL_SC_05D)
 static ssize_t set_touchkey_firm_version_show(struct device *dev, struct device_attribute *attr, char *buf)
