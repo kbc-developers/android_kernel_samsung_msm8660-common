@@ -124,7 +124,7 @@ static struct ld9040 lcd;
 
 #if defined (CONFIG_KOR_MODEL_SHV_E110S) || defined (CONFIG_EUR_MODEL_GT_I9210) \
 	|| defined (CONFIG_USA_MODEL_SGH_T989) || defined (CONFIG_USA_MODEL_SGH_I727) \
-	|| defined (CONFIG_USA_MODEL_SGH_T769)
+	|| defined (CONFIG_USA_MODEL_SGH_T769) || defined (CONFIG_JPN_MODEL_SC_03D)
 extern unsigned int get_hw_rev(void);
 #endif
 
@@ -166,7 +166,7 @@ static struct setting_table ea8868_gamma_update_disable[] = {
 
 #if defined(CONFIG_EUR_MODEL_GT_I9210) \
 	|| defined (CONFIG_USA_MODEL_SGH_T989) || defined (CONFIG_USA_MODEL_SGH_I727) \
-	|| defined (CONFIG_USA_MODEL_SGH_T769)
+	|| defined (CONFIG_USA_MODEL_SGH_T769) || defined (CONFIG_JPN_MODEL_SC_03D)
 static struct setting_table sleep_out_display[] = {
    	// Sleep Out Command
 	{ 0x11,	0,
@@ -873,7 +873,7 @@ void ld9040_disp_on(void)
 #endif
 #if defined (CONFIG_KOR_MODEL_SHV_E110S) \
 	|| defined (CONFIG_USA_MODEL_SGH_I727) || defined (CONFIG_USA_MODEL_SGH_T769) \
-	|| defined (CONFIG_USA_MODEL_SGH_T989)
+	|| defined (CONFIG_USA_MODEL_SGH_T989) || defined (CONFIG_JPN_MODEL_SC_03D)
 	DPRINT("start %s - HW Rev: %d\n", __func__,get_hw_rev());
 #endif
 
@@ -895,7 +895,7 @@ void ld9040_disp_on(void)
 		}
 #elif defined(CONFIG_EUR_MODEL_GT_I9210) \
   || defined (CONFIG_USA_MODEL_SGH_I727) || defined (CONFIG_USA_MODEL_SGH_T769) \
-  || defined (CONFIG_USA_MODEL_SGH_T989)
+  || defined (CONFIG_USA_MODEL_SGH_T989) || defined (CONFIG_JPN_MODEL_SC_03D)
 		if(isEA8868) {
 			for (i = 0; i < POWER_ON_SEQ_EA8868; i++)
 				setting_table_write(&power_on_sequence_ea8868[i]);
@@ -910,7 +910,7 @@ void ld9040_disp_on(void)
 
 #if defined(CONFIG_EUR_MODEL_GT_I9210) \
   || defined (CONFIG_USA_MODEL_SGH_I727) || defined (CONFIG_USA_MODEL_SGH_T769) \
-  || defined (CONFIG_USA_MODEL_SGH_T989)
+  || defined (CONFIG_USA_MODEL_SGH_T989) || defined (CONFIG_JPN_MODEL_SC_03D)
 		ld9040_read_lcd_id();
 		for (i = 0; i < POWER_AUTO_SEQ; i++)
 			setting_table_write(&power_auto_sequence_control[i]);
@@ -1108,7 +1108,7 @@ static void ld9040_gamma_ctl(struct ld9040 *lcd)
 			setting_table_write(lcd_brightness_table_22gamma[0]);
 #elif defined(CONFIG_EUR_MODEL_GT_I9210) \
   || defined (CONFIG_USA_MODEL_SGH_I727) || defined (CONFIG_USA_MODEL_SGH_T769) \
-  || defined (CONFIG_USA_MODEL_SGH_T989)
+  || defined (CONFIG_USA_MODEL_SGH_T989) || defined (CONFIG_JPN_MODEL_SC_03D)
 		setting_table_write(lcd_brightness_table_22gamma[0]);
 #else
 		setting_table_write(lcd_brightness_table_2[0]);
@@ -1125,7 +1125,7 @@ static void ld9040_gamma_ctl(struct ld9040 *lcd)
 			setting_table_write(lcd_brightness_table_22gamma[tune_level]);
 #elif defined(CONFIG_EUR_MODEL_GT_I9210) \
   || defined (CONFIG_USA_MODEL_SGH_I727) || defined (CONFIG_USA_MODEL_SGH_T769) \
-  || defined (CONFIG_USA_MODEL_SGH_T989)
+  || defined (CONFIG_USA_MODEL_SGH_T989) || defined (CONFIG_JPN_MODEL_SC_03D)
 		setting_table_write(lcd_brightness_table_22gamma[tune_level]);
 #else
 		setting_table_write(lcd_brightness_table_2[tune_level]);
@@ -1162,9 +1162,10 @@ static int get_gamma_value_from_bl(int bl)
 #endif
 
 #ifdef MAPPING_TBL_AUTO_BRIGHTNESS
+#if !defined(CONFIG_JPN_MODEL_SC_03D)
 	if (unlikely(!lcd.auto_brightness && bl > 250))
 		bl = 250;
-
+#endif
 	switch (bl) {
 	case 0 ... 29:
 		gamma_value = 0; // 30cd
@@ -1732,6 +1733,7 @@ static void lcdc_ld9040_panel_id(void)
 		isEA8868 = 1;
 
 }
+
 
 static int __init lcdc_ld9040_panel_init(void)
 {

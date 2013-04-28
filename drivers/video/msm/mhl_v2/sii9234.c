@@ -964,7 +964,7 @@ int rsen_state_timer_out(struct sii9234_data *sii9234)
 		goto err_exit;
 	sii9234->rsen = value & RSEN_STATUS;
 
-#if 0//defined(CONFIG_KOR_MODEL_SHV_E160S) || defined(CONFIG_KOR_MODEL_SHV_E160K) || defined (CONFIG_KOR_MODEL_SHV_E160L) || defined (CONFIG_JPN_MODEL_SC_05D)
+#if defined(CONFIG_KOR_MODEL_SHV_E160S) || defined(CONFIG_KOR_MODEL_SHV_E160K) || defined (CONFIG_KOR_MODEL_SHV_E160L) || defined (CONFIG_JPN_MODEL_SC_05D)
 	pr_info("sii9234: jgk:%s() - ignore MHL_TX_SYSSTAT_REG\n", __func__);
 #else
 	if (value & RSEN_STATUS) {
@@ -1781,6 +1781,10 @@ static irqreturn_t sii9234_irq_thread(int irq, void *data)
 		goto i2c_error_exit;
 	}
 
+#if defined(CONFIG_JPN_MODEL_SC_05D)	
+	//Fix for MHL connected (only MHL and no HDMI and Power), Sleep mode - Kernel Panic issue
+	msleep(100);
+#endif
 	pr_debug("sii9234: irq %02x/%02x %02x/%02x %02x/%02x\n",
 			intr1, intr1_en,
 			intr4, intr4_en,
