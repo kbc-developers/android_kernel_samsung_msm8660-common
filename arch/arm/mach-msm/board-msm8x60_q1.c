@@ -5387,7 +5387,7 @@ void __init msm8x60_set_display_params(char *prim_panel, char *ext_panel)
 static struct i2c_board_info tkey_i2c_devices[] = {
     {
 #if defined(CONFIG_KOR_MODEL_SHV_E160S) ||defined(CONFIG_KOR_MODEL_SHV_E160K) \
-	||defined(CONFIG_KOR_MODEL_SHV_E160L) || defined(CONFIG_USA_MODEL_SGH_I717)
+	||defined(CONFIG_KOR_MODEL_SHV_E160L) || defined(CONFIG_USA_MODEL_SGH_I717) || defined(CONFIG_JPN_MODEL_SC_05D)
         I2C_BOARD_INFO("sec_touchkey", 0x20),
 #else
         I2C_BOARD_INFO("melfas_touchkey", 0x20),
