@@ -60,9 +60,13 @@ obj-$(CONFIG_IWM)	+= iwmc3200wifi/
 obj-$(CONFIG_MWIFIEX)	+= mwifiex/
 
 # obj-$(CONFIG_BCM4329)	+= bcm4329/
+ifeq ($(CONFIG_JPN_MODEL_SC_05D),y)
+obj-$(CONFIG_BCM4330)   += bcmdhd_legacy/
+else
 obj-$(CONFIG_BCM4334)   += bcmdhd/
 obj-$(CONFIG_BCM4330)   += bcmdhd/
 obj-$(CONFIG_BCM43241)	+= bcmdhd/
+endif
 obj-$(CONFIG_BCM4334)   += btlock/
 obj-$(CONFIG_LGUIWLAN)	+= mwlan_aarp/
 obj-$(CONFIG_LGUIWLAN)	+= ipsecdrvtl/
