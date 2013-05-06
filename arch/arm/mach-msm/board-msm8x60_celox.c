@@ -708,7 +708,7 @@ static struct regulator_init_data saw_s0_init_data = {
 			.name = "8901_s0",
 			.valid_ops_mask = REGULATOR_CHANGE_VOLTAGE,
 			.min_uV = 800000,
-			.max_uV = 1250000,
+			.max_uV = 1325000,
 		},
 		.consumer_supplies = vreg_consumers_8901_S0,
 		.num_consumer_supplies = ARRAY_SIZE(vreg_consumers_8901_S0),
@@ -719,7 +719,7 @@ static struct regulator_init_data saw_s1_init_data = {
 			.name = "8901_s1",
 			.valid_ops_mask = REGULATOR_CHANGE_VOLTAGE,
 			.min_uV = 800000,
-			.max_uV = 1250000,
+			.max_uV = 1325000,
 		},
 		.consumer_supplies = vreg_consumers_8901_S1,
 		.num_consumer_supplies = ARRAY_SIZE(vreg_consumers_8901_S1),
@@ -2358,7 +2358,7 @@ static int camera_power_maincam(int onoff)
 #endif
 		
 		//HOST 1.8V
-#if defined (CONFIG_KOR_MODEL_SHV_E110S) // Celox KOR
+#if defined (CONFIG_KOR_MODEL_SHV_E110S) || defined(CONFIG_JPN_MODEL_SC_03D) // Celox KOR
 		if (get_hw_rev() >= 0x04)
 			i_host18 = regulator_get(NULL, "8901_usb_otg");
 		else
@@ -2578,7 +2578,7 @@ static int camera_power_vtcam(int onoff)
 
 		
 		//HOST 1.8V
-#if defined (CONFIG_KOR_MODEL_SHV_E110S) 
+#if defined (CONFIG_KOR_MODEL_SHV_E110S) || defined(CONFIG_JPN_MODEL_SC_03D)
 		if (get_hw_rev() >= 0x04)
 			i_host18 = regulator_get(NULL, "8901_usb_otg");
 		else
@@ -8160,7 +8160,7 @@ static struct regulator_consumer_supply vreg_consumers_PM8901_S4_PC[] = {
 /* RPM early regulator constraints */
 static struct rpm_regulator_init_data rpm_regulator_early_init_data[] = {
 	/*	 ID       a_on pd ss min_uV   max_uV   init_ip    freq */
-	RPM_SMPS(PM8058_S0, 0, 1, 1,  500000, 1250000, SMPS_HMIN, 1p60),
+	RPM_SMPS(PM8058_S0, 0, 1, 1,  500000, 1325000, SMPS_HMIN, 1p60),
 	RPM_SMPS(PM8058_S1, 0, 1, 1,  500000, 1250000, SMPS_HMIN, 1p60),
 };
 
@@ -8175,7 +8175,7 @@ static struct rpm_regulator_init_data rpm_regulator_init_data[] = {
 #else
 	RPM_LDO(PM8058_L3,  0, 1, 0, 1800000, 1800000, LDO150HMIN),
 #endif
-	RPM_LDO(PM8058_L4,  0, 1, 0, 1800000, 2850000,  LDO50HMIN),
+	RPM_LDO(PM8058_L4,  0, 1, 0, 2850000, 2850000,  LDO50HMIN),
 	RPM_LDO(PM8058_L5,  0, 1, 0, 2850000, 2850000, LDO300HMIN),
 	RPM_LDO(PM8058_L6,  0, 1, 0, 3000000, 3600000,  LDO50HMIN),
 	RPM_LDO(PM8058_L7,  0, 1, 0, 1800000, 1800000,  LDO50HMIN),
