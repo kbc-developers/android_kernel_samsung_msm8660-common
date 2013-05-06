@@ -1,4 +1,4 @@
-/* Copyright (c) 2009-2011, The Linux Foundation. All rights reserved.
+/* Copyright (c) 2009-2011, Code Aurora Forum. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -292,13 +292,12 @@ static void __pmic8xxx_kp_scan_matrix(struct pmic8xxx_kp *kp, u16 *new_state,
 					!(new_state[row] & (1 << col)));
 
 			input_sync(kp->input);
-
-#if defined (DSEC_KEYBOARD_CODE_DEBUG)
+#ifdef DEBUG_TKEY_I717
 			pr_info("key [%d:%d] %s keycode [%d]\n", row, col,
 					!(new_state[row] & (1 << col)) ?
 					"pressed" : "released", kp->keycodes[code]);
 #else
-			pr_info("key %s\n", 
+			pr_info("key %s\n",
 					!(new_state[row] & (1 << col)) ? "pressed" : "released");
 #endif
 
@@ -731,10 +730,9 @@ static int __devinit pmic8xxx_kp_probe(struct platform_device *pdev)
 	matrix_keypad_build_keymap(keymap_data, PM8XXX_ROW_SHIFT,
 					kp->input->keycode, kp->input->keybit);
 
- 	input_set_capability(kp->input, EV_KEY, KEY_VOLUMEDOWN);
- 	input_set_capability(kp->input, EV_KEY, KEY_VOLUMEUP);
- 	input_set_capability(kp->input, EV_KEY, KEY_HOME);
+	input_set_capability(kp->input, EV_KEY, KEY_HOME);
 	input_set_drvdata(kp->input, kp);
+
 
 	/* initialize keypad state */
 	memset(kp->keystate, 0xff, sizeof(kp->keystate));
