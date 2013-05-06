@@ -2372,7 +2372,7 @@ static int camera_power_maincam(int onoff)
 #endif
 		
 		//HOST 1.8V
-#if defined (CONFIG_KOR_MODEL_SHV_E110S) // Celox KOR
+#if defined (CONFIG_KOR_MODEL_SHV_E110S) || defined(CONFIG_JPN_MODEL_SC_03D) // Celox KOR
 		if (get_hw_rev() >= 0x04)
 			i_host18 = regulator_get(NULL, "8901_usb_otg");
 		else
@@ -2592,7 +2592,7 @@ static int camera_power_vtcam(int onoff)
 
 		
 		//HOST 1.8V
-#if defined (CONFIG_KOR_MODEL_SHV_E110S) 
+#if defined (CONFIG_KOR_MODEL_SHV_E110S) || defined(CONFIG_JPN_MODEL_SC_03D)
 		if (get_hw_rev() >= 0x04)
 			i_host18 = regulator_get(NULL, "8901_usb_otg");
 		else
