@@ -1,6 +1,6 @@
 #
 # Automatically generated make config: don't edit
-# Linux/arm 3.0.72 Kernel Configuration
+# Linux/arm 3.0.77 Kernel Configuration
 #
 CONFIG_ARM=y
 CONFIG_SYS_SUPPORTS_APM_EMULATION=y
@@ -485,7 +485,6 @@ CONFIG_MSM_JTAG=y
 CONFIG_MSM_ETM=y
 # CONFIG_MSM_QDSS is not set
 # CONFIG_CLOCK_MAP is not set
-CONFIG_MSM_SLEEP_STATS=y
 # CONFIG_MSM_SLEEP_STATS_DEVICE is not set
 # CONFIG_MSM_STANDALONE_POWER_COLLAPSE is not set
 CONFIG_MSM_GSBI9_UART=y
@@ -684,8 +683,6 @@ CONFIG_CPU_FREQ_MSM=y
 #
 # At least one emulation must be selected
 #
-# CONFIG_FPE_NWFPE is not set
-# CONFIG_FPE_FASTFPE is not set
 CONFIG_VFP=y
 CONFIG_VFPv3=y
 CONFIG_NEON=y
@@ -1347,6 +1344,7 @@ CONFIG_BCMDHD_NVRAM_PATH=""
 CONFIG_BROADCOM_WIFI_RESERVED_MEM=y
 CONFIG_WLAN_REGION_CODE=100
 CONFIG_BROADCOM_WIFI=y
+CONFIG_WLAN_COUNTRY_CODE=y
 # CONFIG_HOSTAP is not set
 # CONFIG_IWM is not set
 # CONFIG_LIBERTAS is not set
