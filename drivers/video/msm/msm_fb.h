@@ -52,6 +52,7 @@
 #define MSM_FB_DEFAULT_PAGE_SIZE 2
 #define MFD_KEY  0x11161126
 #define MSM_FB_MAX_DEV_LIST 32
+#define MDP_MAX_CACHED_REG 128
 
 struct disp_info_type_suspend {
 	boolean op_enable;
@@ -142,6 +143,8 @@ struct msm_fb_data_type {
 	int (*stop_histogram) (struct fb_info *info, uint32_t block);
 	void (*vsync_ctrl) (int enable);
 	void (*vsync_init) (int cndx);
+	void (*update_panel_info)(struct msm_fb_data_type *mfd);
+	bool (*is_panel_ready)(void);
 	void *vsync_show;
 	void *cursor_buf;
 	void *cursor_buf_phys;
@@ -212,6 +215,9 @@ struct msm_fb_data_type {
 	struct mutex entry_mutex;
 	int vsync_sysfs_created;
 	void *cpu_pm_hdl;
+	struct mdp_table_entry cached_reg[MDP_MAX_CACHED_REG];
+	uint32 cached_reg_cnt;
+	uint32 cache_reg_en;
 };
 
 struct msm_fb_backup_type {
