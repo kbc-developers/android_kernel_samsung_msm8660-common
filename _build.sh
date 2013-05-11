@@ -2,8 +2,8 @@
 
 KERNEL_DIR=$PWD
 
-export BUILD_DEVICE=$1
-export BUILD_TARGET=$2
+BUILD_DEVICE=$1
+BUILD_TARGET=$2
 BUILD_SELECT=$3
 
 cpoy_initramfs()
