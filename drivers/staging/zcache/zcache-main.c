@@ -1356,14 +1356,8 @@ static int zcache_cpu_notifier(struct notifier_block *nb,
 			kp->objnodes[kp->nr - 1] = NULL;
 			kp->nr--;
 		}
-		if (kp->obj) {
-			kmem_cache_free(zcache_obj_cache, kp->obj);
-			kp->obj = NULL;
-		}
-		if (kp->page) {
-			free_page((unsigned long)kp->page);
-			kp->page = NULL;
-		}
+		kmem_cache_free(zcache_obj_cache, kp->obj);
+		free_page((unsigned long)kp->page);
 		break;
 	default:
 		break;
