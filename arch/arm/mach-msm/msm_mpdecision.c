@@ -363,7 +363,7 @@ static ssize_t store_pause(struct kobject *a, struct attribute *b,
 
 	return count;
 }
-
+#if 0
 static ssize_t store_idle_freq(struct kobject *a, struct attribute *b,
 				   const char *buf, size_t count)
 {
@@ -376,7 +376,7 @@ static ssize_t store_idle_freq(struct kobject *a, struct attribute *b,
 
 	return count;
 }
-
+#endif
 static ssize_t store_scroff_single_core(struct kobject *a, struct attribute *b,
 				   const char *buf, size_t count)
 {
@@ -509,7 +509,7 @@ define_one_global_rw(startdelay);
 define_one_global_rw(delay);
 define_one_global_rw(pause);
 define_one_global_rw(scroff_single_core);
-define_one_global_rw(idle_freq);
+//define_one_global_rw(idle_freq);
 define_one_global_rw(enabled);
 define_one_global_rw(nwns_threshold_up);
 define_one_global_rw(nwns_threshold_down);
@@ -521,7 +521,7 @@ static struct attribute *msm_mpdec_attributes[] = {
 	&delay.attr,
 	&pause.attr,
 	&scroff_single_core.attr,
-	&idle_freq.attr,
+//	&idle_freq.attr,
 	&enabled.attr,
 	&nwns_threshold_up.attr,
 	&nwns_threshold_down.attr,
