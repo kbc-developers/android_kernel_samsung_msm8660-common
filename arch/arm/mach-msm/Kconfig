@@ -1769,7 +1769,6 @@ choice
 
 		config USA_MODEL_SGH_I727
                 depends on (TARGET_LOCALE_USA && (USA_OPERATOR_ATT || CAN_OPERATOR_RWC) )
-                        default y
 			bool "USA ATT SGH-I727"
 			
 		config USA_MODEL_SGH_I727R
