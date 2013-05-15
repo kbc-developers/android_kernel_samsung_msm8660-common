@@ -2154,7 +2154,7 @@ static int nl80211_start_ap(struct sk_buff *skb, struct genl_info *info)
 	if (dev->ieee80211_ptr->iftype != NL80211_IFTYPE_AP &&
 	    dev->ieee80211_ptr->iftype != NL80211_IFTYPE_P2P_GO)
 		return -EOPNOTSUPP;
-
+printk("***********************************************nl80211_start_ap\n");
 	if (!rdev->ops->start_ap)
 		return -EOPNOTSUPP;
 
