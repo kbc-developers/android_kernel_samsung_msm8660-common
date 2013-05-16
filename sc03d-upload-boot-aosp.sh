@@ -1,6 +1,6 @@
 #!/bin/bash
 
-BINDIR=./out/SC03D/AOSP//bin
+BINDIR=./out/SC03D/AOSP/bin
 MMCBLK_BOOT=/dev/block/mmcblk0p8
 
 NOSU=$1
