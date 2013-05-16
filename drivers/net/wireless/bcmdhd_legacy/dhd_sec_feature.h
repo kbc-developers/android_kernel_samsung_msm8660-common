@@ -40,23 +40,20 @@
 #define HW_OOB
 #endif
 
-#ifdef CONFIG_MACH_U1
+/* Q1 also uses this feature */
+#if defined(CONFIG_MACH_U1) || defined(CONFIG_MACH_TRATS)
+#ifdef CONFIG_MACH_Q1_BD
+#define HW_OOB
+#endif
+#define USE_CID_CHECK
 #define WRITE_MACADDR
 #endif
 
-#if (defined(CONFIG_TARGET_SERIES_P5LTE) || defined(CONFIG_TARGET_SERIES_P8LTE))\
+#if defined(CONFIG_TARGET_SERIES_P5LTE)\
 	&& defined(CONFIG_USA_OPERATOR_ATT)
+#undef USE_CID_CHECK
 #define OOB_INTR_ONLY
 #define RDWR_MACADDR
-#endif
-
-#if defined(CONFIG_TARGET_SERIES_CELOX)\
-	&& defined(CONFIG_TARGET_LOCALE_USA)
-#if defined(CONFIG_USA_MODEL_SGH_I577)
-#define READ_MACADDR
-#else
-#define WRITE_MACADDR
-#endif
 #endif
 
 #if defined(CONFIG_USA_OPERATOR_TMO)\
@@ -71,6 +68,18 @@
 #define WRITE_MACADDR
 #define HW_OOB
 #endif
+
+#if defined(CONFIG_TARGET_SERIES_CELOX)\
+	&& defined(CONFIG_TARGET_LOCALE_USA)
+#if defined(CONFIG_USA_MODEL_SGH_I577)
+#undef USE_CID_CHECK
+#define READ_MACADDR
+#else
+#define USE_CID_CHECK
+#define WRITE_MACADDR
+#endif
+#endif
+
 
 #if defined(CONFIG_TARGET_SERIES_P4LTE) && defined(CONFIG_JPN_OPERATOR_NTT)
 #define READ_MACADDR
@@ -89,7 +98,7 @@
 
 #if (WLAN_REGION_CODE >= 100) && (WLAN_REGION_CODE < 200) /*EUR*/
 #if (WLAN_REGION_CODE == 101) /*EUR ORG*/
-;/* GAN LITE NAT KEEPALIVE FILTER */
+/* GAN LITE NAT KEEPALIVE FILTER */
 #define GAN_LITE_NAT_KEEPALIVE_FILTER
 #endif
 #endif

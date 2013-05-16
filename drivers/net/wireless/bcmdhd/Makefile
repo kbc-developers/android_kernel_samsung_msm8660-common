@@ -10,7 +10,9 @@ DHDCFLAGS = -Wall -Wstrict-prototypes -Dlinux -DLINUX -DBCMDRIVER             \
         -DMMC_SDIO_ABORT -DBCMSDIO -DBCMLXSDMMC -DBCMPLATFORM_BUS -DWLP2P     \
         -DWIFI_ACT_FRAME -DARP_OFFLOAD_SUPPORT          \
         -DKEEP_ALIVE -DCSCAN -DPKT_FILTER_SUPPORT                             \
-        -DEMBEDDED_PLATFORM -DPNO_SUPPORT
+        -DEMBEDDED_PLATFORM -DPNO_SUPPORT                                     \
+        -DWLBTAMP -DTOE -DNEW_COMPAT_WIRELESS -DCUSTOMER_HW_SAMSUNG -DDONGLEOVERLAYS \
+        -DDHD_GPL -DDHD_SCHED
 
 #################
 # Common feature
@@ -26,6 +28,7 @@ DHDCFLAGS += -DBCMASSERT_LOG
 
 # For p2p connection issue
 DHDCFLAGS += -DWL_CFG80211_GON_COLLISION
+DHDCFLAGS += -DWL_CFG80211_SYNC_GON_TIME
 DHDCFLAGS += -DWL_SCB_TIMEOUT=10
 
 # For Passing all multicast packets to host when not in suspend mode.
@@ -112,6 +115,7 @@ ifneq ($(CONFIG_BCM4330),)
   DHDCFLAGS += -DCUSTOM_GLOM_SETTING=0
   DHDCFLAGS += -DPASS_ARP_PACKET
   DHDCFLAGS += -DWL_CFG80211_VSDB_PRIORITIZE_SCAN_REQUEST
+  DHDCFLAGS += -DUSE_CID_CHECK
 endif
 
 ifneq ($(CONFIG_BCM43241),)
@@ -163,9 +167,14 @@ ifeq ($(CONFIG_SLP),y)
   DHDCFLAGS += -UWL_CFG80211_STA_EVENT
 endif
 
-# GGSM_WIFI_5GHz_CHANNELS feature is define for only GGSM model
-ifeq ($(GGSM_WIFI_5GHz_CHANNELS),true)
-  DHDCFLAGS += -DCUSTOMER_SET_COUNTRY
+# 5GHz channels setting
+ifeq ($(CONFIG_WLAN_COUNTRY_CODE),y)
+DHDCFLAGS += -DGLOBALCONFIG_WLAN_COUNTRY_CODE
+endif
+
+# For ICS SEC Features
+ifneq ($(findstring GlobalConfig, $(wildcard $(srctree)/include/sec_feature/*)),)
+DHDCFLAGS += -DUSE_SECFEATURE
 endif
 
 ##############################################################
@@ -183,6 +192,10 @@ endif
 
 ifeq ($(CONFIG_TARGET_LOCALE_CHN),y)
 REGION_CODE=300
+endif
+
+ifeq ($(CONFIG_TARGET_LOCALE_JPN),y)
+REGION_CODE=400
 endif
 
 ifeq ($(SEC_MODEL_NAME),U1)
@@ -206,13 +219,13 @@ DHDCFLAGS += -include "dhd_sec_feature.h"
 
 EXTRA_LDFLAGS += --strip-debug
 
-EXTRA_CFLAGS += $(DHDCFLAGS) -DDHD_DEBUG
+EXTRA_CFLAGS += $(DHDCFLAGS) -DDHD_DEBUG -DRSSI_OFFSET=0
 EXTRA_CFLAGS += -DSRCBASE=\"$(src)\"
 EXTRA_CFLAGS += -I$(src)/include/ -I$(src)/
 KBUILD_CFLAGS += -I$(LINUXDIR)/include -I$(shell pwd)
 
 DHDOFILES := bcmsdh.o bcmsdh_linux.o bcmsdh_sdmmc.o bcmsdh_sdmmc_linux.o \
-	dhd_cdc.o dhd_common.o dhd_custom_gpio.o dhd_custom_sec.o \
+	dhd_bta.o dhd_cdc.o dhd_common.o dhd_custom_gpio.o dhd_custom_sec.o \
 	dhd_linux.o dhd_linux_sched.o dhd_cfg80211.o dhd_sdio.o aiutils.o bcmevent.o \
 	bcmutils.o bcmwifi_channels.o hndpmu.o linux_osl.o sbutils.o siutils.o \
 	wl_android.o wl_cfg80211.o wl_cfgp2p.o wldev_common.o wl_linux_mon.o wl_roam.o

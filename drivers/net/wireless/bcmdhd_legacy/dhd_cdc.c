@@ -113,20 +113,18 @@ dhdcdc_cmplt(dhd_pub_t *dhd, uint32 id, uint32 len)
 
 	DHD_TRACE(("%s: Enter\n", __FUNCTION__));
 
-#if defined(CUSTOMER_HW4)
+#ifdef CUSTOMER_HW_SAMSUNG
 	DHD_OS_WAKE_LOCK(dhd);
-#endif 
-
+#endif /* CUSTOMER_HW_SAMSUNG */
 	do {
 		ret = dhd_bus_rxctl(dhd->bus, (uchar*)&prot->msg, cdc_len);
 		if (ret < 0)
 			break;
 	} while (CDC_IOC_ID(ltoh32(prot->msg.flags)) != id);
 
-#if defined(CUSTOMER_HW4)
+#ifdef CUSTOMER_HW_SAMSUNG
 	DHD_OS_WAKE_UNLOCK(dhd);
-#endif 
-
+#endif /* CUSTOMER_HW_SAMSUNG */
 	return ret;
 }
 
@@ -160,16 +158,6 @@ dhdcdc_query_ioctl(dhd_pub_t *dhd, int ifidx, uint cmd, void *buf, uint len, uin
 
 	memset(msg, 0, sizeof(cdc_ioctl_t));
 
-#ifdef BCMSPI
-	/* 11bit gSPI bus allows 2048bytes of max-data.  We restrict 'len'
-	 * value which is 8Kbytes for various 'get' commands to 2000.  48 bytes are
-	 * left for sw headers and misc.
-	 */
-	if (len > 2000) {
-		DHD_ERROR(("dhdcdc_query_ioctl: len is truncated to 2000 bytes\n"));
-		len = 2000;
-	}
-#endif /* BCMSPI */
 	msg->cmd = htol32(cmd);
 	msg->len = htol32(len);
 	msg->flags = (++prot->reqid << CDCF_IOC_ID_SHIFT);

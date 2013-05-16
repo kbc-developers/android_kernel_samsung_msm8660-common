@@ -228,9 +228,9 @@ static int wl_android_set_suspendopt(struct net_device *dev, char *command, int 
 	int ret_now;
 	int ret = 0;
 
-#ifdef CUSTOMER_HW_SAMSUNG
+#ifdef CUSTOMER_HW4
 	if (!dhd_download_fw_on_driverload) {
-#endif /* CUSTOMER_HW_SAMSUNG */
+#endif /* CUSTOMER_HW4 */
 		suspend_flag = *(command + strlen(CMD_SETSUSPENDOPT) + 1) - '0';
 
 		if (suspend_flag != 0)
@@ -244,9 +244,9 @@ static int wl_android_set_suspendopt(struct net_device *dev, char *command, int 
 			else
 				DHD_ERROR(("%s: failed %d\n", __FUNCTION__, ret));
 		}
-#ifdef CUSTOMER_HW_SAMSUNG
+#ifdef CUSTOMER_HW4
 	}
-#endif /* CUSTOMER_HW_SAMSUNG */
+#endif /* CUSTOMER_HW4 */
 	return ret;
 }
 
@@ -289,7 +289,7 @@ int wl_android_set_roam_trigger(
 {
 	int roam_trigger[2];
 
-	sscanf(command, "%*s %d", &roam_trigger[0]);
+	sscanf(command, "%*s %10d", &roam_trigger[0]);
 	roam_trigger[1] = WLC_BAND_ALL;
 
 	return wldev_ioctl(dev, WLC_SET_ROAM_TRIGGER, roam_trigger,
@@ -322,7 +322,7 @@ int wl_android_set_roam_delta(
 {
 	int roam_delta[2];
 
-	sscanf(command, "%*s %d", &roam_delta[0]);
+	sscanf(command, "%*s %10d", &roam_delta[0]);
 	roam_delta[1] = WLC_BAND_ALL;
 
 	return wldev_ioctl(dev, WLC_SET_ROAM_DELTA, roam_delta,
@@ -355,7 +355,7 @@ int wl_android_set_roam_scan_period(
 {
 	int roam_scan_period = 0;
 
-	sscanf(command, "%*s %d", &roam_scan_period);
+	sscanf(command, "%*s %10d", &roam_scan_period);
 	return wldev_ioctl(dev, WLC_SET_ROAM_SCAN_PERIOD, &roam_scan_period,
 		sizeof(roam_scan_period), 1);
 }

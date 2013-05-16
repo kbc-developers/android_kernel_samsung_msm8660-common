@@ -3,13 +3,13 @@
  * Basically selected code segments from usb-cdc.c and usb-rndis.c
  *
  * Copyright (C) 1999-2012, Broadcom Corporation
- *
+ * 
  *      Unless you and Broadcom execute a separate written software license
  * agreement governing use of this software, this software is licensed to you
  * under the terms of the GNU General Public License version 2 (the "GPL"),
  * available at http://www.broadcom.com/licenses/GPLv2.php, with the
  * following added to such license:
- *
+ * 
  *      As a special exception, the copyright holders of this software give you
  * permission to link this software with independent modules, and to copy and
  * distribute the resulting executable under terms of your choice, provided that
@@ -17,12 +17,12 @@
  * the license of that module.  An independent module is a module which is not
  * derived from this software.  The special exception does not apply to any
  * modifications of the software.
- *
+ * 
  *      Notwithstanding the above, under no circumstances may you combine this
  * software in any way with any other Broadcom software provided under a license
  * other than the GPL, without Broadcom's express prior written consent.
  *
- * $Id: dhd_linux.c 309571 2012-01-20 01:45:10Z $
+ * $Id: dhd_linux.c 373329 2012-12-07 04:46:09Z $
  */
 
 #include <typedefs.h>
@@ -286,11 +286,12 @@ typedef struct dhd_info {
 
 	tsk_ctl_t	thr_dpc_ctl;
 	tsk_ctl_t	thr_wdt_ctl;
-
-#else
-	bool dhd_tasklet_create;
 #endif /* DHDTHREAD */
+	bool dhd_tasklet_create;
 	tsk_ctl_t	thr_sysioc_ctl;
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(2, 6, 27))
+	struct work_struct work_hang;
+#endif
 
 	/* Wakelocks */
 #if defined(CONFIG_HAS_WAKELOCK) && (LINUX_VERSION_CODE >= KERNEL_VERSION(2, 6, 27))
@@ -315,9 +316,9 @@ typedef struct dhd_info {
 	atomic_t pend_8021x_cnt;
 	dhd_attach_states_t dhd_state;
 
-#ifdef CONFIG_HAS_EARLYSUSPEND
+#if defined(CONFIG_HAS_EARLYSUSPEND) && defined(DHD_USE_EARLYSUSPEND)
 	struct early_suspend early_suspend;
-#endif /* CONFIG_HAS_EARLYSUSPEND */
+#endif /* CONFIG_HAS_EARLYSUSPEND  && defined(DHD_USE_EARLYSUSPEND) */
 
 #ifdef ARP_OFFLOAD_SUPPORT
 	u32 pend_ipaddr;
@@ -329,6 +330,9 @@ typedef struct dhd_info {
 	bool rpcth_timer_active;
 #endif
 } dhd_info_t;
+
+/* Flag to indicate if we should download firmware on driver load */
+uint dhd_download_fw_on_driverload = TRUE;
 
 /* Definitions to provide path to the firmware and nvram
  * example nvram_path[MOD_PARAM_PATHLEN]="/projects/wlan/nvram.txt"
@@ -5108,6 +5112,18 @@ int net_os_send_hang_message(struct net_device *dev)
 			dev_open(dev);
 #endif
 #endif /* WL_CFG80211 */
+		}
+	}
+	return ret;
+}
+
+int dhd_os_send_hang_message(dhd_pub_t *dhdp)
+{
+	int ret = 0;
+	if (dhdp) {
+		if (!dhdp->hang_was_sent) {
+			dhdp->hang_was_sent = 1;
+			schedule_work(&dhdp->info->work_hang);
 		}
 	}
 	return ret;

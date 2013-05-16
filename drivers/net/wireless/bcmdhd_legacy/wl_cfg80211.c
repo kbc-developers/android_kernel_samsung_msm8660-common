@@ -360,7 +360,7 @@ static s32 wl_set_set_sharedkey(struct net_device *dev,
 	struct cfg80211_connect_params *sme);
 #ifdef BCMWAPI_WPI
 static s32 wl_set_set_wapi_ie(struct net_device *dev,
-        struct cfg80211_connect_params *sme);
+	struct cfg80211_connect_params *sme);
 #endif
 static s32 wl_get_assoc_ies(struct wl_priv *wl, struct net_device *ndev);
 static void wl_ch_to_chanspec(int ch,
@@ -6906,12 +6906,12 @@ static void wl_notify_iscan_complete(struct wl_iscan_ctrl *iscan, bool aborted)
 		return;
 	}
 	spin_lock_irqsave(&wl->cfgdrv_lock, flags);
-	wl_clr_drv_status(wl, SCANNING, ndev);
 	if (likely(wl->scan_request)) {
 		cfg80211_scan_done(wl->scan_request, aborted);
 		wl->scan_request = NULL;
 	}
 	spin_unlock_irqrestore(&wl->cfgdrv_lock, flags);
+	wl_clr_drv_status(wl, SCANNING, ndev);
 	wl->iscan_kickstart = false;
 }
 
@@ -6983,7 +6983,7 @@ static s32 wl_iscan_pending(struct wl_priv *wl)
 	s32 err = 0;
 
 	/* Reschedule the timer */
-	mod_timer(&iscan->timer, jiffies + msecs_to_jiffies(iscan->timer_ms));
+	mod_timer(&iscan->timer, jiffies + iscan->timer_ms * HZ / 1000);
 	iscan->timer_on = 1;
 
 	return err;
@@ -6999,7 +6999,7 @@ static s32 wl_iscan_inprogress(struct wl_priv *wl)
 	wl_run_iscan(iscan, NULL, WL_SCAN_ACTION_CONTINUE);
 	mutex_unlock(&wl->usr_sync);
 	/* Reschedule the timer */
-	mod_timer(&iscan->timer, jiffies +  msecs_to_jiffies(iscan->timer_ms));
+	mod_timer(&iscan->timer, jiffies + iscan->timer_ms * HZ / 1000);
 	iscan->timer_on = 1;
 
 	return err;
@@ -7701,6 +7701,8 @@ s32 wl_cfg80211_attach(struct net_device *ndev, void *data)
 	}
 	wdev->iftype = wl_mode_to_nl80211_iftype(WL_MODE_BSS);
 	wl = (struct wl_priv *)wiphy_priv(wdev->wiphy);
+	WL_ERR(("%s: wl = 0x%08x\n", __FUNCTION__, (unsigned int)wl));
+
 	wl->wdev = wdev;
 	wl->pub = data;
 	INIT_LIST_HEAD(&wl->net_list);
@@ -7718,7 +7720,6 @@ s32 wl_cfg80211_attach(struct net_device *ndev, void *data)
 		WL_ERR(("Failed to init iwm_priv (%d)\n", err));
 		goto cfg80211_attach_out;
 	}
-
 	err = wl_setup_rfkill(wl, TRUE);
 	if (err) {
 		WL_ERR(("Failed to setup rfkill %d\n", err));
@@ -7732,7 +7733,7 @@ s32 wl_cfg80211_attach(struct net_device *ndev, void *data)
 #if defined(COEX_DHCP)
 	if (wl_cfg80211_btcoex_init(wl))
 		goto cfg80211_attach_out;
-#endif 
+#endif
 
 	wlcfg_drv_priv = wl;
 
@@ -7761,7 +7762,7 @@ void wl_cfg80211_detach(void *para)
 
 #if defined(COEX_DHCP)
 	wl_cfg80211_btcoex_deinit(wl);
-#endif 
+#endif
 
 #if defined(WLP2P) && (ENABLE_P2P_INTERFACE)
 	wl_cfg80211_detach_p2p();
@@ -7830,19 +7831,23 @@ static s32 wl_event_handler(void *data)
 	struct wl_priv *wl = NULL;
 	struct wl_event_q *e;
 	tsk_ctl_t *tsk = (tsk_ctl_t *)data;
+	int ret;
 
 	wl = (struct wl_priv *)tsk->parent;
-#ifndef USE_KTHREAD_API
-	DAEMONIZE("dhd_cfg80211_event");
-	complete(&tsk->completed);
-#else
 	WL_ERR(("tsk Enter, tsk = 0x%08x\n", (unsigned int)tsk));
-#endif
+	DAEMONIZE("dhd_cfg80211_event");
+	WL_ERR(("DAEMONIZE completed\n"));
+	complete(&tsk->completed);
+	WL_ERR(("tsk completed\n"));
 
-	while (down_interruptible (&tsk->sema) == 0) {
+	while ((ret = down_interruptible (&tsk->sema)) == 0) {
+		WL_DBG(("down the event sema\n"));
 		SMP_RD_BARRIER_DEPENDS();
-		if (tsk->terminated)
+		if (tsk->terminated) {
+			WL_DBG(("%s was terminated[%d] ret=%d\n",
+				__func__, __LINE__, ret));
 			break;
+		}
 		while ((e = wl_deq_event(wl))) {
 			WL_DBG(("event type (%d), if idx: %d\n", e->etype, e->emsg.ifidx));
 			/* All P2P device address related events comes on primary interface since
@@ -7857,15 +7862,17 @@ static s32 wl_event_handler(void *data)
 			if (!netdev)
 				netdev = wl_to_prmry_ndev(wl);
 			if (e->etype < WLC_E_LAST && wl->evt_handler[e->etype]) {
+				WL_DBG(("call event handler\n"));
 				wl->evt_handler[e->etype] (wl, netdev, &e->emsg, e->edata);
 			} else {
+
 				WL_DBG(("Unknown Event (%d): ignoring\n", e->etype));
 			}
 			wl_put_event(e);
 		}
 		DHD_OS_WAKE_UNLOCK(wl->pub);
 	}
-	WL_ERR(("%s was terminated\n", __func__));
+	WL_ERR(("%s was terminated[%d] ret=%d\n", __func__, __LINE__, ret));
 	complete_and_exit(&tsk->completed, 0);
 	return 0;
 }
@@ -7875,6 +7882,9 @@ wl_cfg80211_event(struct net_device *ndev, const wl_event_msg_t * e, void *data)
 {
 	u32 event_type = ntoh32(e->event_type);
 	struct wl_priv *wl = wlcfg_drv_priv;
+#if defined(PNO_SUPPORT) && defined(CONFIG_HAS_WAKELOCK)
+	int pno_wakelock_timeout = 10; /* 10 second */
+#endif
 
 #if (WL_DBG_LEVEL > 0)
 	s8 *estr = (event_type <= sizeof(wl_dbg_estr) / WL_DBG_ESTR_MAX - 1) ?
@@ -7882,12 +7892,15 @@ wl_cfg80211_event(struct net_device *ndev, const wl_event_msg_t * e, void *data)
 	WL_DBG(("event_type (%d):" "WLC_E_" "%s\n", event_type, estr));
 #endif /* (WL_DBG_LEVEL > 0) */
 
-	if (event_type == WLC_E_PFN_NET_FOUND) {
-		WL_DBG((" PNOEVENT: PNO_NET_FOUND\n"));
+	if (event_type == WLC_E_PFN_NET_FOUND)
+	{
+#if defined(PNO_SUPPORT) && defined(CONFIG_HAS_WAKELOCK)
+		net_os_wake_lock_timeout_for_pno(ndev, pno_wakelock_timeout);
+#endif
+		WL_ERR((" PNO Event\n"));
 	}
-	else if (event_type == WLC_E_PFN_NET_LOST) {
-		WL_DBG((" PNOEVENT: PNO_NET_LOST\n"));
-	}
+	else if (event_type == WLC_E_PFN_NET_LOST)
+		WL_ERR((" PNOEVENT: PNO_NET_LOST\n"));
 
 	if (likely(!wl_enq_event(wl, ndev, event_type, e, data)))
 		wl_wakeup_event(wl);
@@ -7962,6 +7975,7 @@ wl_enq_event(struct wl_priv *wl, struct net_device *ndev, u32 event, const wl_ev
 	if (data)
 		memcpy(e->edata, data, data_len);
 	flags = wl_lock_eq(wl);
+	WL_DBG(("enque the event to event queue\n"));
 	list_add_tail(&e->eq_list, &wl->eq_list);
 	wl_unlock_eq(wl, flags);
 
@@ -8243,7 +8257,7 @@ static s32 __wl_cfg80211_up(struct wl_priv *wl)
 	struct net_device *ndev = wl_to_prmry_ndev(wl);
 	struct wireless_dev *wdev = ndev->ieee80211_ptr;
 
-	WL_DBG(("In\n"));
+	WL_TRACE(("In\n"));
 
 	err = dhd_config_dongle(wl, false);
 	if (unlikely(err))
@@ -8275,18 +8289,10 @@ static s32 __wl_cfg80211_down(struct wl_priv *wl)
 	/* Check if cfg80211 interface is already down */
 	if (!wl_get_drv_status(wl, READY, ndev))
 		return err;	/* it is even not ready */
-
 	for_each_ndev(wl, iter, next)
 		wl_set_drv_status(wl, SCAN_ABORTING, iter->ndev);
 
-
 	wl_term_iscan(wl);
-	spin_lock_irqsave(&wl->cfgdrv_lock, flags);
-	if (wl->scan_request) {
-		cfg80211_scan_done(wl->scan_request, true);
-		wl->scan_request = NULL;
-	}
-	spin_unlock_irqrestore(&wl->cfgdrv_lock, flags);
 
 	for_each_ndev(wl, iter, next) {
 		wl_clr_drv_status(wl, READY, iter->ndev);
@@ -8298,8 +8304,14 @@ static s32 __wl_cfg80211_down(struct wl_priv *wl)
 		wl_clr_drv_status(wl, AP_CREATED, iter->ndev);
 		wl_clr_drv_status(wl, AP_CREATING, iter->ndev);
 	}
+	spin_lock_irqsave(&wl->cfgdrv_lock, flags);
+	if (wl->scan_request) {
+		cfg80211_scan_done(wl->scan_request, true);
+		wl->scan_request = NULL;
+	}
 	wl_to_prmry_ndev(wl)->ieee80211_ptr->iftype =
 		NL80211_IFTYPE_STATION;
+	spin_unlock_irqrestore(&wl->cfgdrv_lock, flags);
 
 	DNGL_FUNC(dhd_cfg80211_down, (wl));
 	wl_flush_eq(wl);
@@ -8317,8 +8329,9 @@ s32 wl_cfg80211_up(void *para)
 	s32 err = 0;
 	int val = 1;
 	dhd_pub_t *dhd;
+
 	(void)para;
-	WL_DBG(("In\n"));
+	WL_TRACE(("In\n"));
 	wl = wlcfg_drv_priv;
 
 	if ((err = wldev_ioctl(wl_to_prmry_ndev(wl), WLC_GET_VERSION, &val,
@@ -8341,9 +8354,10 @@ s32 wl_cfg80211_up(void *para)
 		wl_cfg80211_attach_post(wl_to_prmry_ndev(wl));
 	}
 	err = __wl_cfg80211_up(wl);
-	if (unlikely(err))
+	if (err)
 		WL_ERR(("__wl_cfg80211_up failed\n"));
 	mutex_unlock(&wl->usr_sync);
+
 	return err;
 }
 
@@ -8367,7 +8381,7 @@ s32 wl_cfg80211_down(void *para)
 	s32 err = 0;
 
 	(void)para;
-	WL_DBG(("In\n"));
+	WL_TRACE(("In\n"));
 	wl = wlcfg_drv_priv;
 	mutex_lock(&wl->usr_sync);
 	err = __wl_cfg80211_down(wl);

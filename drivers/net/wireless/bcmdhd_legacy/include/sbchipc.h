@@ -185,7 +185,7 @@ typedef volatile struct {
 	
 	uint32	clkdiv2;
 	
-	uint32	PAD;
+	uint32	otpcontrol1;
 	uint32	fabid;			
 
 	
@@ -289,9 +289,14 @@ typedef volatile struct {
 	uint32	pllcontrol_data;
 	uint32	pmustrapopt;		
 	uint32	pmu_xtalfreq;		
-	uint32	PAD[100];
-	uint16	sromotp[512];
-
+	uint32  retention_ctl;         
+	uint32  PAD[3];
+	uint32  retention_grpidx;      
+	uint32  retention_grpctl;      
+	uint32  PAD[94];
+	uint16	sromotp[512];		
+#ifdef NFLASH_SUPPORT
+	
 	uint32	nand_revision;		
 	uint32	nand_cmd_start;
 	uint32	nand_cmd_addr_x;
@@ -353,6 +358,16 @@ typedef volatile struct {
 	uint32	nand_cache_data;
 	uint32	nand_ctrl_config;
 	uint32	nand_ctrl_status;
+#endif
+	uint32  gci_corecaps0;
+	uint32	gci_corecaps1;
+	uint32	gci_corecaps2;
+	uint32	gci_corectrl;
+	uint32	gci_corestat;
+	uint32	PAD[11];
+	uint32	gci_indirect_addr;
+	uint32	PAD[111];
+	uint32	gci_chipctrl;
 } chipcregs_t;
 
 #endif 
@@ -2132,14 +2147,12 @@ typedef volatile struct {
 #define RES4360_REGULATOR          0
 #define RES4360_ILP_AVAIL          1
 #define RES4360_ILP_REQ            2
-#define RES4360_XTAL_PU            3
-#define RES4360_ALP_AVAIL          4
-#define RES4360_BBPLLPWRSW_PU      5
-#define RES4360_HT_AVAIL           6
-#define RES4360_OTP_PU             7
-#define RES4360_USBLDO_PU          8
-#define RES4360_USBPLL_PWRSW_PU    9
-#define RES4360_LQ_AVAIL           10
+#define RES4360_XTAL_LDO_PU        3
+#define RES4360_XTAL_PU            4
+#define RES4360_ALP_AVAIL          5
+#define RES4360_BBPLLPWRSW_PU      6
+#define RES4360_HT_AVAIL           7
+#define RES4360_OTP_PU             8
 
 #define CST4360_XTAL_40MZ                  0x00000001
 #define CST4360_SFLASH                     0x00000002

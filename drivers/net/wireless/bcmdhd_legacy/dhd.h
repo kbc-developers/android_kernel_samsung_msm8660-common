@@ -5,13 +5,13 @@
  * DHD OS, bus, and protocol modules.
  *
  * Copyright (C) 1999-2012, Broadcom Corporation
- *
+ * 
  *      Unless you and Broadcom execute a separate written software license
  * agreement governing use of this software, this software is licensed to you
  * under the terms of the GNU General Public License version 2 (the "GPL"),
  * available at http://www.broadcom.com/licenses/GPLv2.php, with the
  * following added to such license:
- *
+ * 
  *      As a special exception, the copyright holders of this software give you
  * permission to link this software with independent modules, and to copy and
  * distribute the resulting executable under terms of your choice, provided that
@@ -19,12 +19,12 @@
  * the license of that module.  An independent module is a module which is not
  * derived from this software.  The special exception does not apply to any
  * modifications of the software.
- *
+ * 
  *      Notwithstanding the above, under no circumstances may you combine this
  * software in any way with any other Broadcom software provided under a license
  * other than the GPL, without Broadcom's express prior written consent.
  *
- * $Id: dhd.h 309548 2012-01-20 01:13:08Z $
+ * $Id: dhd.h 363319 2012-10-17 04:44:07Z $
  */
 
 /****************
@@ -59,8 +59,11 @@ int setScheduler(struct task_struct *p, int policy, struct sched_param *param);
 #include <wlioctl.h>
 #include <wlfc_proto.h>
 
-// For dual support of WCN3660 and BCM4334
+
+#if defined(CUSTOMER_HW4)
+/* Customer requirement */
 #undef CONFIG_WIRELESS_EXT
+#endif
 
 /* Forward decls */
 struct dhd_bus;
@@ -497,6 +500,8 @@ extern void dhd_os_sdunlock_sndup_rxq(dhd_pub_t * pub);
 extern void dhd_os_sdlock_eventq(dhd_pub_t * pub);
 extern void dhd_os_sdunlock_eventq(dhd_pub_t * pub);
 extern bool dhd_os_check_hang(dhd_pub_t *dhdp, int ifidx, int ret);
+extern int dhd_os_send_hang_message(dhd_pub_t *dhdp);
+extern void dhd_set_version_info(dhd_pub_t *pub, char *fw);
 
 #ifdef PNO_SUPPORT
 extern int dhd_pno_enable(dhd_pub_t *dhd, int pfn_enabled);
@@ -842,6 +847,7 @@ extern int dhd_pno_set_add(dhd_pub_t *dhd, wl_pfn_t *netinfo, int nssid, ushort 
 	ushort slowscan_fr, uint8 pno_repeat, uint8 pno_freq_expo_max, int16 flags);
 extern int dhd_pno_cfg(dhd_pub_t *dhd, wl_pfn_cfg_t *pcfg);
 extern int dhd_pno_suspend(dhd_pub_t *dhd, int pfn_suspend);
+extern int net_os_wake_lock_timeout_for_pno(struct net_device *dev, int sec);
 #endif /* PNO_SUPPORT */
 #ifdef ARP_OFFLOAD_SUPPORT
 #define MAX_IPV4_ENTRIES	8
