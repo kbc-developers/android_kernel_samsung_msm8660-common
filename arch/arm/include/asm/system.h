@@ -336,6 +336,7 @@ static inline unsigned long __xchg(unsigned long x, volatile void *ptr, int size
 
 extern void disable_hlt(void);
 extern void enable_hlt(void);
+extern int get_hlt(void);
 
 void cpu_idle_wait(void);
 
