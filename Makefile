@@ -376,13 +376,13 @@ KBUILD_CFLAGS   := -Wall -Werror -Wundef -Wstrict-prototypes -Wno-trigraphs \
 ifeq ($(USE_CFLAGS_OPTION),y)
 ifeq ($(BUILD_DEVICE),SC03D)
 MODFLAGS  = -fgcse-lm -fgcse-sm -fsched-spec-load -fforce-addr -ffast-math \
-            -fsingle-precision-constant -mtune=cortex-a8 -marm -march=armv7-a \
-            -mfpu=neon -ftree-vectorize -mvectorize-with-neon-double -funroll-loops
+            -fsingle-precision-constant -mcpu=cortex-a9 -mtune=cortex-a9 -marm \
+            -mfpu=neon-vfpv4 -ftree-vectorize -mvectorize-with-neon-double -funroll-loops
 endif
 ifeq ($(BUILD_DEVICE),SC05D)
 MODFLAGS  = -fgcse-lm -fgcse-sm -fsched-spec-load -fforce-addr -ffast-math \
-            -fsingle-precision-constant -mtune=cortex-a8 -marm -march=armv7-a \
-            -mfpu=neon
+            -fsingle-precision-constant -mcpu=cortex-a9 -mtune=cortex-a9 -marm \
+            -mfpu=neon-vfpv4
 endif
 endif
 KBUILD_AFLAGS_KERNEL :=
