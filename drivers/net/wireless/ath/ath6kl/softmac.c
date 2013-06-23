@@ -98,6 +98,7 @@ static int ath6kl_fetch_nvmac_info(struct ath6kl *ar)
 
 		/* copy .nvmac.info file to .mac.info
 		   wifi driver will use .mac.info finally */
+#if !defined(CONFIG_JPN_MODEL_SC_01E)
 		if (isnvmac_file >= 16) {
 			ret = android_readwrite_file(nvfilepath,
 				(char *)softmac_temp, NULL, isnvmac_file);
@@ -112,6 +113,7 @@ static int ath6kl_fetch_nvmac_info(struct ath6kl *ar)
 			ret = android_readwrite_file(softmac_old_filename,
 				NULL, (char *)softmac_temp, ret);
 		}
+#endif
 
 		if (isnvmac_file < 16 && ismac_file < 16) {
 			snprintf(softmac_temp, sizeof(softmac_temp),
