@@ -7,16 +7,20 @@ check_and_get_linaro()
     COMPILER_ARCH=$1
     TOOLCHAIN_VER=$2
     COMPILER_VER=$3
-    COMPILER_REV=$4"_linux"
+    if [ ! $4 == "" ]; then
+        COMPILER_REV="-"$4"_linux"
+    else
+        COMPILER_REV="_linux"
+    fi
 
-    if [ ! -d $TOOLCHAIN_DIR/gcc-linaro-$COMPILER_ARCH-$TOOLCHAIN_VER-$COMPILER_VER-$COMPILER_REV/$COMPILER_ARCH ]; then
-        wget --no-check-certificate https://launchpad.net/linaro-toolchain-binaries/trunk/$COMPILER_VER/+download/gcc-linaro-$COMPILER_ARCH-$TOOLCHAIN_VER-$COMPILER_VER-$COMPILER_REV.tar.bz2
+    if [ ! -d $TOOLCHAIN_DIR/gcc-linaro-$COMPILER_ARCH-$TOOLCHAIN_VER-$COMPILER_VER$COMPILER_REV/$COMPILER_ARCH ]; then
+        wget --no-check-certificate https://launchpad.net/linaro-toolchain-binaries/trunk/$COMPILER_VER/+download/gcc-linaro-$COMPILER_ARCH-$TOOLCHAIN_VER-$COMPILER_VER$COMPILER_REV.tar.bz2
         sudo mkdir -p $TOOLCHAIN_DIR
-        sudo tar jxvf gcc-linaro-$COMPILER_ARCH-$TOOLCHAIN_VER-$COMPILER_VER-$COMPILER_REV.tar.bz2 -C $TOOLCHAIN_DIR
+        sudo tar jxvf gcc-linaro-$COMPILER_ARCH-$TOOLCHAIN_VER-$COMPILER_VER$COMPILER_REV.tar.bz2 -C $TOOLCHAIN_DIR
         #rm gcc-linaro-$COMPILER_ARCH-$TOOLCHAIN_VER-$COMPILER_VER-$COMPILER_REV.tar.bz2
     fi
 
-    echo $TOOLCHAIN_DIR/gcc-linaro-$COMPILER_ARCH-$TOOLCHAIN_VER-$COMPILER_VER-$COMPILER_REV/bin/$COMPILER_ARCH-
+    echo $TOOLCHAIN_DIR/gcc-linaro-$COMPILER_ARCH-$TOOLCHAIN_VER-$COMPILER_VER$COMPILER_REV/bin/$COMPILER_ARCH-
 }
 
 # aosp compiler
