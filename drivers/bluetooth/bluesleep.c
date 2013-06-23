@@ -253,6 +253,14 @@ static void bluesleep_sleep_work(struct work_struct *work)
 			BT_INFO("hsuart_power...  bt_enter_sleep_mode_cnt init " );
 		}
 		#endif
+
+        #if defined(CONFIG_JPN_MODEL_SC_01E)
+        if (bsi->uport == NULL )
+        {
+            BT_INFO("hsuart_power...but bsi->uport == NULL , so return");
+            return ;
+        }
+		#endif
 		
 		if (msm_hs_tx_empty(bsi->uport)
 			#if defined(CONFIG_KOR_MODEL_SHV_E150S) || defined(CONFIG_JPN_MODEL_SC_01E)

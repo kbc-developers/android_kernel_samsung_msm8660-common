@@ -40,6 +40,8 @@
 
 #if defined(CONFIG_TARGET_SERIES_P5LTE) || defined (CONFIG_TARGET_SERIES_P4LTE)
 #include "s5k5ccaf_regs_p5.h"
+#elif defined(CONFIG_TARGET_SERIES_P8LTE) && defined(CONFIG_JPN_OPERATOR_NTT)
+#include "s5k5ccaf_regs_p8_ntt.h"
 #elif defined(CONFIG_TARGET_SERIES_P8LTE)
 #include "s5k5ccaf_regs_p8_skt.h"
 #else
@@ -2159,8 +2161,11 @@ static int s5k5ccaf_sensor_probe(const struct msm_camera_sensor_info *info,
 	s->s_config  = s5k5ccaf_sensor_config;
 	s->s_ext_config	= s5k5ccaf_sensor_ext_config;
 	s->s_camera_type = BACK_CAMERA_2D;
+#ifdef CONFIG_JPN_MODEL_SC_01E
+	s->s_mount_angle = 90;
+#else
 	s->s_mount_angle = 0;
-
+#endif
 probe_done:
 	CDBG("%s %s:%d\n", __FILE__, __func__, __LINE__);
 	return rc;

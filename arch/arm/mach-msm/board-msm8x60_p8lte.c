@@ -2958,8 +2958,13 @@ static struct p5_battery_platform_data p5_battery_platform = {
 	.temp_low_recovery = 1700,
 	.temp_low_threshold = -4000,
 #endif
+#if defined(CONFIG_JPN_MODEL_SC_01E)
+	.charge_duration = 10*60*60,		/* 10 hour */
+	.recharge_duration = 1.5*60*60,		/* 2 hour */
+#else
 	.charge_duration = 10*60*60,		/* 10 hour */
 	.recharge_duration = 2*60*60,		/* 2 hour */
+#endif
 #else
 #if defined(CONFIG_EUR_OPERATOR_OPEN)
 	.temp_high_threshold = 50000,		/* 50 'C */
