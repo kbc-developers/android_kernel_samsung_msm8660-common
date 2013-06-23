@@ -46,6 +46,17 @@ elif [ "$BUILD_DEVICE" = 'SC03D' ]; then
   KERNEL_RAMDISK_ADDRESS=0x41800000
   KERNEL_RAMDISK_OFFSET=0x01400000
 
+elif [ "$BUILD_DEVICE" = 'SC01E' ]; then
+  AOSP_DEFCONFIG=kbc_sc01e_aosp_defconfig
+  SAM_DEFCONFIG=kbc_sc01e_samsung_defconfig
+  RECO_DEFCONFIG=kbc_sc01e_recovery_defconfig
+  MULTI_DEFCONFIG=kbc_sc01e_multi_defconfig
+  MOD_VERSION=sc01e_mod_version
+  BOOT_RAMDISK_NAME=sc01e_boot_ramdisk
+  RECOVERY_RAMDISK_NAME=sc01e_recovery_ramdisk
+  KERNEL_BASE_ADDRESS=0x48000000
+  KERNEL_RAMDISK_ADDRESS=0x49400000
+
 else
   echo "error: not found BUILD_DEVICE"
   exit -1
