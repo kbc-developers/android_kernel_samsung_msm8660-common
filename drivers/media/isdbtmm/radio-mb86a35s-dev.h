@@ -56,11 +56,9 @@
 #include <linux/dma-mapping.h>
 #include <linux/gpio.h>
 #include <linux/wakelock.h>
-/* matsumaru_mod */
 #include <linux/kthread.h>
 #include <linux/spinlock.h>
 #include <linux/sched.h>
-/* matsumaru_mod */
 
 #define	NODE_MAJOR		225	/* Major No. */
 #define	NODE_MINOR		0	/* Minor No. */

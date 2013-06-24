@@ -730,7 +730,14 @@ int msm_camio_sensor_clk_on(struct platform_device *pdev)
 		msleep(5);
 	}
 	return rc;
+#elif defined(CONFIG_MACH_P5_LTE)
+	//  MCLK
+	rc = msm_camio_clk_enable(CAMIO_CAM_MCLK_CLK);  //MCLK ON
+	
+	mclk_cfg = GPIO_CFG(32, 1, GPIO_CFG_OUTPUT, GPIO_CFG_NO_PULL, GPIO_CFG_4MA);
+	gpio_tlmm_config(mclk_cfg, GPIO_CFG_ENABLE);	
 
+   	return rc;
 #else
 	return msm_camio_clk_enable(CAMIO_CAM_MCLK_CLK);
 #endif

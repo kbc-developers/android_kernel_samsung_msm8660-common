@@ -9464,7 +9464,7 @@ static const u8 *mxt224e_config[] = {
 	end_config_e,
 };
 #else
-#if defined (CONFIG_USA_MODEL_SGH_I727) || defined (CONFIG_JPN_MODEL_SC_03D)
+#if defined (CONFIG_USA_MODEL_SGH_I727) 
 static u8 t7_config_e[] = {GEN_POWERCONFIG_T7,
 				48,		/* IDLEACQINT */
 				255,	/* ACTVACQINT */

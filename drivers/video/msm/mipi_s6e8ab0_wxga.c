@@ -220,6 +220,8 @@ static char ETC_COND_SET_2_3[3] = {0xB1, 0x04, 0x00};
 static char ETC_COND_SET_2_4[10] = {0xB6, 0x0C, 0x02, 0x03, 0x32, 0xC0, 0x44, 0x44, 0xC0, 0x00};
 static char ETC_COND_SET_2_7[8] = {0xF4, 0xCF, 0x0A, 0x12, 0x10, 0x19, 0x33, 0x03 };
 
+//AID Logic - Static Arrays
+#if !defined(CONFIG_S6E8AB0_WXGA_P8_AID)
 static char PANEL_COND_SET[41] = {
 	0xF8,
 	0x01, 0x8E, 0x00, 0x00, 0x00, 0xAC, 0x00, 0x9E, 0x8D, 0x1F, 
@@ -227,6 +229,14 @@ static char PANEL_COND_SET[41] = {
 	0x10, 0x00, 0x00, 0x02, 0x08, 0x10, 0x34, 0x34, 0x34, 0xC0, 
 	0xC1, 0x01, 0x00, 0xC1, 0x82, 0x00, 0xC8, 0xC1, 0xE3, 0x01
 };
+#endif
+
+
+//AID Logic - Static Arrays
+#if defined(CONFIG_S6E8AB0_WXGA_P8_AID)
+static char PANEL_COND_SET_7500K_250CD_AID[41] = {0xF8,0x01,0x8E,0x00,0x00,0x00,0xAC,0x00,0x9E,0x8D,0x1F,0x4E,0x9C,0x7D,0x3F,0x10,0x00,0x20,0x02,0x10,0x7D,0x10,0x00,0x00,0x02,0x08,0x10,0x34,0x34,0x34,0xC0,0xC1,0x01,0x81,0xC1,0x81,0x00,0xC8,0xC1,0xE3,0x01};
+static char ETC_COND_SET_2_3_AID[22] = {0xD9, 0x14,0x5C,0x20,0x0C,0x0F,0x41,0x00,0x10,0x11,0x12,0xA8,0x55,0x00,0x00,0x00,0x00,0x80,0xCB,0xED,0x64,0xAF};
+#endif
 
 static char DISPLAY_COND_SET[4] = { 0xF2, 0xC8, 0x05, 0x0D };
 
@@ -252,6 +262,7 @@ const unsigned char SEQ_ACL_CUTOFF_40[] = {
 	0x37, 0x37, 0x37, 0x37, 0x37, 0x37, 0x37, 0x1D, 0x4D, 0x96, 
 };
 
+static char POWER_CONTROL_SET[9] = {0xF5, 0x50, 0x33, 0x33, 0x00, 0x54, 0x96, 0x33, 0x01};
 static char exit_sleep[2] = {0x11, 0x00};
 static char display_on[2] = {0x29, 0x00};
 static char display_off[2] = {0x28, 0x00};
@@ -310,14 +321,21 @@ static struct dsi_cmd_desc s6e8ab0_display_on_before_read_id[] = {
 };
 
 static struct dsi_cmd_desc s6e8ab0_display_on_before_gamma_cmds[] = {
+    {DTYPE_DCS_WRITE,  1, 0, 0, 0, sizeof(POWER_CONTROL_SET), POWER_CONTROL_SET},	
     {DTYPE_DCS_WRITE,  1, 0, 0, 5, sizeof(exit_sleep), exit_sleep},
     {DTYPE_GEN_LWRITE, 1, 0, 0, 0, sizeof(AUTO_POW_ON_2), AUTO_POW_ON_2},
+#if defined(CONFIG_S6E8AB0_WXGA_P8_AID)
+    {DTYPE_DCS_LWRITE, 1, 0, 0, 0, sizeof(PANEL_COND_SET_7500K_250CD_AID), PANEL_COND_SET_7500K_250CD_AID},    
+#else
     {DTYPE_GEN_LWRITE, 1, 0, 0, 0, sizeof(PANEL_COND_SET), PANEL_COND_SET},    
+#endif
     {DTYPE_GEN_LWRITE, 1, 0, 0, 0, sizeof(AUTO_POW_ON_2), AUTO_POW_ON_2},
     {DTYPE_GEN_LWRITE, 1, 0, 0, 0, sizeof(DISPLAY_COND_SET), DISPLAY_COND_SET},    
     {DTYPE_GEN_LWRITE, 1, 0, 0, 0, sizeof(gamma_select_cmd), gamma_select_cmd},
 //    {DTYPE_GEN_LWRITE, 1, 0, 0, 0, sizeof(ETC_COND_SET_2_1), ETC_COND_SET_2_1},
-//    {DTYPE_GEN_LWRITE, 1, 0, 0, 0, sizeof(ETC_COND_SET_2_3), ETC_COND_SET_2_3},
+#if defined(CONFIG_S6E8AB0_WXGA_P8_AID)
+	{DTYPE_GEN_LWRITE, 1, 0, 0, 0, sizeof(ETC_COND_SET_2_3_AID), ETC_COND_SET_2_3_AID},
+#endif
 //    {DTYPE_GEN_LWRITE, 1, 0, 0, 0, sizeof(ETC_COND_SET_2_4), ETC_COND_SET_2_4},
 //    {DTYPE_GEN_LWRITE, 1, 0, 0, 0, sizeof(ETC_COND_SET_2_7), ETC_COND_SET_2_7},    
 };
@@ -333,6 +351,25 @@ static struct dsi_cmd_desc s6e8ab0_display_on_after_gamma_cmds[] = {
   //  {DTYPE_DCS_WRITE, 1, 0, 0, 0, sizeof(display_on), display_on},
 };
 
+//AID Logic
+#if defined(CONFIG_S6E8AB0_WXGA_P8_AID)
+static inline boolean isPANEL_COND_SET( char* src )
+{
+	if( src == PANEL_COND_SET_7500K_250CD_AID )
+	return TRUE;
+	else
+	return FALSE;
+}
+
+static inline boolean is_ETC_COND_0xD9_SET( char* src )
+{
+	if( src == ETC_COND_SET_2_3_AID )
+	return TRUE;
+	else
+	return FALSE;
+}
+
+#else
 static inline boolean isPANEL_COND_SET( char* src )
 {
 	if( src == PANEL_COND_SET )
@@ -340,6 +377,9 @@ static inline boolean isPANEL_COND_SET( char* src )
 	else
 	return FALSE;
 }
+#endif
+
+
 
 #if 0
 char* get_s6e8ab0_id_buffer( void )
@@ -352,6 +392,14 @@ static void update_LCD_SEQ_by_id(struct lcd_setting *destLCD)
 {
 	int	PANEL_COND_SET_dlen_NEW = 0;
 	char* PANEL_COND_SET_NEW = NULL;
+	
+#if defined(CONFIG_S6E8AB0_WXGA_P8_AID)
+	int	PANEL_ETC_COND_0xD9_SET_dlen_NEW = 0;
+	char* PANEL_ETC_COND_0xD9_SET_NEW = NULL;
+
+	unsigned char* pNew_GAMMA_SmartDimming_VALUE_SET_250cd;
+#endif
+	
 	int updateCnt = 0;
 	int i;
 
@@ -378,8 +426,17 @@ static void update_LCD_SEQ_by_id(struct lcd_setting *destLCD)
 		break;
 	}
 	
+	//AID Logic
+#if defined(CONFIG_S6E8AB0_WXGA_P8_AID)
+	PANEL_COND_SET_dlen_NEW = sizeof(PANEL_COND_SET_7500K_250CD_AID);
+	PANEL_COND_SET_NEW = PANEL_COND_SET_7500K_250CD_AID;
+
+	PANEL_ETC_COND_0xD9_SET_dlen_NEW = sizeof(ETC_COND_SET_2_3_AID);
+	PANEL_ETC_COND_0xD9_SET_NEW = ETC_COND_SET_2_3_AID;
+#else	
 	PANEL_COND_SET_dlen_NEW = sizeof(PANEL_COND_SET);
 	PANEL_COND_SET_NEW = PANEL_COND_SET;
+#endif
 
 #if 0
 	for( i = 0; i < ARRAY_SIZE( s6e8ab0_display_on_cmds ); i++ )
@@ -403,16 +460,37 @@ static void update_LCD_SEQ_by_id(struct lcd_setting *destLCD)
 			updateCnt++;
 			LOG_ADD( " b%d", i );
 		}
+#if defined(CONFIG_S6E8AB0_WXGA_P8_AID)			
+		if( is_ETC_COND_0xD9_SET(s6e8ab0_display_on_before_gamma_cmds[i].payload))
+		{
+			s6e8ab0_display_on_before_gamma_cmds[i].dlen	= PANEL_ETC_COND_0xD9_SET_dlen_NEW;
+			s6e8ab0_display_on_before_gamma_cmds[i].payload	= PANEL_ETC_COND_0xD9_SET_NEW;
+			updateCnt++;
+			LOG_ADD( " fb%d", i );
+		}
+#endif
+
 	}
 
 	// smartDimming data initialiazing
 	if( destLCD->isSmartDimming && s6e8ab0_lcd.isSmartDimming_loaded )
 	{
+#if defined(CONFIG_S6E8AB0_WXGA_P8_AID)		
+		pNew_GAMMA_SmartDimming_VALUE_SET_250cd = NULL;
+#endif
 
 		switch(destLCD->factory_id_material)
 		{
 		case lcd_id_material_SM2:
+			
+#if defined(CONFIG_S6E8AB0_WXGA_P8_AID)		
+			pNew_GAMMA_SmartDimming_VALUE_SET_250cd = (unsigned char*) GAMMA_SmartDimming_VALUE_SET_A2SM2_AID1_250cd;
+			
+			init_table_info( &(s6e8ab0_lcd.smart), pNew_GAMMA_SmartDimming_VALUE_SET_250cd );
+#else
 			init_table_info( &(s6e8ab0_lcd.smart), gamma_300cd_sm2_panel );
+#endif
+			
 			break;
 
 		case lcd_id_material_M3:
@@ -1397,7 +1475,12 @@ static void lcd_set_acl(struct msm_fb_data_type *mfd, struct lcd_setting *lcd)
 	if (lcd->enabled_acl) {
 		switch (lcd->stored_acl) //bl level
 			{
-			case 0 ... 1: // 30cd ~ 40cd 
+
+#if defined(CONFIG_JPN_MODEL_SC_01E)
+			case 0 ... 2: // 30cd ~ 50cd 
+#else
+			case 0 ... 1 // 30cd ~ 40cd  
+#endif
 				if (lcd->lcd_acl != 0) {  // 40%
 					mipi_dsi_cmds_tx(mfd, &s6e8ab0_tx_buf, &(s6e8aa0_seq_acl_off),	1); 
 					lcd->lcd_acl = 0;					

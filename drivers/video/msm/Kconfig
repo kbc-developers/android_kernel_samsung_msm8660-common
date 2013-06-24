@@ -104,6 +104,10 @@ config CMC624_P8LTE
 	depends on FB && ARCH_MSM
 	default n
 
+config S6E8AB0_WXGA_P8_AID
+	bool "Support for P8 AID"
+	default n	
+
 config FB_MSM_OVERLAY
 	depends on FB_MSM_MDP40 && ANDROID_PMEM
 	bool "MDP4 overlay support"

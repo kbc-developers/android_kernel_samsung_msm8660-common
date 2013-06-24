@@ -1581,11 +1581,14 @@ void mdp4_mixer_blend_setup(struct mdp4_overlay_pipe *pipe)
 	} else if (fg_alpha) {
 		blend_op = (MDP4_BLEND_BG_ALPHA_FG_PIXEL |
 			    MDP4_BLEND_BG_INV_ALPHA);
+				if (!(pipe->flags & MDP_BLEND_FG_PREMULT))
+			blend_op |= MDP4_BLEND_FG_ALPHA_FG_PIXEL;
 		fg_color3_out = 1; /* keep fg alpha */
 	} else if (bg_alpha) {
-		blend_op = (MDP4_BLEND_BG_ALPHA_BG_PIXEL |
-			    MDP4_BLEND_FG_ALPHA_BG_PIXEL |
+				blend_op = (MDP4_BLEND_FG_ALPHA_BG_PIXEL |
 			    MDP4_BLEND_FG_INV_ALPHA);
+				if (!(pipe->flags & MDP_BLEND_FG_PREMULT))
+			blend_op |= MDP4_BLEND_BG_ALPHA_BG_PIXEL;
 		fg_color3_out = 0; /* keep bg alpha */
 	}
 

@@ -283,7 +283,7 @@ static int mmc_read_ext_csd(struct mmc_card *card, u8 *ext_csd)
 
 		/* Cards with density > 2GiB are sector addressed */
 		if (card->ext_csd.sectors > (2u * 1024 * 1024 * 1024) / 512){
-#if defined(CONFIG_KOR_MODEL_SHV_E140S) || defined(CONFIG_KOR_MODEL_SHV_E150S) || defined(CONFIG_KOR_MODEL_SHV_E140K) || defined(CONFIG_KOR_MODEL_SHV_E140L) || defined(CONFIG_USA_MODEL_SGH_I957 )
+#if defined(CONFIG_KOR_MODEL_SHV_E140S) || defined(CONFIG_KOR_MODEL_SHV_E150S) || defined(CONFIG_KOR_MODEL_SHV_E140K) || defined(CONFIG_KOR_MODEL_SHV_E140L) || defined(CONFIG_USA_MODEL_SGH_I957 ) || defined(CONFIG_EUR_MODEL_GT_P7320)
 			unsigned boot_sectors;
 			
 			boot_sectors = ext_csd[EXT_CSD_BOOT_MULT] * 512;

@@ -38,11 +38,17 @@
 #define SEND_KEY_CHECK_TIME_MS	30		/* 30ms */
 #elif defined (CONFIG_USA_MODEL_SGH_I957)
 #define SEND_KEY_CHECK_TIME_MS	40		/* 40ms */
+#elif defined (CONFIG_EUR_MODEL_GT_P7320) /*same as in HC*/
+#define SEND_KEY_CHECK_TIME_MS	120
 #else
 #define SEND_KEY_CHECK_TIME_MS	60		/* 60ms */
 #endif
 
+#if defined (CONFIG_EUR_MODEL_GT_P7320) /*same as in HC*/
+#define DET_CHECK_TIME_MS	200
+#else
 #define DET_CHECK_TIME_MS	50			/* 200ms -> 50ms */
+#endif
 #define WAKE_LOCK_TIME		(HZ * 5)	/* 5 sec */
 #define WAKE_LOCK_TIME_IN_SENDKEY (HZ * 1)
 #define SUPPORT_PBA
@@ -79,7 +85,7 @@
 #elif defined (CONFIG_USA_MODEL_SGH_I717)
 #define KEY_MEDIA_ADC_MIN 0
 #define KEY_MEDIA_ADC_MAX 76
-#elif defined (CONFIG_USA_MODEL_SGH_I957) || defined (CONFIG_EUR_MODEL_GT_P7320)
+#elif defined (CONFIG_USA_MODEL_SGH_I957)
 #define KEY_MEDIA_ADC_MIN 0
 #define KEY_MEDIA_ADC_MAX 178
 #elif defined (CONFIG_JPN_MODEL_SC_01D)
@@ -87,6 +93,9 @@
 #define KEY_MEDIA_ADC_MAX 178
 #elif defined(CONFIG_TARGET_SERIES_P5LTE) && defined (CONFIG_TARGET_LOCALE_KOR)
 /* P5LTE_KOR_SKT/KT/LGU E140S/K/L */
+#define KEY_MEDIA_ADC_MIN 0
+#define KEY_MEDIA_ADC_MAX 178
+#elif defined (CONFIG_EUR_MODEL_GT_P7320) /*same as in HC*/
 #define KEY_MEDIA_ADC_MIN 0
 #define KEY_MEDIA_ADC_MAX 178
 #else	// etc
@@ -136,12 +145,15 @@
 #elif defined (CONFIG_USA_MODEL_SGH_I717)
 #define KEY_VOLUMEUP_ADC_MIN 76
 #define KEY_VOLUMEUP_ADC_MAX 231
-#elif defined (CONFIG_USA_MODEL_SGH_I957) || defined (CONFIG_EUR_MODEL_GT_P7320)
+#elif defined (CONFIG_USA_MODEL_SGH_I957)
 #define KEY_VOLUMEUP_ADC_MIN 178
 #define KEY_VOLUMEUP_ADC_MAX 401
 #elif defined (CONFIG_JPN_MODEL_SC_01D)
 #define KEY_VOLUMEUP_ADC_MIN 189
 #define KEY_VOLUMEUP_ADC_MAX 391
+#elif defined (CONFIG_EUR_MODEL_GT_P7320) /*same as in HC*/
+#define KEY_VOLUMEUP_ADC_MIN 179
+#define KEY_VOLUMEUP_ADC_MAX 415
 #else
 #define KEY_VOLUMEUP_ADC_MIN 108
 #define KEY_VOLUMEUP_ADC_MAX 301
@@ -186,12 +198,15 @@
 #elif defined (CONFIG_USA_MODEL_SGH_I717)
 #define KEY_VOLUMEDOWN_ADC_MIN 231
 #define KEY_VOLUMEDOWN_ADC_MAX 681
-#elif defined (CONFIG_USA_MODEL_SGH_I957) || defined (CONFIG_EUR_MODEL_GT_P7320)
+#elif defined (CONFIG_USA_MODEL_SGH_I957)
 #define KEY_VOLUMEDOWN_ADC_MIN 401
 #define KEY_VOLUMEDOWN_ADC_MAX 832
 #elif defined (CONFIG_JPN_MODEL_SC_01D)
 #define KEY_VOLUMEDOWN_ADC_MIN 438
 #define KEY_VOLUMEDOWN_ADC_MAX 832
+#elif defined (CONFIG_EUR_MODEL_GT_P7320) /*same as in HC*/
+#define KEY_VOLUMEDOWN_ADC_MIN 416
+#define KEY_VOLUMEDOWN_ADC_MAX 1000
 #else
 #define KEY_VOLUMEDOWN_ADC_MIN 301
 #define KEY_VOLUMEDOWN_ADC_MAX 660

@@ -201,8 +201,8 @@ void mb86a35_com_gpio(unsigned long arg)
 		/* TMM_PWR_EN HIGH */
 		gpio_set_value(GPIO_PWR_EN, 1);
 
-		/* 10ms sleep */
-		usleep_range(10000, 10000);
+		/* 14ms sleep */
+		usleep_range(14000, 14000);
 		
 		/* TMM_XRESET HIGH */
 		gpio_set_value(GPIO_XRESET, 1);

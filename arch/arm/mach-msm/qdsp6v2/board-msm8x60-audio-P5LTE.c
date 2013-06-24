@@ -1664,7 +1664,7 @@ static void msm_snddev_disable_amic_power(void)
 		gpio_free(SNDDEV_GPIO_MIC1_ANCL_SEL);
 		gpio_free(SNDDEV_GPIO_MIC2_ANCR_SEL);
 	} else
-#if defined(CONFIG_USA_MODEL_SGH_I717) || defined(CONFIG_EUR_MODEL_GT_P7320)
+#if defined(CONFIG_USA_MODEL_SGH_I717)
 		if( get_hw_rev() >= 0x3 ){
 			gpio_direction_output(PM8058_GPIO_PM_TO_SYS(PMIC_GPIO_MAIN_MICBIAS_EN), 0);
 		}
@@ -1673,7 +1673,7 @@ static void msm_snddev_disable_amic_power(void)
 			if (ret)
 				pr_err("%s: Disabling amic power failed\n", __func__);
 		}
-#elif defined(CONFIG_USA_MODEL_SGH_I957)
+#elif defined(CONFIG_USA_MODEL_SGH_I957)  || defined(CONFIG_EUR_MODEL_GT_P7320)
 
 		gpio_direction_output(PM8058_GPIO_PM_TO_SYS(PMIC_GPIO_MAIN_MICBIAS_EN), 0);
 

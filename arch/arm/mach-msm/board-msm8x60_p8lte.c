@@ -2958,8 +2958,13 @@ static struct p5_battery_platform_data p5_battery_platform = {
 	.temp_low_recovery = 1700,
 	.temp_low_threshold = -4000,
 #endif
+#if defined(CONFIG_JPN_MODEL_SC_01E)
+	.charge_duration = 10*60*60,		/* 10 hour */
+	.recharge_duration = 1.5*60*60,		/* 2 hour */
+#else
 	.charge_duration = 10*60*60,		/* 10 hour */
 	.recharge_duration = 2*60*60,		/* 2 hour */
+#endif
 #else
 #if defined(CONFIG_EUR_OPERATOR_OPEN)
 	.temp_high_threshold = 50000,		/* 50 'C */
@@ -3809,7 +3814,11 @@ static const u8 *mxt224_config[] = {
 #define MXT768E_CHRGTIME_BATT		64
 #define MXT768E_CHRGTIME_CHRG		64
 #define MXT768E_THRESHOLD_BATT		30
+#if defined(CONFIG_JPN_MODEL_SC_01E)
+#define MXT768E_THRESHOLD_CHRG		50
+#else
 #define MXT768E_THRESHOLD_CHRG		40
+#endif
 #define MXT768E_CALCFG_BATT		242
 #define MXT768E_CALCFG_CHRG		114
 
@@ -3918,6 +3927,18 @@ static u8 t48_config_e[] = {PROCG_NOISESUPPRESSION_T48,
 	0, 0, 0, 0
 };
 
+#if defined(CONFIG_JPN_MODEL_SC_01E)
+static u8 t48_config_chrg_e[] = {PROCG_NOISESUPPRESSION_T48,
+	3, 0, MXT768E_CALCFG_CHRG, 15, 0, 0, 0, 0, 3, 5,
+	96, 20, 0, 6, 6, 0, 0, 48, 4, 64,
+	0, 0, 20, 0, 0, 0, 0, 15, 0, 0,
+	0, 0, 0, 0, 112, MXT768E_THRESHOLD_CHRG, 2, 10, 5, 81,
+	MXT768E_MAX_MT_FINGERS, 20, 40, 251, 251, 6, 6, 144, 50, 136,
+	30, 12, MXT768E_TCHHYST_CHRG, 0, 0, 0, 0, 0, 0, 0,
+	0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+	0, 0, 0, 0
+};
+#else
 static u8 t48_config_chrg_e[] = {PROCG_NOISESUPPRESSION_T48,
 	3, 0, MXT768E_CALCFG_CHRG, 15, 0, 0, 0, 0, 3, 5,
 	96, 20, 0, 6, 6, 0, 0, 48, 4, 64,
@@ -3928,6 +3949,7 @@ static u8 t48_config_chrg_e[] = {PROCG_NOISESUPPRESSION_T48,
 	0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 	0, 0, 0, 0
 };
+#endif
 
 static u8 t52_config_e[] = { TOUCH_PROXIMITY_KEY_T52,
 	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
@@ -4427,9 +4449,12 @@ static struct max17042_platform_data max17042_pdata = {
 #if defined(CONFIG_USA_OPERATOR_ATT) || defined(CONFIG_EUR_OPERATOR_OPEN) 
 	.sdi_capacity = 0x3138, //6300*2
 	.sdi_vfcapacity = 0x41A0, //8400*2
-#elif defined(CONFIG_KOR_OPERATOR_SKT) || defined(CONFIG_KOR_OPERATOR_KT) || defined(CONFIG_KOR_OPERATOR_LGU) || defined(CONFIG_JPN_OPERATOR_NTT)
+#elif defined(CONFIG_KOR_OPERATOR_SKT) || defined(CONFIG_KOR_OPERATOR_KT) || defined(CONFIG_KOR_OPERATOR_LGU)
 	.sdi_capacity = 0x2FA8, //6100*2
 	.sdi_vfcapacity = 0x3F8A, //8133*2
+#elif defined(CONFIG_JPN_OPERATOR_NTT)
+	.sdi_capacity = 0x2B06,  // 5507mAh
+	.sdi_vfcapacity = 0x395E,  // 7343mAh
 #else
 	.sdi_capacity = 0x2EE0,
 	.sdi_vfcapacity = 0x3E80,

@@ -114,6 +114,89 @@ static void ath6kl_hif_dump_fw_crash(struct ath6kl *ar)
 
 }
 
+#define DUMP_MASK_FULL_STACK                   0x01
+#define DUMP_MASK_DBGLOG                       0x02
+
+#define AR6003_HW211_KERNELSTACK_BASE          0x543938
+#define AR6003_HW211_KERNELSTACK_SIZE          2560
+#define MAX_DUMP_BYTE_NUM_ONE_ITERATION        256
+#define DUMP_STACK_OFFSET                      0x40
+
+#define AR6003_HW211_DBGLOG_ADDR               0x543730
+#define AR6003_HW211_DBGLOG_SIZE               3300
+
+static void ath6kl_hif_dump(struct ath6kl *ar, u32 fw_dump_addr, u32 len)
+{
+	__le32 regdump_val[MAX_DUMP_BYTE_NUM_ONE_ITERATION/4];
+	u32 read_len = 0;
+	u32 i = 0,count;
+	int ret;
+	u32 phy_addr = TARG_VTOP(ar->target_type, fw_dump_addr);
+
+	len = (len+3) &(~0x3);;
+	fw_dump_addr = (fw_dump_addr+3) &(~0x3);;
+
+	while(len){
+		read_len = len;
+		if(read_len > MAX_DUMP_BYTE_NUM_ONE_ITERATION){
+			read_len = MAX_DUMP_BYTE_NUM_ONE_ITERATION;
+		}
+		phy_addr = TARG_VTOP(ar->target_type, fw_dump_addr);
+		ret = ath6kl_diag_read(ar, phy_addr, (u8 *)&regdump_val[0], read_len);
+		if (ret) {
+			ath6kl_warn("failed to get register dump: %d\n", ret);
+			return;
+		}
+
+		count = read_len/4;
+		for (i = 0; i < count; i += 4) {
+			ath6kl_info("0x%08x: 0x%08x 0x%08x 0x%08x 0x%08x\n",
+					le32_to_cpu(fw_dump_addr + 4*i),
+					le32_to_cpu(regdump_val[i]),
+					le32_to_cpu(regdump_val[i + 1]),
+					le32_to_cpu(regdump_val[i + 2]),
+					le32_to_cpu(regdump_val[i + 3]));
+		}
+
+		len -= read_len;
+		fw_dump_addr += read_len;
+	}
+}
+
+static void ath6kl_hif_dump_fw_more(struct ath6kl *ar, u32 mask)
+{
+	u32 fw_dump_addr, fw_dump_len;
+	u32 address;
+	int ret;
+
+	if (ar->target_type != TARGET_TYPE_AR6003 ){
+		ath6kl_warn("not support dump stack for type: %x\n", ar->target_type);
+		return;
+	}
+
+	if(mask & DUMP_MASK_FULL_STACK){
+		if(ar->wiphy->hw_version == AR6003_HW_2_1_1_VERSION){
+			fw_dump_addr = AR6003_HW211_KERNELSTACK_BASE - DUMP_STACK_OFFSET;
+			fw_dump_len = AR6003_HW211_KERNELSTACK_SIZE + DUMP_STACK_OFFSET;
+			ath6kl_warn("firmware stack:0x%x, len:0x%x\n",AR6003_HW211_KERNELSTACK_BASE,AR6003_HW211_KERNELSTACK_SIZE);
+			ath6kl_hif_dump(ar, fw_dump_addr, fw_dump_len);
+		}
+	}
+
+	if(mask & DUMP_MASK_DBGLOG){
+		if(ar->wiphy->hw_version == AR6003_HW_2_1_1_VERSION){
+			address = TARG_VTOP(ar->target_type,AR6003_HW211_DBGLOG_ADDR);
+			ret = ath6kl_diag_read32(ar, address, &fw_dump_addr);
+			if(!ret && fw_dump_addr){
+				fw_dump_len = AR6003_HW211_DBGLOG_SIZE;
+				ath6kl_warn("fw dblog:0x%x, len:0x%x\n",fw_dump_addr,AR6003_HW211_DBGLOG_SIZE);
+				ath6kl_hif_dump(ar, fw_dump_addr, fw_dump_len);
+			}
+		}
+	}
+}
+
+
 static int ath6kl_hif_proc_dbg_intr(struct ath6kl_device *dev)
 {
 	u32 dummy;
@@ -131,8 +214,11 @@ static int ath6kl_hif_proc_dbg_intr(struct ath6kl_device *dev)
 		ath6kl_warn("Failed to clear debug interrupt: %d\n", ret);
 
 	ath6kl_hif_dump_fw_crash(dev->ar);
+#ifdef CONFIG_MACH_PX
+	ath6kl_hif_dump_fw_more(dev->ar, DUMP_MASK_FULL_STACK | DUMP_MASK_DBGLOG);
+#endif
 	ath6kl_read_fwlogs(dev->ar);
-
+	panic("firmware crashed");
 	return ret;
 }
 

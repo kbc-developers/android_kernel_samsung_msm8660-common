@@ -39,7 +39,7 @@ static u32 read_max_size = 0;
 static u32 needless_buf_size = 0;
 static int handler_enable_flag = 0;
 static int read_enable_flag = 0;
-/* matsumaru_mod */
+
 #if 0
 static void mb86a35s_irq_work(struct work_struct *);
 static DECLARE_WORK(mb86a35s_work, mb86a35s_irq_work);
@@ -49,7 +49,7 @@ static struct workqueue_struct *wq = 0;
 static void mb86a35s_irq_work(void);
 static int mb86a35s_work_thread(void *arg);
 #endif
-/* matsumaru_mod */
+
 static u8 open_cnt = 0;
 static u8 monitorapp_cnt = 0;
 
@@ -62,7 +62,6 @@ static struct wake_lock mb86a35s_wake_lock;
 
 static u8 stream_data[MB86A35S_STREAM_SIZE] __cacheline_aligned;
 
-/* matsumaru_mod */
 typedef struct mb86a35s_thread {
 	struct task_struct *mb86a5s_thread;
 	wait_queue_head_t mb86a35s_thread_wait;
@@ -74,7 +73,6 @@ typedef struct mb86a35s_thread {
 }mb86a5s_thread_t;
 
 mb86a5s_thread_t *work_thread;
-/* matsumaru_mod */
 
 #if 0
 static u8 null_data[] = {0x47, 0x1F, 0xFF, 0x10};
@@ -6315,8 +6313,6 @@ int mb86a35_IOCTL_CN_MONI_CONFIG_START(mb86a35_cmdcontrol_t * cmdctrl, unsigned 
 	value = cncnt;
 	mb86a35_i2c_master_send(reg, value);
 
-	mdelay(100);
-	
 cn_moni_return:
 	DBGPRINT(PRINT_LHEADERFMT "**** return[ %d ].\n", PRINT_LHEADER,
 		 rtncode);
@@ -6412,9 +6408,10 @@ int mb86a35_IOCTL_CN_MONI_GET(mb86a35_cmdcontrol_t * cmdctrl, unsigned int cmd,
 	for (indx = 0; indx < loop; indx++) {
 		if (mode == PARAM_CNCNT2_MODE_AUTO) {
 			/* PARAM_CNCNT2_MODE_AUTO */
+#if 0
 			/*** WAIT ***/
 			mdelay(wait_time);
-
+#endif
 			reg = MB86A35_REG_ADDR_CNCNT;
 			value = (CN->CNCNT | MB86A35_CNCNT_LOCK);
 			mb86a35_i2c_master_send(reg, value);
@@ -9901,8 +9898,6 @@ static struct file_operations mb86a35_fops = {
 static
 irqreturn_t mb86a35s_irq_handler(int irq, void *dev)
 {
-
-/* matsumaru_mod */
 	if (handler_enable_flag) {
 		spin_lock( &work_thread->tmm_lock );
 		work_thread->mb86a35s_status = 1;
@@ -9910,7 +9905,6 @@ irqreturn_t mb86a35s_irq_handler(int irq, void *dev)
 		/* wakeup event */
 		wake_up_interruptible(&(work_thread->mb86a35s_thread_wait));
 	}
-/* matsumaru_mod */
 	/* XXX:return IRQ_HANDLED without checking the status of interrupt.  */
 	return IRQ_HANDLED;
 }
@@ -10017,7 +10011,6 @@ irq_work_return:
 	return;
 }
 
-/* matsumaru_mod */
 static int mb86a35s_work_thread(void *arg)
 {
 	int ret = 0;
@@ -10049,7 +10042,6 @@ static int mb86a35s_work_thread(void *arg)
 	
 	return 0;
 }
-/* matsumaru_mod */
 
 /************************************************************************/
 static int __devinit mb86a35s_spi_probe(struct spi_device *spi)
@@ -10069,7 +10061,6 @@ static int __devinit mb86a35s_spi_probe(struct spi_device *spi)
 	}
 
 	mb86a35s_spi_device = spi;
-/* matsumaru_mod */
 #if 1
 {
 	struct sched_param param = { .sched_priority = 99 };
@@ -10097,13 +10088,10 @@ static int __devinit mb86a35s_spi_probe(struct spi_device *spi)
 	}
 }
 #else
-/* matsumaru_mod */
 	if (!wq) {
 		wq = create_singlethread_workqueue(DESCRIPTION);
 	}
-/* matsumaru_mod */
 #endif
-/* matsumaru_mod */
 
 #ifdef PERFORMANCE_TEST
 	/* for TEST	*/
@@ -10157,15 +10145,11 @@ static int __devinit mb86a35s_spi_probe(struct spi_device *spi)
 
 ERROR3:
 	gpio_free(GPIO_SPIS_XIRQ);
-/* matsumaru_mod */
 	work_thread->mb86a35s_status = 2;
 	wake_up_interruptible(&(work_thread->mb86a35s_thread_wait));
 	kthread_stop(work_thread->mb86a5s_thread);
-/* matsumaru_mod */
 ERROR2:
-/* matsumaru_mod */
 	kfree(work_thread);
-/* matsumaru_mod */
 #ifdef PERFORMANCE_TEST
 	/* for TEST	*/
 	gpio_free(GPIO_SPI_TEST1);
@@ -10184,20 +10168,16 @@ static int __devexit mb86a35s_spi_remove(struct spi_device *spi)
 
 	gpio_free(GPIO_SPIS_XIRQ);
 	
-/* matsumaru_mod */
 #if 1
 	work_thread->mb86a35s_status = 2;
 	wake_up_interruptible(&(work_thread->mb86a35s_thread_wait));
 	kthread_stop(work_thread->mb86a5s_thread);
 	kfree(work_thread);
 #else
-/* matsumaru_mod */
 	if (wq) {
 		destroy_workqueue(wq);
 	}
-/* matsumaru_mod */
 #endif
-/* matsumaru_mod */
 	
 #ifdef PERFORMANCE_TEST
 	/* for TEST	*/

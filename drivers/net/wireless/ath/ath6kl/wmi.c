@@ -760,11 +760,10 @@ int ath6kl_wmi_set_roam_lrssi_config_cmd(struct wmi *wmi,
 
 	cmd = (struct roam_ctrl_cmd *) skb->data;
 	ath6kl_dbg(ATH6KL_DBG_WMI, "lrssi_scan_period %d, lrssi_scan_threshold = %d, "
-					"lrssi_roam_threshold = %d, roam_rssi_floor = %d\n", 
-					params->lrssi_scan_period, params->lrssi_scan_threshold,
-					params->lrssi_roam_threshold, params->roam_rssi_floor);
-	
-	if(params->lrssi_scan_period == 0)
+			"lrssi_roam_threshold = %d, roam_rssi_floor = %d\n",
+			params->lrssi_scan_period, params->lrssi_scan_threshold,
+			params->lrssi_roam_threshold, params->roam_rssi_floor);
+	if (params->lrssi_scan_period == 0 || wmi->parent_dev->psminfo == 0)
 		cmd->info.params.lrssi_scan_period = 0xFFFF;
 	else
 		cmd->info.params.lrssi_scan_period = params->lrssi_scan_period;
@@ -1828,7 +1827,6 @@ int ath6kl_wmi_connect_cmd(struct wmi *wmi, u8 if_idx,
 		   "type %d dot11_auth %d auth %d pairwise %d group %d\n",
 		   sec_conv_mac(bssid), channel, ctrl_flags, ssid_len, nw_type,
 		   dot11_auth_mode, auth_mode, pairwise_crypto, group_crypto);
-	ath6kl_dbg_dump(ATH6KL_DBG_WMI, NULL, "ssid ", ssid, ssid_len);
 
 	wmi->traffic_class = 100;
 

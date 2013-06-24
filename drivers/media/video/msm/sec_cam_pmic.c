@@ -179,7 +179,7 @@ void cam_ldo_power_off(void)
 
 	//VT_CORE_1.5V(sub)
 //HC-original   #if defined(CONFIG_TARGET_LOCALE_USA_ATT) || defined(CONFIG_TARGET_LOCALE_EUR_OPEN)	|| defined(CONFIG_TARGET_LOCALE_KOR_SKT) || defined(CONFIG_TARGET_LOCALE_KOR_LGU)
-#if defined(CONFIG_TARGET_LOCALE_USA) || defined(CONFIG_TARGET_LOCALE_KOR) || defined(CONFIG_JPN_MODEL_SC_01E)
+#if defined(CONFIG_TARGET_LOCALE_USA) || defined(CONFIG_TARGET_LOCALE_KOR) || defined(CONFIG_JPN_MODEL_SC_01E) || defined(CONFIG_TARGET_LOCALE_EUR)
 #if defined(CONFIG_MACH_P8_LTE) && (defined(CONFIG_TARGET_LOCALE_KOR_SKT) || defined(CONFIG_JPN_MODEL_SC_01E))
 	if(system_rev>0x00)
 #else
