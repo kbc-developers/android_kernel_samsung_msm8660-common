@@ -70,7 +70,7 @@ struct hdmi_msm_state_type {
 	struct timer_list hpd_state_timer;
 	struct completion ddc_sw_done;
 
-#ifdef CONFIG_FB_MSM_HDMI_MSM_PANEL_HDCP_SUPPORT
+#if 1 //def CONFIG_FB_MSM_HDMI_MSM_PANEL_HDCP_SUPPORT
 	boolean hdcp_activating;
 	boolean reauth ;
 	struct work_struct hdcp_reauth_work, hdcp_work;
