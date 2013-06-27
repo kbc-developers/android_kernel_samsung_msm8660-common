@@ -154,6 +154,7 @@ int mipi_dsi_off(struct platform_device *pdev)
 }
 
 extern struct mdp4_overlay_perf perf_current;
+struct platform_device *pdev_temp = NULL;
 int mipi_dsi_on(struct platform_device *pdev)
 {
 	int ret = 0;
@@ -169,7 +170,7 @@ int mipi_dsi_on(struct platform_device *pdev)
 	int target_type = 0;
 
 	pr_debug("%s+:\n", __func__);
-
+	pdev_temp = pdev;
 	mfd = platform_get_drvdata(pdev);
 	fbi = mfd->fbi;
 	var = &fbi->var;
