@@ -10069,8 +10069,12 @@ static int hdmi_core_power(int on, int show)
 
 static int hdmi_gpio_config(int on)
 {
+	static struct regulator *reg_8058_l16;		/* VDD_HDMI */
 	int rc = 0;
 	static int prev_on;
+
+	if (!reg_8058_l16)
+		_GET_REGULATOR(reg_8058_l16, "8058_l16");
 
 	if (on == prev_on)
 		return 0;
@@ -11354,6 +11358,7 @@ int mdp_core_clk_rate_table[] = {
 
 static struct msm_panel_common_pdata mdp_pdata = {
 	.gpio = MDP_VSYNC_GPIO,
+#if 0
 #ifdef CONFIG_FB_MSM_HDMI_AS_PRIMARY
 	.mdp_core_clk_rate = 200000000,
 #else
@@ -11365,6 +11370,8 @@ static struct msm_panel_common_pdata mdp_pdata = {
 #endif
 	.mdp_core_clk_table = mdp_core_clk_rate_table,
 	.num_mdp_clk = ARRAY_SIZE(mdp_core_clk_rate_table),
+#endif
+
 #ifdef CONFIG_MSM_BUS_SCALING
 	.mdp_bus_scale_table = &mdp_bus_scale_pdata,
 #endif

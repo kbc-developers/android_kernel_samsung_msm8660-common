@@ -255,6 +255,13 @@ int msm_fb_check_frame_rate(struct msm_fb_data_type *mfd,
 #ifdef CONFIG_FB_MSM_LOGO
 #define INIT_IMAGE_FILE "/initlogo.rle"
 int load_565rle_image(char *filename, bool bf_supported);
+<<<<<<< HEAD
+=======
+#define LPM_INIT_IMAGE_FILE "/lpminitlogo.rle"
+#if ( defined(CONFIG_TARGET_SERIES_P5LTE) || defined(CONFIG_TARGET_SERIES_P8LTE) ) && ( defined(CONFIG_TARGET_LOCALE_KOR) || defined(CONFIG_TARGET_LOCALE_JPN))
+#define CHARGING_IMAGE_FILE "/charging_image.rle"
+#endif
+>>>>>>> 8d17109... fix sc02e build error
 #endif
 
 #endif /* MSM_FB_H */

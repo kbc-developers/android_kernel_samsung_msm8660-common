@@ -147,7 +147,9 @@ static int mipi_dsi_off(struct platform_device *pdev)
 	return ret;
 }
 
-static int mipi_dsi_on(struct platform_device *pdev)
+extern struct mdp4_overlay_perf perf_current;
+struct platform_device *pdev_temp = NULL;
+int mipi_dsi_on(struct platform_device *pdev)
 {
 	int ret = 0;
 	u32 clk_rate;
@@ -162,7 +164,7 @@ static int mipi_dsi_on(struct platform_device *pdev)
 	int target_type = 0;
 
 	pr_debug("%s+:\n", __func__);
-
+	pdev_temp = pdev;
 	mfd = platform_get_drvdata(pdev);
 	fbi = mfd->fbi;
 	var = &fbi->var;
@@ -333,11 +335,24 @@ static int mipi_dsi_on(struct platform_device *pdev)
 	else
 		up(&mfd->dma->mutex);
 
-	pr_debug("%s-:\n", __func__);
-
 	return ret;
 }
 
+#if defined(CONFIG_USA_MODEL_SGH_I717) || defined (CONFIG_JPN_MODEL_SC_05D)
+static int mipi_dsi_shutdown(struct platform_device *pdev)
+{
+	int ret = 0;
+	printk("%s:+\n", __func__);
+
+	msleep(200);
+	if (mipi_dsi_pdata && mipi_dsi_pdata->dsi_power_save)
+		mipi_dsi_pdata->dsi_power_save(0x10);
+
+	printk("%s:-\n", __func__);
+
+	return ret;
+}
+#endif
 
 static int mipi_dsi_resource_initialized;
 
