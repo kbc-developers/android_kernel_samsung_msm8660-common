@@ -1,4 +1,5 @@
-assert(getprop("ro.product.device") == "SC-01E" || getprop("ro.build.product") == "SC-01E");
+assert(getprop("ro.product.device") == "SC-01E" || getprop("ro.build.product") == "SC-01E" ||
+       getprop("ro.product.device") == "SC01E" || getprop("ro.build.product") == "SC01E");
 ui_print("");
 ui_print("");
 ui_print("------------------------------------------------");
