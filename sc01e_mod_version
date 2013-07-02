@@ -4,7 +4,7 @@
 TARGET_DEVICE=SC01E-ICS
 BUILD_MOD=KBC
 BUILD_VERSION=V1.0.0
-BUILD_RECOVERY_VER=CWM-V6.0.3.2_r0
+BUILD_RECOVERY_VER=CWM-V6.0.3.2_r1
 
 
 ###########################################################
