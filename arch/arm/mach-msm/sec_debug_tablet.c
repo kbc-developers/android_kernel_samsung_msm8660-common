@@ -348,6 +348,14 @@ int sec_debug_is_enabled(void)
 {
 	return enable;
 }
+
+void sec_debug_disabled(void)
+{
+	enable = 0;
+}
+
+
+
 EXPORT_SYMBOL(sec_debug_is_enabled);
 
 /* core reg dump function*/
@@ -500,6 +508,16 @@ static void sec_debug_save_context(void)
 	local_irq_restore(flags);
 }
 
+void sec_debug_clear_upload_magic(void)
+{
+	pr_emerg("(%s)\n", __func__);
+
+	writel(0x0, restart_reason);
+
+	flush_cache_all();
+	outer_flush_all();
+}
+
 static void sec_debug_set_upload_magic(unsigned magic)
 {
 	pr_emerg("(%s) %x\n", __func__, magic);
@@ -638,6 +656,8 @@ void sec_debug_check_crash_key(unsigned int code, int value)
 					pr_info("Level is row. Can not process force dump mode.\n");
 					return;
 				} else {		
+					dump_all_task_info();
+					dump_cpu_stat();
 					panic("Crash Key");
 				}
 			}
@@ -1094,4 +1114,30 @@ static int __init sec_debug_user_fault_init(void)
 	return 0;
 #endif	
 }
+#ifdef CONFIG_SEC_DEBUG_POWERCOLLAPSE_LOG
+
+void sec_debug_powercollapse_log(unsigned int value1, unsigned int value2)
+{
+    unsigned int i;
+    int cpu = smp_processor_id();
+
+	if (sec_debug_nocache_log)
+	{
+		i = atomic_inc_return(&(sec_debug_nocache_log->gExcpPowerCollapseLogIdx)) & (POWERCOLLAPSE_LOG_MAX - 1);
+		sec_debug_nocache_log->gExcpPowerCollapseLog[i].time = cpu_clock(cpu);
+		sec_debug_nocache_log->gExcpPowerCollapseLog[i].value1 = value1;
+		sec_debug_nocache_log->gExcpPowerCollapseLog[i].value2 = value2;
+	}
+/*  not to log when DEBUG_LEVEL_LOW */
+/*
+	else
+	{
+		i = atomic_inc_return(&gExcpPowerCollapseLogIdx) & (POWERCOLLAPSE_LOG_MAX - 1);
+		gExcpPowerCollapseLog[i].time = cpu_clock(cpu);
+		gExcpPowerCollapseLog[i].value1 = value1;
+		gExcpPowerCollapseLog[i].value2 = value2;
+	}
+*/
+}
+#endif
 device_initcall(sec_debug_user_fault_init);
