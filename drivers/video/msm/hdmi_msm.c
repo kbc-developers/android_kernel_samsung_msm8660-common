@@ -3135,7 +3135,7 @@ static void hdmi_msm_hdcp_enable(void)
 	hdmi_msm_state->hdcp_activating = TRUE;
 	mutex_unlock(&hdmi_msm_state_mutex);
 
-	fill_black_screen();
+	fill_black_screen(true,1,3);	//calc from SC01E source value
 
 	mutex_lock(&hdcp_auth_state_mutex);
 	/*
@@ -3185,7 +3185,8 @@ static void hdmi_msm_hdcp_enable(void)
 	if (ret)
 		goto error;
 
-	unfill_black_screen();
+	//unfill_black_screen();
+	fill_black_screen(false,1,3);	//calc from SC01E source value
 
 	external_common_state->hdcp_active = TRUE;
 	mutex_lock(&hdmi_msm_state_mutex);

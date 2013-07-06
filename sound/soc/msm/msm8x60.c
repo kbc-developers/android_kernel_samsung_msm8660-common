@@ -440,7 +440,11 @@ static int msm_device_put(struct snd_kcontrol *kcontrol,
 						closing_dev,
 						SESSION_IGNORE);
 					pr_err("DEV_BUSY:closing Last active Open dev (%d)\n",  closing_dev);
+#if defined(CONFIG_TARGET_SERIES_P8LTE) && defined(CONFIG_TARGET_LOCALE_KOR)
+					rc = last_dev_info->dev_ops.close(last_dev_info);
+#else
 					rc = dev_info->dev_ops.close(last_dev_info);
+#endif
 					pr_err("DEV_BUSY: %s : route_cfg.dev_id 2: %d\n", __func__, route_cfg.dev_id);
 					
 					if (rc < 0) {

@@ -38,8 +38,10 @@
 
 #include "sec_cam_dev.h"
 
-#if defined(CONFIG_TARGET_SERIES_P5LTE)
+#if defined(CONFIG_TARGET_SERIES_P5LTE) || defined (CONFIG_TARGET_SERIES_P4LTE)
 #include "s5k5ccaf_regs_p5.h"
+#elif defined(CONFIG_TARGET_SERIES_P8LTE) && defined(CONFIG_JPN_OPERATOR_NTT)
+#include "s5k5ccaf_regs_p8_ntt.h"
 #elif defined(CONFIG_TARGET_SERIES_P8LTE)
 #include "s5k5ccaf_regs_p8_skt.h"
 #else

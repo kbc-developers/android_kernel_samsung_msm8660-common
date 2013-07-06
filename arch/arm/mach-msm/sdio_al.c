@@ -494,7 +494,10 @@ module_param(debug_data_on, int, 0);
 static int debug_close_on = 1;
 module_param(debug_close_on, int, 0);
 
-#if defined(CONFIG_USA_OPERATOR_ATT) && (defined(CONFIG_TARGET_SERIES_P5LTE) || defined(CONFIG_TARGET_SERIES_P8LTE))
+#if (defined(CONFIG_USA_OPERATOR_ATT) && (defined(CONFIG_TARGET_SERIES_P5LTE) \
+ || defined(CONFIG_TARGET_SERIES_P8LTE))) \
+ || (defined(CONFIG_JPN_OPERATOR_NTT) && defined (CONFIG_TARGET_SERIES_P4LTE)) \
+ || (defined(CONFIG_EUR_OPERATOR_OPEN) && defined(CONFIG_TARGET_SERIES_P5LTE))
 int mdm_bootloader_done = 0;
 EXPORT_SYMBOL(mdm_bootloader_done);
 #endif
@@ -1484,7 +1487,9 @@ static void boot_worker(struct work_struct *work)
 done:
 	pr_debug(MODULE_NAME ":Boot Worker for card %d Exit!\n",
 		sdio_al_dev->host->index);
-#if defined(CONFIG_USA_OPERATOR_ATT) && (defined(CONFIG_TARGET_SERIES_P5LTE) || defined(CONFIG_TARGET_SERIES_P8LTE))
+#if defined(CONFIG_USA_OPERATOR_ATT) && (defined(CONFIG_TARGET_SERIES_P5LTE) \
+ || defined(CONFIG_TARGET_SERIES_P8LTE)) \
+ || (defined(CONFIG_EUR_OPERATOR_OPEN) && defined(CONFIG_TARGET_SERIES_P5LTE))
 	mdm_bootloader_done = 1;
 #endif
 }

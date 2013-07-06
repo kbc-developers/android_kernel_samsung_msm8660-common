@@ -29,7 +29,7 @@ extern int android_readwrite_file(const A_CHAR *filename, A_CHAR *rbuf, const A_
 
 /* Global variables, sane coding be damned. */
 u8 *ath6kl_softmac;
-size_t ath6kl_softmac_len;
+size_t ath6kl_softmac_len = 0;
 
 static void ath6kl_calculate_crc(u32 target_type, u8 *data, size_t len)
 {
@@ -67,7 +67,7 @@ static void ath6kl_calculate_crc(u32 target_type, u8 *data, size_t len)
 static int ath6kl_fetch_nvmac_info(struct ath6kl *ar)
 {
 	char softmac_temp[64];
-	int ret = 0, ath6kl_softmac_len = 0;
+	int ret = 0;
 	int isnvmac_imei = 0, isnvmac_wifi = 0;
 	int isnvmac_file = 0, ismac_file = 0;
 
@@ -98,6 +98,7 @@ static int ath6kl_fetch_nvmac_info(struct ath6kl *ar)
 
 		/* copy .nvmac.info file to .mac.info
 		   wifi driver will use .mac.info finally */
+#if !defined(CONFIG_JPN_MODEL_SC_01E)
 		if (isnvmac_file >= 16) {
 			ret = android_readwrite_file(nvfilepath,
 				(char *)softmac_temp, NULL, isnvmac_file);
@@ -112,6 +113,7 @@ static int ath6kl_fetch_nvmac_info(struct ath6kl *ar)
 			ret = android_readwrite_file(softmac_old_filename,
 				NULL, (char *)softmac_temp, ret);
 		}
+#endif
 
 		if (isnvmac_file < 16 && ismac_file < 16) {
 			snprintf(softmac_temp, sizeof(softmac_temp),
@@ -200,7 +202,7 @@ void ath6kl_mangle_mac_address(struct ath6kl *ar)
 	u8 *ptr_mac;
 	int i, ret;
 #ifdef CONFIG_MACH_PX
-	unsigned int softmac[6];
+	u8 *macbuf;
 #endif
 
 	switch (ar->target_type) {
@@ -230,19 +232,30 @@ void ath6kl_mangle_mac_address(struct ath6kl *ar)
 		return;
 	}
 
-	if (sscanf(ath6kl_softmac, "%02x:%02x:%02x:%02x:%02x:%02x",
-			   &softmac[0], &softmac[1], &softmac[2],
-			   &softmac[3], &softmac[4], &softmac[5])==6) {
+	macbuf = kmalloc(ath6kl_softmac_len + 1, GFP_ATOMIC);
+	if (macbuf) {
+		if (ath6kl_softmac_len >= 6) {
+			unsigned int softmac[6];
+			memcpy(macbuf, ath6kl_softmac, ath6kl_softmac_len);
+			macbuf[ath6kl_softmac_len] = '\0';
+			if (sscanf(macbuf, "%02x:%02x:%02x:%02x:%02x:%02x",
+					&softmac[0], &softmac[1], &softmac[2],
+					&softmac[3], &softmac[4], &softmac[5])==6) {
 
-		for (i=0; i<6; ++i) {
-			ptr_mac[i] = softmac[i] & 0xff;
+				for (i=0; i<6; ++i) {
+					ptr_mac[i] = softmac[i] & 0xff;
+				}
+			}
+
+			ath6kl_dbg(ATH6KL_DBG_BOOT,
+					"MAC from SoftMAC %02X_%02X:%02X\n",
+					ptr_mac[0], ptr_mac[4], ptr_mac[5]);
 		}
+		kfree(macbuf);
 	}
 
-	ath6kl_dbg(ATH6KL_DBG_BOOT,
-		   "MAC from SoftMAC %02X_%02X:%02X\n",
-		   ptr_mac[0], ptr_mac[4], ptr_mac[5]);
-	vfree(ath6kl_softmac);
+	if (ath6kl_softmac)
+		vfree(ath6kl_softmac);
 #else
 	ret = ath6kl_fetch_mac_file(ar);
 	if (ret) {

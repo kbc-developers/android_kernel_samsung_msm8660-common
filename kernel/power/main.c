@@ -135,6 +135,11 @@ power_attr(pm_test);
 
 #endif /* CONFIG_PM_SLEEP */
 
+#if defined(CONFIG_TARGET_SERIES_P8LTE) && defined(CONFIG_TARGET_LOCALE_KOR)
+int msm_pm_mode_active_power_collapse(void);
+int msm_pm_mode_deactive_power_collapse(void);
+#endif
+
 struct kobject *power_kobj;
 
 /**

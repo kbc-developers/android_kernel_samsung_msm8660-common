@@ -39,6 +39,9 @@
 #define HCI_DEV_DOWN			4
 #define HCI_DEV_SUSPEND			5
 #define HCI_DEV_RESUME			6
+// samsung bluetooth feature : add event for celox [
+#define HCI_DEV_WRITE			7
+// ]
 
 /* HCI notify events */
 #define HCI_NOTIFY_CONN_ADD		1

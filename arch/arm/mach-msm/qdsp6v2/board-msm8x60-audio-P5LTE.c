@@ -68,6 +68,8 @@
 #include "timpani_profile_quincy_lgt.h"
 #elif defined(CONFIG_USA_MODEL_SGH_I957)  //P5LTE-ATT
 #include "timpani_profile_p5lte_att.h"
+#elif defined(CONFIG_JPN_MODEL_SC_01D)  //P4LTE-NTT
+#include "timpani_profile_p4lte_ntt.h"
 #elif defined(CONFIG_EUR_MODEL_GT_P7320)  //P5LTE-EUR //SHOULD BE CHECKED
 #include "timpani_profile_p5lte_att.h"
 #elif defined(CONFIG_KOR_MODEL_SHV_E140S)  //P5LTE-SKT

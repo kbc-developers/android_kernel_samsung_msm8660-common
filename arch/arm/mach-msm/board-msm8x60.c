@@ -4276,7 +4276,11 @@ static struct platform_device *rumi_sim_devices[] __initdata = {
 	&msm_kgsl_3d0,
 	&msm_kgsl_2d0,
 	&msm_kgsl_2d1,
+#ifdef CONFIG_FB_MSM_LCDC_LD9040_WVGA_PANEL
+	&lcdc_ld9040_panel_device,
+#else		
 	&lcdc_samsung_panel_device,
+#endif	
 #ifdef CONFIG_FB_MSM_HDMI_MSM_PANEL
 	&hdmi_msm_device,
 #endif /* CONFIG_FB_MSM_HDMI_MSM_PANEL */

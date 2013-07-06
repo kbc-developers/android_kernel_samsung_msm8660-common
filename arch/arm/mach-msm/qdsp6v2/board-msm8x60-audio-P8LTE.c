@@ -76,6 +76,8 @@
 #include "timpani_profile_p5lte_lgt.h"
 #elif defined(CONFIG_KOR_MODEL_SHV_E150S)  //P8LTE-SKT
 #include "timpani_profile_p8lte_skt.h"
+#elif defined(CONFIG_JPN_MODEL_SC_01E)	//P8LTE-NTT
+#include "timpani_profile_p8lte_ntt.h"
 #else
 #include "timpani_profile_celox_kor.h"
 #endif
@@ -151,9 +153,12 @@ struct platform_device msm_device_dspcrashd_8x60 = {
 	.dev = { .platform_data = &dspcrashd_pdata_8x60 },
 };
 
-#ifdef CONFIG_USA_MODEL_SGH_I717
+#if defined(CONFIG_USA_MODEL_SGH_I717)
 #define PMIC_GPIO_MAIN_MICBIAS_EN      PM8058_GPIO(25)
 #define PMIC_GPIO_SUB_MICBIAS_EN       PM8058_GPIO(26)
+#elif defined(CONFIG_JPN_MODEL_SC_01E)	//P8LTE-NTT
+#define PMIC_GPIO_MAIN_MICBIAS_EN      PM8058_GPIO(28)
+#define PMIC_GPIO_SUB_MICBIAS_EN       PM8058_GPIO(37)
 #endif
 
 #if defined (CONFIG_Q1_KOR_AUDIO)
@@ -571,7 +576,7 @@ static int msm_snddev_amp_on_normal_speaker(void)
 #endif
 #ifdef CONFIG_WM8994_AMP
 		msleep(50);
-#if defined(CONFIG_TARGET_LOCALE_KOR) 
+#if defined(CONFIG_TARGET_LOCALE_KOR) || defined(CONFIG_TARGET_LOCALE_JPN)
 		wm8994_set_normal_speaker(1);
 #endif
 #endif
@@ -712,7 +717,9 @@ static void msm_snddev_amp_off_normal_headset(void)
 #endif         
 		msleep(30);
 #ifdef CONFIG_WM8994_AMP
-//		 wm8994_set_normal_headset(0);
+#if defined(CONFIG_JPN_MODEL_SC_01E)	//P8LTE-NTT
+		 wm8994_set_normal_headset(0);
+#endif
 #endif	
 
 	return;
@@ -748,7 +755,7 @@ static void msm_snddev_amp_off_normal_speaker(void)
 		max9879_i2c_speaker_onoff(0);
 #endif
 #ifdef CONFIG_WM8994_AMP
-#if defined(CONFIG_TARGET_LOCALE_KOR) 
+#if defined(CONFIG_TARGET_LOCALE_KOR) || defined(CONFIG_TARGET_LOCALE_JPN)
 		wm8994_set_normal_speaker(0);
 #endif
 #endif	
@@ -1227,7 +1234,7 @@ void msm_snddev_poweramp_off_together(void)
 	pr_info("%s: power off amplifier\n", __func__);
 }
 
-#if defined (CONFIG_TARGET_LOCALE_KOR)
+#if defined (CONFIG_TARGET_LOCALE_KOR) || defined(CONFIG_TARGET_LOCALE_JPN)
 static struct regulator *snddev_reg_l1;
 
 int msm_snddev_poweramp_on_lineout(void)
@@ -1235,7 +1242,12 @@ int msm_snddev_poweramp_on_lineout(void)
 	int rc;
 	pr_debug("%s\n", __func__);
 
-
+#if defined(CONFIG_TARGET_SERIES_P8LTE) //kks_120710
+#ifdef CONFIG_WM8994_AMP
+	msleep(50);
+	wm8994_set_cradle(1);
+#endif	 
+#else
 	/* PMIC8058 L1 Setting (L1 must be set the default voltage 1.0V because L1 is internally used for NCP level shifter supply) */
 #if defined (CONFIG_KOR_MODEL_SHV_E110S)
 	if(get_hw_rev()>=0x8)
@@ -1269,12 +1281,19 @@ int msm_snddev_poweramp_on_lineout(void)
 	yda165_headset_onoff(1);
 #endif
 #endif
+#endif
 	return 0;
 
 }
 void msm_snddev_poweramp_off_lineout(void)
 {
 	int rc;
+
+#if defined(CONFIG_TARGET_SERIES_P8LTE) //kks_120710
+#ifdef CONFIG_WM8994_AMP
+	wm8994_set_cradle(0);
+#endif	
+#else
 
 #if defined (CONFIG_KOR_MODEL_SHV_E110S)
 	if(get_hw_rev()>=0x8)
@@ -1301,10 +1320,11 @@ void msm_snddev_poweramp_off_lineout(void)
 	yda165_headset_onoff(0);
 #endif
 #endif
+#endif
 
 	pr_info("%s: power on headset\n", __func__);
 }
-#endif  //#if defined (CONFIG_TARGET_LOCALE_KOR)
+#endif  //#if defined (CONFIG_TARGET_LOCALE_KOR) || defined(CONFIG_TARGET_LOCALE_JPN)
 
 /* Regulator 8058_l10 supplies regulator 8058_ncp. */
 static struct regulator *snddev_reg_ncp;
@@ -1549,10 +1569,14 @@ static int msm_snddev_enable_amic_power(void)
 		gpio_direction_output(SNDDEV_GPIO_MIC1_ANCL_SEL, 0);
 #endif
 	} else {
-		ret = pm8058_micbias_enable(OTHC_MICBIAS_0,
-				OTHC_SIGNAL_ALWAYS_ON);
-		if (ret)
-			pr_err("%s: Enabling amic power failed\n", __func__);
+
+		if(system_rev >= 0x07)	{
+    		gpio_direction_output(PM8058_GPIO_PM_TO_SYS(PMIC_GPIO_MAIN_MICBIAS_EN), 1);
+		}else{ 
+    		ret = pm8058_micbias_enable(OTHC_MICBIAS_0,OTHC_SIGNAL_ALWAYS_ON);
+    		if (ret)
+        		pr_err("%s: Enabling amic power failed\n", __func__);
+		}
 	}
 #endif
 	return ret;
@@ -1590,10 +1614,17 @@ static int msm_snddev_enable_voip_amic_power(void)
 				pr_err("%s: Enabling amic power failed\n", __func__);
 		}
 #else
-		ret = pm8058_micbias_enable(OTHC_MICBIAS_0,
-				OTHC_SIGNAL_ALWAYS_ON);
-		if (ret)
-			pr_err("%s: Enabling amic power failed\n", __func__);
+		if(system_rev >= 0x07){
+
+			gpio_direction_output(PM8058_GPIO_PM_TO_SYS(PMIC_GPIO_MAIN_MICBIAS_EN), 1);
+		}
+		else{
+
+			ret = pm8058_micbias_enable(OTHC_MICBIAS_0,
+					OTHC_SIGNAL_ALWAYS_ON);
+			if (ret)
+				pr_err("%s: Enabling amic power failed\n", __func__);
+		}
 #endif
 	}
 
@@ -1604,7 +1635,7 @@ static int msm_snddev_enable_voip_amic_power(void)
 static void msm_snddev_disable_amic_power(void)
 {
 #ifdef CONFIG_PMIC8058_OTHC
-	int ret;
+	int ret = 0;
 	if (machine_is_msm8x60_fluid()) {
 		ret = pm8058_micbias_enable(OTHC_MICBIAS_0,
 				OTHC_SIGNAL_OFF);
@@ -1621,21 +1652,30 @@ static void msm_snddev_disable_amic_power(void)
 				pr_err("%s: Disabling amic power failed\n", __func__);
 		}
 #else
-	ret = pm8058_micbias_enable(OTHC_MICBIAS_0, OTHC_SIGNAL_OFF);
-	if (ret)
-		pr_err("%s: Disabling amic power failed\n", __func__);
+	if(system_rev >= 0x07){
+
+
+		gpio_direction_output(PM8058_GPIO_PM_TO_SYS(PMIC_GPIO_MAIN_MICBIAS_EN), 0);
+	}
+	else{
+
+
+		ret = pm8058_micbias_enable(OTHC_MICBIAS_0, OTHC_SIGNAL_OFF);
+		if (ret)
+    		pr_err("%s: Disabling amic power failed\n", __func__);
+	}
 #endif
 
 #endif
 
-#ifdef CONFIG_VP_A2220
+#if defined(CONFIG_VP_A2220) || defined(CONFIG_JPN_MODEL_SC_01E)
 	if (machine_is_msm8x60_fluid()) {
 		printk("1.A2220::disable sub_mic off\n");	
 		ret = pm8058_micbias_enable(OTHC_MICBIAS_2,
 				OTHC_SIGNAL_OFF);
 		//gpio_free(SNDDEV_GPIO_MIC2_ANCR_SEL);
 	} else {
-#if defined(CONFIG_USA_MODEL_SGH_I717)
+#if defined(CONFIG_USA_MODEL_SGH_I717) 
 		if( get_hw_rev() >= 0x03 ){
 			pr_debug("2.A2220::disable sub_mic off\n");		
 			gpio_direction_output(PM8058_GPIO_PM_TO_SYS(PMIC_GPIO_SUB_MICBIAS_EN), 0);
@@ -1645,9 +1685,14 @@ static void msm_snddev_disable_amic_power(void)
 			ret = pm8058_micbias_enable(OTHC_MICBIAS_2, OTHC_SIGNAL_OFF);
 		}
 #else
-		pr_debug("2.A2220::disable sub_mic off\n");		
-		ret = pm8058_micbias_enable(OTHC_MICBIAS_2, OTHC_SIGNAL_OFF);
-
+		if(system_rev >= 07){
+			pr_debug("2.A2220::disable sub_mic off\n");		
+			gpio_direction_output(PM8058_GPIO_PM_TO_SYS(PMIC_GPIO_SUB_MICBIAS_EN), 0);
+		}
+		else{
+			pr_debug("2.A2220::disable sub_mic off\n");		
+			ret = pm8058_micbias_enable(OTHC_MICBIAS_2, OTHC_SIGNAL_OFF);
+		}
 #endif
         }
         if (ret)
@@ -1674,8 +1719,11 @@ static int msm_snddev_enable_anc_power(void)
 {
 	int ret = 0;
 #ifdef CONFIG_PMIC8058_OTHC
-	ret = pm8058_micbias_enable(OTHC_MICBIAS_2,
-			OTHC_SIGNAL_ALWAYS_ON);
+	if(system_rev >= 07){
+		gpio_direction_output(PM8058_GPIO_PM_TO_SYS(PMIC_GPIO_SUB_MICBIAS_EN), 1);
+	}else{
+		ret = pm8058_micbias_enable(OTHC_MICBIAS_2,OTHC_SIGNAL_ALWAYS_ON);
+	}
 	if (ret)
 		pr_err("%s: Enabling anc micbias 2 failed\n", __func__);
 
@@ -1703,7 +1751,16 @@ static int msm_snddev_enable_anc_power(void)
 		}
 		gpio_direction_output(SNDDEV_GPIO_MIC1_ANCL_SEL, 1);
 
+	}else{
+		if(system_rev >= 07){
+			gpio_direction_output(PM8058_GPIO_PM_TO_SYS(PMIC_GPIO_MAIN_MICBIAS_EN), 1);
+		}else{
+			ret = pm8058_micbias_enable(OTHC_MICBIAS_0,OTHC_SIGNAL_ALWAYS_ON);
+			if (ret)
+				pr_err("%s: Enabling anc micbias 0 failed\n", __func__);
+		}
 	}
+
 #endif
 	return ret;
 }
@@ -1711,15 +1768,25 @@ static int msm_snddev_enable_anc_power(void)
 static void msm_snddev_disable_anc_power(void)
 {
 #ifdef CONFIG_PMIC8058_OTHC
-	int ret;
+	int ret = 0;
 
-	ret = pm8058_micbias_enable(OTHC_MICBIAS_2, OTHC_SIGNAL_OFF);
+	if(system_rev >= 07){
+		gpio_direction_output(PM8058_GPIO_PM_TO_SYS(PMIC_GPIO_SUB_MICBIAS_EN), 0);
+	}else{
+		ret = pm8058_micbias_enable(OTHC_MICBIAS_2, OTHC_SIGNAL_OFF);
+	}
 
 	if (machine_is_msm8x60_fluid()) {
 		ret |= pm8058_micbias_enable(OTHC_MICBIAS_0,
 				OTHC_SIGNAL_OFF);
 		gpio_free(SNDDEV_GPIO_MIC2_ANCR_SEL);
 		gpio_free(SNDDEV_GPIO_MIC1_ANCL_SEL);
+	}else{
+		if(system_rev >= 07){
+			gpio_direction_output(PM8058_GPIO_PM_TO_SYS(PMIC_GPIO_MAIN_MICBIAS_EN), 0);
+		}else{
+			ret |= pm8058_micbias_enable(OTHC_MICBIAS_0,OTHC_SIGNAL_OFF);
+		}
 	}
 
 	if (ret)
@@ -1731,7 +1798,7 @@ static void msm_snddev_disable_anc_power(void)
 static int msm_snddev_enable_amic_sec_power(void)
 {
 #ifdef CONFIG_PMIC8058_OTHC
-	int ret;
+	int ret = 0;
 
 	if (machine_is_msm8x60_fluid()) {
 
@@ -1748,6 +1815,14 @@ static int msm_snddev_enable_amic_sec_power(void)
 			return ret;
 		}
 		gpio_direction_output(SNDDEV_GPIO_HS_MIC4_SEL, 1);
+	}else{
+		if(system_rev >= 07){
+			gpio_direction_output(PM8058_GPIO_PM_TO_SYS(PMIC_GPIO_SUB_MICBIAS_EN), 1);
+		}else{
+			ret = pm8058_micbias_enable(OTHC_MICBIAS_2,OTHC_SIGNAL_ALWAYS_ON);
+			if (ret)
+				pr_err("%s: Enabling amic2 power failed\n", __func__);
+		}
 	}
 #endif
 
@@ -1758,15 +1833,21 @@ static int msm_snddev_enable_amic_sec_power(void)
 static void msm_snddev_disable_amic_sec_power(void)
 {
 #ifdef CONFIG_PMIC8058_OTHC
-	int ret;
+	int ret = 0;
 	if (machine_is_msm8x60_fluid()) {
-
-		ret = pm8058_micbias_enable(OTHC_MICBIAS_2,
-					OTHC_SIGNAL_OFF);
+		ret = pm8058_micbias_enable(OTHC_MICBIAS_2,OTHC_SIGNAL_OFF);
 		if (ret)
 			pr_err("%s: Disabling amic2 power failed\n", __func__);
 
 		gpio_free(SNDDEV_GPIO_HS_MIC4_SEL);
+	}else{
+		if(system_rev >= 07){
+			gpio_direction_output(PM8058_GPIO_PM_TO_SYS(PMIC_GPIO_SUB_MICBIAS_EN), 0);
+		}else{
+			ret = pm8058_micbias_enable(OTHC_MICBIAS_2,OTHC_SIGNAL_OFF);
+			if (ret)
+				pr_err("%s: Disabling amic2 power failed\n", __func__);
+		}
 	}
 #endif
 
@@ -1775,7 +1856,7 @@ static void msm_snddev_disable_amic_sec_power(void)
 
 static int msm_snddev_enable_dmic_sec_power(void)
 {
-	int ret;
+	int ret = 0;
 
 	ret = msm_snddev_enable_dmic_power();
 	if (ret) {
@@ -1783,9 +1864,15 @@ static int msm_snddev_enable_dmic_sec_power(void)
 		return ret;
 	}
 #ifdef CONFIG_PMIC8058_OTHC
-#if defined(CONFIG_USA_MODEL_SGH_I717)
-		if( get_hw_rev() >= 0x03 ){
-			gpio_direction_output(PM8058_GPIO_PM_TO_SYS(PMIC_GPIO_SUB_MICBIAS_EN), 1);
+	if(system_rev >= 07){
+		gpio_direction_output(PM8058_GPIO_PM_TO_SYS(PMIC_GPIO_SUB_MICBIAS_EN), 1);
+	}
+	else{
+		ret = pm8058_micbias_enable(OTHC_MICBIAS_2, OTHC_SIGNAL_ALWAYS_ON);
+		if (ret) {
+			pr_err("%s: Error: Enabling micbias failed\n", __func__);
+			msm_snddev_disable_dmic_power();
+			return ret;
 		}
 		else{
 			ret = pm8058_micbias_enable(OTHC_MICBIAS_2, OTHC_SIGNAL_ALWAYS_ON);
@@ -1795,6 +1882,7 @@ static int msm_snddev_enable_dmic_sec_power(void)
 				return ret;
 			}
 		}
+	}
 #else
 	ret = pm8058_micbias_enable(OTHC_MICBIAS_2, OTHC_SIGNAL_ALWAYS_ON);
 	if (ret) {
@@ -1802,15 +1890,13 @@ static int msm_snddev_enable_dmic_sec_power(void)
 		msm_snddev_disable_dmic_power();
 		return ret;
 	}
-
-#endif
-
 #endif
 	return 0;
 }
 
 static void msm_snddev_disable_dmic_sec_power(void)
 {
+	int ret = 0;
 	msm_snddev_disable_dmic_power();
 
 #ifdef CONFIG_PMIC8058_OTHC
@@ -1822,7 +1908,16 @@ static void msm_snddev_disable_dmic_sec_power(void)
 			pm8058_micbias_enable(OTHC_MICBIAS_2, OTHC_SIGNAL_OFF);
 		}
 #else
-		pm8058_micbias_enable(OTHC_MICBIAS_2, OTHC_SIGNAL_OFF);
+		if(system_rev >= 07){
+			gpio_direction_output(PM8058_GPIO_PM_TO_SYS(PMIC_GPIO_SUB_MICBIAS_EN), 0);
+		}
+		else{
+		ret = pm8058_micbias_enable(OTHC_MICBIAS_2, OTHC_SIGNAL_OFF);
+	}
+	if (ret)
+		pr_err("%s: Diabling dmic power failed\n", __func__);
+	else
+		pr_info("%s: Diabling dmic power success\n", __func__);
 #endif
 
 #endif
@@ -1833,8 +1928,11 @@ static int msm_snddev_enable_submic_power(void)
 {
 	int ret = 0;
 #ifdef CONFIG_PMIC8058_OTHC
-	ret = pm8058_micbias_enable(OTHC_MICBIAS_2,
-			OTHC_SIGNAL_ALWAYS_ON);
+	if(system_rev >= 07){
+		gpio_direction_output(PM8058_GPIO_PM_TO_SYS(PMIC_GPIO_SUB_MICBIAS_EN), 1);
+	}else{
+		ret = pm8058_micbias_enable(OTHC_MICBIAS_2,OTHC_SIGNAL_ALWAYS_ON);
+	}
 	if (ret)
 		pr_err("%s: Enabling submic power failed\n", __func__);
 	else
@@ -1846,14 +1944,29 @@ static int msm_snddev_enable_submic_power(void)
 static void msm_snddev_disable_submic_power(void)
 {
 #ifdef CONFIG_PMIC8058_OTHC
-	int ret;
-	ret = pm8058_micbias_enable(OTHC_MICBIAS_2, OTHC_SIGNAL_OFF);
-
+	int ret = 0;
+	if(system_rev >= 07){
+		gpio_direction_output(PM8058_GPIO_PM_TO_SYS(PMIC_GPIO_SUB_MICBIAS_EN), 0);
+	}else{
+		ret = pm8058_micbias_enable(OTHC_MICBIAS_2, OTHC_SIGNAL_OFF);
+	}
 	if (ret)
 		pr_err("%s: Disabling submic power failed\n", __func__);
 	else
 		pr_info("%s: Disabling submic power success\n", __func__);
 #endif
+}
+
+static int msm_snddev_enable_stereo_mic_power(void)
+{
+    msm_snddev_enable_amic_power();
+    msm_snddev_enable_submic_power();
+}
+
+static int msm_snddev_disable_stereo_mic_power(void)
+{
+    msm_snddev_disable_amic_power();
+    msm_snddev_disable_submic_power();
 }
 
 
@@ -1873,7 +1986,7 @@ ADIE_HEADSET_TX_48000_256;
 
 
 // ------- DEFINITION OF VT CALL PAIRED DEVICES ------ 
-#if defined(CONFIG_TARGET_LOCALE_KOR)
+#if defined(CONFIG_TARGET_LOCALE_KOR) || defined(CONFIG_TARGET_LOCALE_JPN)
 static struct adie_codec_action_unit handset_vt_rx_48KHz_osr256_actions[] =
 ADIE_HANDSET_VT_RX_48000_256;
 static struct adie_codec_action_unit handset_vt_tx_48KHz_osr256_actions[] =
@@ -1998,7 +2111,14 @@ ADIE_SPEAKER_CALL_RX_48000_256;
 static struct adie_codec_action_unit speaker_call_tx_48KHz_osr256_actions[] =
 ADIE_SPEAKER_CALL_TX_48000_256;
 
-#if defined (CONFIG_KOR_MODEL_SHV_E110S)|| defined (CONFIG_KOR_MODEL_SHV_E120S) || defined (CONFIG_KOR_MODEL_SHV_E120K) || defined (CONFIG_Q1_KOR_AUDIO)
+#if defined (CONFIG_KOR_MODEL_SHV_E110S)|| defined (CONFIG_KOR_MODEL_SHV_E120S) || defined (CONFIG_KOR_MODEL_SHV_E120K) \
+	|| defined (CONFIG_Q1_KOR_AUDIO) || defined(CONFIG_KOR_MODEL_SHV_E150S) || defined(CONFIG_JPN_MODEL_SC_01E)
+static struct adie_codec_action_unit handset_loopback_rx_48KHz_osr256_actions[] =
+ADIE_HANDSET_LOOPBACK_RX_48000_256; // byeongguk.kim_120618
+static struct adie_codec_action_unit handset_loopback_tx_48KHz_osr256_actions[] =
+ADIE_HANDSET_LOOPBACK_TX_48000_256; // byeongguk.kim_120618
+static struct adie_codec_action_unit speaker_loopback_rx_48KHz_osr256_actions[] =
+ADIE_SPEAKER_LOOPBACK_RX_48000_256; // byeongguk.kim_120618
 static struct adie_codec_action_unit speaker_loopback_tx_48KHz_osr256_actions[] =
 ADIE_SPEAKER_LOOPBACK_TX_48000_256;
 #endif 
@@ -2008,7 +2128,11 @@ ADIE_HEADSET_CALL_RX_48000_256;
 static struct adie_codec_action_unit headset_call_tx_48KHz_osr256_actions[] =
 ADIE_HEADSET_CALL_TX_48000_256;
 
-#if defined (CONFIG_KOR_MODEL_SHV_E110S) || defined (CONFIG_KOR_MODEL_SHV_E120S) || defined (CONFIG_KOR_MODEL_SHV_E120K) || defined (CONFIG_Q1_KOR_AUDIO) || defined(CONFIG_USA_MODEL_SGH_I727) || defined (CONFIG_USA_MODEL_SGH_I757)
+#if defined (CONFIG_KOR_MODEL_SHV_E110S) || defined (CONFIG_KOR_MODEL_SHV_E120S) || defined (CONFIG_KOR_MODEL_SHV_E120K) \
+	|| defined (CONFIG_Q1_KOR_AUDIO) || defined(CONFIG_USA_MODEL_SGH_I727) || defined (CONFIG_USA_MODEL_SGH_I757) \
+	|| defined(CONFIG_KOR_MODEL_SHV_E150S) || defined(CONFIG_JPN_MODEL_SC_01E)
+static struct adie_codec_action_unit headset_loopback_rx_48KHz_osr256_actions[] =
+ADIE_HEADSET_LOOPBACK_RX_48000_256; // byeongguk.kim_120618
 static struct adie_codec_action_unit headset_loopback_tx_48KHz_osr256_actions[] =
 ADIE_HEADSET_LOOPBACK_TX_48000_256;
 #endif 
@@ -2058,9 +2182,9 @@ static struct adie_codec_action_unit fm_radio_speaker_rx_48KHz_osr256_actions[] 
 ADIE_SPEAKER_RX_48000_256;
 
 // ------- DEFINITION OF EXTERNAL DEVICES ------ 
-#if defined (CONFIG_TARGET_LOCALE_KOR)
+#if defined (CONFIG_TARGET_LOCALE_KOR) || defined(CONFIG_TARGET_LOCALE_JPN)
 static struct adie_codec_action_unit lineout_rx_48KHz_osr256_actions[] =
-ADIE_LINEOUT_RX_48000_256;
+ADIE_SPEAKER_LINEOUT_RX_48000_256; //kks_120724 ADIE_LINEOUT_RX_48000_256
 #else
 #if defined (CONFIG_USA_MODEL_SGH_I727) || defined(CONFIG_USA_MODEL_SGH_T989) || defined (CONFIG_USA_MODEL_SGH_I717)
 static struct adie_codec_action_unit lineout_rx_48KHz_osr256_actions[] =
@@ -2091,6 +2215,9 @@ ADIE_CAMCODER_TX_48000_256;
 static struct adie_codec_action_unit camcoder_tx_48KHz_osr256_actions[] =
 ADIE_SPEAKER_TX_48000_256;
 #endif
+
+static struct adie_codec_action_unit camcorder_stereo_tx_48KHz_osr256_actions[] =
+ADIE_HANDSET_DUALMIC_TX_48000_256;
 
 #if 1
 static struct adie_codec_action_unit dualmic_handset_call_tx_48KHz_osr256_actions[] =
@@ -2398,7 +2525,32 @@ static struct adie_codec_hwsetting_entry speaker_call_tx_settings[] = {
 	}
 };
 
-#if defined (CONFIG_KOR_MODEL_SHV_E110S)||defined (CONFIG_KOR_MODEL_SHV_E120S) || defined (CONFIG_KOR_MODEL_SHV_E120K) || defined (CONFIG_Q1_KOR_AUDIO)
+#if defined (CONFIG_KOR_MODEL_SHV_E110S)||defined (CONFIG_KOR_MODEL_SHV_E120S) || defined (CONFIG_KOR_MODEL_SHV_E120K) \
+	|| defined (CONFIG_Q1_KOR_AUDIO) || defined(CONFIG_KOR_MODEL_SHV_E150S) || defined(CONFIG_JPN_MODEL_SC_01E)
+static struct adie_codec_hwsetting_entry handset_loopback_rx_settings[] = { // byeongguk.kim_120618
+	{
+		.freq_plan = AUDIO_FREQUENCY,
+		.osr = 256,
+		.actions = handset_loopback_rx_48KHz_osr256_actions,
+		.action_sz = ARRAY_SIZE(handset_loopback_rx_48KHz_osr256_actions),
+	}
+};
+static struct adie_codec_hwsetting_entry handset_loopback_tx_settings[] = { // byeongguk.kim_120618
+	{
+		.freq_plan = AUDIO_FREQUENCY,
+		.osr = 256,
+		.actions = handset_loopback_tx_48KHz_osr256_actions,
+		.action_sz = ARRAY_SIZE(handset_loopback_tx_48KHz_osr256_actions),
+	}
+};
+static struct adie_codec_hwsetting_entry speaker_loopback_rx_settings[] = { // byeongguk.kim_120618
+	{
+		.freq_plan = AUDIO_FREQUENCY,
+		.osr = 256,
+		.actions = speaker_loopback_rx_48KHz_osr256_actions,
+		.action_sz = ARRAY_SIZE(speaker_loopback_rx_48KHz_osr256_actions),
+	}
+};
 static struct adie_codec_hwsetting_entry speaker_loopback_tx_settings[] = {
 	{
 		.freq_plan = AUDIO_FREQUENCY,
@@ -2427,7 +2579,16 @@ static struct adie_codec_hwsetting_entry headset_call_tx_settings[] = {
 	}
 };
 
-#if defined (CONFIG_KOR_MODEL_SHV_E110S) || defined (CONFIG_KOR_MODEL_SHV_E120S) || defined (CONFIG_KOR_MODEL_SHV_E120K)|| defined (CONFIG_Q1_KOR_AUDIO) || defined(CONFIG_USA_MODEL_SGH_I727) 
+#if defined (CONFIG_KOR_MODEL_SHV_E110S) || defined (CONFIG_KOR_MODEL_SHV_E120S) || defined (CONFIG_KOR_MODEL_SHV_E120K) \
+	|| defined (CONFIG_Q1_KOR_AUDIO) || defined(CONFIG_USA_MODEL_SGH_I727) || defined(CONFIG_KOR_MODEL_SHV_E150S) || defined(CONFIG_JPN_MODEL_SC_01E)
+static struct adie_codec_hwsetting_entry headset_loopback_rx_settings[] = { // byeongguk.kim_120618
+	{
+		.freq_plan = AUDIO_FREQUENCY,
+		.osr = 256,
+		.actions = headset_loopback_rx_48KHz_osr256_actions,
+		.action_sz = ARRAY_SIZE(headset_loopback_rx_48KHz_osr256_actions),
+	}
+};
 static struct adie_codec_hwsetting_entry headset_loopback_tx_settings[] = {
 	{
 		.freq_plan = AUDIO_FREQUENCY,
@@ -2549,6 +2710,15 @@ static struct adie_codec_hwsetting_entry camcoder_tx_settings[] = {
 		.actions = camcoder_tx_48KHz_osr256_actions,
 		.action_sz = ARRAY_SIZE(camcoder_tx_48KHz_osr256_actions),
 	}
+};
+
+static struct adie_codec_hwsetting_entry camcorder_stereo_tx_settings[] = {
+    {
+        .freq_plan = 48000,
+        .osr = 256,
+        .actions = camcorder_stereo_tx_48KHz_osr256_actions,
+        .action_sz = ARRAY_SIZE(camcorder_stereo_tx_48KHz_osr256_actions),
+    }
 };
 
 /////////////////////////////////////////////////////////////////////////////
@@ -2738,7 +2908,23 @@ static struct adie_codec_dev_profile speaker_call_tx_profile = {
 	.setting_sz = ARRAY_SIZE(speaker_call_tx_settings),
 };
 
-#if defined (CONFIG_KOR_MODEL_SHV_E110S)|| defined (CONFIG_KOR_MODEL_SHV_E120S) || defined (CONFIG_KOR_MODEL_SHV_E120K) || defined (CONFIG_Q1_KOR_AUDIO)
+#if defined (CONFIG_KOR_MODEL_SHV_E110S)|| defined (CONFIG_KOR_MODEL_SHV_E120S) || defined (CONFIG_KOR_MODEL_SHV_E120K) \
+	|| defined (CONFIG_Q1_KOR_AUDIO) || defined(CONFIG_KOR_MODEL_SHV_E150S) || defined(CONFIG_JPN_MODEL_SC_01E)
+static struct adie_codec_dev_profile handset_loopback_rx_profile = { // byeongguk.kim_120618
+	.path_type = ADIE_CODEC_RX,
+	.settings = handset_loopback_rx_settings,
+	.setting_sz = ARRAY_SIZE(handset_loopback_rx_settings),
+};
+static struct adie_codec_dev_profile handset_loopback_tx_profile = { // byeongguk.kim_120618
+	.path_type = ADIE_CODEC_TX,
+	.settings = handset_loopback_tx_settings,
+	.setting_sz = ARRAY_SIZE(handset_loopback_tx_settings),
+};
+static struct adie_codec_dev_profile speaker_loopback_rx_profile = { // byeongguk.kim_120618
+	.path_type = ADIE_CODEC_RX,
+	.settings = speaker_loopback_rx_settings,
+	.setting_sz = ARRAY_SIZE(speaker_loopback_rx_settings),
+};
 static struct adie_codec_dev_profile speaker_loopback_tx_profile = {
 	.path_type = ADIE_CODEC_TX,
 	.settings = speaker_loopback_tx_settings,
@@ -2757,7 +2943,13 @@ static struct adie_codec_dev_profile headset_call_tx_profile = {
 	.setting_sz = ARRAY_SIZE(headset_call_tx_settings),
 };
 
-#if defined (CONFIG_KOR_MODEL_SHV_E110S) || defined (CONFIG_KOR_MODEL_SHV_E120S) || defined (CONFIG_KOR_MODEL_SHV_E120K) || defined (CONFIG_Q1_KOR_AUDIO) || defined(CONFIG_USA_MODEL_SGH_I727)
+#if defined (CONFIG_KOR_MODEL_SHV_E110S) || defined (CONFIG_KOR_MODEL_SHV_E120S) || defined (CONFIG_KOR_MODEL_SHV_E120K) \
+	|| defined (CONFIG_Q1_KOR_AUDIO) || defined(CONFIG_USA_MODEL_SGH_I727) || defined(CONFIG_KOR_MODEL_SHV_E150S) || defined(CONFIG_JPN_MODEL_SC_01E)
+static struct adie_codec_dev_profile headset_loopback_rx_profile = { // byeongguk.kim_120618
+	.path_type = ADIE_CODEC_RX,
+	.settings = headset_loopback_rx_settings,
+	.setting_sz = ARRAY_SIZE(headset_loopback_rx_settings),
+};
 static struct adie_codec_dev_profile headset_loopback_tx_profile = {
 	.path_type = ADIE_CODEC_TX,
 	.settings = headset_loopback_tx_settings,
@@ -2840,6 +3032,12 @@ static struct adie_codec_dev_profile camcoder_tx_profile = {
 	.setting_sz = ARRAY_SIZE(camcoder_tx_settings),
 };
 
+static struct adie_codec_dev_profile camcorder_stereo_tx_profile = {
+    .path_type = ADIE_CODEC_TX,
+    .settings = camcorder_stereo_tx_settings,
+    .setting_sz = ARRAY_SIZE(camcorder_stereo_tx_settings),
+};
+
 /////////////////////////////////////////////////////////////////////////////
 
 /////////////////////////////////////////////////////////////////////////////
@@ -2882,8 +3080,13 @@ static struct snddev_icodec_data speaker_rx_data = {
 	//#else
 	.default_sample_rate = 48000,
 	//#endif	
+#if defined(CONFIG_TARGET_SERIES_P8LTE) //kks_110915_1 (hcomb merge)
+	.pamp_on = msm_snddev_amp_on_normal_speaker,
+	.pamp_off = msm_snddev_amp_off_normal_speaker,
+#else
 	.pamp_on = msm_snddev_amp_on_speaker,
 	.pamp_off = msm_snddev_amp_off_speaker,
+#endif
 };
 
 static struct snddev_icodec_data speaker_tx_data = {
@@ -2906,8 +3109,13 @@ static struct snddev_icodec_data headset_rx_data = {
 	//	.profile = &headset_ab_cpls_profile,
 	.channel_mode = 2,
 	.default_sample_rate = 48000,
+#if defined(CONFIG_TARGET_SERIES_P8LTE) //kks_110916_1 (hcomb merge)
+	.pamp_on = msm_snddev_amp_on_normal_headset,
+	.pamp_off = msm_snddev_amp_off_normal_headset,
+#else
 	.pamp_on = msm_snddev_amp_on_headset,
 	.pamp_off = msm_snddev_amp_off_headset,
+#endif
 	.voltage_on = msm_snddev_voltage_on,
 	.voltage_off = msm_snddev_voltage_off,
 };
@@ -3037,7 +3245,7 @@ static struct snddev_icodec_data headset_vt_rx_data = {
 	.profile = &headset_vt_rx_profile,
 	//	.profile = &headset_ab_cpls_profile,
 	.channel_mode = 2,
-	.default_sample_rate = 48000,
+	.default_sample_rate = 8000, // 48000 -> 8000 fix high frequency noise on headset mode during video call  
 #if defined (CONFIG_USA_MODEL_SGH_T989)  || defined (CONFIG_USA_MODEL_SGH_I727) || defined (CONFIG_USA_MODEL_SGH_I717)
 	.pamp_on = msm_snddev_poweramp_on_headset_call,
 	.pamp_off = msm_snddev_poweramp_off_headset_call,
@@ -3464,7 +3672,12 @@ static struct snddev_icodec_data headset_loopback_rx_data = {
 	.capability = (SNDDEV_CAP_RX | SNDDEV_CAP_VOICE),
 	.name = "headset_loopback_rx",
 	.copp_id = 0,
+#if defined (CONFIG_KOR_MODEL_SHV_E110S)|| defined (CONFIG_KOR_MODEL_SHV_E120S) || defined (CONFIG_KOR_MODEL_SHV_E120K) \
+	|| defined (CONFIG_Q1_KOR_AUDIO) || defined(CONFIG_KOR_MODEL_SHV_E150S) || defined(CONFIG_JPN_MODEL_SC_01E)
+	.profile = &headset_loopback_rx_profile, // byeongguk.kim_120618
+#else
 	.profile = &headset_call_rx_profile,
+#endif
 	.channel_mode = 2,
 	.default_sample_rate = AUDIO_FREQUENCY,
 #ifdef CONFIG_VP_A2220
@@ -3488,7 +3701,9 @@ static struct snddev_icodec_data headset_loopback_tx_data = {
 	.name = "headset_loopback_tx",
 	.copp_id = PRIMARY_I2S_TX,
 
-	#if defined (CONFIG_KOR_MODEL_SHV_E110S) || defined (CONFIG_KOR_MODEL_SHV_E120S) || defined (CONFIG_KOR_MODEL_SHV_E120K) || (defined (CONFIG_Q1_KOR_AUDIO) && !defined(CONFIG_KOR_MODEL_SHV_E160L)) || defined(CONFIG_USA_MODEL_SGH_I727)
+	#if defined (CONFIG_KOR_MODEL_SHV_E110S) || defined (CONFIG_KOR_MODEL_SHV_E120S) || defined (CONFIG_KOR_MODEL_SHV_E120K) \
+		|| (defined (CONFIG_Q1_KOR_AUDIO) && !defined(CONFIG_KOR_MODEL_SHV_E160L)) || defined(CONFIG_USA_MODEL_SGH_I727) \
+		|| defined(CONFIG_KOR_MODEL_SHV_E150S) || defined(CONFIG_JPN_MODEL_SC_01E)
 	.profile = &headset_loopback_tx_profile,
 	#else
 	.profile = &headset_call_tx_profile,
@@ -3678,7 +3893,7 @@ static struct snddev_icodec_data lineout_rx_data = {
 #if defined(CONFIG_USA_MODEL_SGH_T989)
 	.pamp_on = msm_snddev_vpsamp_on_headset,
 	.pamp_off = msm_snddev_vpsramp_off_headset,
-#elif defined(CONFIG_TARGET_LOCALE_KOR)
+#elif defined(CONFIG_TARGET_LOCALE_KOR) || defined(CONFIG_TARGET_LOCALE_JPN)
 	.pamp_on = msm_snddev_poweramp_on_lineout,
 	.pamp_off = msm_snddev_poweramp_off_lineout,	
 #else
@@ -3723,8 +3938,8 @@ static struct snddev_icodec_data speaker_headset_rx_data = {
 	.profile = &speaker_headset_rx_profile,
 	.channel_mode = 2,
 	.default_sample_rate = 48000,
-	.pamp_on = msm_snddev_amp_on_speaker,
-	.pamp_off = msm_snddev_amp_off_speaker,
+	.pamp_on = msm_snddev_amp_on_speaker_headset,
+	.pamp_off = msm_snddev_amp_off_speaker_headset,
 	.voltage_on = msm_snddev_voltage_on,
 	.voltage_off = msm_snddev_voltage_off,
 };
@@ -3779,6 +3994,18 @@ static struct snddev_icodec_data camcoder_tx_data = {
 	.pamp_on = msm_snddev_enable_submic_power,
 	.pamp_off = msm_snddev_disable_submic_power,
 #endif
+};
+
+static struct snddev_icodec_data camcorder_stereo_tx_data = {
+    .capability = (SNDDEV_CAP_TX | SNDDEV_CAP_VOICE),
+    .name = "camcorder_stereo_tx",
+    .copp_id = PRIMARY_I2S_TX,
+    .profile = &camcorder_stereo_tx_profile,
+    .channel_mode = 2,
+    .default_sample_rate = 48000,
+    .pamp_on = msm_snddev_enable_stereo_mic_power,
+    .pamp_off = msm_snddev_disable_stereo_mic_power,
+
 };
 
 // ------- DEFINITION OF CALL2 PAIRED DEVICES ------ 
@@ -4331,7 +4558,12 @@ static struct snddev_icodec_data handset_loopback_rx_data = {
 	.capability = (SNDDEV_CAP_RX | SNDDEV_CAP_VOICE),
 	.name = "handset_loopback_rx",
 	.copp_id = 0,
+#if defined (CONFIG_KOR_MODEL_SHV_E110S)|| defined (CONFIG_KOR_MODEL_SHV_E120S) || defined (CONFIG_KOR_MODEL_SHV_E120K) \
+	|| defined (CONFIG_Q1_KOR_AUDIO) || defined(CONFIG_KOR_MODEL_SHV_E150S) || defined(CONFIG_JPN_MODEL_SC_01E)
+	.profile = &handset_loopback_rx_profile, // byeongguk.kim_120618
+#else
 	.profile = &handset_call_rx_profile,
+#endif
 	.channel_mode = 1,
 	.default_sample_rate = AUDIO_FREQUENCY,
 #ifdef CONFIG_VP_A2220
@@ -4354,7 +4586,12 @@ static struct snddev_icodec_data handset_loopback_tx_data = {
 	.capability = (SNDDEV_CAP_TX | SNDDEV_CAP_VOICE),
 	.name = "handset_loopback_tx",
 	.copp_id = 1,
+#if defined (CONFIG_KOR_MODEL_SHV_E110S)|| defined (CONFIG_KOR_MODEL_SHV_E120S) || defined (CONFIG_KOR_MODEL_SHV_E120K) \
+	|| defined (CONFIG_Q1_KOR_AUDIO) || defined(CONFIG_KOR_MODEL_SHV_E150S) || defined(CONFIG_JPN_MODEL_SC_01E)
+	.profile = &handset_loopback_tx_profile, // byeongguk.kim_120618
+#else
 	.profile = &handset_call_tx_profile,
+#endif
 	.channel_mode = 1,
 	.default_sample_rate = 48000,
 	.pamp_on = msm_snddev_enable_amic_power,
@@ -4366,7 +4603,12 @@ static struct snddev_icodec_data speaker_loopback_rx_data = {
 	.capability = (SNDDEV_CAP_RX | SNDDEV_CAP_VOICE),
 	.name = "speaker_loopback_rx",
 	.copp_id = 0,
-	.profile = &speaker_call_rx_profile,
+#if defined (CONFIG_KOR_MODEL_SHV_E110S)|| defined (CONFIG_KOR_MODEL_SHV_E120S) || defined (CONFIG_KOR_MODEL_SHV_E120K) \
+	|| defined (CONFIG_Q1_KOR_AUDIO) || defined(CONFIG_KOR_MODEL_SHV_E150S) || defined(CONFIG_JPN_MODEL_SC_01E)
+	.profile = &speaker_loopback_rx_profile, // byeongguk.kim_120618		
+#else		
+	.profile = &speaker_call_rx_profile,			
+#endif 
 	.channel_mode = 2,
 	.default_sample_rate = AUDIO_FREQUENCY,
 #ifdef CONFIG_VP_A2220
@@ -4382,14 +4624,11 @@ static struct snddev_icodec_data speaker_loopback_tx_data = {
 	.capability = (SNDDEV_CAP_TX | SNDDEV_CAP_VOICE),
 	.name = "speaker_loopback_tx",
 	.copp_id = PRIMARY_I2S_TX,
-
-#if defined (CONFIG_KOR_MODEL_SHV_E110S)|| defined (CONFIG_KOR_MODEL_SHV_E120S) || defined (CONFIG_KOR_MODEL_SHV_E120K) || defined (CONFIG_Q1_KOR_AUDIO)
-	.profile = &speaker_loopback_tx_profile,
-
+#if defined (CONFIG_KOR_MODEL_SHV_E110S)|| defined (CONFIG_KOR_MODEL_SHV_E120S) || defined (CONFIG_KOR_MODEL_SHV_E120K) \
+	|| defined (CONFIG_Q1_KOR_AUDIO) || defined(CONFIG_KOR_MODEL_SHV_E150S) || defined(CONFIG_JPN_MODEL_SC_01E)
+	.profile = &speaker_loopback_tx_profile, // byeongguk.kim_1020618
 #else
-
-    .profile = &speaker_call_tx_profile,
-    
+    .profile = &speaker_call_tx_profile,    
 #endif 
 
 	.channel_mode = 1,
@@ -4768,6 +5007,11 @@ static struct platform_device device_camcoder_tx = {
 	.dev = { .platform_data = &camcoder_tx_data },
 };
 
+static struct platform_device device_camcorder_stereo_tx = {
+    .name = "snddev_icodec",
+    .dev = { .platform_data = &camcorder_stereo_tx_data },
+};
+
 // ------- DEFINITION OF CALL2 PAIRED DEVICES ------ 
 static struct platform_device device_handset_call2_rx = {
 	.name = "snddev_icodec",
@@ -4997,7 +5241,7 @@ static struct platform_device device_speaker_loopback_tx = {
 
 
 
-static struct platform_device *snd_devices_celox[] __initdata = {
+static struct platform_device *snd_devices_p8_lte[] __initdata = {
 	// ------- DEFINITION OF NORMAL PAIRED DEVICES ------ 
 	&device_handset_rx,
 	&device_handset_tx,
@@ -5051,78 +5295,7 @@ static struct platform_device *snd_devices_celox[] __initdata = {
 	&device_bt_sco_stereo_voip_tx,
 	&device_bt_sco_stereo_nrec_voip_rx,
 	&device_bt_sco_stereo_nrec_voip_tx,
-
-	&device_deskdock_voip_rx,
-	&device_deskdock_voip_tx,
-
-	// ------- DEFINITION OF CALL PAIRED DEVICES ------ 
-	&device_handset_call_rx,
-	&device_handset_call_tx,
-	&device_speaker_call_rx,
-	&device_speaker_call_tx,
-	&device_headset_call_rx,
-	&device_headset_call_tx,
-
-	&device_bt_sco_mono_call_rx,
-	&device_bt_sco_mono_call_tx,
-	&device_bt_sco_mono_nrec_call_rx,
-	&device_bt_sco_mono_nrec_call_tx,
-	&device_bt_sco_stereo_call_rx,
-	&device_bt_sco_stereo_call_tx,
-	&device_bt_sco_stereo_nrec_call_rx,
-	&device_bt_sco_stereo_nrec_call_tx,
-
-	&device_deskdock_call_rx,
-	&device_deskdock_call_tx,
-
-	&device_headset_loopback_rx,
-	&device_headset_loopback_tx,
-
-	// ------- DEFINITION OF SPECIAL DEVICES ------ 
-	&device_dualmic_handset_tx,
-	&device_dualmic_speaker_tx,
-	&device_speaker_vr_tx,
-	&device_headset_vr_tx,
-	&device_bt_sco_vr_tx,
-	&device_bt_sco_nrec_vr_tx,
-	&device_fm_radio_headset_rx,
-	&device_fm_radio_speaker_rx,
-	&device_fm_radio_tx,
-
-	// ------- DEFINITION OF EXTERNAL DEVICES ------ 
-	&device_hdmi_stereo_rx,
-	&device_lineout_rx,
-	&device_tty_headset_rx,
-	&device_tty_headset_tx,
-	&device_speaker_headset_rx,
-	&device_speaker_lineout_rx,
-	&device_speaker_hdmi_rx,
-#if defined(CONFIG_USA_MODEL_SGH_T989)
-	&device_hac_handset_call_rx,
-#endif 	
-	&device_camcoder_tx,
-
-	// ------- DEFINITION OF CALL2 PAIRED DEVICES ------ 
-	&device_handset_call2_rx,
-	&device_handset_call2_tx,
-	&device_speaker_call2_rx,
-	&device_speaker_call2_tx,
-	&device_headset_call2_rx,
-	&device_headset_call2_tx,
-
-	&device_bt_sco_mono_call2_rx,
-	&device_bt_sco_mono_call2_tx,
-	&device_bt_sco_mono_nrec_call2_rx,
-	&device_bt_sco_mono_nrec_call2_tx,
-	&device_bt_sco_stereo_call2_rx,
-	&device_bt_sco_stereo_call2_tx,
-	&device_bt_sco_stereo_nrec_call2_rx,
-	&device_bt_sco_stereo_nrec_call2_tx,
-
-    &device_deskdock_call2_rx,
-	&device_deskdock_call2_tx,
-
-	// ------- DEFINITION OF VOIP CALL2 PAIRED DEVICES ------ 
+// ------- DEFINITION OF VOIP CALL PAIRED DEVICES ------ 
 	&device_handset_voip2_rx,
 	&device_handset_voip2_tx,
 	&device_speaker_voip2_rx,
@@ -5139,34 +5312,52 @@ static struct platform_device *snd_devices_celox[] __initdata = {
 	&device_bt_sco_stereo_nrec_voip2_rx,
 	&device_bt_sco_stereo_nrec_voip2_tx,
 
-	&device_deskdock_voip2_rx,
-	&device_deskdock_voip2_tx,
 
-	// ------- DEFINITION OF VOIP CALL3 PAIRED DEVICES ------ 
-#if defined (CONFIG_KOR_MODEL_SHV_E120S) || defined (CONFIG_KOR_MODEL_SHV_E120K) || defined (CONFIG_KOR_MODEL_SHV_E120L) || defined (CONFIG_Q1_KOR_AUDIO)
-	&device_handset_voip3_rx,
-	&device_handset_voip3_tx,
-	&device_speaker_voip3_rx,
-	&device_speaker_voip3_tx,
-	&device_headset_voip3_rx,
-	&device_headset_voip3_tx,
+// ------- DEFINITION OF CALL PAIRED DEVICES ------ 
 
-	&device_bt_sco_mono_voip3_rx,
-	&device_bt_sco_mono_voip3_tx,
-	&device_bt_sco_mono_nrec_voip3_rx,
-	&device_bt_sco_mono_nrec_voip3_tx,
-	&device_bt_sco_stereo_voip3_rx,
-	&device_bt_sco_stereo_voip3_tx,
-	&device_bt_sco_stereo_nrec_voip3_rx,
-	&device_bt_sco_stereo_nrec_voip3_tx,
+	&device_handset_call_rx,
+	&device_handset_call_tx,
+	&device_speaker_call_rx,
+	&device_speaker_call_tx,
+	&device_headset_call_rx,
+	&device_headset_call_tx,
 
-	&device_deskdock_voip3_rx,
-	&device_deskdock_voip3_tx,
-#endif
-    &device_handset_loopback_rx,
-	&device_handset_loopback_tx,
+	&device_bt_sco_mono_call_rx,
+	&device_bt_sco_mono_call_tx,
+	&device_bt_sco_mono_nrec_call_rx,
+	&device_bt_sco_mono_nrec_call_tx,
+	&device_bt_sco_stereo_call_rx,
+	&device_bt_sco_stereo_call_tx,
+	&device_bt_sco_stereo_nrec_call_rx,
+	&device_bt_sco_stereo_nrec_call_tx,
+
+
+// ------- DEFINITION OF SPECIAL DEVICES ------ 
+	&device_dualmic_handset_tx,
+	&device_dualmic_speaker_tx,
+	&device_speaker_vr_tx,
+	&device_headset_vr_tx,
+	&device_bt_sco_vr_tx,
+	&device_bt_sco_nrec_vr_tx,
+	&device_fm_radio_headset_rx,
+	&device_fm_radio_speaker_rx,
+	&device_fm_radio_tx,
+	&device_speaker_loopback_tx,
+	&device_headset_loopback_rx,
+	&device_headset_loopback_tx,
 	&device_speaker_loopback_rx,
-	&device_speaker_loopback_tx
+	&device_handset_loopback_rx,
+	&device_handset_loopback_tx,	
+
+// ------- DEFINITION OF EXTERNAL DEVICES ------ 
+	&device_hdmi_stereo_rx,
+	&device_lineout_rx,
+	&device_tty_headset_rx,
+	&device_tty_headset_tx,
+	&device_speaker_headset_rx,
+	&device_speaker_lineout_rx,
+	&device_speaker_hdmi_rx,
+	&device_camcorder_stereo_tx,
 };
 #endif /* SEC_AUDIO_DEVICE */
 
@@ -7254,13 +7445,13 @@ void __init msm_snddev_init(void)
 	} else if (machine_is_msm8x60_ffa() ||
 			machine_is_msm8x60_fusn_ffa()) {
 #ifdef SEC_AUDIO_DEVICE
-		pr_err("%s snd_devices_celox - config \n", __func__);
+		pr_err("%s snd_devices_p8_lte - config \n", __func__);
 
-		for (i = 0; i < ARRAY_SIZE(snd_devices_celox); i++)
-			snd_devices_celox[i]->id = dev_id++;
+		for (i = 0; i < ARRAY_SIZE(snd_devices_p8_lte); i++)
+			snd_devices_p8_lte[i]->id = dev_id++;
 
-		platform_add_devices(snd_devices_celox,
-				ARRAY_SIZE(snd_devices_celox));
+		platform_add_devices(snd_devices_p8_lte,
+				ARRAY_SIZE(snd_devices_p8_lte));
 #else
 		for (i = 0; i < ARRAY_SIZE(snd_devices_ffa); i++)
 			snd_devices_ffa[i]->id = dev_id++;

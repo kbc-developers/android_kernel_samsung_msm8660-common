@@ -36,8 +36,10 @@
 #include "sec_cam_pmic.h"
 
 
-#if defined(CONFIG_TARGET_SERIES_P5LTE)
+#if defined(CONFIG_TARGET_SERIES_P5LTE) || defined(CONFIG_TARGET_SERIES_P4LTE)
 #include "sec_s5k5bafx_reg_p5.h"
+#elif defined(CONFIG_TARGET_SERIES_P8LTE) && defined(CONFIG_JPN_OPERATOR_NTT)
+#include "sec_s5k5bafx_reg_p8_ntt.h"
 #elif defined(CONFIG_TARGET_SERIES_P8LTE)
 #include "sec_s5k5bafx_reg_p8_skt.h"
 #else
@@ -1118,7 +1120,11 @@ static int s5k5bafx_sensor_probe(const struct msm_camera_sensor_info *info,
 	s->s_config  = s5k5bafx_sensor_config;
 	s->s_ext_config	= s5k5bafx_sensor_ext_config;
 	s->s_camera_type = FRONT_CAMERA_2D;
+#ifdef CONFIG_JPN_MODEL_SC_01E
+	s->s_mount_angle = 270;
+#else
 	s->s_mount_angle = 0;
+#endif	
 
 probe_done:
 	CDBG("%s %s:%d\n", __FILE__, __func__, __LINE__);
