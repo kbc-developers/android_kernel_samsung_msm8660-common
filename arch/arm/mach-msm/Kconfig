@@ -1763,6 +1763,7 @@ endchoice
 choice
 		prompt "USA Model Name"
 		depends on TARGET_LOCALE_USA
+		default USA_MODEL_SGH_I727
 
 		config USA_MODEL_SGH_I717
 			bool "USA ATT SGH-I717"
@@ -1773,7 +1774,6 @@ choice
 			
 		config USA_MODEL_SGH_I727R
                 depends on (USA_MODEL_SGH_I727)
-                        default n
                         bool "USA ATT SGH-I727R"
 	
 		config USA_MODEL_SGH_I757 
