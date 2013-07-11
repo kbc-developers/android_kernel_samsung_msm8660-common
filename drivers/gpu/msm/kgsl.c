@@ -1165,6 +1165,32 @@ kgsl_sharedmem_find_id(struct kgsl_process_private *process, unsigned int id)
 	return entry;
 }
 
+/**
+ * kgsl_mem_entry_set_pend() - Set the pending free flag of a memory entry
+ * @entry - The memory entry
+ *
+ * @returns - true if pending flag was 0 else false
+ *
+ * This function will set the pending free flag if it is previously unset. Used
+ * to prevent race condition between ioctls calling free/freememontimestamp
+ * on the same entry. Whichever thread set's the flag first will do the free.
+ */
+static inline bool kgsl_mem_entry_set_pend(struct kgsl_mem_entry *entry)
+{
+	bool ret = false;
+
+	if (entry == NULL)
+		return false;
+
+	spin_lock(&entry->priv->mem_lock);
+	if (!entry->pending_free) {
+		entry->pending_free = 1;
+		ret = true;
+	}
+	spin_unlock(&entry->priv->mem_lock);
+	return ret;
+}
+
 /*call all ioctl sub functions with driver locked*/
 static long kgsl_ioctl_device_getproperty(struct kgsl_device_private *dev_priv,
 					  unsigned int cmd, void *data)
