@@ -1,18 +1,14 @@
-/* linux/drivers/media/nmi326/nmi326.c
-*
-* Driver file for NMI326 oneseg device
-*
-*  Copyright (c) 2012 Samsung Electronics
-
-* This program is free software; you can redistribute it and/or
-* modify it under the terms of the GNU General Public License
-* version 2 as published by the Free Software Foundation.
-*
-* This program is distributed in the hope that it will be useful,
-* but WITHOUT ANY WARRANTY; without even the implied warranty of
-* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-* See the GNU General Public License for more details.
- */
+/*****************************************************************************
+ Copyright(c) 2010 NMI Inc. All Rights Reserved
+ 
+ File name : nmi_hw.c
+ 
+ Description : NM326 host interface
+ 
+ History : 
+ ----------------------------------------------------------------------
+ 2011/11/10 	ssw		initial
+*******************************************************************************/
 
 #include <linux/init.h>
 #include <linux/module.h>
@@ -21,9 +17,11 @@
 #include <linux/errno.h>
 #include <linux/types.h>
 #include <linux/fcntl.h>
+//#include <linux/miscdevice.h>
 #include <linux/interrupt.h>
-#include <linux/uaccess.h>
+#include <asm/uaccess.h>
 #include <linux/irq.h>
+//#include <asm/irq.h>
 #include <asm/mach/irq.h>
 
 #include <linux/wait.h>
@@ -31,6 +29,8 @@
 #include <linux/ioctl.h>
 #include <linux/delay.h>
 #include <linux/slab.h>
+//#include <plat/gpio.h>
+//#include <plat/mux.h>
 
 #include <linux/device.h>
 #include <linux/platform_device.h>
@@ -43,8 +43,10 @@
 #include "nmi326.h"
 #include "nmi326_spi_drv.h"
 
+
 static struct class *isdbt_class;
 static struct isdbt_platform_data gpio_cfg;
+//static struct tdmb_platform_data gpio_cfg;
 static char g_bCatchIrq = 0;
 
 #define SPI_RW_BUF		(188*50*2)
@@ -105,13 +107,13 @@ static int isdbt_open(struct inode *inode, struct file *filp)
 	
 	memset(pdev, 0x00, sizeof(ISDBT_OPEN_INFO_T));
 	pdev->irq_status = DTV_IRQ_DEINIT;
-	g_bCatchIrq = 0;
 
 	filp->private_data = pdev;
 
 	pdev->rwBuf = kmalloc(SPI_RW_BUF, GFP_KERNEL);
 
-	if (pdev->rwBuf == NULL) {
+	if(pdev->rwBuf == NULL)
+	{
 		NM_KMSG("<isdbt> pdev->rwBuf kmalloc FAIL\n");
 		return -1;
 	}
@@ -127,8 +129,6 @@ static int isdbt_release(struct inode *inode, struct file *filp)
 	ISDBT_OPEN_INFO_T *pdev = (ISDBT_OPEN_INFO_T*)(filp->private_data);
 
 	NM_KMSG("<isdbt> isdbt release \n");
-	pdev->irq_status = DTV_IRQ_DEINIT;
-	g_bCatchIrq = 0;
 
 	kfree(pdev->rwBuf);
 	kfree((void*)pdev);	
@@ -147,9 +147,12 @@ static int isdbt_read(struct file *filp, char *buf, size_t count, loff_t *f_pos)
 		return rv;
 	}
 
+	//NM_KMSG("[R] count (%d), rv (%d)\n", count, rv);
+	
 	/* move data from kernel area to user area */
-	if (copy_to_user(buf, pdev->rwBuf, count) < 0) {
-		NM_KMSG("isdbt_read() : put_user() error(rv:%d)!\n", rv); 
+	if( copy_to_user (buf, pdev->rwBuf, count) < 0)
+	{
+		NM_KMSG("isdbt_read() : put_user() error(rv:%d)!\n"); 
 		return -1;
 	}
 	return rv;
@@ -161,23 +164,23 @@ static int isdbt_write(struct file *filp, char *buf, size_t count, loff_t *f_pos
 	ISDBT_OPEN_INFO_T* pdev = (ISDBT_OPEN_INFO_T*)(filp->private_data);
 
 	/* move data from user area to kernel  area */
-	if (copy_from_user(pdev->rwBuf, buf, count) < 0) {
-		NM_KMSG("isdbt_write() : get_user() error(rv:%d)!\n", rv);
+	if(copy_from_user(pdev->rwBuf, buf, count) < 0)
+	{
+		NM_KMSG("isdbt_write() : get_user() error(rv:%d)!\n"); 
 		return -1;
 	}
 
 	/* write data to SPI Controller */
 	rv = nmi326_spi_write(pdev->rwBuf, count);
 	if (rv < 0) {
-		NM_KMSG("isdbt_write() : nmi326_spi_write failed(rv:%d)\n",
-					rv);
+		NM_KMSG("isdbt_write() : nmi326_spi_write failed(rv:%d)\n", rv); 
 		return rv;
 	}
 
 	return rv;
 }
 
-static int isdbt_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
+static int isdbt_ioctl(struct inode *inode, struct file *filp, unsigned int cmd, unsigned long arg)
 {
 	long res = 1;
 	ISDBT_OPEN_INFO_T* pdev = (ISDBT_OPEN_INFO_T*)(filp->private_data);
@@ -195,12 +198,8 @@ static int isdbt_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
 		else if(_IOC_DIR(cmd) & _IOC_WRITE)
 			err = access_ok(VERIFY_READ, (void *) arg, size);
 		if(!err) {
-			NM_KMSG("%s : Wrong argument! ", __func__);
-			NM_KMSG("cmd(0x%08x) _IOC_NR(%d) _IOC_TYPE(0x%x)",
-					cmd, _IOC_NR(cmd), _IOC_TYPE(cmd));
-			NM_KMSG("_IOC_SIZE(%d) _IOC_DIR(0x%x)\n",
-					_IOC_SIZE(cmd), _IOC_DIR(cmd));
-
+			NM_KMSG("%s : Wrong argument! cmd(0x%08x) _IOC_NR(%d) _IOC_TYPE(0x%x) _IOC_SIZE(%d) _IOC_DIR(0x%x)\n", 
+			__FUNCTION__, cmd, _IOC_NR(cmd), _IOC_TYPE(cmd), _IOC_SIZE(cmd), _IOC_DIR(cmd));
 			return err;
 		}
 	}
@@ -226,8 +225,7 @@ static int isdbt_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
 
 			if(pdev->irq_status == DTV_IRQ_DEINIT)
 			{
-				g_bCatchIrq = 0;
-				irq_set_irq_type(gpio_cfg.irq, IRQ_TYPE_LEVEL_LOW);
+				set_irq_type(gpio_cfg.irq, IRQ_TYPE_LEVEL_LOW);
 				retval = request_irq(gpio_cfg.irq, isdbt_irq_handler, /*IRQF_DISABLED|*/IRQF_TRIGGER_LOW, ISDBT_DEV_NAME, (void*)pdev);
 				if(retval < 0) {
 					NM_KMSG("<isdbt> INT reg, fail\n");
@@ -243,14 +241,13 @@ static int isdbt_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
 		
 		case IOCTL_ISDBT_INTERRUPT_UNREGISTER:
 		{
-			unsigned long flags;
+			unsigned long flags, retval;
 			spin_lock_irqsave(&pdev->isr_lock, flags);
 
 			NM_KMSG("<isdbt> ioctl: interrupt unregister, (stat : %d)\n", pdev->irq_status);
 
 			if(pdev->irq_status == DTV_IRQ_INIT)
 			{
-				g_bCatchIrq = 0;
 				free_irq(gpio_cfg.irq, pdev);
 				pdev->irq_status = DTV_IRQ_DEINIT;
 			}
@@ -286,7 +283,6 @@ static int isdbt_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
 
 			if(pdev->irq_status == DTV_IRQ_SET)
 			{
-				g_bCatchIrq = 0;
 				disable_irq_nosync(gpio_cfg.irq);
 				pdev->irq_status = DTV_IRQ_INIT;
 			}
@@ -332,7 +328,7 @@ static const struct file_operations isdbt_fops = {
 	.release		= isdbt_release,
 	.read		= isdbt_read,
 	.write		= isdbt_write,
-	.unlocked_ioctl			= isdbt_ioctl,
+	.ioctl			= isdbt_ioctl,
 	.poll			= isdbt_poll,
 };
 
@@ -350,15 +346,12 @@ static int isdbt_probe(struct platform_device *pdev)
 
 	NM_KMSG("<isdbt> isdbt_probe, MAJOR = %d\n", ISDBT_DEV_MAJOR);
 
-	/* 1. register character device */
+	// 1. register character device
 	ret = register_chrdev(ISDBT_DEV_MAJOR, ISDBT_DEV_NAME, &isdbt_fops);
-	if (ret < 0) {
+	if(ret < 0)
 		NM_KMSG("<isdbt> register_chrdev(ISDBT_DEV) failed\n");
 
-		return -EFAULT;
-	}
-
-	/* 2. class create */
+	// 2. class create
 	isdbt_class = class_create(THIS_MODULE, ISDBT_DEV_NAME);
 	if(IS_ERR(isdbt_class)) {
 		unregister_chrdev(ISDBT_DEV_MAJOR, ISDBT_DEV_NAME);
@@ -368,13 +361,8 @@ static int isdbt_probe(struct platform_device *pdev)
 		return -EFAULT;
 	}
 
-	/* 3. device create */
-	isdbt_dev = device_create(
-				isdbt_class,
-				NULL,
-				MKDEV(ISDBT_DEV_MAJOR, ISDBT_DEV_MINOR),
-				NULL,
-				ISDBT_DEV_NAME);
+	// 3. device create
+	isdbt_dev = device_create(isdbt_class, NULL, MKDEV(ISDBT_DEV_MAJOR, ISDBT_DEV_MINOR), NULL, ISDBT_DEV_NAME);
 	if(IS_ERR(isdbt_dev)) {
 		unregister_chrdev(ISDBT_DEV_MAJOR, ISDBT_DEV_NAME);
 		class_destroy(isdbt_class);
