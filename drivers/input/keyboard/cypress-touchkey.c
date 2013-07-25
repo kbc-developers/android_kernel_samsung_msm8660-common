@@ -280,7 +280,7 @@ int cypress_write_register(u8 addr, u8 w_data)
 || defined (CONFIG_USA_MODEL_SGH_T989) || defined (CONFIG_USA_MODEL_SGH_I727) \
 || defined (CONFIG_USA_MODEL_SGH_I717) || defined(CONFIG_KOR_MODEL_SHV_E160L) \
 || defined(CONFIG_USA_MODEL_SGH_I757) || defined (CONFIG_USA_MODEL_SGH_T769) \
-|| defined(CONFIG_USA_MODEL_SGH_I577) || defined(CONFIG_CAN_MODEL_SGH_I577R) || defined(CONFIG_CAN_MODEL_SGH_I757M)
+|| defined(CONFIG_USA_MODEL_SGH_I577) || defined(CONFIG_CAN_MODEL_SGH_I577R) || defined(CONFIG_CAN_MODEL_SGH_I757M) || defined(CONFIG_JPN_MODEL_SC_05D)
 extern unsigned int  get_hw_rev(void);
 #endif
 
@@ -708,7 +708,7 @@ static void sec_touchkey_early_suspend(struct early_suspend *h)
 		gpio_direction_output(GPIO_TOUCHKEY_SCL, 0);
 		gpio_free(GPIO_TOUCHKEY_SCL);
 		gpio_direction_output(GPIO_TOUCHKEY_SDA, 0);
-		gpio_free(GPIO_TOUCHKEY_SDA);
+		gpio_free(GPIO_TOUCHKEY_SDA);		
 #endif
 	for (index = 1; index< sizeof(touchkey_keycode)/sizeof(*touchkey_keycode); index++)
 	{
@@ -809,7 +809,7 @@ static void sec_touchkey_early_resume(struct early_suspend *h)
 		gpio_request(GPIO_TOUCHKEY_SDA, "TKEY_SDA");
 		gpio_direction_input(GPIO_TOUCHKEY_SDA);
 		}
-#elif defined(CONFIG_KOR_MODEL_SHV_E160L)
+#elif defined(CONFIG_KOR_MODEL_SHV_E160L) || defined(CONFIG_JPN_MODEL_SC_05D)
 		tkey_vdd_enable(1);
 		gpio_request(GPIO_TOUCHKEY_SCL, "TKEY_SCL");
 		gpio_direction_input(GPIO_TOUCHKEY_SCL);
@@ -1001,7 +1001,7 @@ static int i2c_touchkey_probe(struct i2c_client *client, const struct i2c_device
 #elif defined (CONFIG_JPN_MODEL_SC_05D)
 //TODO Check HW REV for JPN
 		touchkey_keycode[1] = KEY_MENU;
-		touchkey_keycode[2] = KEY_BACK;
+		touchkey_keycode[2] = KEY_BACK; 	
 #endif
 
 	set_bit(EV_SYN, input_dev->evbit);
@@ -1786,6 +1786,16 @@ static ssize_t set_touchkey_firm_version_show(struct device *dev, struct device_
 #endif
 	return count;
 }
+
+#if defined(CONFIG_JPN_MODEL_SC_05D)
+static ssize_t set_touchkey_firm_version_show(struct device *dev, struct device_attribute *attr, char *buf)
+{
+	/*TO DO IT */
+	int count;
+	count = sprintf(buf, "0x%x\n", FIRMWARE_VERSION);
+	return count;
+}
+#endif
 
 static ssize_t set_touchkey_update_show(struct device *dev, struct device_attribute *attr, char *buf)
 {

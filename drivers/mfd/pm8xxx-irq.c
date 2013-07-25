@@ -399,6 +399,7 @@ static void pm8xxx_clear_hw_rev_gpio_irq(const struct pm_irq_chip *chip, int dev
 		PM8058_GPIO_IRQ(PM8058_IRQ_BASE,33),
 		PM8058_GPIO_IRQ(PM8058_IRQ_BASE,34),
 		PM8058_GPIO_IRQ(PM8058_IRQ_BASE,35),
+		PM8058_GPIO_IRQ(PM8058_IRQ_BASE,37),
 	};
 
 	pm_gpio_hw_rev.chip_data = (void*)chip;

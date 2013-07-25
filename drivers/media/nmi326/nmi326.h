@@ -1,19 +1,14 @@
-/* linux/drivers/media/nmi326/nmi326.h
-*
-* Header file for NMI326 oneseg device
-*
-*  Copyright (c) 2012 Samsung Electronics
+/*****************************************************************************
+ Copyright(c) 2010 NMI Inc. All Rights Reserved
  
-* This program is free software; you can redistribute it and/or
-* modify it under the terms of the GNU General Public License
-* version 2 as published by the Free Software Foundation.
-*
-* This program is distributed in the hope that it will be useful,
-* but WITHOUT ANY WARRANTY; without even the implied warranty of
-* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-* See the GNU General Public License for more details.
- */
+ File name : nmi_hw.h
  
+ Description : NM625 host interface
+ 
+ History : 
+ ----------------------------------------------------------------------
+ 2010/05/17 	ssw		initial
+*******************************************************************************/
 
 #ifndef __NMI_HW_H__
 #define __NMI_HW_H__
@@ -26,7 +21,6 @@ extern "C" {
 #include <linux/fs.h>
 #include <linux/poll.h>  
 #include <linux/sched.h>
-#include <mach/isdbt_pdata.h>
 
 #define NM_DEBUG_ON
 
