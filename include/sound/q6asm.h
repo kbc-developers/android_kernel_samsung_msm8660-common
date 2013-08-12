@@ -1,4 +1,4 @@
-/* Copyright (c) 2010-2012, The Linux Foundation. All rights reserved.
+/* Copyright (c) 2010-2013, The Linux Foundation. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -76,7 +76,8 @@
 #define SESSION_MAX	0x08
 
 #define SOFT_PAUSE_PERIOD       30   /* ramp up/down for 30ms    */
-#define SOFT_PAUSE_STEP         2000 /* Step value 2ms or 2000us */
+#define SOFT_PAUSE_STEP_LINEAR  0    /* Step value 0ms or 0us */
+#define SOFT_PAUSE_STEP         2000 /* Step value 2000ms or 2000us */
 enum {
 	SOFT_PAUSE_CURVE_LINEAR = 0,
 	SOFT_PAUSE_CURVE_EXP,
@@ -84,7 +85,8 @@ enum {
 };
 
 #define SOFT_VOLUME_PERIOD       30   /* ramp up/down for 30ms    */
-#define SOFT_VOLUME_STEP         2000 /* Step value 2ms or 2000us */
+#define SOFT_VOLUME_STEP_LINEAR  0    /* Step value 0ms or 0us */
+#define SOFT_VOLUME_STEP         2000 /* Step value 2000ms or 2000us */
 enum {
 	SOFT_VOLUME_CURVE_LINEAR = 0,
 	SOFT_VOLUME_CURVE_EXP,
@@ -300,7 +302,7 @@ int q6asm_set_lrgain(struct audio_client *ac, int left_gain, int right_gain);
 /* Enable Mute/unmute flag */
 int q6asm_set_mute(struct audio_client *ac, int muteflag);
 
-uint64_t q6asm_get_session_time(struct audio_client *ac);
+int q6asm_get_session_time(struct audio_client *ac, uint64_t *tstamp);
 
 /* Client can set the IO mode to either AIO/SIO mode */
 int q6asm_set_io_mode(struct audio_client *ac, uint32_t mode);

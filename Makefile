@@ -371,11 +371,14 @@ KBUILD_CPPFLAGS := -D__KERNEL__
 KBUILD_CFLAGS   := -Wall -Werror -Wundef -Wstrict-prototypes -Wno-trigraphs \
 		   -fno-strict-aliasing -fno-common \
 		   -Werror-implicit-function-declaration \
-		   -Wno-format-security -Wno-unused \
-		   -fno-delete-null-pointer-checks
+		   -Wno-format-security \
+		   -fno-delete-null-pointer-checks \
+                   -Wno-error=maybe-uninitialized \
+                   -w
+
 ifeq ($(USE_CFLAGS_OPTION),y)
 MODFLAGS  = -fgcse-lm -fgcse-sm -fsched-spec-load -fforce-addr -ffast-math \
-            -fsingle-precision-constant -mcpu=cortex-a9 -mtune=cortex-a9 -marm -mfpu=neon \
+            -fsingle-precision-constant -mcpu=cortex-a8 -mtune=cortex-a8 -marm -mfpu=neon \
             -mfpu=neon-vfpv4
 endif
 KBUILD_AFLAGS_KERNEL :=

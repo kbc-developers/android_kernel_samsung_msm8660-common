@@ -3605,10 +3605,6 @@ static uint32_t gsbi7_i2c_table[] = {
 	GPIO_CFG(GSBI7_SCL, 1, GPIO_CFG_INPUT, GPIO_CFG_NO_PULL, GPIO_CFG_8MA),
 };
 
-static void gsbi_qup_i2c_gpio_config(int adap_id, int config_type)
-{
-}
-
 //QC patch for case 00580204 , I2C QTR failure	//rohbt
 static void gsbi7_qup_i2c_gpio_config(int adap_id, int config_type)
 {
@@ -3619,6 +3615,10 @@ static void gsbi7_qup_i2c_gpio_config(int adap_id, int config_type)
 		gpio_tlmm_config(gsbi7_i2c_table[0], GPIO_CFG_ENABLE);
 		gpio_tlmm_config(gsbi7_i2c_table[1], GPIO_CFG_ENABLE);
 	}
+}
+#else
+static void gsbi_qup_i2c_gpio_config(int adap_id, int config_type)
+{
 }
 #endif
 
@@ -4358,7 +4358,7 @@ unsigned char hdmi_is_primary;
 #define MSM_PMEM_ADSP_SIZE         0x02A00000 /* 42MB */
 #endif
 #endif
-#define MSM_PMEM_AUDIO_SIZE        0x28B000
+#define MSM_PMEM_AUDIO_SIZE        0x4CF000
 
 #ifdef CONFIG_ANDROID_RAM_CONSOLE
 #if defined(CONFIG_JPN_MODEL_SC_05D)
@@ -4390,7 +4390,7 @@ unsigned char hdmi_is_primary;
 #else
 #if defined(CONFIG_JPN_MODEL_SC_05D)
 #define MSM_ION_SF_SIZE		0x06000000 /* 64MB -> 96MB same as Gingerbread of ATT Quincy */
-else
+#else
 #define MSM_ION_SF_SIZE		0x5000000 /* 64MB -> 80MB */
 #endif
 #endif
@@ -16514,6 +16514,9 @@ static int atv_dac_power(int on)
 static struct msm_panel_common_pdata mdp_pdata = {
 	.gpio = MDP_VSYNC_GPIO,
 	.mdp_max_clk = 200000000,
+	.mdp_max_bw = 2000000000,
+	.mdp_bw_ab_factor = 115,
+	.mdp_bw_ib_factor = 150,
 #ifdef CONFIG_MSM_BUS_SCALING
 	.mdp_bus_scale_table = &mdp_bus_scale_pdata,
 #endif
