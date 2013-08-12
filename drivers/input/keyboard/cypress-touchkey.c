@@ -1699,8 +1699,9 @@ static ssize_t touch_sensitivity_control(struct device *dev, struct device_attri
 }
 
 #if defined (CONFIG_USA_MODEL_SGH_T989) || defined(CONFIG_USA_MODEL_SGH_I727) || defined(CONFIG_USA_MODEL_SGH_I717) \
-|| defined (CONFIG_KOR_MODEL_SHV_E110S)|| defined(CONFIG_KOR_MODEL_SHV_E160L) || defined(CONFIG_CAN_MODEL_SGH_I757M)\
-|| defined(CONFIG_USA_MODEL_SGH_I757) || defined (CONFIG_USA_MODEL_SGH_T769) || defined(CONFIG_USA_MODEL_SGH_I577) || defined(CONFIG_CAN_MODEL_SGH_I577R) || defined(CONFIG_JPN_MODEL_SC_05D)
+|| defined (CONFIG_KOR_MODEL_SHV_E110S)|| defined(CONFIG_KOR_MODEL_SHV_E160L) || defined(CONFIG_CAN_MODEL_SGH_I757M) \
+|| defined(CONFIG_USA_MODEL_SGH_I757) || defined (CONFIG_USA_MODEL_SGH_T769) || defined(CONFIG_USA_MODEL_SGH_I577)\
+|| defined(CONFIG_CAN_MODEL_SGH_I577R) || defined(CONFIG_JPN_MODEL_SC_05D)|| defined(CONFIG_JPN_MODEL_SC_03D)
 static ssize_t touch_recommend_read(struct device *dev, struct device_attribute *attr, char *buf)
 {
 	char data[3] = { 0, };
@@ -2520,7 +2521,7 @@ printk("%s : update SHV_E120L_WXGA tkey...\n",__func__);
 		   printk("%s : Touch Key version is latest. E110S %d!!!...\n",__func__, get_hw_rev());
 		}*/
 #elif defined (CONFIG_JPN_MODEL_SC_03D)
-		if (get_hw_rev() ==0x01 ){
+/*		if (get_hw_rev() ==0x01 ){
 			firm_version = 0x02;
 			if ((data[1] != 0x02) || (data[2] != 0x00))
 			{
@@ -2609,7 +2610,7 @@ printk("%s : update SHV_E120L_WXGA tkey...\n",__func__);
 				get_touchkey_firmware(data);
 				printk("%s change to F/W version: 0x%x, Module version:0x%x\n", __FUNCTION__, data[1], data[2]);
 			}
-		}
+		} */
 #endif
 	ret = i2c_add_driver(&touchkey_i2c_driver);
 
