@@ -5290,7 +5290,7 @@ CIFSSMBSetFileInfo(const int xid, struct cifs_tcon *tcon,
 	offset = param_offset + params;
 
 	data_offset = (char *)pSMB +
-		offsetof(struct smb_hdr, Protocol) + offset;
+			offsetof(struct smb_hdr, Protocol) + offset;
 
 	count = sizeof(FILE_BASIC_INFO);
 	pSMB->MaxParameterCount = cpu_to_le16(2);

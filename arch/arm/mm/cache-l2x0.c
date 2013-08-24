@@ -367,6 +367,25 @@ static void l2x0_disable(void)
 	raw_spin_unlock_irqrestore(&l2x0_lock, flags);
 }
 
+static void __init l2x0_unlock(__u32 cache_id)
+{
+	int lockregs;
+	int i;
+
+	if (cache_id == L2X0_CACHE_ID_PART_L310)
+		lockregs = 8;
+	else
+		/* L210 and unknown types */
+		lockregs = 1;
+
+	for (i = 0; i < lockregs; i++) {
+		writel_relaxed(0x0, l2x0_base + L2X0_LOCKDOWN_WAY_D_BASE +
+			       i * L2X0_LOCKDOWN_STRIDE);
+		writel_relaxed(0x0, l2x0_base + L2X0_LOCKDOWN_WAY_I_BASE +
+			       i * L2X0_LOCKDOWN_STRIDE);
+	}
+}
+
 void __init l2x0_init(void __iomem *base, __u32 aux_val, __u32 aux_mask)
 {
 	__u32 aux, bits;
@@ -411,37 +430,25 @@ void __init l2x0_init(void __iomem *base, __u32 aux_val, __u32 aux_mask)
 	 * L2 cache Size =  Way size * Number of ways
 	 */
 	way_size = (aux & L2X0_AUX_CTRL_WAY_SIZE_MASK) >> 17;
-	way_size = SZ_1K << (way_size + 3);
-	l2x0_size = l2x0_ways * way_size;
-	l2x0_sets = way_size / CACHE_LINE_SIZE;
+	way_size = 1 << (way_size + 3);
+	l2x0_size = ways * way_size * SZ_1K;
 
-	l2x0_inv_all();
+	/*
+	 * Check if l2x0 controller is already enabled.
+	 * If you are booting from non-secure mode
+	 * accessing the below registers will fault.
+	 */
+	if (!(readl_relaxed(l2x0_base + L2X0_CTRL) & 1)) {
+		/* Make sure that I&D is not locked down when starting */
+		l2x0_unlock(cache_id);
 
-	/* enable L2X0 */
-	bits = readl_relaxed(l2x0_base + L2X0_CTRL);
-	bits |= 0x01;	/* set bit 0 */
-	writel_relaxed(bits, l2x0_base + L2X0_CTRL);
+		/* l2x0 controller is disabled */
+		writel_relaxed(aux, l2x0_base + L2X0_AUX_CTRL);
 
-	switch (l2x0_cache_id & L2X0_CACHE_ID_PART_MASK) {
-	case L2X0_CACHE_ID_PART_L220:
-		outer_cache.inv_range = l2x0_inv_range;
-		outer_cache.clean_range = l2x0_clean_range;
-		outer_cache.flush_range = l2x0_flush_range;
-		printk(KERN_INFO "L220 cache controller enabled\n");
-		break;
-	case L2X0_CACHE_ID_PART_L310:
-		outer_cache.inv_range = l2x0_inv_range;
-		outer_cache.clean_range = l2x0_clean_range;
-		outer_cache.flush_range = l2x0_flush_range;
-		printk(KERN_INFO "L310 cache controller enabled\n");
-		break;
-	case L2X0_CACHE_ID_PART_L210:
-	default:
-		outer_cache.inv_range = l2x0_inv_range_atomic;
-		outer_cache.clean_range = l2x0_clean_range_atomic;
-		outer_cache.flush_range = l2x0_flush_range_atomic;
-		printk(KERN_INFO "L210 cache controller enabled\n");
-		break;
+		l2x0_inv_all();
+
+		/* enable L2X0 */
+		writel_relaxed(1, l2x0_base + L2X0_CTRL);
 	}
 
 	outer_cache.sync = l2x0_cache_sync;
