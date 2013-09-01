@@ -633,6 +633,8 @@ static int msm_rotator_get_plane_sizes(uint32_t format,	uint32_t w, uint32_t h,
 		break;
 	case MDP_Y_CRCB_H2V1:
 	case MDP_Y_CBCR_H2V1:
+	case MDP_Y_CRCB_H1V2:
+	case MDP_Y_CBCR_H1V2:
 		p->num_planes = 2;
 		p->plane_size[0] = w * h;
 		p->plane_size[1] = w * h;
@@ -785,8 +787,24 @@ static int msm_rotator_ycxcx_h2v1(struct msm_rotator_img_info *info,
 				  unsigned int out_chroma_paddr)
 {
 	int bpp;
-
-	if (info->src.format != info->dst.format)
+	uint32_t dst_format;
+	switch (info->src.format) {
+	case MDP_Y_CRCB_H2V1:
+		if (info->rotations & MDP_ROT_90)
+			dst_format = MDP_Y_CRCB_H1V2;
+		else
+			dst_format = info->src.format;
+		break;
+	case MDP_Y_CBCR_H2V1:
+		if (info->rotations & MDP_ROT_90)
+			dst_format = MDP_Y_CBCR_H1V2;
+		else
+			dst_format = info->src.format;
+		break;
+	default:
+		return -EINVAL;
+	}
+	if (info->dst.format != dst_format)
 		return -EINVAL;
 
 	bpp = get_bpp(info->src.format);
@@ -1004,9 +1022,12 @@ static int msm_rotator_ycrycb(struct msm_rotator_img_info *info,
 	int bpp;
 	uint32_t dst_format;
 
-	if (info->src.format == MDP_YCRYCB_H2V1)
-		dst_format = MDP_Y_CRCB_H2V1;
-	else
+	if (info->src.format == MDP_YCRYCB_H2V1) {
+		if (info->rotations & MDP_ROT_90)
+			dst_format = MDP_Y_CRCB_H1V2;
+		else
+			dst_format = MDP_Y_CRCB_H2V1;
+	} else
 		return -EINVAL;
 
 	if (info->dst.format != dst_format)
@@ -1843,14 +1864,27 @@ static int msm_rotator_start(unsigned long arg,
 		is_rgb = 1;
 		info.dst.format = info.src.format;
 		break;
+	case MDP_Y_CBCR_H2V1:
+	if (info.rotations & MDP_ROT_90) {
+		info.dst.format = MDP_Y_CBCR_H1V2;
+		break;
+	}
+	case MDP_Y_CRCB_H2V1:
+	if (info.rotations & MDP_ROT_90) {
+		info.dst.format = MDP_Y_CRCB_H1V2;
+		break;
+	}
 	case MDP_Y_CBCR_H2V2:
 	case MDP_Y_CRCB_H2V2:
-	case MDP_Y_CBCR_H2V1:
-	case MDP_Y_CRCB_H2V1:
+	case MDP_YCBCR_H1V1:
+	case MDP_YCRCB_H1V1:
 		info.dst.format = info.src.format;
 		break;
 	case MDP_YCRYCB_H2V1:
-		info.dst.format = MDP_Y_CRCB_H2V1;
+		if (info.rotations & MDP_ROT_90)
+			info.dst.format = MDP_Y_CRCB_H1V2;
+		else
+			info.dst.format = MDP_Y_CRCB_H2V1;
 		break;
 	case MDP_Y_CB_CR_H2V2:
 		if (fast_yuv_en) {
