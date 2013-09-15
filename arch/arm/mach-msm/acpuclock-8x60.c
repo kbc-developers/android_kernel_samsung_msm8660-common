@@ -46,7 +46,11 @@
  * The PLL hardware is capable of 384MHz to 1536MHz. The L_VALs
  * used for calibration should respect these limits. */
 #define L_VAL_SCPLL_CAL_MIN	0x08 /* =  432 MHz with 27MHz source */
+#ifdef CONFIG_USA_MODEL_SGH_I577
+#define L_VAL_SCPLL_CAL_MAX	0x17 /* = 1242 MHz with 27MHz source */
+#else
 #define L_VAL_SCPLL_CAL_MAX	0x1C /* = 1512 MHz with 27MHz source */
+#endif
 
 #ifdef CONFIG_CPU_OVERCLOCK
 #define MAX_VDD_SC		1350000 /* uV */
@@ -266,13 +270,11 @@ static struct clkctl_acpu_speed acpu_freq_tbl_slow[] = {
   { {1, 1}, 1134000,  ACPU_SCPLL, 0, 0, 1, 0x15, L2(14), 1075000, 0x03006000},
   { {1, 1}, 1188000,  ACPU_SCPLL, 0, 0, 1, 0x16, L2(15), 1100000, 0x03006000},
   { {1, 1}, 1242000,  ACPU_SCPLL, 0, 0, 1, 0x17, L2(16), 1125000, 0x03006000},
-#ifndef CONFIG_USA_MODEL_SGH_I577
   { {1, 1}, 1296000,  ACPU_SCPLL, 0, 0, 1, 0x18, L2(17), 1150000, 0x03006000},
   { {1, 1}, 1350000,  ACPU_SCPLL, 0, 0, 1, 0x19, L2(18), 1150000, 0x03006000},
   { {1, 1}, 1404000,  ACPU_SCPLL, 0, 0, 1, 0x1A, L2(19), 1175000, 0x03006000},
   { {1, 1}, 1458000,  ACPU_SCPLL, 0, 0, 1, 0x1B, L2(19), 1200000, 0x03006000},
   { {1, 1}, 1512000,  ACPU_SCPLL, 0, 0, 1, 0x1C, L2(19), 1225000, 0x03006000},
-#endif
   { {0, 0}, 0 },
 };
 
@@ -298,13 +300,11 @@ static struct clkctl_acpu_speed acpu_freq_tbl_nom[] = {
   { {1, 1}, 1134000,  ACPU_SCPLL, 0, 0, 1, 0x15, L2(14), 1025000, 0x03006000},
   { {1, 1}, 1188000,  ACPU_SCPLL, 0, 0, 1, 0x16, L2(15), 1050000, 0x03006000},
   { {1, 1}, 1242000,  ACPU_SCPLL, 0, 0, 1, 0x17, L2(16), 1075000, 0x03006000},
-#ifndef CONFIG_USA_MODEL_SGH_I577
   { {1, 1}, 1296000,  ACPU_SCPLL, 0, 0, 1, 0x18, L2(17), 1100000, 0x03006000},
   { {1, 1}, 1350000,  ACPU_SCPLL, 0, 0, 1, 0x19, L2(18), 1125000, 0x03006000},
   { {1, 1}, 1404000,  ACPU_SCPLL, 0, 0, 1, 0x1A, L2(19), 1150000, 0x03006000},
   { {1, 1}, 1458000,  ACPU_SCPLL, 0, 0, 1, 0x1B, L2(19), 1150000, 0x03006000},
   { {1, 1}, 1512000,  ACPU_SCPLL, 0, 0, 1, 0x1C, L2(19), 1175000, 0x03006000},
-#endif
   { {0, 0}, 0 },
 };
 #endif
@@ -331,13 +331,11 @@ static struct clkctl_acpu_speed acpu_freq_tbl_fast[] = {
   { {1, 1}, 1134000,  ACPU_SCPLL, 0, 0, 1, 0x15, L2(14), 1000000, 0x03006000},
   { {1, 1}, 1188000,  ACPU_SCPLL, 0, 0, 1, 0x16, L2(15), 1025000, 0x03006000},
   { {1, 1}, 1242000,  ACPU_SCPLL, 0, 0, 1, 0x17, L2(16), 1050000, 0x03006000},
-#ifndef CONFIG_USA_MODEL_SGH_I577
   { {1, 1}, 1296000,  ACPU_SCPLL, 0, 0, 1, 0x18, L2(17), 1075000, 0x03006000},
   { {1, 1}, 1350000,  ACPU_SCPLL, 0, 0, 1, 0x19, L2(18), 1100000, 0x03006000},
   { {1, 1}, 1404000,  ACPU_SCPLL, 0, 0, 1, 0x1A, L2(19), 1100000, 0x03006000},
   { {1, 1}, 1458000,  ACPU_SCPLL, 0, 0, 1, 0x1B, L2(19), 1100000, 0x03006000},
   { {1, 1}, 1512000,  ACPU_SCPLL, 0, 0, 1, 0x1C, L2(19), 1125000, 0x03006000},
-#endif
 #ifdef CONFIG_CPU_OVERCLOCK
   { {1, 1}, 1566000,  ACPU_SCPLL, 0, 0, 1, 0x1D, L2(22), 1150000, 0x03006000},
   { {1, 1}, 1620000,  ACPU_SCPLL, 0, 0, 1, 0x1E, L2(22), 1175000, 0x03006000},
@@ -1008,6 +1006,22 @@ static unsigned int __init select_freq_plan(void)
 			acpu_freq_tbl = acpu_freq_tbl_slow;
 			pr_warn("ACPU PVS: Unknown. Defaulting to slow.\n");
 			break;
+		}
+	} else if (speed_bin == 0x0 ) {
+		max_khz = MAX_FREQ_LIMIT;
+		pvs = (pte_efuse >> 10) & 0x7;
+                if (pvs == 0x7)
+                        pvs = (pte_efuse >> 13) & 0x7;
+
+                switch (pvs) {
+                case 0x0:
+			acpu_freq_tbl = acpu_freq_tbl_nom;
+                        pr_info("ACPU PVS: Nominal\n");
+                        break;
+		default:
+			acpu_freq_tbl = acpu_freq_tbl_slow;
+                        pr_warn("ACPU PVS: Unknown. Defaulting to slow.\n");
+                        break;
 		}
 	} else {
 		max_khz = 1188000;
