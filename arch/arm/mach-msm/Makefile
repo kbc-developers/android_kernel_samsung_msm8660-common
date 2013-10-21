@@ -352,6 +352,7 @@ obj-$(CONFIG_MSM_CPU_PWRCTL) +=  msm_cpu_pwrctl.o
 obj-$(CONFIG_SEC_DEBUG)		+= sec_debug.o sec_getlog.o sec_gaf.o
 
 obj-$(CONFIG_SEC_LOG_LAST_KMSG) += sec_last_log.o
+obj-$(CONFIG_INTELLI_PLUG) += intelli_plug.o
 
 ifdef CONFIG_BT_BCM4330
 obj-$(CONFIG_BT_BCM4330) += board-bluetooth-bcm4330.o
