@@ -967,6 +967,11 @@ config KERNEL_PMEM_SMI_REGION
 	help
 	   Enable the in-kernel PMEM allocator to use SMI memory.
 
+config REMOVE_SMI_2X_CLK
+	bool "Remove 2x_axi_clk for SMI"
+	default n
+	depends on ARCH_MSM8X60
+
 config PMEM_GPU0
 	bool "Enable PMEM GPU0 region"
 	default y
