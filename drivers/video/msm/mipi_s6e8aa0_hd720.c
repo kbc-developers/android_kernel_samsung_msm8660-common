@@ -32,7 +32,9 @@ brightness-update has effect after return of it.
 solution :
 reschedule 'first set_backlight()'
 */
+#if 0
 #define FEATURE_BRIGHTNESS_DELAY_AFTER_WAKEUP
+#endif
 #ifdef FEATURE_BRIGHTNESS_DELAY_AFTER_WAKEUP
 #include <linux/workqueue.h>
 #endif 
@@ -1677,12 +1679,14 @@ static int lcd_power(struct msm_fb_data_type *mfd, struct lcd_setting *plcd, int
 	
     if(power == FB_BLANK_UNBLANK)
     {
-		if(s6e8aa0_lcd.lcd_state.display_on == TRUE)
+		if (s6e8aa0_lcd.lcd_state.powered_up && s6e8aa0_lcd.lcd_state.display_on) {
 			return ret;
-
+		}
+		else {
     		// LCD ON
     		DPRINT("%s : LCD_ON\n", __func__);
     		lcd_on_seq(mfd);
+    	}
     }
     else if(power == FB_BLANK_POWERDOWN)
     {
@@ -1779,18 +1783,21 @@ static DEVICE_ATTR(auto_brightness, 0664,
 #ifdef CONFIG_HAS_EARLYSUSPEND
 static void early_suspend(struct early_suspend *h) 
 {
+#ifdef CONFIG_S6E8AA0_HAS_EARLYSUSPEND
 	DPRINT("%s +\n", __func__);
 	lcd_off_seq(pMFD);
 	DPRINT("%s -\n", __func__);
-
- return;
+    return;
+#endif
 }
 
 static void late_resume(struct early_suspend *h) 
 {
+#ifdef CONFIG_S6E8AA0_HAS_EARLYSUSPEND
 	DPRINT("%s\n", __func__);
 	lcd_on_seq(pMFD);
 	return;
+#endif
 }
 #endif
 
