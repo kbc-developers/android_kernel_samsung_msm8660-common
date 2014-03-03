@@ -198,7 +198,7 @@ static ssize_t state_store(struct kobject *kobj, struct kobj_attribute *attr,
 		if (*s && len == strlen(*s) && !strncmp(buf, *s, len))
 			break;
 	}
-	if (state < PM_SUSPEND_MAX && *s)
+	if (state < PM_SUSPEND_MAX && *s) {
 #ifdef CONFIG_EARLYSUSPEND
 		if (state == PM_SUSPEND_ON || valid_state(state)) {
 			error = 0;
@@ -207,6 +207,7 @@ static ssize_t state_store(struct kobject *kobj, struct kobj_attribute *attr,
 #else
 		error = enter_state(state);
 #endif
+	}
 #endif
 
  Exit:
@@ -400,7 +401,7 @@ int set_freq_limit(unsigned long id, unsigned int freq)
 	set_min_lock(min);
 	set_max_lock(max);
         #ifndef CONFIG_USA_MODEL_SGH_T989
-	printk("%s: 0x%lx %d, min %d, max %d\n", __FUNCTION__, id, freq, min, max);
+	//printk("%s: 0x%lx %d, min %d, max %d\n", __FUNCTION__, id, freq, min, max);
 	#endif
 
 	/* need to update now */

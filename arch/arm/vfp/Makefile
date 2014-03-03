@@ -9,7 +9,7 @@
 ifeq ($(USE_CFLAGS_OPTION),y)
 KBUILD_AFLAGS  :=$(KBUILD_AFLAGS:-msoft-float=-Wa,-mfpu=neon-vfpv4 -mfloat-abi=soft)
 else
-KBUILD_AFLAGS	:=$(KBUILD_AFLAGS:-msoft-float=-Wa,-mfpu=softvfp+vfp)
+KBUILD_AFLAGS	:=$(KBUILD_AFLAGS:-msoft-float=-Wa,-mfpu=neon)
 endif
 LDFLAGS		+=--no-warn-mismatch
 
