@@ -222,17 +222,7 @@ config CPU_FREQ_DEFAULT_GOV_ABYSSPLUG
 
 config CPU_FREQ_DEFAULT_GOV_PEGASUSQ
 	bool "pegasusq"
-	select CPU_FREQ_GOV_SCARY
-	help
-	A modified ondemand governor.
-
-config CPU_FREQ_DEFAULT_GOV_PEGASUSQ
-	bool "pegasusq"
 	select CPU_FREQ_GOV_PEGASUSQ
-
-config CPU_FREQ_DEFAULT_GOV_SCARY
-	bool "lulzactive"
-	select CPU_FREQ_GOV_SCARY
 
 config CPU_FREQ_DEFAULT_GOV_SCARY
 	bool "scary"
@@ -623,10 +613,11 @@ config CPU_FREQ_GOV_INTELLIDEMAND
 
 config CPU_FREQ_GOV_SCARY
 	tristate "'scary' governor"
-  depends on CPU_FREQ
-	help
-	  'scary' - this governor is a modified ondemand.
-	   If in doubt, say N.
+	depends on CPU_FREQ
+	---help---
+         'scary' - this governor is a modified ondemand.
+
+          If in doubt, say N.
 
 config CPU_FREQ_GOV_SUPERBAD
 	tristate "'superbad'cpufreq governor"
@@ -793,12 +784,6 @@ config CPU_FREQ_GOV_GALLIMAUFRY
 	help
 	  'gallimaufry' - this governor is a modified ondemand.
 	   If in doubt, say N.
-
-config CPU_FREQ_GOV_SCARY
-	bool "scary"
-	select CPU_FREQ_GOV_SCARY
-	help
-	A modified ondemand governor.
 
 config CPU_FREQ_GOV_SLP
 	tristate "'slp' cpufreq policy governor"
