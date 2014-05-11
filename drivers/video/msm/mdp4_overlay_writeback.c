@@ -170,6 +170,7 @@ int mdp4_overlay_writeback_on(struct platform_device *pdev)
 }
 
 static void mdp4_writeback_pipe_clean(struct vsync_update *vp);
+static void mdp4_wfd_wait4ov(int cndx);
 
 int mdp4_overlay_writeback_off(struct platform_device *pdev)
 {
@@ -267,14 +268,10 @@ static int mdp4_overlay_writeback_update(struct msm_fb_data_type *mfd)
 
 	mdp4_calc_blt_mdp_bw(mfd, pipe);
 
-	if (mfd->map_buffer) {
-		pipe->srcp0_addr = (unsigned int)mfd->map_buffer->iova[0] + \
-			buf_offset;
-		pr_debug("start 0x%lx srcp0_addr 0x%x\n", mfd->
-			map_buffer->iova[0], pipe->srcp0_addr);
-	} else {
-		pipe->srcp0_addr = (uint32)(buf + buf_offset);
-	}
+       if (mfd->display_iova)
+           pipe->srcp0_addr = mfd->display_iova + buf_offset;
+       else
+           pipe->srcp0_addr = (uint32)(buf + buf_offset);
 
 	mdp4_mixer_stage_up(pipe, 0);
 
@@ -330,21 +327,6 @@ void mdp4_wfd_pipe_queue(int cndx, struct mdp4_overlay_pipe *pipe)
 }
 
 static void mdp4_wfd_wait4ov(int cndx);
-
-static void mdp4_writeback_pipe_clean(struct vsync_update *vp)
-{
-	struct mdp4_overlay_pipe *pipe;
-	int i;
-
-	pipe = vp->plist;
-	for (i = 0; i < OVERLAY_PIPE_MAX; i++, pipe++) {
-		if (pipe->pipe_used) {
-			mdp4_overlay_iommu_pipe_free(pipe->pipe_ndx, 0);
-			pipe->pipe_used = 0; /* clear */
-		}
-	}
-	vp->update_cnt = 0;     /* empty queue */
-}
 
 int mdp4_wfd_pipe_commit(struct msm_fb_data_type *mfd,
 			int cndx, int wait)
