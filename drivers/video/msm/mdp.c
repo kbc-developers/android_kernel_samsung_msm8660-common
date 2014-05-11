@@ -2425,6 +2425,9 @@ void mdp4_hw_init(void)
 static int mdp_bus_scale_restore_request(void);
 static struct msm_panel_common_pdata *mdp_pdata;
 
+static bool mdp_gamma_cooler_colors = true;
+module_param(mdp_gamma_cooler_colors, bool, 0664);
+
 static int mdp_on(struct platform_device *pdev)
 {
 	int ret = 0;
@@ -2490,8 +2493,9 @@ static int mdp_on(struct platform_device *pdev)
 
 	mdp_histogram_ctrl_all(TRUE);
 
-  if (mdp_pdata->mdp_gamma)
-    mdp_pdata->mdp_gamma();
+        if (mdp_pdata->mdp_gamma && mdp_gamma_cooler_colors) {
+                mdp_pdata->mdp_gamma();
+        }
 
 	if (ret == 0)
 		ret = panel_next_late_init(pdev);
