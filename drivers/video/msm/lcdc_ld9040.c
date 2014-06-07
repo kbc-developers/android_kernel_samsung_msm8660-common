@@ -623,6 +623,43 @@ static void spi_read_id(u8 cmd, u8 *data, int num)
 	udelay(2);
 	gpio_set_value(spi_cs, 1);
 }
+
+static int ld9040_gpio_array_num[] = {
+		103, /* spi_clk */
+		104, /* spi_cs  */
+		106, /* spi_mosi */
+		28, /* lcd_reset */
+};
+
+static uint32_t lcdc_gpio_config_data[] = {
+	GPIO_CFG(103, 0, GPIO_CFG_OUTPUT, GPIO_CFG_NO_PULL, GPIO_CFG_8MA),
+	GPIO_CFG(104, 0, GPIO_CFG_OUTPUT, GPIO_CFG_NO_PULL, GPIO_CFG_8MA),
+	GPIO_CFG(106, 0, GPIO_CFG_OUTPUT, GPIO_CFG_NO_PULL, GPIO_CFG_8MA),
+	GPIO_CFG(28, 0, GPIO_CFG_OUTPUT, GPIO_CFG_NO_PULL, GPIO_CFG_8MA),
+};
+
+static uint32_t lcdc_gpio_off_config_data[] = {
+	GPIO_CFG(103, 0, GPIO_CFG_OUTPUT, GPIO_CFG_PULL_DOWN, GPIO_CFG_2MA),
+	GPIO_CFG(104, 0, GPIO_CFG_OUTPUT, GPIO_CFG_PULL_DOWN, GPIO_CFG_2MA),
+	GPIO_CFG(106, 0, GPIO_CFG_OUTPUT, GPIO_CFG_PULL_DOWN, GPIO_CFG_2MA),
+	GPIO_CFG(28, 0, GPIO_CFG_OUTPUT, GPIO_CFG_PULL_DOWN, GPIO_CFG_2MA),
+};
+
+static void ld9040_config_gpios(int enable)
+{
+	int i;
+	printk("ld9040 : lcdc_config_gpios [%d]\n", enable);
+	if (enable) {
+		for(i = 0; i < ARRAY_SIZE(lcdc_gpio_config_data); i++) {
+			gpio_tlmm_config(lcdc_gpio_config_data[i], 1);
+		}
+	} else {
+		for(i = 0; i < ARRAY_SIZE(lcdc_gpio_off_config_data); i++) {
+			gpio_tlmm_config(lcdc_gpio_off_config_data[i], 1);
+		}
+	}
+}
+
 static void spi_init(void)
 {
 #if defined (CONFIG_USA_MODEL_SGH_T989) || defined (CONFIG_USA_MODEL_SGH_I727) || defined (CONFIG_USA_MODEL_SGH_T769)
@@ -630,9 +667,9 @@ static void spi_init(void)
 #endif
         DPRINT("start %s\n", __func__);
 	/* Setting the Default GPIO's */
-	spi_sclk = *(lcdc_ld9040_pdata->gpio_num);
-	spi_cs   = *(lcdc_ld9040_pdata->gpio_num + 1);
-	spi_sdi  = *(lcdc_ld9040_pdata->gpio_num + 2);
+	spi_sclk = *(ld9040_gpio_array_num);
+	spi_cs   = *(ld9040_gpio_array_num + 1);
+	spi_sdi  = *(ld9040_gpio_array_num + 2);
 	DPRINT("clk : %d, cs : %d, sdi : %d\n", spi_sclk,spi_cs , spi_sdi);
         lcd_reset = 28;
 
@@ -999,7 +1036,7 @@ static int lcdc_ld9040_panel_on(struct platform_device *pdev)
 	
 	if (!ld9040_state.disp_initialized) {
 		/* Configure reset GPIO that drives DAC */
-		lcdc_ld9040_pdata->panel_config_gpio(1);
+		ld9040_config_gpios(1);
 		spi_init();	/* LCD needs SPI */
 		ld9040_disp_powerup();
 		ld9040_disp_on();
@@ -1027,7 +1064,7 @@ static int lcdc_ld9040_panel_off(struct platform_device *pdev)
 		for (i = 0; i < POWER_OFF_SEQ; i++)
 			setting_table_write(&power_off_sequence[i]);
 
-		lcdc_ld9040_pdata->panel_config_gpio(0);
+		ld9040_config_gpios(0);
 		ld9040_state.display_on = FALSE;
 		ld9040_state.disp_initialized = FALSE;
 		ld9040_disp_powerdown();
@@ -1474,7 +1511,7 @@ static int ld9040_power(struct ld9040 *lcd, int power)
 	if(power == FB_BLANK_UNBLANK) {
 		DPRINT("ld9040_power : UNBLANK\n");
 		/* Configure reset GPIO that drives DAC */
-		lcdc_ld9040_pdata->panel_config_gpio(1);
+		ld9040_config_gpios(1);
 		spi_init();	/* LCD needs SPI */
 		ld9040_disp_powerup();
 		ld9040_disp_on();
@@ -1485,7 +1522,7 @@ static int ld9040_power(struct ld9040 *lcd, int power)
 			for (i = 0; i < POWER_OFF_SEQ; i++)
 				setting_table_write(&power_off_sequence[i]);
 
-			lcdc_ld9040_pdata->panel_config_gpio(0);
+			ld9040_config_gpios(0);
 			ld9040_state.display_on = FALSE;
 			ld9040_state.disp_initialized = FALSE;
 			ld9040_disp_powerdown();
@@ -1673,6 +1710,16 @@ static void lcdc_ld9040_panel_id(void)
 
 }
 
+#define LCDC_HBP		16
+#define LCDC_HFP		16
+#define LCDC_VBP		4
+#define LCDC_VFP		10
+
+#define LCDC_EA8868_HBP		40
+#define LCDC_EA8868_HFP		40
+#define LCDC_EA8868_VBP		8
+#define LCDC_EA8868_VFP		8
+
 static int __init lcdc_ld9040_panel_init(void)
 {
 	int ret;
@@ -1695,17 +1742,17 @@ static int __init lcdc_ld9040_panel_init(void)
 	if (isEA8868 == 0) { // for LDI : LD9040
 		DPRINT("LDI : LD9040, pixelclock 25600000\n");
 		pinfo->clk_rate = 25600000;
-		pinfo->lcdc.h_back_porch = 16;
-		pinfo->lcdc.h_front_porch = 16;
-		pinfo->lcdc.v_back_porch = 4;
-		pinfo->lcdc.v_front_porch = 10;
+		pinfo->lcdc.h_back_porch = LCDC_HBP;
+		pinfo->lcdc.h_front_porch = LCDC_HFP;
+		pinfo->lcdc.v_back_porch = LCDC_VBP;
+		pinfo->lcdc.v_front_porch = LCDC_VFP;
 	} else { // for LDI : EA8868
 		DPRINT("LDI : EA8868, pixelclock 27400000\n");
 		pinfo->clk_rate = 27400000;
-		pinfo->lcdc.h_back_porch = 40;
-		pinfo->lcdc.h_front_porch = 40;
-		pinfo->lcdc.v_back_porch = 8;
-		pinfo->lcdc.v_front_porch = 8;
+		pinfo->lcdc.h_back_porch = LCDC_EA8868_HBP;
+		pinfo->lcdc.h_front_porch = LCDC_EA8868_HFP;
+		pinfo->lcdc.v_back_porch = LCDC_EA8868_VBP;
+		pinfo->lcdc.v_front_porch = LCDC_EA8868_VFP;
 
 	}
 	pinfo->lcdc.h_pulse_width = 2;
@@ -1726,3 +1773,4 @@ static int __init lcdc_ld9040_panel_init(void)
 }
 
 module_init(lcdc_ld9040_panel_init);
+
