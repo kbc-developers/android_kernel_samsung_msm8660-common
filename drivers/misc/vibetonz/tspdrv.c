@@ -361,11 +361,6 @@ static struct platform_device platdev = {
 	},
 };
 
-/* Module info */
-MODULE_AUTHOR("Immersion Corporation");
-MODULE_DESCRIPTION("TouchSense Kernel Module");
-MODULE_LICENSE("GPL v2");
-
 static struct vibrator {
 //	struct wake_lock wklock;
 	struct hrtimer timer;
@@ -412,7 +407,7 @@ static struct i2c_driver vibrator_i2c_driver = {
 	.id_table  = vibrator_device_id,
 };
 
-int init_module(void)
+int __init tspdrv_init(void)
 {
     int nRet, i;   /* initialized below */
 
@@ -506,7 +501,7 @@ int init_module(void)
 //    return nRet;
 }
 
-void cleanup_module(void)
+void __exit tspdrv_exit(void)
 {
     DbgOut((KERN_INFO "tspdrv: cleanup_module.\n"));
 
@@ -972,3 +967,11 @@ static void platform_release(struct device *dev)
 {	
     DbgOut((KERN_INFO "tspdrv: platform_release.\n"));
 }
+
+module_init(tspdrv_init);
+module_exit(tspdrv_exit);
+
+/* Module info */
+MODULE_AUTHOR("Immersion Corporation");
+MODULE_DESCRIPTION("TouchSense Kernel Module");
+MODULE_LICENSE("GPL v2");
