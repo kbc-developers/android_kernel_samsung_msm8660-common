@@ -4046,7 +4046,7 @@ int mdp4_overlay_commit(struct fb_info *info)
 		mdp4_dsi_video_pipe_commit(0, 1);
 		break;
 	case LCDC_PANEL:
-		mdp4_lcdc_pipe_commit(0, 1);
+		mdp4_lcdc_pipe_commit(0, 1, &release_busy);
 		break;
 	case DTV_PANEL:
 		mdp4_dtv_pipe_commit(0, 1);
