@@ -264,8 +264,7 @@ u32 rotator_allocate_2pass_buf(struct rot_buf_type *rot_buf, int s_ndx)
 		pr_info("%s:%d ion based allocation\n",
 			__func__, __LINE__);
 		rot_buf->ihdl = ion_alloc(mrd->client, buffer_size, SZ_4K,
-			mrd->rot_session[s_ndx]->mem_hid,
-			mrd->rot_session[s_ndx]->mem_hid & ION_SECURE);
+			mrd->rot_session[s_ndx]->mem_hid);
 		if (!IS_ERR_OR_NULL(rot_buf->ihdl)) {
 			if (rot_iommu_split_domain) {
 				if (ion_map_iommu(mrd->client, rot_buf->ihdl,
