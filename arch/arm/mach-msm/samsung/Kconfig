@@ -1,0 +1,11 @@
+config MACH_SAMSUNG
+	bool
+
+menu "SAMSUNG Board Selection"
+source "arch/arm/mach-msm/samsung/Kconfig.board"
+endmenu
+
+
+menu "SAMSUNG Specific Patches"
+
+endmenu

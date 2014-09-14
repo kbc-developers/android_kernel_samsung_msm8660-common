@@ -925,6 +925,8 @@ endmenu
 
 source "arch/arm/mach-msm/lge/Kconfig"
 
+source "arch/arm/mach-msm/samsung/Kconfig"
+
 config MSM_STACKED_MEMORY
 	bool "Stacked Memory"
 	default y
