@@ -13,6 +13,8 @@
 #include "smart_dimming_ea8868.h"
 #include "s6ea8868_volt_tbl.h"
 
+//#define DEBUG
+
 const u8 v1_offset_table[14] = {
 	49,44,39,34,29,24,20,16,12,8,6,4,2,0
 };
@@ -267,6 +269,7 @@ u8 calc_voltage_table(struct str_smart_dim *smart, const u8 *mtp)
 		table_index = j;
 	}
 
+#ifdef DEBUG
 	printk("++++++++++++++++++++++++++++++ MTP VALUE ++++++++++++++++++++++++++++++\n");
 	for(i=IV_1;i<IV_MAX;i++) {
 #ifndef CONFIG_USA_MODEL_SGH_T989
@@ -307,6 +310,7 @@ u8 calc_voltage_table(struct str_smart_dim *smart, const u8 *mtp)
 			printk("  %c : %04dV", color_name[c], smart->ve[i].v[c]);
 		printk("\n");
 	}
+#endif // DEBUG
 
 	return 0;
 }
