@@ -582,7 +582,7 @@ static irqreturn_t touchkey_interrupt(int irq, void *dummy)  // ks 79 - threaded
 
 #ifdef CONFIG_TOUCH_CYPRESS_SWEEP2WAKE
 
-		if((s2w_count > 0) && ((jiffies_to_msecs(jiffies) - s2w_start) > 3000)) s2w_count = 0; //timeout after 3 seconds
+		if((s2w_count > 0) && ((jiffies_to_msecs(jiffies) - s2w_start) > 1500)) s2w_count = 0; //timeout after 1.5 seconds
 		else if(s2w_start > 0 && s2w_count == 0) s2w_start = 0;
 		if ((!touch_is_pressed) && (scr_suspended == true) && (s2w_switch)) { //s2w
 			int key = data[0] & KEYCODE_BIT;
