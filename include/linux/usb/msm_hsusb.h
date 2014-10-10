@@ -25,6 +25,9 @@
 #include <linux/wakelock.h>
 #include <linux/pm_qos.h>
 #include <linux/hrtimer.h>
+#ifdef CONFIG_USB_HOST_NOTIFY
+#include <linux/host_notify.h>
+#endif
 
 /*
  * The following are bit fields describing the usb_request.udc_priv word.
@@ -217,6 +220,9 @@ struct msm_otg_platform_data {
 	bool core_clk_always_on_workaround;
 	struct msm_bus_scale_pdata *bus_scale_table;
 	const char *mhl_dev_name;
+#ifdef CONFIG_USB_HOST_NOTIFY
+	void (*set_autosw_pba)(void);
+#endif
 };
 
 /* Timeout (in msec) values (min - max) associated with OTG timers */
@@ -340,6 +346,11 @@ struct msm_otg {
 	struct msm_xo_voter *xo_handle;
 	uint32_t bus_perf_client;
 	bool mhl_enabled;
+#ifdef CONFIG_USB_HOST_NOTIFY
+	struct host_notify_dev ndev;
+	struct work_struct notify_work;
+	unsigned notify_state;
+#endif
 	/*
 	 * Allowing PHY power collpase turns off the HSUSB 3.3v and 1.8v
 	 * analog regulators while going to low power mode.

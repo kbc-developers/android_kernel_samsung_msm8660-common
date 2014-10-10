@@ -394,6 +394,18 @@ config SENSORS_AK8975
 	  If you say yes here you get support for Asahi Kasei's
 	  orientation sensor AK8975.
 
+config VP_A2220
+	tristate "A2220 Voice Processor Driver"
+	depends on I2C
+	help
+	  A2220 Voice Processor Driver implemented by ysseo.
+
+config USE_A2220_B
+	tristate "A2220_B Voice Processor Driver"
+	depends on VP_A2220
+	help
+	  This option support audience A2220_B chip
+
 config EP93XX_PWM
 	tristate "EP93xx PWM support"
 	depends on ARCH_EP93XX
@@ -578,6 +590,20 @@ config TSPP
 	processing of MPEG transport streams from the main processor.
 	This can also be compiled as a loadable module.
 
+config SAMSUNG_JACK
+	bool "3.5 PI EAR_JACK driver for Samsung devices"
+	depends on INPUT
+	default n
+	---help---
+	  This is 3.5 PI EAR_JACK driver for Samsung devices.
+
+config SAMSUNG_EARJACK
+	bool "Modified 3.5 PI EAR_JACK driver for Samsung devices"
+	depends on INPUT
+	default n
+	---help---
+	  This is 3.5 PI EAR_JACK driver for Samsung devices.
+	  
 config HAPTIC_ISA1200
 	tristate "ISA1200 haptic support"
 	depends on I2C
@@ -642,6 +668,12 @@ config PMIC8058_XOADC
 	  PMIC8058. Driver interface to program registers of the ADC over
 	  AMUX channels, devices on programmable MPP's and xotherm.
 
+config PMIC8058_XOADC_CAL
+	bool "PMIC8058 adc calibration"
+	depends on PMIC8058_XOADC
+	help
+	  Support PMIC8058 adc calibration
+
 config QSEECOM
 	tristate "Qualcomm Secure Execution Communicator driver"
 	help
@@ -680,6 +712,80 @@ config BU52031NVX_POUCHDETECT
 	depends on BU52031NVX
 	help
 	  depends on BU52031NVX
+
+config SENSORS_K3DH
+	tristate "K3DH acceleration sensor support"
+	depends on I2C
+        default n
+	help
+	  Driver for STMicroelectronic K3DH accelerometer.
+
+config SEC_MISC
+	bool "Samsung CELOX series miscellaneous driver"
+	default n
+	---help---
+	  Samsung CELOX series miscellaneous driver
+
+config SENSORS_CORE
+	bool "Sensor devices"
+	help
+	  Say Y here, and a list of sensors drivers will be displayed.
+	  Everything that didn't fit into the other categories is here. This option
+	  doesn't affect the kernel.
+
+	  If unsure, say Y.
+
+menuconfig VIBETONZ
+        tristate "Vibetonz"
+        default m
+        help
+          Say Y to enable Vibetonz support.
+
+config STMPE811_ADC
+	bool "stmpe811 adc driver"
+	default n
+	help
+	  stmpe811 adc driver
+	  
+config SENSORS_YDA165
+	bool "YDA165 Audio Amp Driver"
+	depends on I2C
+	default y
+	help
+	 YDA165 Audio AMP
+
+config WM8994_AMP
+        bool "WM8994 Audio Amp Driver"
+        depends on I2C
+        default y
+        help
+         WM8994 Audio AMP
+
+config GYRO_K3G
+	tristate "K3G driver for s5pc210"
+	default n
+	help
+	  This option enables gyro sensors using K3G driver.
+
+config SENSORS_YAS529_MAGNETIC
+	tristate "Yamaha YAS529 Geomagnetic Sensor"
+	default n
+	depends on I2C
+
+config INPUT_YAS529_POSITION
+	int "YAS529 Mounting Position on Board"
+	depends on SENSORS_YAS529_MAGNETIC
+	range 0 7
+	help
+	  Chip mounting position (pin 1).
+	    0: top, upper-left
+	    1: top, upper-right
+	    2: top, lower-right
+	    3: top, lower-left
+	    4: bottom, upper-left
+	    5: bottom, upper-right
+	    6: bottom, lower-right
+	    7: bottom, lower-left
 
 source "drivers/misc/c2port/Kconfig"
 source "drivers/misc/eeprom/Kconfig"

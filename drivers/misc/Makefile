@@ -54,11 +54,14 @@ obj-$(CONFIG_ALTERA_STAPL)	+=altera-stapl/
 obj-$(CONFIG_MAX8997_MUIC)	+= max8997-muic.o
 obj-$(CONFIG_WL127X_RFKILL)	+= wl127x-rfkill.o
 obj-$(CONFIG_APANIC)		+= apanic.o
-obj-$(CONFIG_SENSORS_AK8975)	+= akm8975.o
+obj-$(CONFIG_SENSORS_AK8975)	+= ak8975.o
+obj-$(CONFIG_SENSORS_K3DH)	+= k3dh.o orientation.o
 obj-$(CONFIG_TSIF) += msm_tsif.o
 msm_tsif-objs := tsif.o
 obj-$(CONFIG_TSIF_CHRDEV) += tsif_chrdev.o
 obj-$(CONFIG_TSPP) += tspp.o
+obj-$(CONFIG_SAMSUNG_JACK) += sec_jack.o
+obj-$(CONFIG_SAMSUNG_EARJACK) += sec_earjack.o
 obj-$(CONFIG_HAPTIC_ISA1200)		+= isa1200.o
 obj-$(CONFIG_PMIC8058_PWM) += pmic8058-pwm.o
 obj-$(CONFIG_PMIC8XXX_VIBRATOR) += pm8xxx-vibrator.o
@@ -70,6 +73,32 @@ obj-$(CONFIG_MSM_MEMORY_LOW_POWER_MODE_SUSPEND_DEEP_POWER_DOWN) \
 obj-$(CONFIG_PMIC8058_XOADC) += pmic8058-xoadc.o
 obj-$(CONFIG_QSEECOM) += qseecom.o
 obj-$(CONFIG_QFP_FUSE) += qfp_fuse.o
+ifeq ($(CONFIG_VIBETONZ),y)
+obj-y += vibetonz/
+else
 obj-y += tspdrv/
+endif
 obj-$(CONFIG_BU52031NVX) += pm8xxx-cradle.o
 obj-$(CONFIG_SLIMPORT_ANX7808)	+= slimport_anx7808/
+ifeq ($(CONFIG_USE_A2220_B),y)
+obj-$(CONFIG_VP_A2220) += a2220b.o
+else
+obj-$(CONFIG_VP_A2220) += a2220.o
+endif
+obj-$(CONFIG_STMPE811_ADC) += stmpe811.o
+obj-$(CONFIG_SEC_MISC) += sec_misc.o sec_level.o sec_param.o
+ifdef CONFIG_USA_MODEL_SGH_I717
+obj-$(CONFIG_SENSORS_YDA165)	+= yda165_integ.o
+else ifdef CONFIG_USA_MODEL_SGH_I577
+obj-$(CONFIG_SENSORS_YDA165)	+= yda165_integ.o
+else
+obj-$(CONFIG_SENSORS_YDA165)    += yda165.o
+endif
+obj-$(CONFIG_SENSORS_CORE)	+= sensors_core.o
+#obj-$(CONFIG_WM8994_AMP)	+= wm8994_amp.o
+obj-$(CONFIG_GYRO_K3G)		+= k3g.o
+
+#debug setting
+ifeq ($(CONFIG_SENSORS_CORE),y)
+EXTRA_CFLAGS += -DSENSORS_LOG_DUMP
+endif

@@ -63,3 +63,12 @@ obj-$(CONFIG_BOSCH_BMA150)              += bma150.o
 obj-$(CONFIG_STM_LIS3DH)		+= lis3dh_acc.o
 obj-$(CONFIG_BMP18X)			+= bmp18x-core.o
 obj-$(CONFIG_BMP18X_I2C)		+= bmp18x-i2c.o
+obj-$(CONFIG_INPUT_BMP180)              += bmp180.o
+obj-$(CONFIG_OPTICAL_GP2A)		+= gp2a_proximity.o gp2a_light.o gp2a_proc.o
+obj-$(CONFIG_OPTICAL_GP2AP020A00F)	+= gp2ap020_proximity.o gp2ap020_light.o
+obj-$(CONFIG_OPTICAL_TAOS)		+= taos.o
+
+#debug setting
+ifeq ($(CONFIG_SENSORS_CORE),y)
+EXTRA_CFLAGS += -DSENSORS_LOG_DUMP
+endif

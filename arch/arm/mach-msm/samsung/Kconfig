@@ -8,4 +8,139 @@ endmenu
 
 menu "SAMSUNG Specific Patches"
 
+choice
+	prompt "Target Locale"
+	depends on !TARGET_SERIES_DUMMY
+	default TARGET_LOCALE_KOR
+
+	config TARGET_LOCALE_KOR
+		bool "Locale KOR "
+		help
+		  Support Korea SKT Board
+
+	config TARGET_LOCALE_USA
+		bool "Locale USA "
+		help
+		  Support USA Board
+
+	config TARGET_LOCALE_JPN
+		bool "Locale JPN "
+		help
+		  Support JPN Board
+
+	config TARGET_LOCALE_EUR
+		bool "Locale EUR "
+		help
+		  Support EUR Board
+endchoice
+
+choice
+	prompt "Operator in the Korean market"
+	default KOR_CARRIER_SKT
+	depends on TARGET_LOCALE_KOR
+
+	config KOR_OPERATOR_SKT
+		bool "SKT"
+	config KOR_OPERATOR_KT
+		bool "KT"
+	config KOR_OPERATOR_LGU
+		bool "LGU"
+	config KOR_OPERATOR_OPEN
+		bool "OPEN"
+endchoice
+
+choice
+	prompt "Operator in the USA market"
+	default USA_OPERATOR_ATT
+	depends on TARGET_LOCALE_USA
+
+	config USA_OPERATOR_ATT
+		bool "USA Operator ATT"
+
+	config USA_OPERATOR_TMO
+		bool "USA Operator TMO"
+		
+	config CAN_OPERATOR_RWC
+		bool "CAN Operator RWC"			
+endchoice
+
+choice
+	prompt "Operator in the JPN market"
+	default JPN_OPERATOR_NTT
+	depends on TARGET_LOCALE_JPN
+
+	config JPN_OPERATOR_NTT
+		bool "JPN Operator NTT"
+endchoice
+
+choice
+	prompt "Operator in the EUR market"
+	default EUR_OPERATOR_OPEN
+	depends on TARGET_LOCALE_EUR
+
+	config EUR_OPERATOR_OPEN
+		bool "OPEN"			
+endchoice
+
+config SEC_KERNEL_REBASE_FOR_PMEM_OPTIMIZATION
+	bool "Kernel Rebase for PMEM Optimization"
+	default n
+	help
+	  This option is used to place kernel base to 0x48000000 instead of 0x40400000.
+
+config SAMSUNG_MEMORY_LAYOUT_ARRANGE
+	bool "Memory Layout Re-arrangement"
+	default n
+	help
+	  This option is used to place kernel base to 0x48000000 instead of 0x40400000.
+
+config SAMSUNG_8X60_TABLET
+	bool "SAMSUNG 8X60 TABLET"
+	default n
+
+config SEC_AUDIO_DEVICE
+	bool "Sec AUDIO DEVICE"
+	help
+	  Support Sec audio Device
+
+config SEC_AUDIO_I2S_DRIVING_CURRENT
+	bool "Sec I2S Driving Current"
+	default n
+	help
+	  Support I2S driving current up
+
+config SEC_EXTRA_VOLUME_SOL
+	bool "Sec Extra Volume Solution"
+	default n
+	help
+	  Support Sec Extra Volume Solution
+
+config Q1_KOR_AUDIO
+	bool "Q1 KOR AUDIO"
+	default n
+	help
+	  Support Q1 KOR AUDIO
+
+config NOISE_REDUCE_FOR_WIFI_ON
+	bool "noise reduce for WIFI on"
+	default n
+	help
+	  Support Q1 LGU+
+
+config SEC_LOG_LAST_KMSG
+	default n
+	bool "Enable /proc/last_kmsg support: if EMBEDDED"
+	help
+	  This option enables /proc/last_kmsg support.
+
+config BT_BCM4330
+ 	bool "Enable BCM4330 driver"
+ 	default n
+ 	help
+	  Adds BCM4330 RFKILL driver for Broadcom BCM4330 chipset
+
+endmenu
+
+menu "Samsung Debugging Feature"
+source "arch/arm/mach-msm/samsung/Kconfig.debug"
 endmenu

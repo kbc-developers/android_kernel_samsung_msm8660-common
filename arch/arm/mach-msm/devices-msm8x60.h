@@ -22,6 +22,30 @@
 #define MSM_SSBI1_I2C_BUS_ID     6
 #define MSM_SSBI2_I2C_BUS_ID     7
 #define MSM_SSBI3_I2C_BUS_ID     8
+#define MSM_AMP_I2C_BUS_ID        9
+#define MSM_OPT_I2C_BUS_ID		10
+#define MSM_GYRO_I2C_BUS_ID		11
+#define MSM_MAG_I2C_BUS_ID		12
+#define MSM_TKEY_I2C_BUS_ID		13
+#if defined(CONFIG_PN544_NFC)
+#define MSM_GSBI10_QUP_I2C_BUS_ID	14
+#endif
+#if defined(CONFIG_BATTERY_MAX17040) || defined(CONFIG_CHARGER_SMB328A)
+#define MSM_FG_SMB_I2C_BUS_ID		15
+#endif
+#if defined(CONFIG_SAMSUNG_8X60_TABLET) && defined(CONFIG_BATTERY_MAX17042)
+#define MSM_FG_I2C_BUS_ID		15
+#endif
+#ifdef CONFIG_VP_A2220
+#define MSM_A2220_I2C_BUS_ID		16	
+#endif
+#if defined(CONFIG_SAMSUNG_8X60_TABLET) && defined (CONFIG_CMC623_P5LTE)
+#define MSM_CMC623_I2C_BUS_ID		17
+#endif
+#define MSM_MOTOR_I2C_BUS_ID		17
+#if defined (CONFIG_EPEN_WACOM_G5SP)
+#define MSM_GSBI11_QUP_I2C_BUS_ID	18
+#endif
 
 #ifdef CONFIG_SND_SOC_MSM8660_APQ
 extern struct platform_device msm_pcm;

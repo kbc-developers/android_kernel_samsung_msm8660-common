@@ -912,9 +912,14 @@ void mipi_dsi_host_init(struct mipi_panel_info *pinfo)
 	if (pinfo->data_lane0)
 		dsi_ctrl |= BIT(4);
 
+#if !defined (CONFIG_FB_MSM_MIPI_S6E8AA0_HD720_PANEL) && \
+	!defined (CONFIG_FB_MSM_MIPI_S6E8AA0_WXGA_Q1_PANEL)
 	/* from frame buffer, low power mode */
 	/* DSI_COMMAND_MODE_DMA_CTRL */
 	MIPI_OUTP(MIPI_DSI_BASE + 0x38, 0x14000000);
+#else
+	MIPI_OUTP(MIPI_DSI_BASE + 0x38, 0x10000000);
+#endif
 
 	data = 0;
 	if (pinfo->te_sel)
@@ -952,6 +957,12 @@ void mipi_dsi_host_init(struct mipi_panel_info *pinfo)
 		MIPI_OUTP(MIPI_DSI_BASE + 0x118, 0x23f); /* DSI_CLK_CTRL */
 	else
 		MIPI_OUTP(MIPI_DSI_BASE + 0x118, 0x33f); /* DSI_CLK_CTRL */
+
+#if defined(CONFIG_FB_MSM_MIPI_S6E8AA0_HD720_PANEL) \
+	|| defined(CONFIG_FB_MSM_MIPI_S6E8AA0_WXGA_Q1_PANEL)
+	/* add following line */
+	MIPI_OUTP(MIPI_DSI_BASE + 0xA8, 0x10000000);
+#endif
 
 	dsi_ctrl |= BIT(0);	/* enable dsi */
 	MIPI_OUTP(MIPI_DSI_BASE + 0x0000, dsi_ctrl);

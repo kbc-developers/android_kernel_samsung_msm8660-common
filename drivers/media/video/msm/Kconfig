@@ -86,6 +86,43 @@ config MT9P012
 	---help---
 	  MICRON 5M Bayer Sensor with Autofocus
 
+config SENSOR_M5MO
+	bool "Sensor M5MO (YUV 8M)"
+	depends on MSM_CAMERA
+	---help---
+	SONY 8 MP YUV Sensor
+
+config SENSOR_ISX012
+	bool "Sensor ISX012 (YUV 5M)"
+	depends on MSM_CAMERA
+	---help---
+	SONY 5 MP YUV Sensor
+	
+config SENSOR_S5K6AAFX
+	bool "Sensor S5K6AAFX (YUV 1.3M)"
+	depends on MSM_CAMERA
+	---help---
+	SONY 1.3 MP YUV Sensor
+	
+config SENSOR_S5K5BAFX
+	bool "Sensor S5K5BAFX (YUV 2M)"
+	depends on MSM_CAMERA
+	---help---
+	LSI 2 MP YUV Sensor
+
+config SENSOR_SR200PC20M
+	bool "Sensor SR200PC20M (YUV 2M)"
+	depends on MSM_CAMERA
+	---help---
+	Siliconfile 2 MP YUV Sensor
+
+config CAMERA_VE
+	bool "Front camera VE"
+	depends on SENSOR_S5K5BAFX && SENSOR_SR200PC20M
+	default n
+	---help---
+	  Enable support for Front Camera VE for E160S/K/L
+
 choice
 	prompt "AF module"
 	depends on MT9P012 && !ARCH_MSM8X60 && !MSM_CAMERA_V4L2
@@ -189,6 +226,12 @@ config MSM_CAMERA_FLASH
 	default y
 	---help---
 	  Enable support for LED flash for msm camera
+
+config FLASH_TORCH_MODE
+	bool "Qualcomm MSM Torch flash support"
+	depends on MSM_CAMERA
+	---help---
+	  Enable support for Torch LED flash
 
 config MSM_CAMERA_SENSOR
 	bool "Qualcomm MSM camera sensor support"

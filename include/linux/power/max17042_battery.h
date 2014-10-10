@@ -1,9 +1,8 @@
 /*
- * Fuel gauge driver for Maxim 17042 / 8966 / 8997
- *  Note that Maxim 8966 and 8997 are mfd and this is its subdevice.
+ *  max17042_battery.h
+ *  fuel-gauge systems for lithium-ion (Li+) batteries
  *
  * Copyright (C) 2011 Samsung Electronics
- * MyungJoo Ham <myungjoo.ham@samsung.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,177 +19,351 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#ifndef __MAX17042_BATTERY_H_
-#define __MAX17042_BATTERY_H_
+#ifndef _LINUX_MAX_17042_BATTERY_H
+#define _LINUX_MAX_17042_BATTERY_H
+#define INTENSIVE_LOW_COMPENSATION
+#if defined(CONFIG_TARGET_SERIES_P5LTE)
+#define KEEP_SOC_LEVEL1
+#define POWER_OFF_SOC_HIGH_MARGIN	0x181	//1.5%
+#define POWER_OFF_VOLTAGE_HIGH_MARGIN	3500
+#endif
 
-#define MAX17042_STATUS_BattAbsent	(1 << 3)
-#define MAX17042_BATTERY_FULL	(100)
-#define MAX17042_DEFAULT_SNS_RESISTOR	(10000)
+/* Register address */
+#define STATUS_REG				0x00
+#define VALRT_THRESHOLD_REG		0x01
+#define TALRT_THRESHOLD_REG		0x02
+#define SALRT_THRESHOLD_REG		0x03
+#define REMCAP_REP_REG			0x05
+#define SOCREP_REG				0x06
+#define TEMPERATURE_REG			0x08
+#define VCELL_REG				0x09
+#define CURRENT_REG				0x0A
+#define AVG_CURRENT_REG			0x0B
+#define SOCMIX_REG				0x0D
+#define SOCAV_REG				0x0E
+#define REMCAP_MIX_REG			0x0F
+#define FULLCAP_REG				0x10
+#define RFAST_REG				0x15
+#define AVR_TEMPERATURE_REG		0x16
+#define CYCLES_REG				0x17
+#define DESIGNCAP_REG			0x18
+#define AVR_VCELL_REG			0x19
+#define CONFIG_REG				0x1D
+#define REMCAP_AV_REG			0x1F
+#define FULLCAP_NOM_REG			0x23
+#if defined(CONFIG_TARGET_LOCALE_KOR_SKT) || defined(CONFIG_TARGET_LOCALE_KOR_KT) || defined(CONFIG_TARGET_LOCALE_KOR_LGU)
+#define FILTERCFG_REG			0x29
+#define CGAIN_REG				0x2E
+#endif
+#define MISCCFG_REG				0x2B
+#define RCOMP_REG				0x38
+#define FSTAT_REG				0x3D
+#define DQACC_REG				0x45
+#define DPACC_REG				0x46
+#define OCV_REG					0xEE
+#define VFOCV_REG				0xFB
+#define VFSOC_REG				0xFF
 
-#define MAX17042_CHARACTERIZATION_DATA_SIZE 48
+#define FG_LEVEL 0
+#define FG_TEMPERATURE 1
+#define FG_VOLTAGE 2
+#define FG_CURRENT 3
+#define FG_CURRENT_AVG 4
+#define FG_BATTERY_TYPE 5
+#define FG_CHECK_STATUS 6
+#define FG_VF_SOC 7
+#if defined(CONFIG_TARGET_LOCALE_KOR_SKT) || defined(CONFIG_TARGET_LOCALE_KOR_KT) || defined(CONFIG_TARGET_LOCALE_KOR_LGU)
+#define FG_FULLCAP 8
+#define FG_FULLCAP_NOM 9
+#define FG_REMCAP_REP 10
+#define FG_REMCAP_MIX 11
+#define FG_REMCAP_AV 12
+#define FG_VFOCV 13
+#define FG_FILTERCFG 14
+#endif
 
-enum max17042_register {
-	MAX17042_STATUS		= 0x00,
-	MAX17042_VALRT_Th	= 0x01,
-	MAX17042_TALRT_Th	= 0x02,
-	MAX17042_SALRT_Th	= 0x03,
-	MAX17042_AtRate		= 0x04,
-	MAX17042_RepCap		= 0x05,
-	MAX17042_RepSOC		= 0x06,
-	MAX17042_Age		= 0x07,
-	MAX17042_TEMP		= 0x08,
-	MAX17042_VCELL		= 0x09,
-	MAX17042_Current	= 0x0A,
-	MAX17042_AvgCurrent	= 0x0B,
-
-	MAX17042_SOC		= 0x0D,
-	MAX17042_AvSOC		= 0x0E,
-	MAX17042_RemCap		= 0x0F,
-	MAX17042_FullCAP	= 0x10,
-	MAX17042_TTE		= 0x11,
-	MAX17042_V_empty	= 0x12,
-
-	MAX17042_RSLOW		= 0x14,
-
-	MAX17042_AvgTA		= 0x16,
-	MAX17042_Cycles		= 0x17,
-	MAX17042_DesignCap	= 0x18,
-	MAX17042_AvgVCELL	= 0x19,
-	MAX17042_MinMaxTemp	= 0x1A,
-	MAX17042_MinMaxVolt	= 0x1B,
-	MAX17042_MinMaxCurr	= 0x1C,
-	MAX17042_CONFIG		= 0x1D,
-	MAX17042_ICHGTerm	= 0x1E,
-	MAX17042_AvCap		= 0x1F,
-	MAX17042_ManName	= 0x20,
-	MAX17042_DevName	= 0x21,
-
-	MAX17042_FullCAPNom	= 0x23,
-	MAX17042_TempNom	= 0x24,
-	MAX17042_TempLim	= 0x25,
-	MAX17042_TempHot	= 0x26,
-	MAX17042_AIN		= 0x27,
-	MAX17042_LearnCFG	= 0x28,
-	MAX17042_FilterCFG	= 0x29,
-	MAX17042_RelaxCFG	= 0x2A,
-	MAX17042_MiscCFG	= 0x2B,
-	MAX17042_TGAIN		= 0x2C,
-	MAx17042_TOFF		= 0x2D,
-	MAX17042_CGAIN		= 0x2E,
-	MAX17042_COFF		= 0x2F,
-
-	MAX17042_MaskSOC	= 0x32,
-	MAX17042_SOC_empty	= 0x33,
-	MAX17042_T_empty	= 0x34,
-
-	MAX17042_FullCAP0       = 0x35,
-	MAX17042_LAvg_empty	= 0x36,
-	MAX17042_FCTC		= 0x37,
-	MAX17042_RCOMP0		= 0x38,
-	MAX17042_TempCo		= 0x39,
-	MAX17042_EmptyTempCo	= 0x3A,
-	MAX17042_K_empty0	= 0x3B,
-	MAX17042_TaskPeriod	= 0x3C,
-	MAX17042_FSTAT		= 0x3D,
-
-	MAX17042_SHDNTIMER	= 0x3F,
-
-	MAX17042_dQacc		= 0x45,
-	MAX17042_dPacc		= 0x46,
-
-	MAX17042_VFSOC0		= 0x48,
-
-	MAX17042_QH		= 0x4D,
-	MAX17042_QL		= 0x4E,
-
-	MAX17042_VFSOC0Enable	= 0x60,
-	MAX17042_MLOCKReg1	= 0x62,
-	MAX17042_MLOCKReg2	= 0x63,
-
-	MAX17042_MODELChrTbl	= 0x80,
-
-	MAX17042_OCV		= 0xEE,
-
-	MAX17042_OCVInternal	= 0xFB,
-
-	MAX17042_VFSOC		= 0xFF,
-};
-
-/*
- * used for setting a register to a desired value
- * addr : address for a register
- * data : setting value for the register
- */
-struct max17042_reg_data {
-	u8 addr;
-	u16 data;
-};
-
-struct max17042_config_data {
-	/* External current sense resistor value in milli-ohms */
-	u32	cur_sense_val;
-
-	/* A/D measurement */
-	u16	tgain;		/* 0x2C */
-	u16	toff;		/* 0x2D */
-	u16	cgain;		/* 0x2E */
-	u16	coff;		/* 0x2F */
-
-	/* Alert / Status */
-	u16	valrt_thresh;	/* 0x01 */
-	u16	talrt_thresh;	/* 0x02 */
-	u16	soc_alrt_thresh;	/* 0x03 */
-	u16	config;		/* 0x01D */
-	u16	shdntimer;	/* 0x03F */
-
-	/* App data */
-	u16	design_cap;	/* 0x18 */
-	u16	ichgt_term;	/* 0x1E */
-
-	/* MG3 config */
-	u16	at_rate;	/* 0x04 */
-	u16	learn_cfg;	/* 0x28 */
-	u16	filter_cfg;	/* 0x29 */
-	u16	relax_cfg;	/* 0x2A */
-	u16	misc_cfg;	/* 0x2B */
-	u16	masksoc;	/* 0x32 */
-
-	/* MG3 save and restore */
-	u16	fullcap;	/* 0x10 */
-	u16	fullcapnom;	/* 0x23 */
-	u16	socempty;	/* 0x33 */
-	u16	lavg_empty;	/* 0x36 */
-	u16	dqacc;		/* 0x45 */
-	u16	dpacc;		/* 0x46 */
-
-	/* Cell technology from power_supply.h */
-	u16	cell_technology;
-
-	/* Cell Data */
-	u16	vempty;		/* 0x12 */
-	u16	temp_nom;	/* 0x24 */
-	u16	temp_lim;	/* 0x25 */
-	u16	fctc;		/* 0x37 */
-	u16	rcomp0;		/* 0x38 */
-	u16	tcompc0;	/* 0x39 */
-	u16	empty_tempco;	/* 0x3A */
-	u16	kempty0;	/* 0x3B */
-	u16	cell_char_tbl[MAX17042_CHARACTERIZATION_DATA_SIZE];
-} __packed;
+#define LOW_BATT_COMP_RANGE_NUM	5
+#define LOW_BATT_COMP_LEVEL_NUM	2
+#ifdef INTENSIVE_LOW_COMPENSATION
+#define MAX_LOW_BATT_CHECK_CNT	12
+#else
+#define MAX_LOW_BATT_CHECK_CNT	2
+#endif
+#define MAX17042_CURRENT_UNIT	15625 / 100000
 
 struct max17042_platform_data {
-	struct max17042_reg_data *init_data;
-	struct max17042_config_data *config_data;
-	int num_init_data; /* Number of enties in init_data array */
-	bool enable_current_sense;
-	bool enable_por_init; /* Use POR init from Maxim appnote */
-
-	/*
-	 * R_sns in micro-ohms.
-	 * default 10000 (if r_sns = 0) as it is the recommended value by
-	 * the datasheet although it can be changed by board designers.
-	 */
-	unsigned int r_sns;
+	int sdi_capacity;
+	int sdi_vfcapacity;
+	int atl_capacity;
+	int atl_vfcapacity;
+	int fuel_alert_line;
+	void (*hw_init)(void);
 };
 
-#endif /* __MAX17042_BATTERY_H_ */
+struct fuelgauge_info {
+	/* test print count */
+	int pr_cnt;
+	/* battery type */
+	int battery_type;
+	/* full charge comp */
+	u32 previous_fullcap;
+	u32 previous_vffullcap;
+	u32 full_charged_cap;
+	/* capacity and vfcapacity */
+	u16 capacity;
+	u16 vfcapacity;
+	int soc_restart_flag;
+	/* cap corruption check */
+	u32 previous_repsoc;
+	u32 previous_vfsoc;
+	u32 previous_remcap;
+	u32 previous_mixcap;
+	u32 previous_fullcapacity;
+	u32 previous_vfcapacity;
+	u32 previous_vfocv;
+	/* low battery comp */
+	int low_batt_comp_cnt[LOW_BATT_COMP_RANGE_NUM][LOW_BATT_COMP_LEVEL_NUM];
+	int check_start_vol;
+	int low_batt_comp_flag;
+};
+
+struct max17042_chip {
+	struct i2c_client		*client;
+	struct max17042_platform_data	*pdata;
+	struct power_supply		battery;
+	struct fuelgauge_info	info;
+	struct mutex			fg_lock;
+#ifdef INTENSIVE_LOW_COMPENSATION
+	int pre_cond_ok;
+	int low_comp_pre_cond;
+#endif	
+};
+
+/* SDI type low battery compensation offset */
+#ifdef CONFIG_TARGET_SERIES_P4LTE
+#if 0
+#define SDI_Range5_1_Offset		3318
+#define SDI_Range5_3_Offset		3383
+#define SDI_Range4_1_Offset		3451 //3371
+#define SDI_Range4_3_Offset		3618 //3478
+#define SDI_Range3_1_Offset		3453 //3453
+#define SDI_Range3_3_Offset		3615 //3614
+#define SDI_Range2_1_Offset		3447 //3447
+#define SDI_Range2_3_Offset		3606 //3606
+#define SDI_Range1_1_Offset		3438 //3438
+#define SDI_Range1_3_Offset		3591 //3591
+
+#define SDI_Range5_1_Slope		0
+#define SDI_Range5_3_Slope		0
+#define SDI_Range4_1_Slope		53 //0
+#define SDI_Range4_3_Slope		94 //0
+#define SDI_Range3_1_Slope		54 //50
+#define SDI_Range3_3_Slope		92 //90
+#define SDI_Range2_1_Slope		45 //50
+#define SDI_Range2_3_Slope		78 //78
+#define SDI_Range1_1_Slope		0 //0
+#define SDI_Range1_3_Slope		0 //0
+#else 
+//09.01 new table
+#define SDI_Range5_1_Offset		3283
+#define SDI_Range5_3_Offset		3348
+#define SDI_Range4_1_Offset		3450
+#define SDI_Range4_3_Offset		3618
+#define SDI_Range3_1_Offset		3445
+#define SDI_Range3_3_Offset		3605
+#define SDI_Range2_1_Offset		3442
+#define SDI_Range2_3_Offset		3598
+#define SDI_Range1_1_Offset		3401
+#define SDI_Range1_3_Offset		3580
+
+#define SDI_Range5_1_Slope		0
+#define SDI_Range5_3_Slope		0
+#define SDI_Range4_1_Slope		67
+#define SDI_Range4_3_Slope		108
+#define SDI_Range3_1_Slope		63
+#define SDI_Range3_3_Slope		99
+#define SDI_Range2_1_Slope		59
+#define SDI_Range2_3_Slope		87
+#define SDI_Range1_1_Slope		0
+#define SDI_Range1_3_Slope		0
+#endif
+
+#elif defined(CONFIG_TARGET_SERIES_P5LTE)
+/* SDI type low battery compensation offset */
+//Range4 : current consumption is more than 1.5A
+//Range3 : current consumption is between 0.6A ~ 1.5A
+//Range2 : current consumption is between 0.2A ~ 0.6A
+//Range1 : current consumption is less than 0.2A
+//11.09. 01 update 
+#define SDI_Range5_1_Offset		3283	//3308
+#define SDI_Range5_3_Offset		3330	//3365
+#define SDI_Range4_1_Offset		3451	//3361
+#define SDI_Range4_3_Offset		3596	//3448
+#define SDI_Range3_1_Offset		3445	//3438
+#define SDI_Range3_3_Offset		3587	//3634
+#define SDI_Range2_1_Offset		3442	//3459
+#define SDI_Range2_3_Offset		3589	//3606
+#define SDI_Range1_1_Offset		3431	//3442
+#define SDI_Range1_3_Offset		3568	//3591
+
+#define SDI_Range5_1_Slope		0
+#define SDI_Range5_3_Slope		0
+#define SDI_Range4_1_Slope		67	//52	//0
+#define SDI_Range4_3_Slope		106	//92	//0
+#define SDI_Range3_1_Slope		63	//51	//50
+#define SDI_Range3_3_Slope		101	//114	//124
+#define SDI_Range2_1_Slope		59	//85	//90
+#define SDI_Range2_3_Slope		104	//78	//78
+#define SDI_Range1_1_Slope		0	//0	//0
+#define SDI_Range1_3_Slope		0	//0	//0
+
+#elif defined(CONFIG_TARGET_SERIES_P8LTE)
+#if 0
+#define SDI_Range5_1_Offset		3308
+#define SDI_Range5_3_Offset		3365
+#define SDI_Range4_1_Offset		3440	//3361
+#define SDI_Range4_3_Offset		3600	//3448
+#define SDI_Range3_1_Offset		3439	//3438
+#define SDI_Range3_3_Offset		3628	//3634
+#define SDI_Range2_1_Offset		3459	//3459
+#define SDI_Range2_3_Offset		3606	//3606
+#define SDI_Range1_1_Offset		3441	//3442
+#define SDI_Range1_3_Offset		3591	//3591
+
+#define SDI_Range5_1_Slope		0
+#define SDI_Range5_3_Slope		0
+#define SDI_Range4_1_Slope		52	//0
+#define SDI_Range4_3_Slope		92	//0
+#define SDI_Range3_1_Slope		51	//50
+#define SDI_Range3_3_Slope		114	//124
+#define SDI_Range2_1_Slope		85	//90
+#define SDI_Range2_3_Slope		78	//78
+#define SDI_Range1_1_Slope		0	//0
+#define SDI_Range1_3_Slope		0	//0
+#else
+/* Current range for P8(not dependent on battery type */
+#define CURRENT_RANGE1	0
+#define CURRENT_RANGE2	-200
+#define CURRENT_RANGE3	-600
+#define CURRENT_RANGE4	-1500
+#define CURRENT_RANGE5	-2500
+#define CURRENT_RANGE_MAX	CURRENT_RANGE5
+#define CURRENT_RANGE_MAX_NUM	5
+/* SDI type low battery compensation Slope & Offset for 1% SOC range*/
+#define SDI_Range1_1_Slope		0
+#define SDI_Range2_1_Slope		54
+#define SDI_Range3_1_Slope		66
+#define SDI_Range4_1_Slope		69
+#define SDI_Range5_1_Slope		0
+
+#define SDI_Range1_1_Offset		3391
+#define SDI_Range2_1_Offset		3402
+#define SDI_Range3_1_Offset		3409
+#define SDI_Range4_1_Offset		3414
+#define SDI_Range5_1_Offset		3240
+
+/* SDI type low battery compensation Slope & Offset for 3% SOC range*/
+#define SDI_Range1_3_Slope		0
+#define SDI_Range2_3_Slope		92
+#define SDI_Range3_3_Slope		125
+#define SDI_Range4_3_Slope		110
+#define SDI_Range5_3_Slope		0
+
+#define SDI_Range1_3_Offset		3524
+#define SDI_Range2_3_Offset		3542
+#define SDI_Range3_3_Offset		3562
+#define SDI_Range4_3_Offset		3539
+#define SDI_Range5_3_Offset		3265
+
+/* ATL type low battery compensation offset */
+#define ATL_Range4_1_Offset		3298
+#define ATL_Range4_3_Offset		3330
+#define ATL_Range3_1_Offset		3375
+#define ATL_Range3_3_Offset		3445
+#define ATL_Range2_1_Offset		3371
+#define ATL_Range2_3_Offset		3466
+#define ATL_Range1_1_Offset		3362
+#define ATL_Range1_3_Offset		3443
+
+#define ATL_Range4_1_Slope		0
+#define ATL_Range4_3_Slope		0
+#define ATL_Range3_1_Slope		50
+#define ATL_Range3_3_Slope		77
+#define ATL_Range2_1_Slope		40
+#define ATL_Range2_3_Slope		111
+#define ATL_Range1_1_Slope		0
+#define ATL_Range1_3_Slope		0
+#endif
+
+#else //P8LTE
+/* SDI type low battery compensation offset */
+#define SDI_Range4_1_Offset		3361 //3369
+#define SDI_Range4_3_Offset		3448 //3469
+#define SDI_Range3_1_Offset		3438 //3453
+#define SDI_Range3_3_Offset		3634 //3619
+#define SDI_Range2_1_Offset		3459 //3447
+#define SDI_Range2_3_Offset		3606 //3606
+#define SDI_Range1_1_Offset		3442 //3438
+#define SDI_Range1_3_Offset		3590 //3590
+
+#define SDI_Range4_1_Slope		0
+#define SDI_Range4_3_Slope		0
+#define SDI_Range3_1_Slope		50 //60
+#define SDI_Range3_3_Slope		124 //100
+#define SDI_Range2_1_Slope		90 //50
+#define SDI_Range2_3_Slope		78 //77
+#define SDI_Range1_1_Slope		0
+#define SDI_Range1_3_Slope		0
+#endif
+
+/* ATL type low battery compensation offset */
+#define ATL_Range5_1_Offset		3298
+#define ATL_Range5_3_Offset		3330
+#define ATL_Range4_1_Offset		3298
+#define ATL_Range4_3_Offset		3330
+#define ATL_Range3_1_Offset		3375
+#define ATL_Range3_3_Offset		3445
+#define ATL_Range2_1_Offset		3371
+#define ATL_Range2_3_Offset		3466
+#define ATL_Range1_1_Offset		3362
+#define ATL_Range1_3_Offset		3443
+
+#define ATL_Range5_1_Slope		0
+#define ATL_Range5_3_Slope		0
+#define ATL_Range4_1_Slope		0
+#define ATL_Range4_3_Slope		0
+#define ATL_Range3_1_Slope		50
+#define ATL_Range3_3_Slope		77
+#define ATL_Range2_1_Slope		40
+#define ATL_Range2_3_Slope		111
+#define ATL_Range1_1_Slope		0
+#define ATL_Range1_3_Slope		0
+
+enum {
+	POSITIVE = 0,
+	NEGATIVE,
+};
+
+enum {
+	UNKNOWN_TYPE = 0,
+	SDI_BATTERY_TYPE,
+	ATL_BATTERY_TYPE,
+};
+
+void fg_periodic_read(void);
+
+extern int fg_reset_soc(void);
+extern int fg_reset_capacity(void);
+extern int fg_adjust_capacity(void);
+extern void fg_low_batt_compensation(u32 level);
+extern int fg_alert_init(void);
+extern void fg_fullcharged_compensation(u32 is_recharging, u32 pre_update);
+extern void fg_check_vf_fullcap_range(void);
+extern int fg_check_cap_corruption(void);
+extern void fg_set_full_charged(void);
+extern int get_fuelgauge_value(int data);
+#if defined(CONFIG_TARGET_LOCALE_KOR_SKT) || defined(CONFIG_TARGET_LOCALE_KOR_KT) || defined(CONFIG_TARGET_LOCALE_KOR_LGU)
+extern int set_fuelgauge_value(int data, u16 value);
+#endif
+
+#endif

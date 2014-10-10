@@ -55,6 +55,7 @@
 					PM8058_IRQ_BLOCK_BIT(16, (mpp)))
 #define PM8058_GPIO_IRQ(base, gpio)	((base) + \
 					PM8058_IRQ_BLOCK_BIT(24, (gpio)))
+#define PM8058_GPIO(gpio)		((gpio) - 1)
 
 /* PM8058 IRQ's */
 #define PM8058_VCP_IRQ			PM8058_IRQ_BLOCK_BIT(1, 0)

@@ -674,4 +674,36 @@ config BMP18X_I2C
          To compile this driver as a module, choose M here: the
          module will be called bmp18x-i2c.
 
+config INPUT_BMP180
+        depends on I2C && SYSFS
+        tristate "BMP180 digital pressure sensor"
+        default n
+        help
+          If you say yes here you get support for the Bosch Sensortec
+          BMP180 digital pressure sensor.
+
+          To compile this driver as a module, choose M here: the
+           module will be called bmp180.
+	  
+config OPTICAL_GP2A
+	depends on I2C
+	tristate "GP2A driver"
+	default n
+	help
+	  This option enables proximity & light sensors using gp2a driver.
+
+config OPTICAL_GP2AP020A00F
+	depends on I2C
+	tristate "GP2AP020A00F driver"
+	default n
+	help
+	  This option enables proximity & light sensors using gp2ap020a00f driver.  	  
+
+config OPTICAL_TAOS
+	depends on I2C
+	tristate "TAOS driver"
+	default n
+	help
+	  This option enables proximity & light sensors using taos driver.
+
 endif

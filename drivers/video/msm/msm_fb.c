@@ -461,6 +461,10 @@ static int msm_fb_probe(struct platform_device *pdev)
 
 	bf_supported = mdp4_overlay_borderfill_supported();
 
+	/* don't move below */
+	if (mfd->vsync_init != NULL)
+		mfd->vsync_init(0);
+
 	rc = msm_fb_register(mfd);
 	if (rc)
 		return rc;
@@ -915,6 +919,10 @@ static void msmfb_early_resume(struct early_suspend *h)
 static int unset_bl_level, bl_updated;
 static int bl_level_old;
 
+#ifdef CONFIG_BATTERY_SEC
+extern unsigned int is_lpcharging_state(void);
+#endif
+
 static int mdp_bl_scale_config(struct msm_fb_data_type *mfd,
 						struct mdp_bl_scale_data *data)
 {
@@ -1301,8 +1309,17 @@ static int msm_fb_register(struct msm_fb_data_type *mfd)
 	var->grayscale = 0,	/* No graylevels */
 	var->nonstd = 0,	/* standard pixel format */
 	var->activate = FB_ACTIVATE_VBL,	/* activate it at vsync */
+#ifdef CONFIG_FB_MSM_MIPI_S6E8AA0_HD720_PANEL
+	var->height = 103,	/* height of picture in mm */
+	var->width = 58,	/* width of picture in mm */
+#elif defined(CONFIG_FB_MSM_MIPI_S6D6AA0_WXGA_PANEL) \
+	|| defined(CONFIG_FB_MSM_MIPI_S6E8AA0_WXGA_Q1_PANEL)
+	var->height = 114,	/* height of picture in mm */
+	var->width = 71,	/* width of picture in mm */
+#else
 	var->height = -1,	/* height of picture in mm */
 	var->width = -1,	/* width of picture in mm */
+#endif
 	var->accel_flags = 0,	/* acceleration flags */
 	var->sync = 0,	/* see FB_SYNC_* */
 	var->rotate = 0,	/* angle we rotate counter clockwise */
@@ -1644,6 +1661,11 @@ static int msm_fb_register(struct msm_fb_data_type *mfd)
 	     mfd->index, fbi->var.xres, fbi->var.yres, fbi->fix.smem_len);
 
 #ifdef CONFIG_FB_MSM_LOGO
+#ifdef CONFIG_BATTERY_SEC
+	if (is_lpcharging_state() == 1) {
+		MSM_FB_INFO("[lpm-mode] skip init logo!\n");
+	} else
+#endif /* CONFIG_BATTERY_SEC */
 	/* Flip buffer */
 	if (!load_565rle_image(INIT_IMAGE_FILE, bf_supported))
 		;
@@ -4418,6 +4440,16 @@ struct platform_device *msm_fb_add_device(struct platform_device *pdev)
 		fbi_list_index--;
 		return NULL;
 	}
+
+#ifdef CONFIG_SEC_DEBUG
+	if (fbi_list_index == 1) {
+		sec_getlog_supply_fbinfo((void *)(fbi->fix.smem_start),
+					 fbi->var.xres,
+					 fbi->var.yres,
+					 fbi->var.bits_per_pixel, 2);
+	}
+#endif
+
 	return this_dev;
 }
 EXPORT_SYMBOL(msm_fb_add_device);

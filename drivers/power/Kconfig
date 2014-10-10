@@ -344,6 +344,12 @@ config SMB349_CHARGER
 	  SMB349 be operated as a slave device via the power supply
 	  framework.
 
+config BATTERY_P5LTE
+	bool "Enable SEC P5 LTE battery driver"
+	default n
+	help
+	  Say Y here to enable support for batteries with SEC features.
+
 config BATTERY_MSM_FAKE
 	tristate "Fake MSM battery"
 	depends on ARCH_MSM && BATTERY_MSM
@@ -389,6 +395,18 @@ config BQ27520_TEST_ENABLE
 	help
 	  Say Y here to enable Test sysfs Interface for BQ27520 Drivers.
 
+config CHARGER_SMB328A
+	bool "Enable SMB328A charger driver"
+	default n
+	help
+	  Say Y here to enable support for charger with SMB328A chip
+	  
+config BATTERY_SEC
+	bool "Enable SEC battery driver"
+	default n
+	help
+	  Say Y here to enable support for batteries with SEC features.
+	  
 config PM8921_CHARGER
 	tristate "PM8921 Charger driver"
 	depends on MFD_PM8921_CORE

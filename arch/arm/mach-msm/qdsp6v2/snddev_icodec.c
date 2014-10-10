@@ -442,6 +442,15 @@ static int snddev_icodec_open_tx(struct snddev_icodec_state *icodec)
 		}
 	}
 
+#ifdef CONFIG_VP_A2220
+	if (icodec->data->a2220_vp_on) {
+		if (icodec->data->a2220_vp_on()) {
+			pr_err("%s: Error turning on a2220 vp\n", __func__);
+			goto error_a2220;
+		}
+	}	
+#endif	
+
 	msm_snddev_tx_mclk_request();
 
 	drv->tx_osrclk = clk_get_sys(NULL, "i2s_mic_osr_clk");
@@ -524,6 +533,15 @@ error_invalid_freq:
 		icodec->data->pamp_off();
 
 	pr_err("%s: encounter error\n", __func__);
+
+#ifdef CONFIG_VP_A2220	
+	if (icodec->data->pamp_off)
+		icodec->data->pamp_off();
+	
+	pr_err("[A2220]: %s: encounter error\n", __func__);
+
+error_a2220:
+#endif
 error_pamp:
 	pm_qos_update_request(&drv->tx_pm_qos_req, PM_QOS_DEFAULT_VALUE);
 	return -ENODEV;
@@ -619,6 +637,11 @@ static int snddev_icodec_close_tx(struct snddev_icodec_state *icodec)
 	/* Reuse pamp_off for TX platform-specific setup  */
 	if (icodec->data->pamp_off)
 		icodec->data->pamp_off();
+
+#ifdef CONFIG_VP_A2220
+	if (icodec->data->a2220_vp_off)
+		icodec->data->a2220_vp_off();
+#endif
 
 	icodec->enabled = 0;
 

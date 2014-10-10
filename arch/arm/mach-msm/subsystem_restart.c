@@ -36,6 +36,9 @@
 #include <mach/subsystem_restart.h>
 
 #include "smd_private.h"
+#ifdef CONFIG_SEC_DEBUG
+#include <mach/sec_debug.h>
+#endif
 
 struct subsys_soc_restart_order {
 	const char * const *subsystem_list;
@@ -638,6 +641,11 @@ static int __init ssr_init_soc_restart_orders(void)
 
 static int __init subsys_restart_init(void)
 {
+#if defined(CONFIG_SEC_DEBUG)
+	if(!sec_debug_is_enabled()) // if debug_level is low, silent reset is activated.
+		restart_level = RESET_SUBSYS_COUPLED;
+	else
+#endif
 	restart_level = RESET_SOC;
 
 	ssr_wq = alloc_workqueue("ssr_wq", WQ_CPU_INTENSIVE, 0);

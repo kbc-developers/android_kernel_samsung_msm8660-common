@@ -2,5 +2,102 @@
 # Inlcude the specific Kconfig file for SAMSUNG board
 #
 
-config MACH_SAMSUNG_DUMMY
-	bool "NONE (No device)"
+choice
+	prompt "Target Series"
+	depends on ARCH_MSM8X60
+	default TARGET_SERIES_CELOX
+
+	config TARGET_SERIES_CELOX
+		select MACH_SAMSUNG
+		bool "Celox"
+		help
+		  Support models of celox series
+
+	config TARGET_SERIES_DALI
+		select MACH_SAMSUNG
+		bool "Dali"
+		help
+		  Support models of dali series
+
+	config TARGET_SERIES_Q1
+		select MACH_SAMSUNG
+		bool "Quincy"
+		help
+		  Support models of q1 series
+
+	config TARGET_SERIES_DUMMY
+		bool "(None)"
+endchoice
+
+choice
+	prompt "KOR Model Name"
+	default KOR_MODEL_SHV_E110S
+	depends on TARGET_LOCALE_KOR
+
+	config KOR_MODEL_SHV_E110S
+		bool "SHV-E110S"
+	config KOR_MODEL_SHV_E120S
+		bool "SHV-E120S"
+	config KOR_MODEL_SHV_E120K
+		bool "SHV-E120K"
+	config KOR_MODEL_SHV_E120L
+		bool "SHV-E120L"
+	config KOR_MODEL_SHV_E160S
+		bool "SHV-E160S"
+	config KOR_MODEL_SHV_E160K
+		bool "SHV-E160K"
+	config KOR_MODEL_SHV_E160L
+		bool "SHV-E160L"
+		
+endchoice
+
+choice
+	prompt "EUR/USA Model Name"
+	depends on TARGET_LOCALE_USA
+
+	config USA_MODEL_SGH_I717
+		bool "USA ATT SGH-I717"
+
+	config USA_MODEL_SGH_T879
+		bool "USA TMO SGH-T879"	
+		depends on USA_MODEL_SGH_I717
+
+	config USA_MODEL_SGH_I727
+		bool "USA ATT SGH-I727"
+
+	config USA_MODEL_SGH_I727R
+		depends on USA_MODEL_SGH_I727
+		bool "USA ATT SGH-I727R"
+
+	config EUR_MODEL_GT_I9210
+		depends on USA_MODEL_SGH_I727
+		bool "EUR OPEN GT-I9210"
+
+	config USA_MODEL_SGH_I757 
+		bool "USA ATT SGH-I757"
+
+	config USA_MODEL_SGH_T989
+		bool "USA ATT SGH-T989"
+
+	config USA_MODEL_SGH_T989D
+		depends on USA_MODEL_SGH_T989
+		bool "USA TMO SGH-T989D"
+
+	config USA_MODEL_SGH_T769
+		bool "USA TMO SGH-T769"
+
+	config USA_MODEL_SGH_I957
+		bool "USA ATT SGH-I957"
+
+	config USA_MODEL_SGH_I577 
+		bool "USA ATT SGH-I577"
+
+endchoice
+
+choice
+	prompt "JPN Model Name"
+	depends on TARGET_LOCALE_JPN
+
+	config JPN_MODEL_SC_01D
+		bool "JPN NTT SC-01D"
+endchoice

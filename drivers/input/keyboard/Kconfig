@@ -576,7 +576,7 @@ config KEYBOARD_XTKBD
 
 	  To compile this driver as a module, choose M here: the
 	  module will be called xtkbd.
-
+	  
 config KEYBOARD_QCIKBD
    tristate "Quanta Computer Inc. keyboard"
    depends on I2C
@@ -613,4 +613,5 @@ config KEYBOARD_W90P910
 
 endif
 
+source "drivers/input/keyboard/cypress-touchkey/Kconfig"
 

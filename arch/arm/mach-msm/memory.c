@@ -144,6 +144,9 @@ void * __init alloc_bootmem_aligned(unsigned long size, unsigned long alignment)
 char *memtype_name[] = {
 	"SMI_KERNEL",
 	"SMI",
+#ifdef CONFIG_SEC_KERNEL_REBASE_FOR_PMEM_OPTIMIZATION
+	"ADSP",
+#endif
 	"EBI0",
 	"EBI1"
 };

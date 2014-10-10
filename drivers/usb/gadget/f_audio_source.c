@@ -26,7 +26,7 @@
 #define SAMPLE_RATE 44100
 #define FRAMES_PER_MSEC (SAMPLE_RATE / 1000)
 
-#define IN_EP_MAX_PACKET_SIZE 256
+#define IN_EP_MAX_PACKET_SIZE 384
 
 /* Number of requests to allocate */
 #define IN_EP_REQ_COUNT 4
@@ -245,7 +245,6 @@ struct audio_dev {
 
 	struct list_head		idle_reqs;
 	struct usb_ep			*in_ep;
-
 	spinlock_t			lock;
 
 	/* beginning, end and current position in our buffer */
