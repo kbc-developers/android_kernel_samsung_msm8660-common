@@ -3149,8 +3149,7 @@ CONFIG_HAVE_CLK_PREPARE=y
 # Hardware Spinlock drivers
 #
 CONFIG_IOMMU_SUPPORT=y
-CONFIG_MSM_IOMMU=y
-CONFIG_IOMMU_PGTABLES_L2=y
+# CONFIG_MSM_IOMMU is not set
 
 #
 # Remoteproc drivers (EXPERIMENTAL)
