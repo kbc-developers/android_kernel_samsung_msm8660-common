@@ -124,9 +124,23 @@ static void charm_ap2mdm_kpdpwr_off(void)
 	}
 	gpio_direction_output(AP2MDM_ERRFATAL, 0);
 
+#if defined(CONFIG_TARGET_LOCALE_USA)
+	/* When PM8058 has already shut down, PM8028 is still pulsing.
+	 * After shut down the MDM9K by AP2MDM_STATUS , 
+	 * then always turn off the PM8028 by AP2MDM_PMIC_RESET 
+	 */
+	if (true) {
+		if (i == 0)
+			pr_err("%s: MDM2AP_STATUS never went low. Doing a hard reset of the charm modem.\n", 
+				__func__);		
+		else		
+			pr_err("%s: MDM2AP_STATUS went low. but we still need doing a hard reset again.\n", 
+				__func__);	
+#else
 	if (i == 0) {
 		pr_err("%s: MDM2AP_STATUS never went low. Doing a hard reset \
 			of the charm modem.\n", __func__);
+#endif
 		gpio_direction_output(AP2MDM_PMIC_RESET_N, 1);
 		/*
 		* Currently, there is a debounce timer on the charm PMIC. It is
