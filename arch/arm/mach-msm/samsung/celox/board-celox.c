@@ -13766,15 +13766,6 @@ static void sensor_power_off_mag(void)
 	sensor_power_off_vdd(0, 0, 0, 1);
 }
 
-#ifdef CONFIG_SEC_AUDIO_I2S_DRIVING_CURRENT
-static void codec_i2s_strength_init(void)
-{
-	msm_tlmm_set_spkr_hdrive(CODEC_SPKR_SCK_HDRV, GPIO_CFG_8MA);
-	msm_tlmm_set_spkr_hdrive(CODEC_SPKR_WS_HDRV, GPIO_CFG_8MA);
-	msm_tlmm_set_spkr_hdrive(CODEC_SPKR_DOUT_HDRV, GPIO_CFG_8MA);
-}
-#endif
-
 static int lcdc_panel_power(int on)
 {
 	int flag_on = !!on;
@@ -15091,9 +15082,6 @@ vibrator_device_gpio_init();
 			printk("Fail to create sec_debug_level file\n");
 	}
 #endif /*CONFIG_KERNEL_DEBUG_SEC*/
-#ifdef CONFIG_SEC_AUDIO_I2S_DRIVING_CURRENT
-	codec_i2s_strength_init();
-#endif
 }
 
 static void __init msm8x60_surf_init(void)
