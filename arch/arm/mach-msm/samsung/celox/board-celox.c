@@ -43,9 +43,6 @@
 #include <linux/i2c/bq27520.h>
 
 #ifdef CONFIG_TOUCHSCREEN_MELFAS
-#define TOUCHSCREEN_IRQ 		125  
-#define TSP_SDA					43
-#define TSP_SCL					44
 #include <linux/melfas_ts.h>
 #endif
 
@@ -451,10 +448,11 @@ struct pm8xxx_mpp_init_info {
 }
 
 
-#if defined(CONFIG_TOUCHSCREEN_QT602240) || defined(CONFIG_TOUCHSCREEN_MXT768E)
-#define TOUCHSCREEN_IRQ 		125  
-#define TSP_SDA					43
-#define TSP_SCL					44
+#if defined(CONFIG_TOUCHSCREEN_QT602240) || defined(CONFIG_TOUCHSCREEN_MXT768E) \
+	|| defined(CONFIG_TOUCHSCREEN_MELFAS)
+#define TOUCHSCREEN_IRQ		125  
+#define TSP_SDA			43
+#define TSP_SCL			44
 #endif
 
 #ifdef CONFIG_MSM_CAMERA
@@ -5532,114 +5530,105 @@ static struct i2c_board_info cyttsp_ffa_info[] __initdata = {
 };
 #endif
 
-
-/*-----------------------MXT224  TOUCH DRIVER by Xtopher-----------------------*/
 #if defined(CONFIG_TOUCHSCREEN_QT602240) || defined(CONFIG_TOUCHSCREEN_MXT768E)
-#define TSP_IRQ_READY_DELAY 45
-
 static void mxt224_power_on(void)
 {
-	// int ret;
 	int rc;
 	struct regulator *L1;
 	struct regulator *L4;
-	// static struct regulator *tsp_pannel_pwr_reg;
 
 	printk("%s: enter\n", __func__);
-	{
-				L1 = regulator_get(NULL, "8901_l1");
-				if (IS_ERR(L1)) {
-					rc = PTR_ERR(L1);
-					pr_err("%s: L1 get failed (%d)\n",
-						   __func__, rc);
-					return;
-				}
 
-				rc = regulator_set_voltage(L1,3300000, 3300000);
-				if (rc) {
-					printk("%s: debug p1\n", __func__);
-					return;
-				}
+	L1 = regulator_get(NULL, "8901_l1");
+	if (IS_ERR(L1)) {
+		rc = PTR_ERR(L1);
+		pr_err("%s: L1 get failed (%d)\n",
+			   __func__, rc);
+		return;
+	}
+
+	rc = regulator_set_voltage(L1,3300000, 3300000);
+	if (rc) {
+		printk("%s: debug p1\n", __func__);
+		return;
+	}
 #if defined(CONFIG_EUR_MODEL_GT_I9210)
-				if (get_hw_rev()>=0x08) {
-					L4 = regulator_get(NULL, "8901_l4");
-					printk("mxt224_power_on : I9210 Rev02 8901_l4 \n");
-				}
-				else if (get_hw_rev()>=0x06) {
-					L4 = regulator_get(NULL, "8058_l4");
-					//printk("mxt224_power_on : I9210 Rev02 8058_l4 \n");
-				}
-				else {
-					L4 = regulator_get(NULL, "8058_l17");
-					//printk("mxt224_power_on : I9210 Rev01 8058_l17 \n");
-				}
+	if (get_hw_rev()>=0x08) {
+		L4 = regulator_get(NULL, "8901_l4");
+		printk("mxt224_power_on : I9210 Rev02 8901_l4 \n");
+	}
+	else if (get_hw_rev()>=0x06) {
+		L4 = regulator_get(NULL, "8058_l4");
+	}
+	else {
+		L4 = regulator_get(NULL, "8058_l17");
+	}
 #else
 #if defined (CONFIG_USA_MODEL_SGH_I727)  || defined(CONFIG_USA_MODEL_SGH_I577)
-				if (get_hw_rev()>=0x06)
+	if (get_hw_rev()>=0x06)
 #elif defined (CONFIG_USA_MODEL_SGH_T989) || defined (CONFIG_USA_MODEL_SGH_T769)
-				if (get_hw_rev()>=0x09)
+	if (get_hw_rev()>=0x09)
 #else
-				if (get_hw_rev()>=0x04)
+	if (get_hw_rev()>=0x04)
 #endif
-				{
-					L4 = regulator_get(NULL, "8901_l4");
-				} else {
-        				L4 = regulator_get(NULL, "8058_l17");
-				}
+	{
+		L4 = regulator_get(NULL, "8901_l4");
+	} else {
+		L4 = regulator_get(NULL, "8058_l17");
+	}
 #endif
-				if (IS_ERR(L4)) {
-					rc = PTR_ERR(L4);
-					pr_err("%s: L4 get failed (%d)\n",
-						   __func__, rc);
-					return;
-				}
+	if (IS_ERR(L4)) {
+		rc = PTR_ERR(L4);
+		pr_err("%s: L4 get failed (%d)\n",
+			   __func__, rc);
+		return;
+	}
 
 #if defined(CONFIG_EUR_MODEL_GT_I9210)
-				if (get_hw_rev()>=0x08) {
-					rc = regulator_set_voltage(L4, 1800000, 1800000);
-				}
-				else if (get_hw_rev()>=0x06) {
-					rc = regulator_set_voltage(L4, 2850000, 2850000);
-				}
-				else {
-					rc = regulator_set_voltage(L4, 1800000, 1800000);
-				}
+	if (get_hw_rev()>=0x08) {
+		rc = regulator_set_voltage(L4, 1800000, 1800000);
+	}
+	else if (get_hw_rev()>=0x06) {
+		rc = regulator_set_voltage(L4, 2850000, 2850000);
+	}
+	else {
+		rc = regulator_set_voltage(L4, 1800000, 1800000);
+	}
 #else
-				rc = regulator_set_voltage(L4, 1800000, 1800000);
+	rc = regulator_set_voltage(L4, 1800000, 1800000);
 #endif
-				if (rc) {
-					pr_err("%s: L4 set level failed (%d)\n",
-						   __func__, rc);
-					return;
+	if (rc) {
+		pr_err("%s: L4 set level failed (%d)\n",
+			   __func__, rc);
+		return;
 	}
 
-				if(regulator_is_enabled(L1)){
-					printk(KERN_ERR "[TSP POWER ON	L1 3.3 was already enabled\n");
-				} else {
-					rc = regulator_enable(L1);
-					printk(KERN_ERR "[TSP POWER ON	L1 3.3 enable\n");
-					if (rc) {
+	if(regulator_is_enabled(L1)){
+		printk(KERN_ERR "[TSP POWER ON	L1 3.3 was already enabled\n");
+	} else {
+		rc = regulator_enable(L1);
+		printk(KERN_ERR "[TSP POWER ON	L1 3.3 enable\n");
+		if (rc) {
                         pr_err("%s: l1 vreg enable failed (%d)\n", __func__, rc);
-						return;
-					}
+			return;
+		}
 	}
 
-				if(regulator_is_enabled(L4)){
-					printk(KERN_ERR "[TSP POWER ON   L4 1.8 was already enabled\n");
-				} else {
-					rc = regulator_enable(L4);
-						printk(KERN_ERR "[TSP POWER ON  L4 1.8 enable\n");
-					if (rc) {
+	if(regulator_is_enabled(L4)){
+		printk(KERN_ERR "[TSP POWER ON   L4 1.8 was already enabled\n");
+	} else {
+		rc = regulator_enable(L4);
+			printk(KERN_ERR "[TSP POWER ON  L4 1.8 enable\n");
+		if (rc) {
                         pr_err("%s: L4 vreg enable failed (%d)\n",  __func__, rc);
-						return;
-					}
-				}
-				regulator_put(L4);
-				regulator_put(L1);
-
-				printk("%s: exit\n", __func__);
+			return;
+		}
 	}
-	msleep(TSP_IRQ_READY_DELAY);
+	regulator_put(L4);
+	regulator_put(L1);
+
+	printk("%s: exit\n", __func__);
+	msleep(45);
 
 	rc = gpio_request(TOUCHSCREEN_IRQ, "tsp_irq");
 	if(!rc)
@@ -5653,7 +5642,6 @@ static void mxt224_power_on(void)
 
 static void mxt224_power_off(void)
 {
-	// int ret;
 	int rc;
 	struct regulator *L1;
 	struct regulator *L4;
@@ -5679,111 +5667,107 @@ static void mxt224_power_off(void)
 	}
 	gpio_free(TOUCHSCREEN_IRQ);
 
-	{
 #if defined(CONFIG_EUR_MODEL_GT_I9210)
-		if (get_hw_rev()>=0x08) {
-			L4 = regulator_get(NULL, "8901_l4");
-			printk("mxt224_power_off : I9210 Rev02 8901_l4 \n");
-		}
-		else if (get_hw_rev()>=0x06) {
-			L4 = regulator_get(NULL, "8058_l4");
-			//printk("mxt224_power_off : I9210 Rev02 8058_l4 \n");
-		}
-		else {
-			L4 = regulator_get(NULL, "8058_l17");
-			//printk("mxt224_power_off : I9210 Rev02 8058_l17 \n");
-		}
+	if (get_hw_rev()>=0x08) {
+		L4 = regulator_get(NULL, "8901_l4");
+		printk("mxt224_power_off : I9210 Rev02 8901_l4 \n");
+	}
+	else if (get_hw_rev()>=0x06) {
+		L4 = regulator_get(NULL, "8058_l4");
+	}
+	else {
+		L4 = regulator_get(NULL, "8058_l17");
+	}
 #else
 #if defined (CONFIG_USA_MODEL_SGH_I727) || defined(CONFIG_USA_MODEL_SGH_I577)
-		if (get_hw_rev()>=0x06)
+	if (get_hw_rev()>=0x06)
 #elif defined (CONFIG_USA_MODEL_SGH_T989) || defined (CONFIG_USA_MODEL_SGH_T769)
-		if (get_hw_rev()>=0x09)
+	if (get_hw_rev()>=0x09)
 #else
-		if (get_hw_rev()>=0x04)
+	if (get_hw_rev()>=0x04)
 #endif
-		{
-			L4 = regulator_get(NULL, "8901_l4");
-		} else {
-			L4 = regulator_get(NULL, "8058_l17");
-		}
+	{
+		L4 = regulator_get(NULL, "8901_l4");
+	} else {
+		L4 = regulator_get(NULL, "8058_l17");
+	}
 #endif
-		if (IS_ERR(L4)) {
-			rc = PTR_ERR(L4);
-			pr_err("%s: L4 get failed (%d)\n",
-				   __func__, rc);
-			return;
-		}
+	if (IS_ERR(L4)) {
+		rc = PTR_ERR(L4);
+		pr_err("%s: L4 get failed (%d)\n",
+			   __func__, rc);
+		return;
+	}
 
 #if defined(CONFIG_EUR_MODEL_GT_I9210)
-		if (get_hw_rev()>=0x08) {
-			rc = regulator_set_voltage(L4, 1800000, 1800000);
-		}
-		else if (get_hw_rev()>=0x06) {
-			rc = regulator_set_voltage(L4, 2850000, 2850000);
-		}
-		else {
-			rc = regulator_set_voltage(L4, 1800000, 1800000);
-		}
-#else
+	if (get_hw_rev()>=0x08) {
 		rc = regulator_set_voltage(L4, 1800000, 1800000);
+	}
+	else if (get_hw_rev()>=0x06) {
+		rc = regulator_set_voltage(L4, 2850000, 2850000);
+	}
+	else {
+		rc = regulator_set_voltage(L4, 1800000, 1800000);
+	}
+#else
+	rc = regulator_set_voltage(L4, 1800000, 1800000);
 #endif
+	if (rc) {
+		pr_err("%s: L4 set level failed (%d)\n",
+			   __func__, rc);
+		return;
+	}
+
+	if(regulator_is_enabled(L4)){
+		rc = regulator_disable(L4);
+		printk(KERN_ERR "[TSP POWER OFF	 L4 1.8 disable\n");
 		if (rc) {
-			pr_err("%s: L4 set level failed (%d)\n",
-				   __func__, rc);
-			return;
-	}
-		if(regulator_is_enabled(L4)){
-			rc = regulator_disable(L4);
-			printk(KERN_ERR "[TSP POWER OFF	 L4 1.8 disable\n");
-			if (rc) {
-				pr_err("%s: L4 vreg enable failed (%d)\n",
-					   __func__, rc);
-				return;
-			}
-	}
-		regulator_put(L4);
-
-		L1 = regulator_get(NULL, "8901_l1");
-		if (IS_ERR(L1)) {
-			rc = PTR_ERR(L1);
-			pr_err("%s: L1 get failed (%d)\n",
+			pr_err("%s: L4 vreg enable failed (%d)\n",
 				   __func__, rc);
 			return;
 		}
-		rc = regulator_set_voltage(L1,3300000, 3300000);
-		if (rc){
-			printk("%s: debug p1\n", __func__);
+	}
+	regulator_put(L4);
+
+	L1 = regulator_get(NULL, "8901_l1");
+	if (IS_ERR(L1)) {
+		rc = PTR_ERR(L1);
+		pr_err("%s: L1 get failed (%d)\n",
+			   __func__, rc);
+		return;
+	}
+	rc = regulator_set_voltage(L1,3300000, 3300000);
+	if (rc){
+		printk("%s: debug p1\n", __func__);
+		return;
+	}
+	if(regulator_is_enabled(L1)){
+		rc = regulator_disable(L1);
+		printk(KERN_ERR "[TSP POWER OFF	 L1 3.3 disable\n");
+		if (rc) {
+			pr_err("%s: L1 vreg enable failed (%d)\n",
+				   __func__, rc);
 			return;
 		}
-		if(regulator_is_enabled(L1)){
-			rc = regulator_disable(L1);
-			printk(KERN_ERR "[TSP POWER OFF	 L1 3.3 disable\n");
-			if (rc) {
-				pr_err("%s: L1 vreg enable failed (%d)\n",
-					   __func__, rc);
-				return;
-			}
 	}
 
-	}
 	printk("mxt224_power_off is finished\n");
 }
-
-#define MXT224_MAX_MT_FINGERS 10
 
 /*
 	Configuration for MXT224
 */
 static u8 t7_config[] = {GEN_POWERCONFIG_T7,
-				48,		/* IDLEACQINT */
+				48,	/* IDLEACQINT */
 				255,	/* ACTVACQINT */
-				25 		/* ACTV2IDLETO: 25 * 200ms = 5s */};
+				25	/* ACTV2IDLETO: 25 * 200ms = 5s */
+};
 static u8 t8_config[] = {GEN_ACQUISITIONCONFIG_T8, 10, 0, 5, 1, 0, 0, 9, 30};/*byte 3: 0*/
 static u8 t9_config[] = {TOUCH_MULTITOUCHSCREEN_T9,
 				131, 0, 0, 19, 11, 0, 32, MXT224_THRESHOLD, 2, 1, 0,
-				15,		/* MOVHYSTI */
-				1, 11, MXT224_MAX_MT_FINGERS, 5, 40, 10, 31, 3,
-				223, 1, 0, 0, 0, 0, 143, 55, 143, 90, 18};
+				15, 1, 11, 10, 5, 40, 10, 31, 3,
+				223, 1, 0, 0, 0, 0, 143, 55, 143, 90, 18
+};
 static u8 t15_config[] = {TOUCH_KEYARRAY_T15, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 static u8 t18_config[] = {SPT_COMCONFIG_T18, 0, 1};
 static u8 t20_config[] = {PROCI_GRIPFACESUPPRESSION_T20, 7, 0, 0, 0, 0, 0, 0, 30, 20, 4, 15, 10};
@@ -5808,321 +5792,115 @@ static const u8 *mxt224_config[] = {
 /*
 	Configuration for MXT224-E
 */
+static u8 t7_config_e[] = {GEN_POWERCONFIG_T7,
+				48,	/* IDLEACQINT */
+				255,	/* ACTVACQINT */
+				25	/* ACTV2IDLETO: 25 * 200ms = 5s */
+};
+
+static u8 t8_config_e[] = {GEN_ACQUISITIONCONFIG_T8,
 #if defined (CONFIG_USA_MODEL_SGH_I577) || defined(CONFIG_CAN_MODEL_SGH_I577R)
-static u8 t7_config_e[] = {GEN_POWERCONFIG_T7,
-				48,		/* IDLEACQINT */
-				255,	/* ACTVACQINT */
-				25 		/* ACTV2IDLETO: 25 * 200ms = 5s */};
-static u8 t8_config_e[] = {GEN_ACQUISITIONCONFIG_T8,
-				22, 0, 5, 1, 0, 0, 5, 35, 40, 55};
-
-/* NEXTTCHDI added */
-static u8 t9_config_e[] = {TOUCH_MULTITOUCHSCREEN_T9,
-				139, 0, 0, 19, 11, 0, 32/*16*/, 50/*45*/, 2, 1,
-				10,
-				15,		/* MOVHYSTI */
-				1, 81/*80*/, MXT224_MAX_MT_FINGERS, 5, 40, 10, 31, 3,
-				223, 1, 10, 10, 10, 10, 143, 40, 143, 80,
-				18, 15, 50, 50, 0/*1*/};
-
-
-static u8 t15_config_e[] = {TOUCH_KEYARRAY_T15,	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
-static u8 t18_config_e[] = {SPT_COMCONFIG_T18, 0, 0};
-static u8 t23_config_e[] = {TOUCH_PROXIMITY_T23, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
-static u8 t25_config_e[] = {SPT_SELFTEST_T25, 0, 0, 0, 0, 0, 0, 0, 0};
-static u8 t40_config_e[] = {PROCI_GRIPSUPPRESSION_T40, 0, 0, 0, 0, 0};
-static u8 t42_config_e[] = {PROCI_TOUCHSUPPRESSION_T42, 0, 0, 0, 0, 0, 0, 0, 0};
-//static u8 t46_config_e[] = {SPT_CTECONFIG_T46, 0, 3, 24, 35,/* to improve typing speed 48->40 */ 0, 0, 1, 0, 0};
-static u8 t46_config_e[] = {SPT_CTECONFIG_T46, 0, 3, 24, 26/*56*/,0, 0, 1, 0, 0};//110927 gumi noise
-static u8 t47_config_e[] = {PROCI_STYLUS_T47, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
-//static u8 t38_config_e[] = {SPT_USERDATA_T38, 0, 1, 12, 19, 38, 0, 0, 0};//110927 gumi noise
-
-static u8 t38_config_e[] = {SPT_USERDATA_T38, 0,1,15,19,45,40,0,0};  // from yang
-
-
-static u8 t48_config_e_ta[] = {PROCG_NOISESUPPRESSION_T48,
-   				3, 132, 0x52, 0, 0, 0, 0, 0, 10, 15,
-				0, 0, 0, 6, 6, 0, 0, 64, 4, 64,
-				10, 0, 15/*20120228 9*/, 5, 0, 20/*20120228 15*/, 0, 20, 0, 0,//110927 gumi noise
-				0, 0, 0, 0, 0, 32, 2,/*blen=0,threshold=50*/
-				15,		/* MOVHYSTI */
-				1, 47,  // MoveFilter 46->47, for chargeing
-				10, 5, 40, 235,/*20120209 240,*/ 235,/*20120209 245,*/ 10, 10,
-				160,/*20120209 148,*/ 60,/*20120209 50,*/ 143,
-				80, 18, 15, 0};
-
-static u8 t48_config_e[] = {PROCG_NOISESUPPRESSION_T48,
-    				3, 132, 98, 20, 0, 0, 0, 0, 1, 2,
-   				0, 0, 0, 6, 6, 0, 0, 64/* 20120209 48*//*64*/, 4, 64/* 20120209 48*//*64*/,
-				10, 0, 15/*20*/, 5, 0, 30/*38*/, 0, 1,/*20120209 5,*/ 0, 0,  /*byte 27 original value 20*/
-				0, 0, 0, 0, 32, 50, 2,
-				15,
-				1, 50,
-				MXT224_MAX_MT_FINGERS, 5, 40, 10, 10, 10, 10, 143, 40, 143,
-				80, 18, 15, 0};
-
-static u8 end_config_e[] = {RESERVED_T255};
-
-static const u8 *mxt224e_config[] = {
-	t7_config_e,
-	t8_config_e,
-	t9_config_e,
-	t15_config_e,
-	t18_config_e,
-	t23_config_e,
-	t25_config_e,
-	t40_config_e,
-	t42_config_e,
-	t46_config_e,
-	t47_config_e,
-	t48_config_e,
-	t38_config_e,//110927 gumi noise
-	end_config_e,
-};
+				22, 0, 5, 1, 0, 0, 5, 35, 40, 55
+#elif defined(CONFIG_USA_MODEL_SGH_T989)
+				22, 0, 5, 1, 0, 0, 4, 35, 40, 55
 #else
-#if defined (CONFIG_USA_MODEL_SGH_I727)//20120418
-static u8 t7_config_e[] = {GEN_POWERCONFIG_T7,
-				48,		/* IDLEACQINT */
-				255,	/* ACTVACQINT */
-				25 		/* ACTV2IDLETO: 25 * 200ms = 5s */};
-static u8 t8_config_e[] = {GEN_ACQUISITIONCONFIG_T8,
-				27, 0, 5, 1, 0, 0, 5, 35, 40, 55};
+				27, 0, 5, 1, 0, 0, 5, 35, 40, 55
+#endif
+};
 
 /* NEXTTCHDI added */
 static u8 t9_config_e[] = {TOUCH_MULTITOUCHSCREEN_T9,
 				139, 0, 0, 19, 11, 0, 32, 50, 2, 1,
-				10, 15, 1, 81, MXT224_MAX_MT_FINGERS, 5, 40, 10, 31, 3,
+				10, 15, 1, 81, 10, 5, 40, 10, 31, 3,
 				223, 1, 10, 10, 10, 10, 143, 40, 143, 80,
-				18, 15, 50, 50, 0};
-
-static u8 t15_config_e[] = {TOUCH_KEYARRAY_T15,	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
-static u8 t18_config_e[] = {SPT_COMCONFIG_T18, 0, 0};
-static u8 t23_config_e[] = {TOUCH_PROXIMITY_T23, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
-static u8 t25_config_e[] = {SPT_SELFTEST_T25, 0, 0, 0, 0, 0, 0, 0, 0};
-static u8 t40_config_e[] = {PROCI_GRIPSUPPRESSION_T40, 0, 0, 0, 0, 0};
-static u8 t42_config_e[] = {PROCI_TOUCHSUPPRESSION_T42, 0, 0, 0, 0, 0, 0, 0, 0};
-static u8 t46_config_e[] = {SPT_CTECONFIG_T46, 0, 3, 24, 26, 0, 0, 1, 0, 0};
-static u8 t47_config_e[] = {PROCI_STYLUS_T47, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
-
-static u8 t38_config_e[] = {SPT_USERDATA_T38, 0,1,15,19,45,40,0,0};
-
-
-static u8 t48_config_e_ta[] = {PROCG_NOISESUPPRESSION_T48,
-   				3, 132, 0x52, 0, 0, 0, 0, 0, 10, 15,
-				0, 0, 0, 6, 6, 0, 0, 64, 4, 64,
-				10, 0, 9, 5, 0, 15, 0, 20, 0, 0,
-				0, 0, 0, 0, 0, 40, 2,	15, 1, 47,  
-				MXT224_MAX_MT_FINGERS, 5, 40, 235, 235, 10, 10, 160, 60, 143,
-				80, 18, 15, 0};
-
-static u8 t48_config_e[] = {PROCG_NOISESUPPRESSION_T48,
-    				3, 132, 0x72, 20, 0, 0, 0, 0, 1, 2,
-   				0, 0, 0, 6, 6, 0, 0, 48, 4, 48,
-				10, 0, 9, 5, 0, 15, 0, 1, 0, 0,
-				0, 0, 0, 0, 0, 28, 2, 15,	1, 81,
-				MXT224_MAX_MT_FINGERS, 5, 40, 235, 235, 10, 10, 160, 60, 143,
-				80, 18, 15, 0};
-
-static u8 end_config_e[] = {RESERVED_T255};
-
-static const u8 *mxt224e_config[] = {
-	t7_config_e,
-	t8_config_e,
-	t9_config_e,
-	t15_config_e,
-	t18_config_e,
-	t23_config_e,
-	t25_config_e,
-	t40_config_e,
-	t42_config_e,
-	t46_config_e,
-	t47_config_e,
-	t48_config_e,
-	t38_config_e,//110927 gumi noise
-	end_config_e,
+				18, 15, 50, 50, 0
 };
-
-#elif defined(CONFIG_USA_MODEL_SGH_T989) //20120531
-static u8 t7_config_e[] = {GEN_POWERCONFIG_T7,
-				48,		/* IDLEACQINT */
-				255,	/* ACTVACQINT */
-				25 		/* ACTV2IDLETO: 25 * 200ms = 5s */};
-static u8 t8_config_e[] = {GEN_ACQUISITIONCONFIG_T8,
-				27, 0, 5, 1, 0, 0, 5, 35, 40, 55};
-
-/* NEXTTCHDI added */
-static u8 t9_config_e[] = {TOUCH_MULTITOUCHSCREEN_T9,
-				139, 0, 0, 19, 11, 0, 32, 50, 2, 1,
-				10, 15, 1, 81, MXT224_MAX_MT_FINGERS, 5, 40, 10, 31, 3,
-				223, 1, 10, 10, 10, 10, 143, 40, 143, 80,
-				18, 15, 50, 50, 0};
-	
-
-static u8 t15_config_e[] = {TOUCH_KEYARRAY_T15,	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
-static u8 t18_config_e[] = {SPT_COMCONFIG_T18, 0, 0};
-static u8 t23_config_e[] = {TOUCH_PROXIMITY_T23, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
-static u8 t25_config_e[] = {SPT_SELFTEST_T25, 0, 0, 0, 0, 0, 0, 0, 0};
-static u8 t40_config_e[] = {PROCI_GRIPSUPPRESSION_T40, 0, 0, 0, 0, 0};
-static u8 t42_config_e[] = {PROCI_TOUCHSUPPRESSION_T42, 0, 0, 0, 0, 0, 0, 0, 0};
-/*static u8 t46_config_e[] = {SPT_CTECONFIG_T46, 0, 3, 24, 26, 0, 0, 1, 0, 0};*/
-static u8 t46_config_e[] = {SPT_CTECONFIG_T46, 0, 3, 24, 24, 0, 0, 1, 0, 0};//20120530
-
-static u8 t47_config_e[] = {PROCI_STYLUS_T47, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
-
-static u8 t38_config_e[] = {SPT_USERDATA_T38, 0,1,15,19,45,40,0,0};
-
-
-static u8 t48_config_e_ta[] = {PROCG_NOISESUPPRESSION_T48,
-   				3, 132, 0x52, 0, 0, 0, 0, 0, 10, 15,
-				0, 0, 0, 6, 6, 0, 0, 64, 4, 64,
-				10, 0, 9, 5, 0, 15, 0, 20, 0, 0,
-				0, 0, 0, 0, 0, 40, 2,	15, 1, 47,  
-				MXT224_MAX_MT_FINGERS, 5, 40, 235, 235, 10, 10, 160, 60, 143,
-				80, 18, 15, 0};
-
-static u8 t48_config_e[] = {PROCG_NOISESUPPRESSION_T48,
-    			3, 132, 0x72, 24, 0, 0, 0, 0, 1, 2, //20120530
-   				0, 0, 0, 6, 6, 0, 0, 48, 4, 48, 
-/*				10, 0, 9, 5, 0, 15, 0, 1, 0, 0,*/
-				10, 0, 100, 5, 0, 100, 0, 5, 0, 0, //20120530
-
-				0, 0, 0, 0, 0, 30, 2, 15,	1, 81,
-				MXT224_MAX_MT_FINGERS, 5, 40, 235, 235, 10, 10, 160, 60, 143,
-				80, 18, 15, 0};
-
-static u8 end_config_e[] = {RESERVED_T255};
-
-static const u8 *mxt224e_config[] = {
-	t7_config_e,
-	t8_config_e,
-	t9_config_e,
-	t15_config_e,
-	t18_config_e,
-	t23_config_e,
-	t25_config_e,
-	t40_config_e,
-	t42_config_e,
-	t46_config_e,
-	t47_config_e,
-	t48_config_e,
-	t38_config_e,//110927 gumi noise
-	end_config_e,
-};
-
-#elif defined(CONFIG_USA_MODEL_SGH_T769) //20120704
-static u8 t7_config_e[] = {GEN_POWERCONFIG_T7,
-                48,     /* IDLEACQINT */
-                255,    /* ACTVACQINT */
-                25      /* ACTV2IDLETO: 25 * 200ms = 5s */};
-static u8 t8_config_e[] = {GEN_ACQUISITIONCONFIG_T8,
-                22, 0, 5, 1, 0, 0, 4, 35, 40, 55};
-
-/* NEXTTCHDI added */
-static u8 t9_config_e[] = {TOUCH_MULTITOUCHSCREEN_T9,
-                139, 0, 0, 19, 11, 0, 32, 50, 2, 1,
-                10, 15, 1, 81, MXT224_MAX_MT_FINGERS, 5, 40, 10, 31, 3,
-                223, 1, 10, 10, 10, 10, 143, 40, 143, 80,
-                18, 15, 50, 50, 0};
-
-
 static u8 t15_config_e[] = {TOUCH_KEYARRAY_T15, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 static u8 t18_config_e[] = {SPT_COMCONFIG_T18, 0, 0};
 static u8 t23_config_e[] = {TOUCH_PROXIMITY_T23, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 static u8 t25_config_e[] = {SPT_SELFTEST_T25, 0, 0, 0, 0, 0, 0, 0, 0};
 static u8 t40_config_e[] = {PROCI_GRIPSUPPRESSION_T40, 0, 0, 0, 0, 0};
 static u8 t42_config_e[] = {PROCI_TOUCHSUPPRESSION_T42, 0, 0, 0, 0, 0, 0, 0, 0};
-static u8 t46_config_e[] = {SPT_CTECONFIG_T46, 0, 3, 20, 20, 0, 0, 1, 0, 0};//20120704
-
-static u8 t47_config_e[] = {PROCI_STYLUS_T47, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
-
-static u8 t38_config_e[] = {SPT_USERDATA_T38, 0,1,15,19,45,40,0,0};
-
-
-static u8 t48_config_e_ta[] = {PROCG_NOISESUPPRESSION_T48,
-                3, 132, 0x72, 0, 0, 0, 0, 0, 10, 15,
-                0, 0, 0, 6, 6, 0, 0, 64, 4, 64,
-                10, 0, 9, 5, 0, 15, 0, 20, 0, 0,
-                0, 0, 0, 0, 0, 40, 2,   15, 1, 47,
-                MXT224_MAX_MT_FINGERS, 5, 40, 235, 235, 10, 10, 160, 60, 143,
-                80, 18, 15, 0};
-
-static u8 t48_config_e[] = {PROCG_NOISESUPPRESSION_T48,
-                3, 132, 0x72, 24, 0, 0, 0, 0, 1, 2,
-                0, 0, 0, 6, 6, 0, 0, 48, 4, 48,
-                10, 0, 100, 5, 0, 100, 0, 5, 0, 0,
-                0, 0, 0, 0, 0, 30, 2, 15,   1, 81,
-                MXT224_MAX_MT_FINGERS, 5, 40, 235, 235, 10, 10, 160, 60, 143,
-                80, 18, 15, 0};
-
-static u8 end_config_e[] = {RESERVED_T255};
-
-static const u8 *mxt224e_config[] = {
-    t7_config_e,
-    t8_config_e,
-    t9_config_e,
-    t15_config_e,
-    t18_config_e,
-    t23_config_e,
-    t25_config_e,
-    t40_config_e,
-    t42_config_e,
-    t46_config_e,
-    t47_config_e,
-    t48_config_e,
-    t38_config_e,//110927 gumi noise
-    end_config_e,
-};
-
+#if defined (CONFIG_USA_MODEL_SGH_I577) || defined(CONFIG_CAN_MODEL_SGH_I577R) || defined (CONFIG_USA_MODEL_SGH_I727)
+static u8 t46_config_e[] = {SPT_CTECONFIG_T46, 0, 3, 24, 26, 0, 0, 1, 0, 0};
+#elif defined(CONFIG_USA_MODEL_SGH_T989)
+static u8 t46_config_e[] = {SPT_CTECONFIG_T46, 0, 3, 24, 24, 0, 0, 1, 0, 0};
+#elif defined(CONFIG_USA_MODEL_SGH_T769)
+static u8 t46_config_e[] = {SPT_CTECONFIG_T46, 0, 3, 20, 20, 0, 0, 1, 0, 0};
 #else
-static u8 t7_config_e[] = {GEN_POWERCONFIG_T7,
-				48,		/* IDLEACQINT */
-				255,	/* ACTVACQINT */
-				25 		/* ACTV2IDLETO: 25 * 200ms = 5s */};
-static u8 t8_config_e[] = {GEN_ACQUISITIONCONFIG_T8,
-				27, 0, 5, 1, 0, 0, 5, 35, 40, 55};
-
-/* NEXTTCHDI added */
-static u8 t9_config_e[] = {TOUCH_MULTITOUCHSCREEN_T9,
-				139, 0, 0, 19, 11, 0, 32, MXT224E_THRESHOLD, 2, 1,
-				10,
-				15,		/* MOVHYSTI */
-				1, 46, MXT224_MAX_MT_FINGERS, 5, 40, 10, 31, 3,
-				223, 1, 10, 10, 10, 10, 143, 40, 143, 80,
-				18, 15, 50, 50, 1};
-
-static u8 t15_config_e[] = {TOUCH_KEYARRAY_T15,	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
-static u8 t18_config_e[] = {SPT_COMCONFIG_T18, 0, 0};
-static u8 t23_config_e[] = {TOUCH_PROXIMITY_T23, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
-static u8 t25_config_e[] = {SPT_SELFTEST_T25, 0, 0, 0, 0, 0, 0, 0, 0};
-static u8 t40_config_e[] = {PROCI_GRIPSUPPRESSION_T40, 0, 0, 0, 0, 0};
-static u8 t42_config_e[] = {PROCI_TOUCHSUPPRESSION_T42, 0, 0, 0, 0, 0, 0, 0, 0};
-//static u8 t46_config_e[] = {SPT_CTECONFIG_T46, 0, 3, 24, 35,/* to improve typing speed 48->40 */ 0, 0, 1, 0, 0};
-static u8 t46_config_e[] = {SPT_CTECONFIG_T46, 0, 3, 24, 56,0, 0, 1, 0, 0};//110927 gumi noise
+static u8 t46_config_e[] = {SPT_CTECONFIG_T46, 0, 3, 24, 56, 0, 0, 1, 0, 0};
+#endif
 static u8 t47_config_e[] = {PROCI_STYLUS_T47, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
-//static u8 t38_config_e[] = {SPT_USERDATA_T38, 0, 1, 12, 19, 38, 0, 0, 0};//110927 gumi noise
-
-static u8 t38_config_e[] = {SPT_USERDATA_T38, 0,1,15,19,45,40,0,0};  // from yang
-
-
+static u8 t38_config_e[] = {SPT_USERDATA_T38, 0,1,15,19,45,40,0,0};
 static u8 t48_config_e_ta[] = {PROCG_NOISESUPPRESSION_T48,
-    3, 132, 0x52, 0, 0, 0, 0, 0, 10, 15,
+#if defined (CONFIG_USA_MODEL_SGH_I577) || defined(CONFIG_CAN_MODEL_SGH_I577R)
+				3, 132, 0x52, 0, 0, 0, 0, 0, 10, 15,
 				0, 0, 0, 6, 6, 0, 0, 64, 4, 64,
-				10, 0, 9, 5, 0, 15, 0, 20, 0, 0,//110927 gumi noise
-				0, 0, 0, 0, 0, 40, 2,/*blen=0,threshold=50*/
-				15,		/* MOVHYSTI */
-				1, 47,  // MoveFilter 46->47, for chargeing
-				10, 5, 40, 240, 245, 10, 10, 148, 50, 143,
-				80, 18, 15, 0};
-
+				10, 0, 15, 5, 0, 20, 0, 20, 0, 0,
+				0, 0, 0, 0, 0, 32, 2, 15,
+				1, 47, 10, 5, 40, 235, 235, 10, 10,
+				160, 60, 143, 80, 18, 15, 0
+#elif defined (CONFIG_USA_MODEL_SGH_I727) || defined(CONFIG_USA_MODEL_SGH_T989)
+				3, 132, 0x52, 0, 0, 0, 0, 0, 10, 15,
+				0, 0, 0, 6, 6, 0, 0, 64, 4, 64,
+				10, 0, 9, 5, 0, 15, 0, 20, 0, 0,
+				0, 0, 0, 0, 0, 40, 2, 15, 1, 47,  
+				10, 5, 40, 235, 235, 10, 10,
+				160, 60, 143, 80, 18, 15, 0
+#elif defined(CONFIG_USA_MODEL_SGH_T769)
+				3, 132, 0x72, 0, 0, 0, 0, 0, 10, 15,
+				0, 0, 0, 6, 6, 0, 0, 64, 4, 64,
+				10, 0, 9, 5, 0, 15, 0, 20, 0, 0,
+				0, 0, 0, 0, 0, 40, 2, 15, 1, 47,
+				10, 5, 40, 235, 235, 10, 10,
+				160, 60, 143, 80, 18, 15, 0
+#else
+				3, 132, 0x52, 0, 0, 0, 0, 0, 10, 15,
+				0, 0, 0, 6, 6, 0, 0, 64, 4, 64,
+				10, 0, 9, 5, 0, 15, 0, 20, 0, 0,
+				0, 0, 0, 0, 0, 40, 2, 15, 1, 47,
+				10, 5, 40, 240, 245, 10, 10,
+				148, 50, 143, 80, 18, 15, 0
+#endif
+};
 static u8 t48_config_e[] = {PROCG_NOISESUPPRESSION_T48,
-    3, 132, 0x40, 0, 0, 0, 0, 0, 10, 15,
-    0, 0, 0, 6, 6, 0, 0, 64, 4, 64,
-				10, 0, 20, 5, 0, 38, 0, 5, 0, 0,  /*byte 27 original value 20*/
+#if defined (CONFIG_USA_MODEL_SGH_I577) || defined(CONFIG_CAN_MODEL_SGH_I577R)
+				3, 132, 98, 20, 0, 0, 0, 0, 1, 2,
+				0, 0, 0, 6, 6, 0, 0, 64, 4, 64,
+				10, 0, 15, 5, 0, 30, 0, 1, 0, 0,
+				0, 0, 0, 0, 32, 50, 2, 15, 1, 50,
+				10, 5, 40, 10, 10, 10, 10,
+				143, 40, 143, 80, 18, 15, 0
+#elif defined (CONFIG_USA_MODEL_SGH_I727)
+				3, 132, 0x52, 0, 0, 0, 0, 0, 10, 15,
+				0, 0, 0, 6, 6, 0, 0, 64, 4, 64,
+				10, 0, 9, 5, 0, 15, 0, 20, 0, 0,
+				0, 0, 0, 0, 0, 40, 2, 15, 1, 47,  
+				10, 5, 40, 235, 235, 10, 10,
+				160, 60, 143, 80, 18, 15, 0
+#elif defined(CONFIG_USA_MODEL_SGH_T989)
+				3, 132, 0x52, 0, 0, 0, 0, 0, 10, 15,
+				0, 0, 0, 6, 6, 0, 0, 64, 4, 64,
+				10, 0, 9, 5, 0, 15, 0, 20, 0, 0,
+				0, 0, 0, 0, 0, 40, 2,	15, 1, 47,  
+				10, 5, 40, 235, 235, 10, 10,
+				160, 60, 143, 80, 18, 15, 0
+#elif defined(CONFIG_USA_MODEL_SGH_T769)
+				3, 132, 0x72, 24, 0, 0, 0, 0, 1, 2,
+				0, 0, 0, 6, 6, 0, 0, 48, 4, 48,
+				10, 0, 100, 5, 0, 100, 0, 5, 0, 0,
+				0, 0, 0, 0, 0, 30, 2, 15,   1, 81,
+				10, 5, 40, 235, 235, 10, 10,
+				160, 60, 143, 80, 18, 15, 0
+#else
+				3, 132, 0x40, 0, 0, 0, 0, 0, 10, 15,
+				0, 0, 0, 6, 6, 0, 0, 64, 4, 64,
+				10, 0, 20, 5, 0, 38, 0, 5, 0, 0,
 				0, 0, 0, 0, 32, MXT224E_THRESHOLD, 2,
-				15,
-				1, 46,
-				MXT224_MAX_MT_FINGERS, 5, 40, 10, 10, 10, 10, 143, 40, 143,
-				80, 18, 15, 0};
+				15, 1, 46, 10, 5, 40, 10, 10, 10, 10,
+				143, 40, 143, 80, 18, 15, 0
+#endif
+};
 
 static u8 end_config_e[] = {RESERVED_T255};
 
@@ -6139,18 +5917,16 @@ static const u8 *mxt224e_config[] = {
 	t46_config_e,
 	t47_config_e,
 	t48_config_e,
-	t38_config_e,//110927 gumi noise
+	t38_config_e,
 	end_config_e,
 };
-#endif
-#endif
 
 void mxt224_orient_branch(int orient_swap)
 {
-	if (orient_swap == MXT224_ORIENT_SWAP_NN ){
+	if (orient_swap == MXT224_ORIENT_SWAP_NN ) {
 		t9_config[MXT_OREINT]= MXT224_ORIENT_SWAP_NN;
 		t9_config_e[MXT_OREINT]= MXT224_ORIENT_SWAP_NN;
-	}else if(orient_swap == MXT224_ORIENT_SWAP_XY ){
+	}else if(orient_swap == MXT224_ORIENT_SWAP_XY ) {
 		// default
 		t9_config[MXT_OREINT]= MXT224_ORIENT_SWAP_XY;
 		t9_config_e[MXT_OREINT]= MXT224_ORIENT_SWAP_XY;
@@ -6170,8 +5946,7 @@ static void mxt224_read_ta_status(void *ta_status)
 
 void tsp_set_unknown_charging_cable(bool set)
 {
-	if (charging_cbs.tsp_set_charging_cable)
-	{
+	if (charging_cbs.tsp_set_charging_cable) {
 		printk("tsp_set_unknown_charging_cable %d\n", set);
 		if (set)
 			charging_cbs.tsp_set_charging_cable(1);
@@ -6182,7 +5957,7 @@ void tsp_set_unknown_charging_cable(bool set)
 }
 
 static struct mxt224_platform_data mxt224_data = {
-	.max_finger_touches = MXT224_MAX_MT_FINGERS,
+	.max_finger_touches = 10,
 	.gpio_read_done = TOUCHSCREEN_IRQ,
 	.config = mxt224_config,
 	.config_e = mxt224e_config,
@@ -6194,13 +5969,11 @@ static struct mxt224_platform_data mxt224_data = {
 	.max_x = 480,
 #endif
 	.min_y = 0,
-
 #if defined(CONFIG_TOUCHSCREEN_MXT768E)
 	.max_y = 1023,
 #else
 	.max_y = 800,
 #endif
-
 	.min_z = 0,
 	.max_z = 255,
 	.min_w = 0,
@@ -6212,21 +5985,6 @@ static struct mxt224_platform_data mxt224_data = {
 	.orient_barnch = mxt224_orient_branch,
 };
 
-#if 0
-static struct qt602240_platform_data qt602240_pdata = {
-	.x_line                 = 19,
-	.y_line                 = 11,
-	.x_size                 = 480,
-	.y_size                 = 800,
-	.blen                   = 16,
-	//.threshold            = 0x28,
-	//.threshold            =0x20,
-	.threshold              =0x1C,
-	.voltage                = 2800000,              /* 2.8V */
-	.orient                 = QT602240_DIAGONAL,
-};
-#endif
-
 static struct i2c_board_info qt602240_board_info[] = {
 	{
 		I2C_BOARD_INFO("qt602240_ts", 0x4a),
@@ -6235,7 +5993,6 @@ static struct i2c_board_info qt602240_board_info[] = {
 	}
 };
 #endif
-/*-----------------------MXT224  TOUCH DRIVER by Xtopher-----------------------*/
 
 
 #if 0
@@ -13573,7 +13330,6 @@ static void __init msm8x60_init_mmc(void)
 #endif
 }
 
-
 #if defined(CONFIG_TOUCHSCREEN_QT602240) || defined(CONFIG_TOUCHSCREEN_MXT768E)
 static void tsp_power_init(void)
 {
@@ -13583,6 +13339,10 @@ static void tsp_power_init(void)
 	struct regulator *l1;
 	struct regulator *L4;
 #endif
+#if defined(CONFIG_KOR_MODEL_SHV_E120L)
+	struct regulator *l3;
+#endif
+
 #ifdef CONFIG_BATTERY_SEC
 	if(is_lpm_boot){
    	        printk("%s: MXT224 Power On skipped by LPM\n", __func__);
@@ -13592,96 +13352,17 @@ static void tsp_power_init(void)
 
 	printk("[TSP] Power Down S to discharge for unexpected leackage current\n");
 
-#if defined(CONFIG_KOR_MODEL_SHV_E110S)
-	rc = gpio_request(TOUCHSCREEN_IRQ, "TOUCHSCREEN_IRQ");
-	if (rc) {
-		pr_err("'%s'(%d) gpio_request failed, rc=%d\n",
-			"TOUCHSCREEN_IRQ", TOUCHSCREEN_IRQ, rc);
-		return;
-	}
-	rc = gpio_request(TSP_SDA, "TSP_SDA");
-	if (rc) {
-		pr_err("'%s'(%d) gpio_request failed, rc=%d\n",
-			"TSP_SDA", TSP_SDA, rc);
-		goto error1;
-	}
-	rc = gpio_request(TSP_SCL, "TSP_SCL");
-	if (rc) {
-		pr_err("'%s'(%d) gpio_request failed, rc=%d\n",
-			"TSP_SCL", TSP_SCL, rc);
-		goto error2;
-	}
-	gpio_direction_output(TOUCHSCREEN_IRQ, 0);
-	gpio_direction_output(TSP_SDA, 0);
-	gpio_direction_output(TSP_SCL, 0);
-	
-	gpio_free(TOUCHSCREEN_IRQ);
-	gpio_free(TSP_SDA);
-	gpio_free(TSP_SCL);	
-	L4 = regulator_get(NULL, "8901_l4");
-	if (IS_ERR(L4)) {
-		rc = PTR_ERR(L4);
-		pr_err("%s: L4 get failed (%d)\n",
-			   __func__, rc);
-		return;
-	}
-	rc = regulator_set_voltage(L4, 1800000, 1800000);
-	if (rc) {
-		pr_err("%s: L4 set level failed (%d)\n",
-			   __func__, rc);
-		return;
-	}
-	if (regulator_is_enabled(L4)) {
-		rc = regulator_disable(L4);
-		if (rc) {
-			pr_err("%s: L11 vreg enable failed (%d)\n",
-				   __func__, rc);
-			return;
-		}
-	}
-	regulator_put(L4);
-	l1 = regulator_get(NULL, "8901_l1");
-	if (IS_ERR(l1)) {
-		rc = PTR_ERR(l1);
-		pr_err("%s: l1 get failed (%d)\n",
-			   __func__, rc);
-		return;
-	}
+#if defined(CONFIG_KOR_MODEL_SHV_E120L)
+	l3 = regulator_get(NULL, "8058_l3");
 
-	ret = regulator_set_voltage(l1, 3300000, 3300000);
+	ret = regulator_set_voltage(l3, 1800000, 1800000);
 	if (ret) {
 		printk("%s: error setting voltage\n", __func__);
 	}
 
-	if (regulator_is_enabled(l1)) {
-		ret = regulator_disable(l1);
-		if (ret) {
-			printk("%s: error enabling regulator\n", __func__);
-		}
-	}	
-	printk("[TSP] Power Down E to discharge for unexpected leackage current\n");
-	return;
-	
-error2:
-    gpio_free(TSP_SDA);
-error1:
-    gpio_free(TOUCHSCREEN_IRQ);
-	
-#elif defined(CONFIG_KOR_MODEL_SHV_E120L)
-	struct regulator *l3;
-
-	l3 = regulator_get(NULL, "8058_l3");
-	//		   if (IS_ERR(l17))
-	//			return -1;
-
-	ret = regulator_set_voltage(l3, 1800000, 1800000);
-	if (ret) {
-	printk("%s: error setting voltage\n", __func__);
-	}
-
 	ret = regulator_enable(l3);
 	if (ret) {
-	printk("%s: error enabling regulator\n", __func__);
+		printk("%s: error enabling regulator\n", __func__);
 	}
 	
 	l1 = regulator_get(NULL, "8901_l1");
@@ -13695,8 +13376,7 @@ error1:
 	if (ret) {
 		printk("%s: error enabling regulator\n", __func__);
 	}
-#elif defined(CONFIG_USA_MODEL_SGH_I727) || defined(CONFIG_USA_MODEL_SGH_T989)
-
+#else
 	rc = gpio_request(TOUCHSCREEN_IRQ, "TOUCHSCREEN_IRQ");
 	if (rc) {
 		pr_err("'%s'(%d) gpio_request failed, rc=%d\n",	"TOUCHSCREEN_IRQ", TOUCHSCREEN_IRQ, rc);
@@ -13712,15 +13392,16 @@ error1:
 		pr_err("'%s'(%d) gpio_request failed, rc=%d\n",	"TSP_SCL", TSP_SCL, rc);
 		goto error2;
 	}
+
 	gpio_direction_output(TOUCHSCREEN_IRQ, 0);
 	gpio_direction_output(TSP_SDA, 0);
 	gpio_direction_output(TSP_SCL, 0);
-	
+
 	gpio_free(TOUCHSCREEN_IRQ);
 	gpio_free(TSP_SDA);
-	gpio_free(TSP_SCL);	
+	gpio_free(TSP_SCL);
 
-
+#if !defined (CONFIG_JPN_MODEL_SC_03D)
 	L4 = regulator_get(NULL, "8901_l4");
 	if (IS_ERR(L4)) {
 		rc = PTR_ERR(L4);
@@ -13742,14 +13423,14 @@ error1:
 
 	ret = regulator_set_voltage(l1, 3300000, 3300000);
 	if (ret) {
-	    printk("%s: error setting voltage\n", __func__);
+		printk("%s: error setting voltage\n", __func__);
 	}
 
 	if (regulator_is_enabled(l1)) {
 		ret = regulator_disable(l1);
-	    if (ret) {
-	        printk("%s: error enabling regulator\n", __func__);
-	    }
+		if (ret) {
+			printk("%s: error enabling regulator\n", __func__);
+		}
 	}	
 	if (regulator_is_enabled(L4)) {
 		rc = regulator_disable(L4);
@@ -13758,132 +13439,22 @@ error1:
 			return;
 		}
 	}
+
 	regulator_put(L4);
+#if !defined(CONFIG_KOR_MODEL_SHV_E110S)
 	regulator_put(l1);
-	return;
-
-
-error2:
-    gpio_free(TSP_SDA);
-error1:
-    gpio_free(TOUCHSCREEN_IRQ);
-    
-#elif defined(CONFIG_USA_MODEL_SGH_I717)
-	rc = gpio_request(TOUCHSCREEN_IRQ, "TOUCHSCREEN_IRQ");
-	if (rc) {
-		pr_err("'%s'(%d) gpio_request failed, rc=%d\n",
-			"TOUCHSCREEN_IRQ", TOUCHSCREEN_IRQ, rc);
-		return;
-	}
-	rc = gpio_request(TSP_SDA, "TSP_SDA");
-	if (rc) {
-		pr_err("'%s'(%d) gpio_request failed, rc=%d\n",
-			"TSP_SDA", TSP_SDA, rc);
-		goto error1;
-	}
-	rc = gpio_request(TSP_SCL, "TSP_SCL");
-	if (rc) {
-		pr_err("'%s'(%d) gpio_request failed, rc=%d\n",
-			"TSP_SCL", TSP_SCL, rc);
-		goto error2;
-	}
-	gpio_direction_output(TOUCHSCREEN_IRQ, 0);
-	gpio_direction_output(TSP_SDA, 0);
-	gpio_direction_output(TSP_SCL, 0);
-	
-	gpio_free(TOUCHSCREEN_IRQ);
-	gpio_free(TSP_SDA);
-	gpio_free(TSP_SCL);	
-
-	L4 = regulator_get(NULL, "8901_l4");
-	if (IS_ERR(L4)) {
-		rc = PTR_ERR(L4);
-		pr_err("%s: L4 get failed (%d)\n",
-			   __func__, rc);
-		return;
-	}
-	rc = regulator_set_voltage(L4, 1800000, 1800000);
-	if (rc) {
-		pr_err("%s: L4 set level failed (%d)\n",
-			   __func__, rc);
-		return;
-	}
-
-	l1 = regulator_get(NULL, "8901_l1");
-	if (IS_ERR(l1)) {
-		rc = PTR_ERR(l1);
-		pr_err("%s: l1 get failed (%d)\n",
-			   __func__, rc);
-		return;
-	}
-
-	ret = regulator_set_voltage(l1, 3300000, 3300000);
-	if (ret) {
-	printk("%s: error setting voltage\n", __func__);
-	}
-
-	if (regulator_is_enabled(l1)) {
-		ret = regulator_disable(l1);
-	if (ret) {
-	printk("%s: error enabling regulator\n", __func__);
-	}
-	}	
-	if (regulator_is_enabled(L4)) {
-		rc = regulator_disable(L4);
-		if (rc) {
-			pr_err("%s: L11 vreg enable failed (%d)\n",
-				   __func__, rc);
-			return;
-		}
-	}
-	regulator_put(L4);
-	regulator_put(l1);
-	return;
-
-error2:
-    gpio_free(TSP_SDA);
-error1:
-    gpio_free(TOUCHSCREEN_IRQ);
-
-#elif defined (CONFIG_JPN_MODEL_SC_03D)
-	rc = gpio_request(TOUCHSCREEN_IRQ, "TOUCHSCREEN_IRQ");
-	if (rc) {
-		pr_err("'%s'(%d) gpio_request failed, rc=%d\n",
-			"TOUCHSCREEN_IRQ", TOUCHSCREEN_IRQ, rc);
-		return;
-	}
-	rc = gpio_request(TSP_SDA, "TSP_SDA");
-	if (rc) {
-		pr_err("'%s'(%d) gpio_request failed, rc=%d\n",
-			"TSP_SDA", TSP_SDA, rc);
-		goto error1;
-	}
-	rc = gpio_request(TSP_SCL, "TSP_SCL");
-	if (rc) {
-		pr_err("'%s'(%d) gpio_request failed, rc=%d\n",
-			"TSP_SCL", TSP_SCL, rc);
-		goto error2;
-	}
-	gpio_direction_output(TOUCHSCREEN_IRQ, 0);
-	gpio_direction_output(TSP_SDA, 0);
-	gpio_direction_output(TSP_SCL, 0);
-
-	gpio_free(TOUCHSCREEN_IRQ);
-	gpio_free(TSP_SDA);
-	gpio_free(TSP_SCL); 
-	return;
-
-error2:
-	gpio_free(TSP_SDA);
-error1:
-	gpio_free(TOUCHSCREEN_IRQ);
-#endif	
-
-
-}
+#endif
 #endif
 
+	return;
 
+error2:
+	gpio_free(TSP_SDA);
+error1:
+	gpio_free(TOUCHSCREEN_IRQ);
+#endif
+}
+#endif
 
 #if !defined(CONFIG_GPIO_SX150X) && !defined(CONFIG_GPIO_SX150X_MODULE)
 static inline void display_common_power(int on) {}
