@@ -7013,8 +7013,108 @@ static struct snd_set_ampgain init_ampgain[] = {
 #endif
 };
 
-void yda165_avdd_power_on(void);
-void yda165_avdd_power_off(void);
+#if  defined (CONFIG_KOR_MODEL_SHV_E110S) || defined (CONFIG_TARGET_LOCALE_USA)
+/* YDA165 AVDD regulator */
+static struct regulator *amp_reg = NULL;
+static int amp_reg_ref_cnt = 0;
+
+void yda165_avdd_power_on(void)
+{
+	int ret;
+
+#ifdef CONFIG_BATTERY_SEC
+	if(is_lpm_boot)
+		return;
+#endif
+
+	amp_reg_ref_cnt++;
+	pr_info("%s : amp_reg_ref_cnt = %d\n", __func__, amp_reg_ref_cnt);
+	
+#if defined (CONFIG_KOR_MODEL_SHV_E110S)
+	if(get_hw_rev()>=0x04)
+#elif defined (CONFIG_USA_MODEL_SGH_T989) || defined (CONFIG_USA_MODEL_SGH_T769)
+	if(get_hw_rev()>=0x05) 
+#elif defined (CONFIG_USA_MODEL_SGH_I727) || defined(CONFIG_USA_MODEL_SGH_I577)
+	if(get_hw_rev()>=0x06)
+#endif
+	{
+		if(!amp_reg) {
+#if defined (CONFIG_KOR_MODEL_SHV_E110S)
+			if(get_hw_rev()>=0x06)
+				amp_reg = regulator_get(NULL, "8901_l3");
+			else
+#endif
+#if defined(CONFIG_TDMB) || defined(CONFIG_TDMB_MODULE)
+#if defined(CONFIG_KOR_MODEL_SHV_E110S)
+			amp_reg = vreg_l2a;
+#else
+			amp_reg = regulator_get(NULL, "8058_l2");
+#endif
+#else
+			amp_reg = regulator_get(NULL, "8058_l2");
+#endif
+			if (IS_ERR(amp_reg)) {
+				pr_err("%s: regulator get failed (%ld)\n", __func__, PTR_ERR(amp_reg));
+				return;
+			}
+		}
+
+		ret = regulator_set_voltage(amp_reg, 2600000, 2600000);
+		if (ret) {
+			pr_err("%s: error setting voltage\n", __func__);
+		}
+		
+		ret = regulator_enable(amp_reg);
+		if (ret) {
+			pr_err("%s: error enabling regulator\n", __func__);
+		}
+
+		pr_info("YDA165 AVDD set to 2.6V for %d revison.\n", get_hw_rev());
+	}
+
+}
+
+void yda165_avdd_power_off(void)
+{
+	int ret;
+
+	amp_reg_ref_cnt--;
+	pr_info("%s : amp_reg_ref_cnt = %d\n", __func__, amp_reg_ref_cnt);
+
+#if defined (CONFIG_USA_MODEL_SGH_T989) || defined (CONFIG_USA_MODEL_SGH_T769)
+	if(get_hw_rev()>=0x05) 
+#elif defined (CONFIG_USA_MODEL_SGH_I727) || defined(CONFIG_USA_MODEL_SGH_I577)
+	if(get_hw_rev()>=0x06)      
+#elif defined (CONFIG_KOR_MODEL_SHV_E110S)
+	if(get_hw_rev()>=0x04)
+#endif
+	{
+		if (!amp_reg)
+			return;
+
+		if(regulator_is_enabled(amp_reg)) {
+			ret = regulator_disable(amp_reg);
+			if (ret < 0)
+				pr_err("%s: amp regulator_disable failed (%d)\n",
+						__func__, ret);
+		}
+
+		if(!amp_reg_ref_cnt)
+			amp_reg = NULL;
+
+	}
+}
+#else
+void yda165_avdd_power_on(void)
+{
+	return;
+}
+
+void yda165_avdd_power_off(void)
+{
+	return;
+}
+#endif
 
 static struct yda165_i2c_data yda165_data = {
 	.ampgain = init_ampgain,
@@ -14214,109 +14314,6 @@ static void set_mdp_clocks_for_wuxga(void)
 
 	mdp_pdata.mdp_max_clk = 200000000;
 }
-
-#if  defined (CONFIG_KOR_MODEL_SHV_E110S) || defined (CONFIG_TARGET_LOCALE_USA)
-/* YDA165 AVDD regulator */
-static struct regulator *amp_reg = NULL;
-static int amp_reg_ref_cnt = 0;
-
-void yda165_avdd_power_on(void)
-{
-	int ret;
-
-#ifdef CONFIG_BATTERY_SEC
-	if(is_lpm_boot)
-		return;
-#endif
-
-	amp_reg_ref_cnt++;
-	pr_info("%s : amp_reg_ref_cnt = %d\n", __func__, amp_reg_ref_cnt);
-	
-#if defined (CONFIG_KOR_MODEL_SHV_E110S)
-	if(get_hw_rev()>=0x04)
-#elif defined (CONFIG_USA_MODEL_SGH_T989) || defined (CONFIG_USA_MODEL_SGH_T769)
-	if(get_hw_rev()>=0x05) 
-#elif defined (CONFIG_USA_MODEL_SGH_I727) || defined(CONFIG_USA_MODEL_SGH_I577)
-	if(get_hw_rev()>=0x06)
-#endif
-	{
-		if(!amp_reg) {
-#if defined (CONFIG_KOR_MODEL_SHV_E110S)
-			if(get_hw_rev()>=0x06)
-				amp_reg = regulator_get(NULL, "8901_l3");
-			else
-#endif
-#if defined(CONFIG_TDMB) || defined(CONFIG_TDMB_MODULE)
-#if defined(CONFIG_KOR_MODEL_SHV_E110S)
-			amp_reg = vreg_l2a;
-#else
-			amp_reg = regulator_get(NULL, "8058_l2");
-#endif
-#else
-			amp_reg = regulator_get(NULL, "8058_l2");
-#endif
-			if (IS_ERR(amp_reg)) {
-				pr_err("%s: regulator get failed (%ld)\n", __func__, PTR_ERR(amp_reg));
-				return;
-			}
-		}
-
-		ret = regulator_set_voltage(amp_reg, 2600000, 2600000);
-		if (ret) {
-			pr_err("%s: error setting voltage\n", __func__);
-		}
-		
-		ret = regulator_enable(amp_reg);
-		if (ret) {
-			pr_err("%s: error enabling regulator\n", __func__);
-		}
-
-		pr_info("YDA165 AVDD set to 2.6V for %d revison.\n", get_hw_rev());
-	}
-
-}
-
-void yda165_avdd_power_off(void)
-{
-	int ret;
-
-	amp_reg_ref_cnt--;
-	pr_info("%s : amp_reg_ref_cnt = %d\n", __func__, amp_reg_ref_cnt);
-
-#if defined (CONFIG_USA_MODEL_SGH_T989) || defined (CONFIG_USA_MODEL_SGH_T769)
-	if(get_hw_rev()>=0x05) 
-#elif defined (CONFIG_USA_MODEL_SGH_I727) || defined(CONFIG_USA_MODEL_SGH_I577)
-	if(get_hw_rev()>=0x06)      
-#elif defined (CONFIG_KOR_MODEL_SHV_E110S)
-	if(get_hw_rev()>=0x04)
-#endif
-	{
-		if (!amp_reg)
-			return;
-
-		if(regulator_is_enabled(amp_reg)) {
-			ret = regulator_disable(amp_reg);
-			if (ret < 0)
-				pr_err("%s: amp regulator_disable failed (%d)\n",
-						__func__, ret);
-		}
-
-		if(!amp_reg_ref_cnt)
-			amp_reg = NULL;
-
-	}
-}
-#else
-void yda165_avdd_power_on(void)
-{
-	return;
-}
-
-void yda165_avdd_power_off(void)
-{
-	return;
-}
-#endif
 
 static void __init msm8x60_cfg_smsc911x(void)
 {
