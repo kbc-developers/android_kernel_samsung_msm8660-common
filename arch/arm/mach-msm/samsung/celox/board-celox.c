@@ -16132,36 +16132,6 @@ int __init brcm_wlan_init(void);
 extern unsigned int sec_get_lpm_mode(void);
 #endif
 
-
-#ifdef CONFIG_MSM_SDIO_INIT_WORKAROUND
-/*
- * Sultanxda: delay msm8x60_multi_sdio_init (modem SDIO detection)
- * by 40 seconds so the modem doesn't crash the device when
- * entering sleep.
- */
-
-static struct delayed_work multi_sdio_init;
-
-static void multi_sdio_delayed_init(struct work_struct *work)
-{
-	static int init = 1;
-	int sdio_delay = CONFIG_MSM_SDIO_INIT_DELAY * 1000;
-
-	if (init) {
-		init = 0;
-		goto end;
-	}
-
-	msm8x60_multi_sdio_init();
-	cancel_delayed_work_sync(&multi_sdio_init);
-	return;
-
-end:
-	schedule_delayed_work(&multi_sdio_init,
-		msecs_to_jiffies(sdio_delay));
-}
-#endif
-
 static void __init msm8x60_init(struct msm_board_data *board_data)
 {
 	uint32_t soc_platform_version;
@@ -16479,12 +16449,7 @@ static void __init msm8x60_init(struct msm_board_data *board_data)
 	tsp_power_init();
 #endif
 
-#ifdef CONFIG_MSM_SDIO_INIT_WORKAROUND
-	INIT_DELAYED_WORK(&multi_sdio_init, multi_sdio_delayed_init);
-	schedule_delayed_work(&multi_sdio_init, 0);
-#else
 	msm8x60_multi_sdio_init();
-#endif
 
 	if (machine_is_msm8x60_fusion() || machine_is_msm8x60_fusn_ffa())
 		msm_fusion_setup_pinctrl();
