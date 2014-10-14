@@ -1583,54 +1583,42 @@ static void msm_hsusb_smb137b_vbus_power(unsigned phy_info, int on)
 }
 #endif
 
-#if 0
 static void msm_hsusb_vbus_power(unsigned phy_info, int on)
 {
-	static struct regulator *votg_5v_switch;
-	static struct regulator *ext_5v_reg;
+	struct power_supply *psy = power_supply_get_by_name("battery");
+	union power_supply_propval value;
 	static int vbus_is_on;
+	int ret = 0;
+	
+	printk(KERN_ERR "msm_hsusb_smb328a_vbus_power attached %d\n", on);
 
 	/* If VBUS is already on (or off), do nothing. */
 	if (on == vbus_is_on)
 		return;
 
-	if (!votg_5v_switch) {
-		votg_5v_switch = regulator_get(NULL, "8901_usb_otg");
-		if (IS_ERR(votg_5v_switch)) {
-			pr_err("%s: unable to get votg_5v_switch\n", __func__);
-			return;
-		}
-	}
-	if (!ext_5v_reg) {
-		ext_5v_reg = regulator_get(NULL, "8901_mpp0");
-		if (IS_ERR(ext_5v_reg)) {
-			pr_err("%s: unable to get ext_5v_reg\n", __func__);
-			return;
-		}
-	}
-	if (on) {
-		if (regulator_enable(ext_5v_reg)) {
-			pr_err("%s: Unable to enable the regulator:"
-					" ext_5v_reg\n", __func__);
-			return;
-		}
-		if (regulator_enable(votg_5v_switch)) {
-			pr_err("%s: Unable to enable the regulator:"
-					" votg_5v_switch\n", __func__);
-			return;
+	if (on)
+		value.intval = POWER_SUPPLY_CAPACITY_OTG_ENABLE;
+	else
+		value.intval = POWER_SUPPLY_CAPACITY_OTG_DISABLE;
+
+	if (psy) {
+		ret = psy->set_property(psy, POWER_SUPPLY_PROP_OTG, &value);
+		if (ret) {
+			pr_err("%s: fail to set power_suppy otg property(%d)\n",
+				__func__, ret);
+			goto fail;
 		}
 	} else {
-		if (regulator_disable(votg_5v_switch))
-			pr_err("%s: Unable to enable the regulator:"
-				" votg_5v_switch\n", __func__);
-		if (regulator_disable(ext_5v_reg))
-			pr_err("%s: Unable to enable the regulator:"
-				" ext_5v_reg\n", __func__);
+		pr_err("%s : psy is null!\n", __func__);
+		goto fail;
 	}
 
 	vbus_is_on = on;
+	return;
+fail:
+	vbus_is_on = false;
+	return;
 }
-#endif
 
 static struct msm_usb_host_platform_data msm_usb_host_pdata = {
 	.phy_info	= (USB_PHY_INTEGRATED | USB_PHY_MODEL_45NM),
@@ -1687,41 +1675,6 @@ static int msm_hsusb_pmic_vbus_notif_init(void (*callback)(int online),
 }
 #endif
 
-static void msm_hsusb_smb328a_vbus_power(unsigned phy_info,int attached)
-{
-	struct power_supply *psy = power_supply_get_by_name("battery");
-	union power_supply_propval value;
-	int ret = 0;
-
-	static int vbus_is_on;
-	
-	printk(KERN_ERR "msm_hsusb_smb328a_vbus_power attached %d\n", attached);
-	/* If VBUS is already on (or off), do nothing. */
-	if (attached == vbus_is_on)
-		return;
-
-	if (attached)
-		value.intval = POWER_SUPPLY_CAPACITY_OTG_ENABLE;
-	else
-		value.intval = POWER_SUPPLY_CAPACITY_OTG_DISABLE;
-
-	if (psy) {
-		ret = psy->set_property(psy, POWER_SUPPLY_PROP_OTG, &value);
-		if (ret) {
-			pr_err("%s: fail to set power_suppy otg property(%d)\n",
-				__func__, ret);
-			goto fail;
-		}
-	} else {
-		pr_err("%s : psy is null!\n", __func__);
-		goto fail;
-	}
-	vbus_is_on = attached;
-	return;
-fail:
-	vbus_is_on = false;
-	return;
-}
 #if defined(CONFIG_USB_MSM_72K) || defined(CONFIG_USB_EHCI_MSM_72K)
 static struct msm_otg_platform_data msm_otg_pdata = {
 	/* if usb link is in sps there is no need for
@@ -1730,7 +1683,7 @@ static struct msm_otg_platform_data msm_otg_pdata = {
 	 */
 	.pemp_level		 = PRE_EMPHASIS_WITH_20_PERCENT,
 	.cdr_autoreset		 = CDR_AUTO_RESET_DISABLE,
-	.drv_ampl			 = HS_DRV_AMPLITUDE_75_PERCENT, // for voltage driving
+	.drv_ampl		 = HS_DRV_AMPLITUDE_75_PERCENT,
 	.se1_gating		 = SE1_GATING_DISABLE,
 	.bam_disable		 = 1,
 #ifdef CONFIG_USB_EHCI_MSM_72K
@@ -1738,11 +1691,9 @@ static struct msm_otg_platform_data msm_otg_pdata = {
 	.phy_id_setup_init = msm_hsusb_phy_id_setup_init,
 #endif
 #ifdef CONFIG_USB_EHCI_MSM_72K
-//	.vbus_power = msm_hsusb_vbus_power,
-	.vbus_power = msm_hsusb_smb328a_vbus_power,
+	.vbus_power = msm_hsusb_vbus_power,
 #endif
 #ifdef CONFIG_BATTERY_MSM8X60
-//	.pmic_vbus_notif_init	= msm_hsusb_pmic_vbus_notif_init,
 	.pmic_vbus_notif_init	= NULL,
 #endif
 	.ldo_init		 = msm_hsusb_ldo_init,
@@ -1750,7 +1701,6 @@ static struct msm_otg_platform_data msm_otg_pdata = {
 	.config_vddcx            = msm_hsusb_config_vddcx,
 	.init_vddcx              = msm_hsusb_init_vddcx,
 #ifdef CONFIG_BATTERY_MSM8X60
-//	.chg_vbus_draw = msm_charger_vbus_draw,
 	.chg_vbus_draw = NULL,
 #endif
 	.ldo_set_voltage=msm_hsusb_ldo_set_voltage,
@@ -4568,7 +4518,6 @@ EXPORT_SYMBOL(switch_dev);
 int usb_access_lock = 0;
 EXPORT_SYMBOL(usb_access_lock);
 
-#if 1
 static unsigned fsa9480_gpio_on[] = {
 	GPIO_CFG(58, 0, GPIO_CFG_OUTPUT, GPIO_CFG_PULL_UP, GPIO_CFG_2MA), // uart_sel
 };
@@ -4585,9 +4534,8 @@ static void __init fsa9480_gpio_init(void)
 		
 	}
 }
-#endif
 
- static void fsa9480_otg_cb(bool attached)
+static void fsa9480_otg_cb(bool attached)
 {
 #ifdef CONFIG_BATTERY_SEC
 	union power_supply_propval value;
@@ -5062,7 +5010,6 @@ struct platform_device sec_device_switch = {
 	}
 };
 
-#if 1
 static void LTE_switch_init(void)
 {
 	sec_class = class_create(THIS_MODULE, "sec");
@@ -5081,7 +5028,7 @@ static void LTE_switch_init(void)
 	
 };
 #endif
-#endif
+
 #ifdef CONFIG_FB_MSM_LCDC_NT35582_WVGA
 
 #define GPIO_NT35582_RESET			94
@@ -5994,187 +5941,6 @@ static struct i2c_board_info qt602240_board_info[] = {
 };
 #endif
 
-
-#if 0
-static struct regulator *vreg_tmg200;
-
-#define TS_PEN_IRQ_GPIO 61
-static int tmg200_power(int vreg_on)
-{
-	int rc = -EINVAL;
-
-	if (!vreg_tmg200) {
-		printk(KERN_ERR "%s: regulator 8058_s3 not found (%d)\n",
-			__func__, rc);
-		return rc;
-	}
-
-	rc = vreg_on ? regulator_enable(vreg_tmg200) :
-		  regulator_disable(vreg_tmg200);
-	if (rc < 0)
-		printk(KERN_ERR "%s: vreg 8058_s3 %s failed (%d)\n",
-				__func__, vreg_on ? "enable" : "disable", rc);
-
-	/* wait for vregs to stabilize */
-	msleep(20);
-
-	return rc;
-}
-
-static int tmg200_dev_setup(bool enable)
-{
-	int rc;
-
-	if (enable) {
-		vreg_tmg200 = regulator_get(NULL, "8058_s3");
-		if (IS_ERR(vreg_tmg200)) {
-			pr_err("%s: regulator get of 8058_s3 failed (%ld)\n",
-				__func__, PTR_ERR(vreg_tmg200));
-			rc = PTR_ERR(vreg_tmg200);
-			return rc;
-		}
-
-		rc = regulator_set_voltage(vreg_tmg200, 1800000, 1800000);
-		if (rc) {
-			pr_err("%s: regulator_set_voltage() = %d\n",
-				__func__, rc);
-			goto reg_put;
-		}
-	} else {
-		/* put voltage sources */
-		regulator_put(vreg_tmg200);
-	}
-	return 0;
-reg_put:
-	regulator_put(vreg_tmg200);
-	return rc;
-}
-
-static struct cy8c_ts_platform_data cy8ctmg200_pdata = {
-	.ts_name = "msm_tmg200_ts",
-	.dis_min_x = 0,
-	.dis_max_x = 1023,
-	.dis_min_y = 0,
-	.dis_max_y = 599,
-	.min_tid = 0,
-	.max_tid = 255,
-	.min_touch = 0,
-	.max_touch = 255,
-	.min_width = 0,
-	.max_width = 255,
-	.power_on = tmg200_power,
-	.dev_setup = tmg200_dev_setup,
-	.nfingers = 2,
-	.irq_gpio = TS_PEN_IRQ_GPIO,
-	.resout_gpio = GPIO_CAP_TS_RESOUT_N,
-};
-
-static struct i2c_board_info cy8ctmg200_board_info[] = {
-	{
-		I2C_BOARD_INFO("cy8ctmg200", 0x2),
-		.platform_data = &cy8ctmg200_pdata,
-	}
-};
-
-static struct regulator *vreg_tma340;
-
-static int tma340_power(int vreg_on)
-{
-	int rc = -EINVAL;
-
-	if (!vreg_tma340) {
-		pr_err("%s: regulator 8901_l2 not found (%d)\n",
-			__func__, rc);
-		return rc;
-	}
-
-	rc = vreg_on ? regulator_enable(vreg_tma340) :
-			regulator_disable(vreg_tma340);
-	if (rc < 0)
-		pr_err("%s: vreg 8901_l2 %s failed (%d)\n",
-				__func__, vreg_on ? "enable" : "disable", rc);
-
-	/* wait for vregs to stabilize */
-	msleep(100);
-
-	return rc;
-}
-
-static struct kobject *tma340_prop_kobj;
-
-static int tma340_dragon_dev_setup(bool enable)
-{
-	int rc;
-
-	if (enable) {
-		vreg_tma340 = regulator_get(NULL, "8901_l2");
-		if (IS_ERR(vreg_tma340)) {
-			pr_err("%s: regulator get of 8901_l2 failed (%ld)\n",
-				__func__, PTR_ERR(vreg_tma340));
-			rc = PTR_ERR(vreg_tma340);
-			return rc;
-		}
-
-		rc = regulator_set_voltage(vreg_tma340, 3300000, 3300000);
-		if (rc) {
-			pr_err("%s: regulator_set_voltage() = %d\n",
-				__func__, rc);
-			goto reg_put;
-		}
-		tma340_prop_kobj = kobject_create_and_add("board_properties",
-					NULL);
-		if (tma340_prop_kobj) {
-			;
-			if (rc) {
-				kobject_put(tma340_prop_kobj);
-				pr_err("%s: failed to create board_properties\n",
-					__func__);
-				goto reg_put;
-			}
-		}
-
-	} else {
-		/* put voltage sources */
-		regulator_put(vreg_tma340);
-		/* destroy virtual keys */
-		if (tma340_prop_kobj) {
-			kobject_put(tma340_prop_kobj);
-		}
-	}
-	return 0;
-reg_put:
-	regulator_put(vreg_tma340);
-	return rc;
-}
-
-
-static struct cy8c_ts_platform_data cy8ctma340_dragon_pdata = {
-	.ts_name = "cy8ctma340",
-	.dis_min_x = 0,
-	.dis_max_x = 479,
-	.dis_min_y = 0,
-	.dis_max_y = 799,
-	.min_tid = 0,
-	.max_tid = 255,
-	.min_touch = 0,
-	.max_touch = 255,
-	.min_width = 0,
-	.max_width = 255,
-	.power_on = tma340_power,
-	.dev_setup = tma340_dragon_dev_setup,
-	.nfingers = 2,
-	.irq_gpio = TS_PEN_IRQ_GPIO,
-	.resout_gpio = -1,
-};
-
-static struct i2c_board_info cy8ctma340_dragon_board_info[] = {
-	{
-		I2C_BOARD_INFO("cy8ctma340", 0x24),
-		.platform_data = &cy8ctma340_dragon_pdata,
-	}
-};
-#endif
-
 #if defined(CONFIG_SAMSUNG_JACK) || defined (CONFIG_SAMSUNG_EARJACK)
 static struct sec_jack_zone jack_zones[] = {
         [0] = {
@@ -6248,8 +6014,6 @@ EXPORT_SYMBOL(get_sec_det_jack_state);
 
 static int get_sec_send_key_state(void)
 {
-	// int state;
-
 	struct pm_gpio ear_micbiase = {
 		.direction      = PM_GPIO_DIR_OUT,
 		.pull           = PM_GPIO_PULL_NO,
@@ -6263,7 +6027,6 @@ static int get_sec_send_key_state(void)
 
 	if(get_sec_det_jack_state())
 	{
-//		pm8058_gpio_config(PMIC_GPIO_EAR_MICBIAS_EN, &ear_micbiase);
 		pm8xxx_gpio_config(PM8058_GPIO_PM_TO_SYS(PMIC_GPIO_EAR_MICBIAS_EN), &ear_micbiase);
 
 		gpio_set_value_cansleep(PM8058_GPIO_PM_TO_SYS(PMIC_GPIO_EAR_MICBIAS_EN),1);	
@@ -6276,26 +6039,12 @@ static int get_sec_send_key_state(void)
 	}else		
 #endif
 		return(gpio_get_value_cansleep(PM8058_GPIO_PM_TO_SYS(PMIC_GPIO_SHORT_SENDEND))) ^ 1;
-
-/*
-#if defined (CONFIG_KOR_MODEL_SHV_E110S)
-	if(get_hw_rev()==0x05) //only for celox_REV05
-		state = (gpio_get_value_cansleep(PM8058_GPIO_PM_TO_SYS(PMIC_GPIO_SHORT_SENDEND)));
-	else
-#endif
-	state = (gpio_get_value_cansleep(PM8058_GPIO_PM_TO_SYS(PMIC_GPIO_SHORT_SENDEND))) ^ 1;
-	pr_info("sec_jack: send key state %d\n", state);
-	return state;*/
 }
 
 static void set_sec_micbias_state(bool state)
 {
-	/* split MICBIAS and EAR_MICBIAS from Rev05 */
-    //if(get_hw_rev()==0x1)
-	{
-		pr_info("sec_jack: ear micbias %s\n", state?"on":"off");
-		gpio_set_value_cansleep(PM8058_GPIO_PM_TO_SYS(PMIC_GPIO_EAR_MICBIAS_EN), state);	
-	}
+	pr_info("sec_jack: ear micbias %s\n", state?"on":"off");
+	gpio_set_value_cansleep(PM8058_GPIO_PM_TO_SYS(PMIC_GPIO_EAR_MICBIAS_EN), state);
 }
 
 static int sec_jack_read_adc(int channel, int *adc_data)
@@ -6594,11 +6343,6 @@ static struct i2c_board_info mhl_i2c_borad_info[] = {
 	},
 };
 #elif defined(CONFIG_VIDEO_MHL_V2)
-/*static void msm8x60_mhl_gpio_init(void)
-{
-	return;//gpio init done
-}*/
-
 static void cfg_mhl_sel(bool onoff)
 {
 	gpio_set_value_cansleep(GPIO_MHL_SEL, onoff);
@@ -6607,7 +6351,7 @@ static void cfg_mhl_sel(bool onoff)
 
 static void mhl_gpio_config(void)
 {
-	return;/*gpio config done*/
+	return;
 }
 
 /*
@@ -7754,11 +7498,7 @@ static struct rpm_regulator_init_data rpm_regulator_init_data[] = {
 	RPM_PC(PM8058_L20,  0, SLEEP_B, RPM_VREG_PIN_CTRL_NONE),
 	RPM_PC(PM8058_L21,  1, SLEEP_B, RPM_VREG_PIN_CTRL_NONE),
 	RPM_PC(PM8058_S2,   0, ENABLE,  RPM_VREG_PIN_CTRL_PM8058_A0),
-#if 1 // SAMSUNG LDO SETTING
 	RPM_PC(PM8901_L0,   0, SLEEP_B, RPM_VREG_PIN_CTRL_NONE),
-#else
-	RPM_PC(PM8901_L0,   0, ENABLE,  RPM_VREG_PIN_CTRL_PM8901_A0),
-#endif
 	RPM_PC(PM8901_S4,   0, ENABLE,  RPM_VREG_PIN_CTRL_PM8901_A0),
 };
 
@@ -7809,18 +7549,6 @@ static struct platform_device *early_devices[] __initdata = {
 	&msm_device_dmov_adm0,
 	&msm_device_dmov_adm1,
 };
-
-#if 0 //(defined(CONFIG_MARIMBA_CORE)) && (defined(CONFIG_MSM_BT_POWER) || defined(CONFIG_MSM_BT_POWER_MODULE))
-
-static int bluetooth_power(int);
-static struct platform_device msm_bt_power_device = {
-	.name	 = "bt_power",
-	.id	 = -1,
-	.dev	 = {
-		.platform_data = &bluetooth_power,
-	},
-};
-#endif
 
 /* Bluetooth */
 #ifdef CONFIG_BT_BCM4330
@@ -8765,9 +8493,6 @@ static struct platform_device *surf_devices[] __initdata = {
 	&msm8660_rpm_stat_device,
 #endif
 	&msm_device_vidc,
-#if 0 //(defined(CONFIG_MARIMBA_CORE)) && (defined(CONFIG_MSM_BT_POWER) || defined(CONFIG_MSM_BT_POWER_MODULE))
-	&msm_bt_power_device,
-#endif
 
 #if defined (CONFIG_BT_BCM4330)
     &bcm4330_bluetooth_device,
@@ -9303,15 +9028,6 @@ static void config_gpio_table_for_nfc(void)
 		.function		= PM_GPIO_FUNC_NORMAL,
 		.inv_int_pol	= 0,
 	};
-/*
-    struct pm_gpio hdmi_en= {
-	    .direction		= PM_GPIO_DIR_OUT,
-	    .pull			= PM_GPIO_PULL_NO,
-	    .vin_sel		= 4,
-	    .function		= PM_GPIO_FUNC_NORMAL,
-	    .inv_int_pol	= 0,
-    };
-*/
 #endif
 
 #ifdef CONFIG_PMIC8058
@@ -9869,32 +9585,7 @@ static const unsigned int ffa_keymap[] = {
 	KEY(0, 2, KEY_MENU),		
 	KEY(0, 3, KEY_HOME),
 	KEY(0, 4, KEY_VOLUMEDOWN),
-	KEY(0, 5, KEY_VOLUMEUP),	
-#if 0
-	KEY(0, 0, KEY_FN_F1),	 /* LS - PUSH1 */
-	KEY(0, 1, KEY_UP),	 /* NAV - UP */
-	KEY(0, 2, KEY_LEFT),	 /* NAV - LEFT */
-	KEY(0, 3, KEY_VOLUMEUP), /* Shuttle SW_UP */
-
-	KEY(1, 0, KEY_FN_F2), 	 /* LS - PUSH2 */
-	KEY(1, 1, KEY_RIGHT),    /* NAV - RIGHT */
-	KEY(1, 2, KEY_DOWN),     /* NAV - DOWN */
-	KEY(1, 3, KEY_VOLUMEDOWN),
-
-	KEY(2, 3, KEY_ENTER),     /* SW_PUSH key */
-
-	KEY(4, 0, KEY_CAMERA_FOCUS), /* RS - PUSH1 */
-	KEY(4, 1, KEY_UP),	  /* USER_UP */
-	KEY(4, 2, KEY_LEFT),	  /* USER_LEFT */
-	KEY(4, 3, KEY_HOME),	  /* Right switch: MIC Bd */
-	KEY(4, 4, KEY_FN_F3),	  /* Reserved MIC */
-
-	KEY(5, 0, KEY_CAMERA), /* RS - PUSH2 */
-	KEY(5, 1, KEY_RIGHT),	  /* USER_RIGHT */
-	KEY(5, 2, KEY_DOWN),	  /* USER_DOWN */
-	KEY(5, 3, KEY_BACK),	  /* Left switch: MIC */
-	KEY(5, 4, KEY_MENU),	  /* Center switch: MIC */
-#endif
+	KEY(0, 5, KEY_VOLUMEUP),
 };
 
 static const unsigned int dragon_keymap[] = {
@@ -11610,12 +11301,6 @@ static void __init msm8x60_map_io(void)
 		pr_err("socinfo_init() failed!\n");
 
 #ifdef CONFIG_SEC_DEBUG
-	/* onlyjazz : now sec_debug is ready to run */
-#if 0
-	sec_getlog_supply_meminfo(meminfo.bank[0].size, meminfo.bank[0].start,
-				  meminfo.bank[1].size, meminfo.bank[1].start);
-#endif
-
 	sec_getlog_supply_meminfo(0x40000000, 0x40000000, 0x00, 0x00);
 #endif
 }
@@ -14137,13 +13822,8 @@ static struct msm_bus_vectors rotator_init_vectors[] = {
 	{
 		.src = MSM_BUS_MASTER_ROTATOR,
 		.dst = MSM_BUS_SLAVE_SMI,
-#if 1	/* onlyjazz.el26 : temporarilly use non-zero bandwidth in order to avoid mmfab rate change during smi_clk is disabled */		
 		.ab = 0,
 		.ib = 0,
-#else	/* onlyjazz.el26 : temporarilly use non-zero bandwidth in order to avoid mmfab rate change during smi_clk is disabled */			
-		.ab = (1024 * 600 * 4 * 2 * 60),
-		.ib = (1024 * 600 * 4 * 2 * 60 * 1.5),
-#endif	
 	},
 	{
 		.src = MSM_BUS_MASTER_ROTATOR,
@@ -14284,14 +13964,8 @@ static struct msm_bus_vectors mdp_sd_ebi_vectors[] = {
 	{
 		.src = MSM_BUS_MASTER_MDP_PORT0,
 		.dst = MSM_BUS_SLAVE_SMI,
-		
-#if 1	/* onlyjazz.el26 : temporarilly use non-zero bandwidth in order to avoid mmfab rate change during smi_clk is disabled */
 		.ab = 0,
 		.ib = 0,
-#else	/* onlyjazz.el26 : temporarilly use non-zero bandwidth in order to avoid mmfab rate change during smi_clk is disabled */
-		.ab = 388800000,
-		.ib = 486000000 * 2,
-#endif	/* onlyjazz.el26 : end */
 	},
 	/* Master and slaves can be from different fabrics */
 	{
@@ -14374,16 +14048,8 @@ static struct msm_bus_vectors mdp_sd_ebi_vectors[] = {
 	{
 		.src = MSM_BUS_MASTER_MDP_PORT0,
 		.dst = MSM_BUS_SLAVE_SMI,
-#if defined(CONFIG_FB_MSM_MIPI_S6E8AA0_HD720_PANEL)
-		.ab = 740000000,
-		.ib = 900000000,
-#elif 1	/* onlyjazz.el26 : temporarilly use non-zero bandwidth in order to avoid mmfab rate change during smi_clk is disabled */
 		.ab = 0,
 		.ib = 0,
-#else	/* onlyjazz.el26 : temporarilly use non-zero bandwidth in order to avoid mmfab rate change during smi_clk is disabled */
-		.ab = 216000000,
-		.ib = 270000000 * 2,
-#endif	/* onlyjazz.el26 : end */
 	},
 	/* Master and slaves can be from different fabrics */
 	{
@@ -14874,345 +14540,6 @@ static void set_mdp_clocks_for_wuxga(void)
 
 	mdp_pdata.mdp_max_clk = 200000000;
 }
-
-#if 0 // (defined(CONFIG_MARIMBA_CORE)) && (defined(CONFIG_MSM_BT_POWER) || defined(CONFIG_MSM_BT_POWER_MODULE))
-
-static const struct {
-	char *name;
-	int vmin;
-	int vmax;
-} bt_regs_info[] = {
-	{ "8058_s3", 1800000, 1800000 },
-	{ "8058_s2", 1300000, 1300000 },
-	{ "8058_l8", 2900000, 3050000 },
-};
-
-static struct {
-	bool enabled;
-} bt_regs_status[] = {
-	{ false },
-	{ false },
-	{ false },
-};
-static struct regulator *bt_regs[ARRAY_SIZE(bt_regs_info)];
-
-static int bahama_bt(int on)
-{
-	int rc;
-	int i;
-	struct marimba config = { .mod_id =  SLAVE_ID_BAHAMA};
-
-	struct bahama_variant_register {
-		const size_t size;
-		const struct bahama_config_register *set;
-	};
-
-	const struct bahama_config_register *p;
-
-	u8 version;
-
-	const struct bahama_config_register v10_bt_on[] = {
-		{ 0xE9, 0x00, 0xFF },
-		{ 0xF4, 0x80, 0xFF },
-		{ 0xE4, 0x00, 0xFF },
-		{ 0xE5, 0x00, 0x0F },
-#ifdef CONFIG_WLAN
-		{ 0xE6, 0x38, 0x7F },
-		{ 0xE7, 0x06, 0xFF },
-#endif
-		{ 0xE9, 0x21, 0xFF },
-		{ 0x01, 0x0C, 0x1F },
-		{ 0x01, 0x08, 0x1F },
-	};
-
-	const struct bahama_config_register v20_bt_on_fm_off[] = {
-		{ 0x11, 0x0C, 0xFF },
-		{ 0x13, 0x01, 0xFF },
-		{ 0xF4, 0x80, 0xFF },
-		{ 0xF0, 0x00, 0xFF },
-		{ 0xE9, 0x00, 0xFF },
-#ifdef CONFIG_WLAN
-		{ 0x81, 0x00, 0x7F },
-		{ 0x82, 0x00, 0xFF },
-		{ 0xE6, 0x38, 0x7F },
-		{ 0xE7, 0x06, 0xFF },
-#endif
-		{ 0xE9, 0x21, 0xFF },
-	};
-
-	const struct bahama_config_register v20_bt_on_fm_on[] = {
-		{ 0x11, 0x0C, 0xFF },
-		{ 0x13, 0x01, 0xFF },
-		{ 0xF4, 0x86, 0xFF },
-		{ 0xF0, 0x06, 0xFF },
-		{ 0xE9, 0x00, 0xFF },
-#ifdef CONFIG_WLAN
-		{ 0x81, 0x00, 0x7F },
-		{ 0x82, 0x00, 0xFF },
-		{ 0xE6, 0x38, 0x7F },
-		{ 0xE7, 0x06, 0xFF },
-#endif
-		{ 0xE9, 0x21, 0xFF },
-	};
-
-	const struct bahama_config_register v10_bt_off[] = {
-		{ 0xE9, 0x00, 0xFF },
-	};
-
-	const struct bahama_config_register v20_bt_off_fm_off[] = {
-		{ 0xF4, 0x84, 0xFF },
-		{ 0xF0, 0x04, 0xFF },
-		{ 0xE9, 0x00, 0xFF }
-	};
-
-	const struct bahama_config_register v20_bt_off_fm_on[] = {
-		{ 0xF4, 0x86, 0xFF },
-		{ 0xF0, 0x06, 0xFF },
-		{ 0xE9, 0x00, 0xFF }
-	};
-	const struct bahama_variant_register bt_bahama[2][3] = {
-		{
-			{ ARRAY_SIZE(v10_bt_off), v10_bt_off },
-			{ ARRAY_SIZE(v20_bt_off_fm_off), v20_bt_off_fm_off },
-			{ ARRAY_SIZE(v20_bt_off_fm_on), v20_bt_off_fm_on }
-		},
-		{
-			{ ARRAY_SIZE(v10_bt_on), v10_bt_on },
-			{ ARRAY_SIZE(v20_bt_on_fm_off), v20_bt_on_fm_off },
-			{ ARRAY_SIZE(v20_bt_on_fm_on), v20_bt_on_fm_on }
-		}
-	};
-
-	u8 offset = 0; /* index into bahama configs */
-
-	on = on ? 1 : 0;
-	version = read_bahama_ver();
-
-	if (version ==  VER_UNSUPPORTED) {
-		dev_err(&msm_bt_power_device.dev,
-			"%s: unsupported version\n",
-			__func__);
-		return -EIO;
-	}
-
-	if (version == VER_2_0) {
-		if (marimba_get_fm_status(&config))
-			offset = 0x01;
-	}
-
-	/* Voting off 1.3V S2 Regulator,BahamaV2 used in Normal mode */
-	if (on && (version == VER_2_0)) {
-		for (i = 0; i < ARRAY_SIZE(bt_regs_info); i++) {
-			if ((!strcmp(bt_regs_info[i].name, "8058_s2"))
-				&& (bt_regs_status[i].enabled == true)) {
-				if (regulator_disable(bt_regs[i])) {
-					dev_err(&msm_bt_power_device.dev,
-						"%s: regulator disable failed",
-						__func__);
-				}
-				bt_regs_status[i].enabled = false;
-				break;
-			}
-		}
-	}
-
-	p = bt_bahama[on][version + offset].set;
-
-	dev_info(&msm_bt_power_device.dev,
-		"%s: found version %d\n", __func__, version);
-
-	for (i = 0; i < bt_bahama[on][version + offset].size; i++) {
-		u8 value = (p+i)->value;
-		rc = marimba_write_bit_mask(&config,
-			(p+i)->reg,
-			&value,
-			sizeof((p+i)->value),
-			(p+i)->mask);
-		if (rc < 0) {
-			dev_err(&msm_bt_power_device.dev,
-				"%s: reg %d write failed: %d\n",
-				__func__, (p+i)->reg, rc);
-			return rc;
-		}
-		dev_dbg(&msm_bt_power_device.dev,
-			"%s: reg 0x%02x write value 0x%02x mask 0x%02x\n",
-				__func__, (p+i)->reg,
-				value, (p+i)->mask);
-	}
-	/* Update BT Status */
-	if (on)
-		marimba_set_bt_status(&config, true);
-	else
-		marimba_set_bt_status(&config, false);
-
-	return 0;
-}
-
-static int bluetooth_use_regulators(int on)
-{
-	int i, recover = -1, rc = 0;
-
-	for (i = 0; i < ARRAY_SIZE(bt_regs_info); i++) {
-		bt_regs[i] = on ? regulator_get(&msm_bt_power_device.dev,
-						bt_regs_info[i].name) :
-				(regulator_put(bt_regs[i]), NULL);
-		if (IS_ERR(bt_regs[i])) {
-			rc = PTR_ERR(bt_regs[i]);
-			dev_err(&msm_bt_power_device.dev,
-				"regulator %s get failed (%d)\n",
-				bt_regs_info[i].name, rc);
-			recover = i - 1;
-			bt_regs[i] = NULL;
-			break;
-		}
-
-		if (!on)
-			continue;
-
-		rc = regulator_set_voltage(bt_regs[i],
-					  bt_regs_info[i].vmin,
-					  bt_regs_info[i].vmax);
-		if (rc < 0) {
-			dev_err(&msm_bt_power_device.dev,
-				"regulator %s voltage set (%d)\n",
-				bt_regs_info[i].name, rc);
-			recover = i;
-			break;
-		}
-	}
-
-	if (on && (recover > -1))
-		for (i = recover; i >= 0; i--) {
-			regulator_put(bt_regs[i]);
-			bt_regs[i] = NULL;
-		}
-
-	return rc;
-}
-
-static int bluetooth_switch_regulators(int on)
-{
-	int i, rc = 0;
-
-	for (i = 0; i < ARRAY_SIZE(bt_regs_info); i++) {
-		if (on && (bt_regs_status[i].enabled == false)) {
-			rc = regulator_enable(bt_regs[i]);
-			if (rc < 0) {
-				dev_err(&msm_bt_power_device.dev,
-					"regulator %s %s failed (%d)\n",
-					bt_regs_info[i].name,
-					"enable", rc);
-				if (i > 0) {
-					while (--i) {
-						regulator_disable(bt_regs[i]);
-						bt_regs_status[i].enabled
-								 = false;
-					}
-					break;
-				}
-			}
-			bt_regs_status[i].enabled = true;
-		} else if (!on && (bt_regs_status[i].enabled == true)) {
-			rc = regulator_disable(bt_regs[i]);
-			if (rc < 0) {
-				dev_err(&msm_bt_power_device.dev,
-					"regulator %s %s failed (%d)\n",
-					bt_regs_info[i].name,
-					"disable", rc);
-				break;
-			}
-			bt_regs_status[i].enabled = false;
-		}
-	}
-	return rc;
-}
-
-static struct msm_xo_voter *bt_clock;
-
-static int bluetooth_power(int on)
-{
-	int rc = 0;
-	int id;
-
-	/* In case probe function fails, cur_connv_type would be -1 */
-	id = adie_get_detected_connectivity_type();
-	if (id != BAHAMA_ID) {
-		pr_err("%s: unexpected adie connectivity type: %d\n",
-			__func__, id);
-		return -ENODEV;
-	}
-
-	if (on) {
-
-		rc = bluetooth_use_regulators(1);
-		if (rc < 0)
-			goto out;
-
-		rc = bluetooth_switch_regulators(1);
-
-		if (rc < 0)
-			goto fail_put;
-
-		bt_clock = msm_xo_get(MSM_XO_TCXO_D0, "bt_power");
-
-		if (IS_ERR(bt_clock)) {
-			pr_err("Couldn't get TCXO_D0 voter\n");
-			goto fail_switch;
-		}
-
-		rc = msm_xo_mode_vote(bt_clock, MSM_XO_MODE_ON);
-
-		if (rc < 0) {
-			pr_err("Failed to vote for TCXO_DO ON\n");
-			goto fail_vote;
-		}
-
-		rc = bahama_bt(1);
-
-		if (rc < 0)
-			goto fail_clock;
-
-		msleep(10);
-
-		rc = msm_xo_mode_vote(bt_clock, MSM_XO_MODE_PIN_CTRL);
-
-		if (rc < 0) {
-			pr_err("Failed to vote for TCXO_DO pin control\n");
-			goto fail_vote;
-		}
-	} else {
-		/* check for initial RFKILL block (power off) */
-		/* some RFKILL versions/configurations rfkill_register */
-		/* calls here for an initial set_block */
-		/* avoid calling i2c and regulator before unblock (on) */
-		if (platform_get_drvdata(&msm_bt_power_device) == NULL) {
-			dev_info(&msm_bt_power_device.dev,
-				"%s: initialized OFF/blocked\n", __func__);
-			goto out;
-		}
-
-		bahama_bt(0);
-
-fail_clock:
-		msm_xo_mode_vote(bt_clock, MSM_XO_MODE_OFF);
-fail_vote:
-		msm_xo_put(bt_clock);
-fail_switch:
-		bluetooth_switch_regulators(0);
-fail_put:
-		bluetooth_use_regulators(0);
-	}
-
-out:
-	if (rc < 0)
-		on = 0;
-	dev_info(&msm_bt_power_device.dev,
-		"Bluetooth power switch: state %d result %d\n", on, rc);
-
-	return rc;
-}
-
-#endif /*CONFIG_MARIMBA_CORE, CONFIG_MSM_BT_POWER, CONFIG_MSM_BT_POWER_MODULE*/
 
 #if  defined (CONFIG_KOR_MODEL_SHV_E110S) || defined (CONFIG_TARGET_LOCALE_USA)
 /* YDA165 AVDD regulator */
