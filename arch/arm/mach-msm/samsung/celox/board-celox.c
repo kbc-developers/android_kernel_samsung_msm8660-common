@@ -3982,17 +3982,12 @@ static void __init msm8x60_init_dsps(void)
 }
 #endif /* CONFIG_MSM_DSPS */
 
-#if defined (CONFIG_FB_MSM_MIPI_S6E8AA0_HD720_PANEL)
-/* prim = 736 x 1280 x 4(bpp) x 2(pages) */
-#define MSM_FB_PRIM_BUF_SIZE (736 * 1280 * 4 * 3) /* 4 bpp x 3 pages */
-#else
 #ifdef CONFIG_FB_MSM_TRIPLE_BUFFER
 #define MSM_FB_PRIM_BUF_SIZE \
 		(roundup((800 * 480 * 4), 4096) * 3) /* 4 bpp x 3 pages */
 #else
 #define MSM_FB_PRIM_BUF_SIZE \
 		(roundup((800 * 480 * 4), 4096) * 2) /* 4 bpp x 2 pages */
-#endif
 #endif
 
 #ifdef CONFIG_FB_MSM_HDMI_MSM_PANEL
@@ -4019,11 +4014,7 @@ unsigned char hdmi_is_primary;
 #endif
 
 #ifdef CONFIG_FB_MSM_OVERLAY0_WRITEBACK
-#if defined (CONFIG_FB_MSM_MIPI_S6E8AA0_HD720_PANEL)
-#define MSM_FB_OVERLAY0_WRITEBACK_SIZE roundup((1632 * 968 * 3 * 2), 4096)
-#else
 #define MSM_FB_OVERLAY0_WRITEBACK_SIZE roundup((832 * 512 * 3 * 2), 4096)
-#endif
 #else
 #define MSM_FB_OVERLAY0_WRITEBACK_SIZE (0)
 #endif  /* CONFIG_FB_MSM_OVERLAY0_WRITEBACK */
@@ -4087,12 +4078,7 @@ unsigned char hdmi_is_primary;
 
 #define MSM_ION_SF_SIZE		0x4000000 /* 64MB */
 #define MSM_ION_CAMERA_SIZE	0x1200000 /* 18MB */
-
-#if defined (CONFIG_FB_MSM_MIPI_S6E8AA0_HD720_PANEL)
-#define MSM_ION_WB_SIZE 	0x1700000 /* 24MB */
-#else
 #define MSM_ION_WB_SIZE		0x1400000 /* 20MB */
-#endif
 
 #define MSM_ION_QSECOM_SIZE	0x600000 /* (6MB) */
 
@@ -4374,10 +4360,7 @@ static struct platform_device ram_console_device = {
 
 #define GPIO_DONGLE_PWR_EN 258
 #if !defined(CONFIG_FB_MSM_LCDC_LD9040_WVGA_PANEL) \
-	&& !defined(CONFIG_FB_MSM_LCDC_S6E63M0_WVGA_PANEL)\
-	&& !defined(CONFIG_FB_MSM_MIPI_S6D6AA0_WXGA_PANEL) \
-	&& !defined(CONFIG_FB_MSM_MIPI_S6E8AA0_HD720_PANEL) \
-	&& !defined(CONFIG_FB_MSM_MIPI_S6E8AA0_WXGA_Q1_PANEL)
+	&& !defined(CONFIG_FB_MSM_LCDC_S6E63M0_WVGA_PANEL)
 	
 static void setup_display_power(void);
 static int lcdc_vga_enabled;
@@ -5127,15 +5110,6 @@ static struct platform_device mipi_dsi_novatek_panel_device = {
 		.platform_data = &novatek_pdata,
 	}
 };
-#ifdef CONFIG_FB_MSM_MIPI_S6E8AA0_HD720_PANEL
-static struct platform_device mipi_dsi_s6e8aa0_hd720_panel_device = {
-	.name = "mipi_s6e8aa0_hd720",
-	.id = 0,
-	/*.dev = {
-		.platform_data = &,	//Need to check
-	}*/
-};
-#endif
 #endif
 
 #ifndef CONFIG_SEC_KERNEL_REBASE_FOR_PMEM_OPTIMIZATION /* onlyjazz.ub02 : workaournd for kernel memory crash by TZBSP XPU */
@@ -7438,9 +7412,7 @@ static struct rpm_regulator_init_data rpm_regulator_init_data[] = {
 	RPM_LDO(PM8058_L16, 1, 1, 0, 1800000, 1800000, LDO300HMIN),
 	RPM_LDO(PM8058_L17, 0, 1, 0, 1800000, 2600000, LDO150HMIN),
 	RPM_LDO(PM8058_L18, 0, 1, 0, 2200000, 2200000, LDO150HMIN),
-#if defined (CONFIG_FB_MSM_MIPI_S6E8AA0_HD720_PANEL)
-	RPM_LDO(PM8058_L19, 0, 1, 0, 3000000, 3300000, LDO150HMIN),
-#elif defined (CONFIG_KOR_MODEL_SHV_E110S) || defined (CONFIG_TARGET_LOCALE_USA)
+#if defined (CONFIG_KOR_MODEL_SHV_E110S) || defined (CONFIG_TARGET_LOCALE_USA)
 	RPM_LDO(PM8058_L19, 0, 1, 0, 3000000, 3000000, LDO150HMIN),
 #else
 	RPM_LDO(PM8058_L19, 0, 1, 0, 2500000, 2500000, LDO150HMIN),
@@ -8434,10 +8406,8 @@ static struct platform_device *surf_devices[] __initdata = {
 
 #if defined (CONFIG_FB_MSM_LCDC_LD9040_WVGA_PANEL) || defined (CONFIG_FB_MSM_LCDC_S6E63M0_WVGA_PANEL)
 	&lcdc_ld9040_panel_device,
-#else	
-	#if !defined (CONFIG_FB_MSM_MIPI_S6E8AA0_HD720_PANEL)
+#else
 	&lcdc_samsung_panel_device,
-#endif
 #endif
 #ifdef CONFIG_FB_MSM_LCDC_NT35582_WVGA
 	&lcdc_nt35582_panel_device,
@@ -8454,9 +8424,6 @@ static struct platform_device *surf_devices[] __initdata = {
 #ifdef CONFIG_FB_MSM_MIPI_DSI
 	&mipi_dsi_toshiba_panel_device,
 	&mipi_dsi_novatek_panel_device,
-#ifdef CONFIG_FB_MSM_MIPI_S6E8AA0_HD720_PANEL
-	&mipi_dsi_s6e8aa0_hd720_panel_device,
-#endif
 #endif
 #ifdef CONFIG_MSM_CAMERA
 #ifndef CONFIG_MSM_CAMERA_V4L2
@@ -12444,10 +12411,7 @@ error1:
 #endif
 
 #if !defined(CONFIG_FB_MSM_LCDC_LD9040_WVGA_PANEL) \
-	&& !defined(CONFIG_FB_MSM_LCDC_S6E63M0_WVGA_PANEL)\
-	&& !defined(CONFIG_FB_MSM_MIPI_S6D6AA0_WXGA_PANEL) \
-	&& !defined(CONFIG_FB_MSM_MIPI_S6E8AA0_HD720_PANEL) \
-	&& !defined(CONFIG_FB_MSM_MIPI_S6E8AA0_WXGA_Q1_PANEL)
+	&& !defined(CONFIG_FB_MSM_LCDC_S6E63M0_WVGA_PANEL)
 
 #define _GET_REGULATOR(var, name) do {					\
 	if (var == NULL) {						\
@@ -12779,255 +12743,6 @@ static inline void setup_display_power(void) {}
 #endif
 
 static int mipi_dsi_panel_power(int on);
-
-#if defined(CONFIG_FB_MSM_MIPI_S6E8AA0_HD720_PANEL) || defined(CONFIG_FB_MSM_MIPI_S6E8AA0_WXGA_Q1_PANEL)
-
-#define MIPI_STR "[Mipi_LCD] "
-#define LCD_GPIO_RESET	    (28)
-#define LCD_GPIO_OLED_ID	(7)
-
-#if defined (CONFIG_USA_MODEL_SGH_I757)
-#define LCD_GPIO_2_2V_EN    (142)
-#endif
-
-struct pm8058_gpio_cfg {
-	int                gpio;
-	struct pm_gpio	   cfg;
-};
-
-static struct msm_gpio hd720_gpio_config_data[] = {
-	 { GPIO_CFG(LCD_GPIO_RESET, 0, GPIO_CFG_OUTPUT, GPIO_CFG_NO_PULL, GPIO_CFG_2MA), "lcd_reset" },
-};
-
-static int hd720_pm8058_gpio_config_gpio[] = { LCD_GPIO_OLED_ID };
-struct pm8058_gpio_cfg hd720_pm8058_gpio_config_data[] = {
-	{
-		PM8058_GPIO_PM_TO_SYS(18),
-		{
-			.direction	= PM_GPIO_DIR_IN,
-			.pull           = PM_GPIO_PULL_UP_1P5,
-			.vin_sel        = 2,
-			.function       = PM_GPIO_FUNC_NORMAL,
-			.inv_int_pol    = 0,
-		}
-	},
-};
-
-static void mipi_S6E8AA0_panel_gpio_init(void)
-{
-        int i;
-	int loop_count;
-	int rc;
-	printk(MIPI_STR "%s\n", __func__);
-
-	loop_count= ARRAY_SIZE(hd720_gpio_config_data);
-	for( i=0; i<loop_count; i++)
-	{
-		rc = gpio_tlmm_config(hd720_gpio_config_data[i].gpio_cfg, 1);
-		if (rc) {
-			pr_err("%s: gpio_tlmm_config FAIL(%dth) = %d\n", __func__, i, rc);
-		}
-	}
-
-	loop_count= ARRAY_SIZE(hd720_pm8058_gpio_config_gpio);
-	for( i=0; i<loop_count; i++)
-	{
-		rc = pm8xxx_gpio_config(PM8058_GPIO_PM_TO_SYS(PM8058_GPIO(hd720_pm8058_gpio_config_gpio[i])),
-				&(hd720_pm8058_gpio_config_data[i].cfg));
-		if (rc < 0) {
-			pr_err("%s: pm8058_gpio_config FAIL(gpio:%d) = %d\n", __func__, hd720_pm8058_gpio_config_gpio[i], rc);
-		}
-	}
-#if defined (CONFIG_USA_MODEL_SGH_I757)
-	if (get_hw_rev()>=6)
-	{
-		gpio_tlmm_config(GPIO_CFG(LCD_GPIO_2_2V_EN, 0, GPIO_CFG_OUTPUT, GPIO_CFG_NO_PULL, GPIO_CFG_2MA), 1);
-	}
-#endif
-}
-
-static void mipi_S6E8AA0_panel_reset_up(void)
-{
-	gpio_set_value(LCD_GPIO_RESET, 1);
-}
-
-static void mipi_S6E8AA0_panel_reset_down(void)
-{
-	gpio_set_value(LCD_GPIO_RESET, 0);
-}
-
-static int mipi_S6E8AA0_panel_power(int enable)
-{
-    static struct regulator *l19 = NULL;
-    static struct regulator *l17 = NULL;
-    static struct regulator *l3 = NULL;
-    static struct regulator *l12 = NULL;
-    int ret;
-    //int	isDaliLgtRev01 = false;
-
-    int isUse_LDO3 = false;
-    int LDO3_voltage = 2200000;
-    int isUse_LDO12 = false;
-    int LDO12_voltage = 2200000;
-    int isUse_LDO19 = false;
-    int LDO19_voltage = 3100000;
-    int isUse_LDO17 = false;
-    int LDO17_voltage = 2200000;
-
-#if defined(CONFIG_USA_MODEL_SGH_I757)
-	if (get_hw_rev()>=6)	{
-		isUse_LDO3 = 0;
-	}
-	else	{
-		isUse_LDO3 = true;
-		LDO3_voltage = 2200000;
-	}
-	isUse_LDO12 = false;
-	isUse_LDO19 = true;
-	LDO19_voltage = 3100000;
-#else
-	isUse_LDO3 = false;
-	LDO3_voltage = 2200000;
-	isUse_LDO12 = true;
-	LDO12_voltage = 2200000;
-	isUse_LDO19 = true;
-	LDO19_voltage = 3100000;
-	printk("[Mipi_LCD] %s: Enable=%d, Unknown Model Case\n", __FUNCTION__, enable);
-#endif
-
-	 if(l3 == NULL && isUse_LDO3)	 {
-		 l3 = regulator_get(NULL, "8058_l3");
-		 if (IS_ERR(l3)) {
-		 	printk( MIPI_STR "Fail to get handle LDO3\n" );
-					 return -1;
-		}
-
-		 ret = regulator_set_voltage(l3, LDO3_voltage, LDO3_voltage);
-				 if (ret) {
-		 	printk( MIPI_STR "Fail to control LDO3\n" );
-		 } else {
-		 	printk( MIPI_STR "Use LDO3, volt=%d\n", LDO3_voltage);
-		 }
-	 }
-
-	 if(l12 == NULL && isUse_LDO12)	 {
-		 l12 = regulator_get(NULL, "8058_l12");
-		 if (IS_ERR(l12)) {
-		 	printk( MIPI_STR "Fail to get handle LDO12\n" );
-		 return -1;
-		}
-
-		 ret = regulator_set_voltage(l12, LDO12_voltage, LDO12_voltage);
-		 if (ret) {
-		 	printk( MIPI_STR "Fail to control LDO12\n" );
-		 } else {
-		 	printk( MIPI_STR "Use LDO12, volt=%d\n", LDO12_voltage);
-		 }
-	 }
-
-	 if(l17 == NULL && isUse_LDO17)	 {
-		 l17 = regulator_get(NULL, "8058_l17");
-		 if (IS_ERR(l17)) {
-		 	printk( MIPI_STR "Fail to get handle LDO17\n" );
-		 return -1;
-		}
-
-		 ret = regulator_set_voltage(l17, LDO17_voltage, LDO17_voltage);
-		 if (ret) {
-		 	printk( MIPI_STR "Fail to control LDO17\n" );
-		 } else {
-		 	printk( MIPI_STR "Use LDO17, volt=%d\n", LDO17_voltage);
-		 }
-	}
-
-	if(l19 == NULL && isUse_LDO19 )	 {
-		 l19 = regulator_get(NULL, "8058_l19");
-		 if (IS_ERR(l19)) {
-		 	printk( MIPI_STR "Fail to get handle LDO19\n" );
-				 return -1;
-		}
-
-		 ret = regulator_set_voltage(l19, LDO19_voltage, LDO19_voltage);
-			 if (ret) {
-		 	printk( MIPI_STR "Fail to control LDO19\n" );
-		 } else {
-		 	printk( MIPI_STR "Use LDO19, volt=%d\n", LDO19_voltage);
-		 }
-	}
-
-	if (enable) {
-		if( l3 != NULL ) {
-			 ret = regulator_enable(l3);
-			 if (ret) {
-			 	printk( MIPI_STR "Fail to enable LDO3\n" );
-			 }
-	        }
-
-		if( l12 != NULL ) {
-			 ret = regulator_enable(l12);
-                         if (ret) {
-			 	printk( MIPI_STR "Fail to enable LDO12\n" );
-			 }
-		}
-
-		if( l17 != NULL ) {
-			 ret = regulator_enable(l17);
-			 if (ret) {
-			 	printk( MIPI_STR "Fail to enable LDO17\n" );
-			 }
-		}
-
-#if defined (CONFIG_USA_MODEL_SGH_I757)
-		if (get_hw_rev()>=6)	{
-			gpio_set_value(LCD_GPIO_2_2V_EN, 1);
-		}
-#endif
-		msleep(5);
-
-		if( l19 != NULL ) {
-		         ret = regulator_enable(l19);
-			 if (ret) {
-			 	printk( MIPI_STR "Fail to enable LDO19\n" );
-			 }
-		}
-
-		 mipi_S6E8AA0_panel_gpio_init();
-		 msleep(25);
-		 mipi_S6E8AA0_panel_reset_up();
-		 msleep(5);
-
-         } else {
-
-		mipi_S6E8AA0_panel_reset_down();
-
-		msleep(5);
-
-		if( l19 != NULL ) {
-			ret = regulator_disable(l19);
-	                if (ret) {
-			 	printk( MIPI_STR "Fail to disable LDO19\n" );
-			}
-		}
-
-		msleep(5);
-
-		if( l12 != NULL ) {
-			ret = regulator_disable(l12);
-		        if (ret) {
-			 	printk( MIPI_STR "Fail to disable LDO12\n" );
-			}
-		}
-                if( l17 != NULL ) {
-                        ret = regulator_disable(l17);
-                        if (ret) {
-                                printk( MIPI_STR "Fail to disable LDO17\n" );
-                        }
-                }
-
-    }
-    return ret;
-}
-#endif
 
  static int lcdc_LD9040_panel_power(int enable)
 {
@@ -14061,13 +13776,8 @@ static struct msm_bus_vectors mdp_vga_vectors[] = {
 	{
 		.src = MSM_BUS_MASTER_MDP_PORT0,
 		.dst = MSM_BUS_SLAVE_EBI_CH0,
-#if defined (CONFIG_FB_MSM_MIPI_S6E8AA0_HD720_PANEL)
-		.ab = 334080000, // as 1080p
-		.ib = 550000000 * 2, // as 1080p
-#else
 		.ab = 216000000,
 		.ib = 270000000 * 2,
-#endif
 	},
 };
 
@@ -14083,13 +13793,8 @@ static struct msm_bus_vectors mdp_720p_vectors[] = {
 	{
 		.src = MSM_BUS_MASTER_MDP_PORT0,
 		.dst = MSM_BUS_SLAVE_EBI_CH0,
-#if defined (CONFIG_FB_MSM_MIPI_S6E8AA0_HD720_PANEL)
-		.ab = 334080000, // as 1080p
-		.ib = 550000000 * 2, // as 1080p
-#else
 		.ab = 230400000,
 		.ib = 288000000 * 2,
-#endif
 	},
 };
 
@@ -14255,14 +13960,8 @@ static struct lcdc_platform_data lcdc_pdata = {
 	.lcdc_power_save   = lcdc_panel_power,
 };
 
-#if !defined(CONFIG_FB_MSM_MIPI_S6D6AA0_WXGA_PANEL) \
-	&& !defined(CONFIG_FB_MSM_MIPI_S6E8AA0_HD720_PANEL) \
-	&& !defined(CONFIG_FB_MSM_MIPI_S6E8AA0_WXGA_Q1_PANEL)
-
 #define MDP_VSYNC_GPIO			28
-#else
-#define MDP_VSYNC_GPIO (-1)
-#endif
+
 /*
  * MIPI_DSI only use 8058_LDO0 which need always on
  * therefore it need to be put at low power mode if
@@ -14278,9 +13977,6 @@ static int mipi_dsi_panel_power(int on)
 	if (mipi_dsi_power_save_on == flag_on)
 		return 0;
 
-#ifdef CONFIG_FB_MSM_MIPI_S6E8AA0_HD720_PANEL
-	mipi_S6E8AA0_panel_power(on);
-#endif
 	mipi_dsi_power_save_on = flag_on;
 
 	if (ldo0 == NULL) {	/* init */
@@ -14320,12 +14016,10 @@ out:
 	return rc;
 }
 
-#if defined(CONFIG_FB_MSM_MIPI_S6E8AA0_HD720_PANEL)
 static struct mipi_dsi_platform_data mipi_dsi_pdata = {
 	.vsync_gpio = MDP_VSYNC_GPIO,
 	.dsi_power_save   = mipi_dsi_panel_power,
 };
-#endif
 
 #ifdef CONFIG_FB_MSM_TVOUT
 static struct regulator *reg_8058_l13;
@@ -14389,14 +14083,6 @@ static struct msm_panel_common_pdata mdp_pdata = {
 #endif
 	.mdp_iommu_split_domain = 0,
 };
-#if defined(CONFIG_FB_MSM_MIPI_S6E8AA0_HD720_PANEL)
-int mdp_core_clk_rate_table[] = {
-	85330000,
-	96000000,
-	200000000, // 11.10.11 : 160->200, barcode+Lockscreen = BlackScreen issue
-	200000000,
-};
-#endif
 
 static void __init reserve_mdp_memory(void)
 {
@@ -14481,11 +14167,8 @@ static void __init msm_fb_add_devices(void)
 	mdp_pdata.mdp_max_clk = 200000000;
 #endif
 	msm_fb_register_device("mdp", &mdp_pdata);
-#if !defined(CONFIG_FB_MSM_MIPI_S6E8AA0_HD720_PANEL)
 	msm_fb_register_device("lcdc", &lcdc_pdata);
-#else
 	msm_fb_register_device("mipi_dsi", &mipi_dsi_pdata);
-#endif
 #ifdef CONFIG_FB_MSM_DTV
 	if (hdmi_is_primary)
 		msm_fb_register_device("dtv", &dtv_hdmi_prim_pdata);
