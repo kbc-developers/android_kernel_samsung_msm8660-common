@@ -62,6 +62,7 @@
 #include <linux/fb.h>
 #include <linux/backlight.h>
 #include <linux/miscdevice.h>
+#include <mach/devices-lte.h>
 
 #include "lcdc_S6E63M0_seq.h"
 #include "mdp4_video_enhance.h"
@@ -142,7 +143,6 @@ const int ELVSS_OFFSET[] = {0xD, 0x09, 0x07, 0x0};
 
 static int PANEL_TYPE = 0;
 static int PANLE_ELVSS_VALUE = 0;
-extern unsigned int get_hw_rev(void);
 static int lcdc_s6e63m0_panel_off(struct platform_device *pdev);
 
 static int spi_cs;

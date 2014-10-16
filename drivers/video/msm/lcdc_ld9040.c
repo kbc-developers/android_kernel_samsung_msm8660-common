@@ -64,6 +64,7 @@
 #include <linux/miscdevice.h>
 #include "mdp4_video_enhance.h"
 #include <linux/regulator/consumer.h>
+#include <mach/devices-lte.h>
 
 #define MAPPING_TBL_AUTO_BRIGHTNESS 1
 #include "lcdc_ld9040_seq.h"
@@ -121,12 +122,6 @@ int isEA8868_M3 = 0;
 int isIndividualElvss = 0;
 int IElvssOffset = 0;
 static struct ld9040 lcd;
-
-#if defined (CONFIG_KOR_MODEL_SHV_E110S) || defined (CONFIG_EUR_MODEL_GT_I9210) \
-	|| defined (CONFIG_USA_MODEL_SGH_T989) || defined (CONFIG_USA_MODEL_SGH_I727) \
-	|| defined (CONFIG_USA_MODEL_SGH_T769)
-extern unsigned int get_hw_rev(void);
-#endif
 
 #ifdef MAPPING_TBL_AUTO_BRIGHTNESS
 #define CANDELA_TABLE_SIZE 24

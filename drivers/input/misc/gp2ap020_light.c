@@ -105,8 +105,6 @@ static int StateToLux(state_type state);
 int lightsensor_get_adc(void);
 static int lightsensor_onoff(u8 onoff);
 
-extern unsigned int get_hw_rev(void);
-
 //extern int backlight_level;
 #ifdef CONFIG_FB_S3C_MDNIE_TUNINGMODE_FOR_BACKLIGHT
 static int pre_val = -1;

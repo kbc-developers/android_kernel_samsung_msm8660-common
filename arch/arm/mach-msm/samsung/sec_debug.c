@@ -151,8 +151,6 @@ module_param_named(enable, enable, uint, 0644);
 module_param_named(enable_user, enable_user, uint, 0644);
 module_param_named(reset_reason, reset_reason, uint, 0644);
 
-extern unsigned int get_hw_rev(void);
-
 static const char *gkernel_sec_build_info_date_time[] ={
 	__DATE__,
 	__TIME__

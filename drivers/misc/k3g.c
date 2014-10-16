@@ -213,10 +213,6 @@ static void set_polling_delay(struct k3g_data *k3g_data, int res)
 	k3g_data->polling_delay = ns_to_ktime(delay_ns);
 }
 
-#if defined (CONFIG_KOR_MODEL_SHV_E110S) || defined (CONFIG_KOR_MODEL_SHV_E160S) || defined (CONFIG_KOR_MODEL_SHV_E160K) || defined (CONFIG_KOR_MODEL_SHV_E160L)
-extern unsigned int get_hw_rev(void);
-#endif
-
 /* gyroscope data readout */
 static int k3g_read_gyro_values(struct i2c_client *client, struct k3g_t *data, int total_read)
 {

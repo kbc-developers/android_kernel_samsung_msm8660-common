@@ -133,7 +133,6 @@ static u8 gp2a_original_image[COL][2] =
 
 static int alt_int = 0;
 extern u8 lightsensor_mode; // 0 = low, 1 = high
-extern unsigned int get_hw_rev(void);
 
 static int proximity_onoff(u8 onoff);
 	

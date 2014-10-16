@@ -149,8 +149,6 @@ struct tdmb_drv_func {
 	unsigned long (*get_int_size) (void);
 };
 
-extern unsigned int get_hw_rev(void);
-
 extern unsigned int *tdmb_ts_head;
 extern unsigned int *tdmb_ts_tail;
 extern char *tdmb_ts_buffer;

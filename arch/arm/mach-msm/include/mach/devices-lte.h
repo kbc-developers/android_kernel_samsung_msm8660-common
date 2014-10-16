@@ -29,6 +29,37 @@
 #ifndef __ARCH_ARM_MACH_MSM_DEVICES_LTE_H
 #define __ARCH_ARM_MACH_MSM_DEVICES_LTE_H
 
+#include <mach/board-msm8660.h>
+
+#define REV_GPIO_BASE 34
+#if defined (CONFIG_USA_MODEL_SGH_I727) || defined(CONFIG_USA_MODEL_SGH_I757) || defined(CONFIG_USA_MODEL_SGH_I577)
+#define REV_PMIC_BASE PM8058_GPIO(26)
+#else
+#define REV_PMIC_BASE PM8058_GPIO(32)
+#endif
+
+#if defined (CONFIG_USA_MODEL_SGH_I717)
+typedef struct _hw_rev_mapping {
+	unsigned int real_hw_rev;
+	unsigned int hw_rev;
+} hw_rev_mapping;
+
+static const hw_rev_mapping hw_rev_map[] = {
+	{ .real_hw_rev = 0x05, .hw_rev = 0x00 },
+	{ .real_hw_rev = 0x03, .hw_rev = 0x01 },
+	{ .real_hw_rev = 0x02, .hw_rev = 0x02 },
+	{ .real_hw_rev = 0x04, .hw_rev = 0x03 },
+	{ .real_hw_rev = 0x06, .hw_rev = 0x04 },
+	{ .real_hw_rev = 0x07, .hw_rev = 0x05 },
+	{ .real_hw_rev = 0x08, .hw_rev = 0x07 },
+	{ .real_hw_rev = 0x09, .hw_rev = 0x0B },
+	{ .real_hw_rev = 0x0A, .hw_rev = 0x0C },
+};
+#endif
+
+unsigned int get_baseband(void);
+unsigned int get_hw_rev(void);
+
 #ifdef CONFIG_USB_ANDROID_SAMSUNG_COMPOSITE
 /* soonyong.cho : Define samsung product id and config string.
  *                Sources such as 'android.c' and 'devs.c' refered below define

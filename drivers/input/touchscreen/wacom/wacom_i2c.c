@@ -26,6 +26,7 @@
 #ifdef EPEN_CPU_LOCK
 #include <mach/cpufreq.h>
 #endif
+#include <mach/devices-lte.h>
 
 #include "wacom_i2c_func.h"
 #include "wacom_i2c_flash.h"
@@ -39,8 +40,6 @@
 #elif defined(CONFIG_KOR_MODEL_SHV_E160S) || defined(CONFIG_KOR_MODEL_SHV_E160K) || defined(CONFIG_KOR_MODEL_SHV_E160L)
 #define HWREV_PEN_PITCH4P4   0x05
 #endif
-
-extern unsigned int get_hw_rev(void);
 
 /*sec_class sysfs*/
 extern struct class *sec_class;

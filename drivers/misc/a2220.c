@@ -27,6 +27,7 @@
 #include <linux/freezer.h>
 #include <linux/a2220.h>
 #include <linux/kthread.h>
+#include <mach/devices-lte.h>
 #include "a2220_firmware.h"
 
 #define MODULE_NAME "audience_a2220 :"
@@ -59,8 +60,6 @@ int a2220_ioctl2(unsigned int cmd , unsigned long arg);
 static unsigned int a2220_NS_state = A2220_NS_STATE_AUTO;
 static int a2220_current_config = A2220_PATH_SUSPEND;
 static int a2220_param_ID;
-
-extern unsigned int get_hw_rev(void);
 
 struct vp_ctxt {
 	unsigned char *data;
@@ -1144,6 +1143,7 @@ unsigned char phonecall_bt[] = {
 	0x80,0x17,0x00,0x02, /* SetAlgorithmParmID, 0x0002:Microphone Configuration */
 	0x80,0x18,0x00,0x03, /* SetAlgorithmParm, 0x0003:1-mic External (MD) */
 	0x80,0x26,0x00,0x06, /* SelectRouting, 0x0006:Snk,Snk,Fei,Pri - Zro,Csp,Feo (PCM0->PCM1+ADCs) */
+
 	0x80,0x1C,0x00,0x00, /* VoiceProcessingOn, 0x0000:No */
 	0x80,0x1B,0x00,0x00, /* SetDigitalInputGain, 0x00:Primay Mic (Tx), 0x00:(0 dB) */
 	0x80,0x15,0x00,0x00, /* SetDigitalOutputGain, 0x00:Tx, 0x00:(0 dB) */

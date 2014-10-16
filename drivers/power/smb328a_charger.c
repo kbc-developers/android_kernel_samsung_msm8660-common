@@ -24,6 +24,7 @@
 #include <linux/regulator/machine.h>
 #include <linux/smb328a_charger.h>
 #include <linux/i2c/fsa9480.h>
+#include <mach/devices-lte.h>
 
 /* Register define */
 #define SMB328A_INPUT_AND_CHARGE_CURRENTS		0x00

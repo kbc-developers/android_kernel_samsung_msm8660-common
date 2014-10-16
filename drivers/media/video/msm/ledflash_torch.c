@@ -32,6 +32,7 @@
 #include <linux/timer.h>
 #include <linux/jiffies.h>
 #include <linux/miscdevice.h>
+#include <mach/devices-lte.h>
 
 MODULE_LICENSE("GPL");
 
@@ -43,9 +44,6 @@ MODULE_LICENSE("GPL");
 #if defined(CONFIG_KOR_MODEL_SHV_E160S) || defined(CONFIG_KOR_MODEL_SHV_E160K) ||defined(CONFIG_KOR_MODEL_SHV_E160L)
 #define TORCH_MINOR 216
 #endif
-
-
-extern unsigned int get_hw_rev(void);
 
 struct class *ledflash_class;
 #if defined (CONFIG_USA_MODEL_SGH_I717)

@@ -2,6 +2,7 @@ subdir-ccflags-$(CONFIG_ARCH_MSM) += -Iarch/arm/mach-msm
 
 -include $(src)/Makefile.board
 
+obj-$(CONFIG_ARCH_MSM8X60) += sec_devices.o
 obj-$(CONFIG_BROADCOM_WIFI) += broadcom_wlan.o
 obj-$(CONFIG_BT_BCM4330) += board-bluetooth-bcm4330.o
 obj-$(CONFIG_USB_SWITCH_FSA9480)   += sec_switch.o

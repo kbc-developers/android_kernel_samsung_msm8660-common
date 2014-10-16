@@ -28,6 +28,7 @@
 #include <linux/android_alarm.h>
 #include <linux/msm_adc.h>
 #include <linux/earlysuspend.h>
+#include <mach/devices-lte.h>
 #include <mach/sec_battery.h>
 #include <linux/gpio.h>
 #include <linux/pmic8058-xoadc.h>

@@ -18,6 +18,7 @@
 #include <linux/mfd/pmic8901.h>
 #include <linux/mfd/pm8xxx/core.h>
 #include <linux/module.h>
+#include <mach/devices-lte.h>
 
 /* PMIC8901 Revision */
 #define PM8901_REG_REV			0x002
@@ -38,10 +39,6 @@
 	.end	= _irq, \
 	.flags	= IORESOURCE_IRQ, \
 }
-
-#ifdef CONFIG_PMIC8901_PRELOAD_DVDD
-extern unsigned int get_hw_rev(void);
-#endif
 
 struct pm8901_chip {
 	struct pm8901_platform_data	pdata;

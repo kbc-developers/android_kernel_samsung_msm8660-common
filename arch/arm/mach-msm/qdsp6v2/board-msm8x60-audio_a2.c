@@ -34,6 +34,7 @@
 #endif
 #include <linux/i2c/fsa9480.h>
 #include <mach/board-msm8660.h>
+#include <mach/devices-lte.h>
 #include <mach/qdsp6v2/audio_dev_ctl.h>
 #include <sound/apr_audio.h>
 #include <mach/mpp.h>
@@ -73,8 +74,6 @@ static struct dentry *debugfs_hsed_config;
 static void snddev_hsed_config_modify_setting(int type);
 static void snddev_hsed_config_restore_setting(void);
 #endif
-
-extern unsigned int get_hw_rev(void);
 
 /* GPIO_CLASS_D0_EN */
 #define SNDDEV_GPIO_CLASS_D0_EN 227

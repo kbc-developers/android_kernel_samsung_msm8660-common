@@ -34,6 +34,7 @@
 #include <linux/delay.h>
 //#include <mach/param.h>
 #include <mach/board-msm8660.h>
+#include <mach/devices-lte.h>
 #include <linux/regulator/consumer.h>
 #include <linux/mfd/pmic8058.h>
 #include <linux/input.h>
@@ -195,7 +196,6 @@ extern unsigned char ftm_sleep_exit;
 static void fsa9480_reg_init(struct fsa9480_usbsw *usbsw);
 
 static bool usedeskdock = false;
-extern unsigned int get_hw_rev(void);
 static int HWversion=0;
 static int gv_intr2=0;
 static int isDeskdockconnected=0;

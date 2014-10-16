@@ -36,6 +36,7 @@
 #include <asm/mach-types.h>
 #include <asm/uaccess.h>
 #include <mach/board-msm8660.h>
+#include <mach/devices-lte.h>
 
 #if defined(CONFIG_JPN_MODEL_SC_03D)
 #include <linux/kthread.h>
@@ -100,8 +101,6 @@ static struct dentry *debugfs_hsed_config;
 static void snddev_hsed_config_modify_setting(int type);
 static void snddev_hsed_config_restore_setting(void);
 #endif
-
-extern unsigned int get_hw_rev(void);
 
 #if defined(CONFIG_USA_MODEL_SGH_T989) || defined(CONFIG_USA_MODEL_SGH_T769)
 #define SNDDEV_GPIO_VPS_AMP_EN 142

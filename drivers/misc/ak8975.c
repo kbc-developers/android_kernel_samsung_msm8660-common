@@ -30,6 +30,7 @@
 #include <linux/i2c/ak8975.h>
 #include <linux/completion.h>
 #include <linux/mfd/pmic8058.h>
+#include <mach/devices-lte.h>
 #include "ak8975-reg.h"
 
 #ifdef SENSORS_LOG_DUMP
@@ -189,10 +190,6 @@ static int akm8975_wait_for_data_ready(struct akm8975_data *akm)
 	pr_err("akm: wait restart\n");
 	return err;
 }
-
-#if defined (CONFIG_EUR_MODEL_GT_I9210)
-extern unsigned int get_hw_rev(void);
-#endif
 
 static ssize_t akmd_read(struct file *file, char __user *buf,
 					size_t count, loff_t *pos)
@@ -483,8 +480,6 @@ err_request_irq:
 done:
 	return rc;
 }
-
-extern unsigned int get_hw_rev(void);
 
 int akm8975_probe(struct i2c_client *client,
 		const struct i2c_device_id *devid)

@@ -23,6 +23,7 @@
 #include <linux/uaccess.h>
 #include <linux/i2c/k3dh.h>
 #include "k3dh_reg.h"
+#include <mach/devices-lte.h>
 #include <mach/gpio.h>
 #ifdef SENSORS_LOG_DUMP
 #include <linux/i2c/sensors_core.h>
@@ -110,12 +111,6 @@ static int k3dh_read_accel_raw_xyz(struct k3dh_data *k3dh, struct k3dh_acc *acc)
 
 	return 0;
 }
-
-#if defined (CONFIG_TARGET_LOCALE_KOR) || defined (CONFIG_JPN_MODEL_SC_03D)|| defined(CONFIG_USA_MODEL_SGH_I727)|| defined(CONFIG_USA_MODEL_SGH_T989) \
- || defined(CONFIG_USA_MODEL_SGH_I717) || defined(CONFIG_EUR_MODEL_GT_I9210) || defined(CONFIG_USA_MODEL_SGH_I957) \
- || defined(CONFIG_USA_MODEL_SGH_I757)|| defined (CONFIG_USA_MODEL_SGH_T769) || defined(CONFIG_USA_MODEL_SGH_I577)
-extern unsigned int get_hw_rev(void);
-#endif
 
 static int k3dh_read_accel_xyz(struct k3dh_data *k3dh, struct k3dh_acc *acc)
 {

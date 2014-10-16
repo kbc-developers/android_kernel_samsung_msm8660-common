@@ -50,7 +50,6 @@ struct sec_bat_platform_data {
 	void (*chg_shutdown_cb) (void);
 };
 
-extern unsigned int get_hw_rev(void);
 #if defined(CONFIG_TOUCHSCREEN_QT602240) || defined(CONFIG_TOUCHSCREEN_MXT768E)
 extern void tsp_set_unknown_charging_cable(bool);
 #endif

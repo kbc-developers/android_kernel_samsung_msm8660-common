@@ -252,10 +252,6 @@ short IsTaosSensorOn(void)
 
 EXPORT_SYMBOL(IsTaosSensorOn);
 
-#if defined(CONFIG_USA_MODEL_SGH_I577) || defined(CONFIG_CAN_MODEL_SGH_I577R)
-extern unsigned int get_hw_rev(void);
-#endif
-
 static void taos_light_enable(struct taos_data *taos)
 {
 	light_enable = 1;

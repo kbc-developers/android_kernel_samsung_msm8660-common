@@ -34,6 +34,7 @@
 #endif
 #include <linux/i2c/fsa9480.h>
 #include <mach/board-msm8660.h>
+#include <mach/devices-lte.h>
 #include <mach/qdsp6v2/audio_dev_ctl.h>
 #include <sound/apr_audio.h>
 #include <mach/mpp.h>
@@ -83,8 +84,6 @@ static struct dentry *debugfs_hsed_config;
 static void snddev_hsed_config_modify_setting(int type);
 static void snddev_hsed_config_restore_setting(void);
 #endif
-
-extern unsigned int get_hw_rev(void);
 
 /* GPIO_CLASS_D0_EN */
 #define SNDDEV_GPIO_CLASS_D0_EN 227
@@ -470,7 +469,9 @@ static void msm_snddev_poweramp_off_call(void)
 }
 
 int msm_snddev_poweramp_on_headset_call(void)
-{	fsa9480_audiopath_control(0);
+{
+
+	fsa9480_audiopath_control(0);
 #ifdef CONFIG_SENSORS_YDA165
 	yda165_headset_call_onoff(1);
 #endif
@@ -534,7 +535,24 @@ void msm_snddev_vpsamp_off_headset(void)
 #endif
 	fsa9480_audiopath_control(0);
 }
-int msm_snddev_spkvpsamp_on_together(void){	pr_info("%s\n", __func__);#ifdef CONFIG_SENSORS_YDA165	yda165_speaker_headset_onoff(1);#endif	fsa9480_audiopath_control(1);	return 0;}void msm_snddev_spkvpsamp_off_together(void){	pr_info("%s\n", __func__);#ifdef CONFIG_SENSORS_YDA165	yda165_speaker_headset_onoff(0);#endif	fsa9480_audiopath_control(0);}
+int msm_snddev_spkvpsamp_on_together(void)
+{
+	pr_info("%s\n", __func__);
+#ifdef CONFIG_SENSORS_YDA165
+	yda165_speaker_headset_onoff(1);
+#endif
+	fsa9480_audiopath_control(1);
+	return 0;
+}
+
+void msm_snddev_spkvpsamp_off_together(void)
+{
+	pr_info("%s\n", __func__);
+#ifdef CONFIG_SENSORS_YDA165
+	yda165_speaker_headset_onoff(0);
+#endif
+	fsa9480_audiopath_control(0);
+}
 int msm_snddev_poweramp_on_together(void)
 {
 #ifdef CONFIG_SENSORS_YDA165
@@ -5113,6 +5131,7 @@ static struct snddev_icodec_data ftm_handset_mic1_aux_in_data = {
 	.channel_mode = 2,
 	.default_sample_rate = 48000,
 	/* Assumption is that inputs are not tied to analog mic, so
+
 	 * no need to enable mic bias.
 	 */
 };

@@ -239,10 +239,6 @@ static void sec_esd_work_func(struct work_struct *work)
 	return;
 }
 
-#if defined (CONFIG_KOR_MODEL_SHV_E160S)
-extern unsigned int get_hw_rev(void);
-#endif
-
 static int sec_esd_probe(struct platform_device *pdev)
 {
 	struct sec_esd_info *hi;

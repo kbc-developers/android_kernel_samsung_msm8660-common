@@ -20,9 +20,6 @@ CAMERA Power control
 //static struct regulator *i_core12, *s_core12, *s_io18, *i_host18, *af28, *vt_core15;
 static struct regulator *i_core12, *i_host18, *af28, *vt_core15;
 
-extern unsigned int get_hw_rev(void);
-
-
 void cam_mclk_onoff(int onoff)
 {
 	unsigned int mclk_cfg;

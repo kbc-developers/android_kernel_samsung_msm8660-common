@@ -488,86 +488,9 @@ static void taos_power_on(void);
 static void taos_power_off(void);
 #endif
 
-static unsigned int HWREV;
-static unsigned char is_checked_hwrev = 0;
 #ifdef CONFIG_BATTERY_SEC
 static unsigned int is_lpm_boot = 0;
 #endif
-
-static int target_baseband = 0; // default : csfb
-
-static int __init target_baseband_setup(char *baseband)
-{
-	if (!strcmp(baseband, "csfb"))
-		target_baseband = 0;
-	else if (!strcmp(baseband, "svlte2a"))
-		target_baseband = 1;
-
-	return 1;
-}
-__setup("androidboot.baseband=", target_baseband_setup);
-
-static int __init hw_rev_setup(char *str)
-{
-	if (!str)
-		return 0;
-
-	printk("%s : HW rev value is intialized first\n", __func__);
-
-	HWREV = simple_strtoul(str, &str, 0);
-
-	printk("HW rev value : 0x%X\n", HWREV);
-
-	is_checked_hwrev = 1;
-
-	return 1;
-}
-__setup("hw_rev=", hw_rev_setup);
-
-unsigned int get_hw_rev(void)
-{
-	int i = 0;                
-	char str_rev[10];
-	int return_value;
-	unsigned int temp_rev = 0;
-
-	if(!is_checked_hwrev)
-	{
-		printk("%s : HW rev value is intialized first\n", __func__);
-
-#if defined (CONFIG_KOR_MODEL_SHV_E110S) || defined (CONFIG_TARGET_LOCALE_USA)
-		for(i = 0; i < 3; i++)
-		{
-			sprintf(str_rev, "HW_REV_%d",i);
-			return_value = gpio_request(PM8058_GPIO_PM_TO_SYS(PM8058_GPIO(REV_GPIO_BASE+i)), str_rev);       
-			return_value = gpio_direction_input(PM8058_GPIO_PM_TO_SYS(PM8058_GPIO(REV_GPIO_BASE+i)));
-			temp_rev = temp_rev | (gpio_get_value_cansleep(PM8058_GPIO_PM_TO_SYS(PM8058_GPIO(REV_GPIO_BASE+i)))<<i);
-		}
-
-#if defined (CONFIG_USA_MODEL_SGH_I727)|| defined(CONFIG_USA_MODEL_SGH_I757) || defined(CONFIG_USA_MODEL_SGH_I577)
-		sprintf(str_rev, "HW_REV_%d", 3);
-		return_value = gpio_request(PM8058_GPIO_PM_TO_SYS(PM8058_GPIO(26)), str_rev);
-		return_value = gpio_direction_input(PM8058_GPIO_PM_TO_SYS(PM8058_GPIO(26)));
-
-		temp_rev = temp_rev | (gpio_get_value_cansleep(PM8058_GPIO_PM_TO_SYS(PM8058_GPIO(26)))<<3);
-#else
-		sprintf(str_rev, "HW_REV_%d", 3);
-		return_value = gpio_request(PM8058_GPIO_PM_TO_SYS(PM8058_GPIO(32)), str_rev);
-		return_value = gpio_direction_input(PM8058_GPIO_PM_TO_SYS(PM8058_GPIO(32)));
-
-		temp_rev = temp_rev | (gpio_get_value_cansleep(PM8058_GPIO_PM_TO_SYS(PM8058_GPIO(32)))<<3);
-#endif
-#else
-		temp_rev = 0xFFFFFFFF; // abnormal revision
-#endif
-		printk("HW rev value : 0x%X\n", temp_rev);
-		HWREV = temp_rev;
-
-		is_checked_hwrev = 1;
-	}
-	return HWREV;
-}
-EXPORT_SYMBOL(get_hw_rev);
 
 #ifdef CONFIG_MMC_MSM_SDC2_SUPPORT
 static void (*sdc2_status_notify_cb)(int card_present, void *dev_id);
@@ -14594,7 +14517,7 @@ static void __init msm8x60_init(struct msm_board_data *board_data)
 	}
 
 	/* if csfb, enable rtc write */
-	if (target_baseband == 0) {
+	if (get_baseband() == 0) {
 		pm8058_rtc_pdata.rtc_write_enable = true;
 	}
 

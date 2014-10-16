@@ -9,6 +9,7 @@
 #include <linux/uaccess.h>
 #include <linux/miscdevice.h>
 #include <linux/i2c/yda165_integ.h>
+#include <mach/devices-lte.h>
 
 #define MODULE_NAME "yda165"
 #define AMPREG_DEBUG 0
@@ -20,9 +21,6 @@ static struct snd_set_ampgain g_ampgain[MODE_NUM_MAX];
 static struct snd_set_ampgain temp;
 static int set_mode = 0;
 static int cur_mode = 0;
-
-extern unsigned int get_hw_rev(void);
-
 
 static ssize_t mode_show(struct device *dev,struct device_attribute *attr,char *buf)
 {
