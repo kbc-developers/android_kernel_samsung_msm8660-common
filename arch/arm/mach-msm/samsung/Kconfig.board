@@ -13,12 +13,6 @@ choice
 		help
 		  Support models of celox series
 
-	config TARGET_SERIES_DALI
-		select MACH_SAMSUNG
-		bool "Dali"
-		help
-		  Support models of dali series
-
 	config TARGET_SERIES_Q1
 		select MACH_SAMSUNG
 		bool "Quincy"

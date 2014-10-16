@@ -5,8 +5,5 @@
 # CELOX
 obj-$(CONFIG_TARGET_SERIES_CELOX) += celox/
 
-# DALI
-obj-$(CONFIG_TARGET_SERIES_DALI) += dali/
-
 # QUINCY
 obj-$(CONFIG_TARGET_SERIES_Q1) += quincy/
