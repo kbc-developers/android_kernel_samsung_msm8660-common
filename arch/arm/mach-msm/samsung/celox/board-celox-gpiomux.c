@@ -14,6 +14,7 @@
 #include <asm/mach-types.h>
 #include <mach/gpiomux.h>
 #include "gpiomux-8x60.h"
+#include "board-celox.h"
 
 static struct gpiomux_setting console_uart = {
 	.func = GPIOMUX_FUNC_2,
