@@ -7858,15 +7858,6 @@ static struct i2c_board_info opt_i2c_borad_info[] = {
 	},
 };
 
-struct opt_gp2a_platform_data {
-	void	(*gp2a_led_on) (void);
-	void	(*gp2a_led_off) (void);
-	void	(*power_on) (void);
-	void	(*power_off) (void);
-    int gp2a_irq;
-    int gp2a_gpio;
-};
-
 static void proximity_LED_on(void);
 static void proximity_LED_off(void);
 
@@ -7900,17 +7891,6 @@ static struct platform_device taos_i2c_gpio_device = {
 	.dev        = {		
 		.platform_data  = &taos_i2c_gpio_data,	
 	},
-};
-
-struct taos_platform_data {	
-	void	(*led_on) (void);	
-	void	(*led_off) (void);	
-	void	(*power_on) (void);	
-	void	(*power_off) (void);
-#if defined (CONFIG_USA_MODEL_SGH_I757) || defined (CONFIG_CAN_MODEL_SGH_I757M)	
-	void 	(*light_on) (void);	
-	void 	(*light_off) (void);
-#endif
 };
 
 static void proximity_LED_on(void);

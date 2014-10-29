@@ -60,6 +60,30 @@ static const hw_rev_mapping hw_rev_map[] = {
 unsigned int get_baseband(void);
 unsigned int get_hw_rev(void);
 
+#if defined (CONFIG_OPTICAL_GP2A)
+struct opt_gp2a_platform_data {
+	void (*gp2a_led_on) (void);
+	void (*gp2a_led_off) (void);
+	void (*power_on) (void);
+	void (*power_off) (void);
+	int gp2a_irq;
+	int gp2a_gpio;
+};
+#endif
+
+#if defined (CONFIG_OPTICAL_TAOS)
+struct taos_platform_data {	
+	void	(*led_on) (void);	
+	void	(*led_off) (void);	
+	void	(*power_on) (void);	
+	void	(*power_off) (void);
+#if defined (CONFIG_USA_MODEL_SGH_I757) || defined (CONFIG_CAN_MODEL_SGH_I757M)	
+	void 	(*light_on) (void);	
+	void 	(*light_off) (void);
+#endif
+};
+#endif
+
 #ifdef CONFIG_USB_ANDROID_SAMSUNG_COMPOSITE
 /* soonyong.cho : Define samsung product id and config string.
  *                Sources such as 'android.c' and 'devs.c' refered below define
