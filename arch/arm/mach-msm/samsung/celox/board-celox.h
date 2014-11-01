@@ -148,5 +148,7 @@ void __init msm8x60_init_mmc(void);
 void __init msm8x60_surf_rpm_fixup(void);
 void msm8x60_pmic_regulator_force_off(void);
 void __init msm8x60_pm8901_gpio_mpp_init(void);
+void __init msm8x60_init_fb(void);
+void __init msm8x60_allocate_fb_region(void);
 
 #endif
