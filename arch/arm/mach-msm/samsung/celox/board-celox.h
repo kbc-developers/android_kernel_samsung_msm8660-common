@@ -134,7 +134,18 @@ int __init brcm_wlan_init(void);
 extern unsigned int sec_get_lpm_mode(void);
 #endif
 
+extern struct regulator_init_data msm_saw_regulator_pdata_s0;
+extern struct regulator_init_data msm_saw_regulator_pdata_s1;
+extern struct rpm_regulator_platform_data msm8x60_rpm_regulator_early_pdata __devinitdata;
+extern struct rpm_regulator_platform_data msm8x60_rpm_regulator_pdata __devinitdata;
+extern struct platform_device msm8x60_8901_mpp_vreg __devinitdata;
+extern struct pm8901_vreg_pdata pm8901_regulator_pdata[];
+extern int pm8901_regulator_pdata_len;
+
 int msm8x60_multi_sdio_init(void);
 void __init msm8x60_init_mmc(void);
+void __init msm8x60_surf_rpm_fixup(void);
+void msm8x60_pmic_regulator_force_off(void);
+void __init msm8x60_pm8901_gpio_mpp_init(void);
 
 #endif
