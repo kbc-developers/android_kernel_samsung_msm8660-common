@@ -134,4 +134,7 @@ int __init brcm_wlan_init(void);
 extern unsigned int sec_get_lpm_mode(void);
 #endif
 
+int msm8x60_multi_sdio_init(void);
+void __init msm8x60_init_mmc(void);
+
 #endif
