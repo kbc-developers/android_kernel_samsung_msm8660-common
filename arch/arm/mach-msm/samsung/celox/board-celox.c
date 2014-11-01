@@ -4977,28 +4977,6 @@ void __init msm8x60_set_display_params(char *prim_panel, char *ext_panel)
 	}
 }
 
-#ifdef CONFIG_KEYPAD_CYPRESS_TOUCH // touchkey
-#define MSM_TKEY_I2C_BUS_ID		13
-
-/* I2C2 */
-static struct i2c_board_info tkey_i2c_devices[] = {
-    {
-        I2C_BOARD_INFO("sec_touchkey", 0x20),
-    },
-};
-
-static  struct  i2c_gpio_platform_data  tkey_i2c_gpio_data = {
-        .sda_pin                = GPIO_TKEY_I2C_SDA,
-        .scl_pin                = GPIO_TKEY_I2C_SCL,
-        .udelay                 = 0,    /* 250KHz */
-};
-static struct platform_device tkey_i2c_gpio_device = {
-        .name                           = "i2c-gpio",
-        .id                                     = MSM_TKEY_I2C_BUS_ID,
-        .dev.platform_data      = &tkey_i2c_gpio_data,
-};
-#endif
-
 #if defined(CONFIG_TOUCHSCREEN_CYTTSP_I2C_QC) || \
 		defined(CONFIG_TOUCHSCREEN_CYTTSP_I2C_QC_MODULE)
 /*virtual key support */
@@ -7929,9 +7907,6 @@ static struct platform_device *surf_devices[] __initdata = {
 #ifdef CONFIG_OPTICAL_TAOS	
 	&taos_i2c_gpio_device,
 #endif
-#ifdef CONFIG_KEYPAD_CYPRESS_TOUCH
-	&tkey_i2c_gpio_device,
-#endif
 #ifdef CONFIG_VP_A2220
 #if !defined (CONFIG_TARGET_LOCALE_USA)
 	&a2220_i2c_device,
@@ -8628,15 +8603,6 @@ static int pm8058_gpios_init(void)
 		
 	};
 
-#ifdef CONFIG_KEYPAD_CYPRESS_TOUCH
-	struct pm_gpio tkey_int = {
-		.direction      = PM_GPIO_DIR_IN,
-		.pull           = PM_GPIO_PULL_NO,
-		.vin_sel        = 2,
-		.function       = PM_GPIO_FUNC_NORMAL,
-		.inv_int_pol    = 0,
-	};
-#endif
 #if defined(CONFIG_TOUCHDISC_VTD518_SHINETSU) || \
 		defined(CONFIG_TOUCHDISC_VTD518_SHINETSU_MODULE)
 	struct pm_gpio touchdisc_intr_gpio_cfg = {
@@ -8818,13 +8784,6 @@ pr_err("%s PMIC_GPIO_EAR_DET : OK \n", __func__);
 		}
 	}
 
-#ifdef CONFIG_KEYPAD_CYPRESS_TOUCH
-	rc = pm8xxx_gpio_config(PM8058_GPIO_PM_TO_SYS(PMIC_GPIO_TKEY_INT), &tkey_int);
-	if (rc) {
-		pr_err("%s PMIC_GPIO_TKEY_INT config failed\n", __func__);
-		return rc;
-	}
-#endif
 #if defined(CONFIG_VIDEO_MHL_V1) || defined(CONFIG_VIDEO_MHL_V2)
 		rc = pm8xxx_gpio_config(PM8058_GPIO_PM_TO_SYS(PMIC_GPIO_MHL_SEL), &mhl_sel);
 		if (rc) {
@@ -10321,14 +10280,6 @@ static struct i2c_registry msm8x60_i2c_devices[] __initdata = {
 		ARRAY_SIZE(qt602240_board_info),
 	},
 #endif /*CONFIG_TOUCHSCREEN_QT602240 */
-#ifdef CONFIG_KEYPAD_CYPRESS_TOUCH
-	{
-		I2C_SURF | I2C_FFA | I2C_FLUID,
-		MSM_TKEY_I2C_BUS_ID,
-		tkey_i2c_devices,
-		ARRAY_SIZE(tkey_i2c_devices),
-	},
-#endif
 #ifdef CONFIG_MSM_CAMERA
 #ifndef CONFIG_MSM_CAMERA_V4L2
 	{
@@ -11457,152 +11408,6 @@ static int hdmi_panel_power(int on)
 #undef _GET_REGULATOR
 
 #endif /* CONFIG_FB_MSM_HDMI_MSM_PANEL */
-#ifdef CONFIG_KEYPAD_CYPRESS_TOUCH
-struct regulator *TKEY_L12 = NULL;
-struct regulator *TKEY_L3B = NULL;
-static int __init tkey_device_init(void)
-{
-	int rc;
-	
-// add_celox for rev02 tkey        
-#if defined(CONFIG_KOR_MODEL_SHV_E110S) || defined (CONFIG_TARGET_LOCALE_USA)
-	struct regulator *lvs2;   // modified for LGU 
-#endif
-
-#ifdef CONFIG_BATTERY_SEC
-	if(is_lpm_boot)
-		return 0;
-#endif
-
-
-gpio_tlmm_config(GPIO_CFG(156, 0, GPIO_CFG_INPUT, GPIO_CFG_NO_PULL, GPIO_CFG_2MA),1);
-gpio_tlmm_config(GPIO_CFG(157, 0, GPIO_CFG_INPUT, GPIO_CFG_NO_PULL, GPIO_CFG_2MA),1);
-
-// add_celox for rev02 tkey
-#if defined(CONFIG_KOR_MODEL_SHV_E110S) || defined (CONFIG_TARGET_LOCALE_USA)
-		lvs2 = regulator_get(NULL, "8901_lvs2");
-		rc = regulator_enable(lvs2);
-        if(rc)	
-			printk("[TKEY] %s: error enabling regulator\n", __func__);
-        else 
-            printk("[TKEY] %s: 8901_lvs2 On \n", __func__);
-		regulator_put(lvs2);
-#endif	
-
-	//TKEY_L12 = regulator_get(&rpm_vreg_device[RPM_VREG_ID_PM8058_L12].dev, "8058_l12");
-	TKEY_L12 = regulator_get(NULL, "8058_l12");
-
-		if (IS_ERR(TKEY_L12)) {
-			rc = PTR_ERR(TKEY_L12);
-		    pr_err("%s: L12 get failed (%d)\n", __func__, rc);
-			return rc;
-		}
-		rc = regulator_set_voltage(TKEY_L12, 3300000, 3300000);
-		if (rc) {
-			pr_err("%s: L12 set level failed (%d)\n", __func__, rc);
-			return rc;
-		}
-		rc = regulator_enable(TKEY_L12);
-		if (rc) {
-			pr_err("%s: L12vreg enable failed (%d)\n", __func__, rc);
-			return rc;
-		}
-		regulator_put(TKEY_L12);
-		printk("[TKEY] %s: TKEY_L12 3.3 V Set \n", __func__);
-
-		return 0;
-}
-
-#if defined(CONFIG_KOR_MODEL_SHV_E110S) || defined (CONFIG_TARGET_LOCALE_USA)
-int tkey_vdd_enable(int onoff)
-{
-	struct regulator *lvs2;	
-	int ret;
-	printk("[TKEY] %s: enter\n", __func__);
-
-	lvs2 = regulator_get(NULL, "8901_lvs2");
-	if (IS_ERR(lvs2))
-		return -1;
-
-	if(onoff)
-	{
-		ret = regulator_enable(lvs2);
-		if (ret) {
-			printk("%s: error enabling regulator\n", __func__);
-		}
-	}
-	else
-	{
-		ret = regulator_disable(lvs2);
-		if (ret) {
-			printk("%s: error enabling regulator\n", __func__);
-		}
-	}
-
-	regulator_put(lvs2);
-	return 0;
-}
-EXPORT_SYMBOL(tkey_vdd_enable);
-
-int tkey_led_vdd_enable(int onoff) 
-{
-	struct regulator *l12;
-	int ret;
-	printk("tkey_led_vdd_enable %d\n", onoff);
-#if defined(CONFIG_EUR_MODEL_GT_I9210)
-	if(get_hw_rev()>=0x07)	//I9210
-#elif defined(CONFIG_USA_MODEL_SGH_T989) || defined (CONFIG_USA_MODEL_SGH_T769)
-	if(get_hw_rev()>=0x08)
-#elif defined(CONFIG_USA_MODEL_SGH_I727)
-	if(get_hw_rev()>=0x0a)
-#elif defined(CONFIG_USA_MODEL_SGH_I757) || defined(CONFIG_USA_MODEL_SGH_I577)
-    if(true)
-#else
-	if(get_hw_rev()>=0x04)
-#endif
-	{
-		l12 = regulator_get(NULL, "8058_l12");
-		if (IS_ERR(l12))
-			return -1;
-
-		if(onoff)
-		{
-			ret = regulator_set_voltage(l12, 3300000, 3300000);
-
-			if (ret) {
-				printk("%s: error setting voltage\n", __func__);
-			}
-
-			if(!regulator_is_enabled(l12)) {
-			ret = regulator_enable(l12);
-			if (ret) {
-				printk("%s: error enabling regulator\n", __func__);
-				}
-			}
-		}
-		else
-		{
-			ret = regulator_set_voltage(l12, 3300000, 3300000);
-
-			if (ret) {
-				printk("%s: error setting voltage\n", __func__);
-			}
-
-			if(regulator_is_enabled(l12)) {
-			ret = regulator_disable(l12);
-			if (ret) {
-				printk("%s: error enabling regulator\n", __func__);
-				}
-			}
-		}
-		regulator_put(l12);
-	}
-	return 0;
-}
-EXPORT_SYMBOL(tkey_led_vdd_enable);
-#endif
-#endif
-
 
 static struct regulator *vsensor_2p85 = NULL;
 #if defined(CONFIG_KOR_MODEL_SHV_E110S) || defined(CONFIG_EUR_MODEL_GT_I9210)|| defined(CONFIG_USA_MODEL_SGH_I577)|| defined(CONFIG_USA_MODEL_SGH_T769)
@@ -12935,10 +12740,7 @@ static void __init msm8x60_init(struct msm_board_data *board_data)
 		msm_fusion_setup_pinctrl();
 
 	sensor_device_init();
-
-#ifdef CONFIG_KEYPAD_CYPRESS_TOUCH
-	tkey_device_init();
-#endif
+	msm8x60_init_keypad();
 #ifdef CONFIG_BROADCOM_WIFI
 	brcm_wlan_init();
 #endif

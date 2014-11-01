@@ -142,6 +142,7 @@ extern struct platform_device msm8x60_8901_mpp_vreg __devinitdata;
 extern struct pm8901_vreg_pdata pm8901_regulator_pdata[];
 extern int pm8901_regulator_pdata_len;
 
+int __init msm8x60_init_keypad(void);
 int msm8x60_multi_sdio_init(void);
 void __init msm8x60_init_mmc(void);
 void __init msm8x60_surf_rpm_fixup(void);
