@@ -141,14 +141,34 @@ extern struct rpm_regulator_platform_data msm8x60_rpm_regulator_pdata __devinitd
 extern struct platform_device msm8x60_8901_mpp_vreg __devinitdata;
 extern struct pm8901_vreg_pdata pm8901_regulator_pdata[];
 extern int pm8901_regulator_pdata_len;
+extern struct platform_device msm_adc_device;
 
 int __init msm8x60_init_keypad(void);
 int msm8x60_multi_sdio_init(void);
+#ifdef CONFIG_FB_MSM_HDMI_MSM_PANEL
+int hdmi_enable_5v(int on);
+#endif
+
 void __init msm8x60_init_mmc(void);
+void __init msm8x60_init_fb(void);
+void __init msm8x60_init_pmic(void);
+void __init msm8x60_gpio_mpp_init(void);
+void msm8x60_init_gpiomux(void);
+void __init msm8x60_allocate_fb_region(void);
 void __init msm8x60_surf_rpm_fixup(void);
 void msm8x60_pmic_regulator_force_off(void);
 void __init msm8x60_pm8901_gpio_mpp_init(void);
-void __init msm8x60_init_fb(void);
-void __init msm8x60_allocate_fb_region(void);
+void msm8x60_mdp_writeback(struct memtype_reserve *reserve_table);
+
+#define _GET_REGULATOR(var, name) do {					\
+	if (var == NULL) {						\
+		var = regulator_get(NULL, name);			\
+		if (IS_ERR(var)) {					\
+			pr_err("'%s' regulator not found, rc=%ld\n",	\
+				name, PTR_ERR(var));			\
+			var = NULL;					\
+		}							\
+	}								\
+} while (0)
 
 #endif
