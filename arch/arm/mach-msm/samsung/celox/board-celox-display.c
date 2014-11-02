@@ -10,14 +10,19 @@
  * GNU General Public License for more details.
  */
 
+#include <linux/init.h>
+#include <linux/ioport.h>
 #include <linux/gpio.h>
-#include <mach/gpio.h>
-#include <mach/panel_id.h>
-#include <mach/msm_memtypes.h>
+#include <linux/platform_device.h>
 #include <linux/bootmem.h>
-#ifdef CONFIG_FB_MSM_HDMI_MHL
-#include <video/msm_hdmi_modes.h>
-#endif
+#include <linux/msm_ion.h>
+#include <asm/mach-types.h>
+#include <mach/msm_memtypes.h>
+#include <mach/board.h>
+#include <mach/gpiomux.h>
+#include <mach/ion.h>
+#include <mach/msm_bus_board.h>
+#include <mach/socinfo.h>
 
 #include "devices.h"
 #include "board-celox.h"
@@ -47,6 +52,11 @@
 
 #define MDP_VSYNC_GPIO 28
 
+#define LCDC_LD9040_PANEL_NAME	"lcdc_ld9040_wvga"
+#define LCDC_S6E63M0_PANEL_NAME	"lcdc_S6E63M0_wvga"
+#define HDMI_PANEL_NAME		"hdmi_msm"
+#define TVOUT_PANEL_NAME	"tvout_msm"
+
 static struct resource msm_fb_resources[] = {
 	{
 		.flags = IORESOURCE_DMA,
@@ -56,15 +66,15 @@ static struct resource msm_fb_resources[] = {
 static int msm_fb_detect_panel(const char *name)
 {
 #if defined (CONFIG_FB_MSM_LCDC_LD9040_WVGA_PANEL)
-	if (!strncmp(name, "lcdc_ld9040_wvga",
-			strnlen("lcdc_ld9040_wvga",
+	if (!strncmp(name, LCDC_LD9040_PANEL_NAME,
+			strnlen(LCDC_LD9040_PANEL_NAME,
 				PANEL_NAME_MAX_LEN)))
 		return 0;
 #endif
 
 #if defined (CONFIG_FB_MSM_LCDC_S6E63M0_WVGA_PANEL)	
-	if (!strncmp(name, "lcdc_S6E63M0_wvga",
-			strnlen("lcdc_S6E63M0_wvga",
+	if (!strncmp(name, LCDC_S6E63M0_PANEL_NAME,
+			strnlen(LCDC_S6E63M0_PANEL_NAME,
 				PANEL_NAME_MAX_LEN)))
 		return 0;
 #endif
@@ -72,8 +82,6 @@ static int msm_fb_detect_panel(const char *name)
 	if (!strncmp(name, HDMI_PANEL_NAME,
 			strnlen(HDMI_PANEL_NAME,
 				PANEL_NAME_MAX_LEN))) {
-		if (hdmi_is_primary)
-			set_mdp_clocks_for_wuxga();
 		return 0;
 	}
 
@@ -401,10 +409,9 @@ static void lcdc_panel_gpios_init(int on)
 static bool lcdc_power_on;
 static int lcdc_panel_power(int on)
 {
-        static struct regulator *l3, *lvs1_1v8, *l19;
+        static struct regulator *l3, *l19;
 	static bool bPanelPowerOn = false;
 	int ret;
-	int rc;
 
 	/* If panel is already on (or off), do nothing. */
 	if (!lcdc_power_on) {
@@ -500,17 +507,17 @@ static uint32_t lcdc_gpio_off_config_data[] = {
 	GPIO_CFG(28, 0, GPIO_CFG_OUTPUT, GPIO_CFG_PULL_DOWN, GPIO_CFG_2MA),
 };
 
-static void lcdc_ld9040_config_gpios(int enable)
+static void lcdc_ld9040_config_gpio(int enable)
 {
 	int i;
 	printk("ld9040 : lcdc_config_gpios [%d]\n", enable);
 	if (enable) {
 		for(i = 0; i < ARRAY_SIZE(lcdc_gpio_config_data); i++) {
-			gpio_tlmm_config(lcdc_gpio_config_data[i].gpio_cfg, 1);
+			gpio_tlmm_config(lcdc_gpio_config_data[i], 1);
 		}
 	} else {
 		for(i = 0; i < ARRAY_SIZE(lcdc_gpio_off_config_data); i++) {
-			gpio_tlmm_config(lcdc_gpio_off_config_data[i].gpio_cfg, 1);
+			gpio_tlmm_config(lcdc_gpio_off_config_data[i], 1);
 		}
 	}
 }
@@ -523,7 +530,7 @@ static struct msm_panel_common_pdata lcdc_panel_data = {
 
 #if defined (CONFIG_FB_MSM_LCDC_LD9040_WVGA_PANEL)
 static struct platform_device lcdc_ld9040_panel_device = {
-	.name   = "lcdc_ld9040_wvga",
+	.name   = LCDC_LD9040_PANEL_NAME,
 	.id     = 0,
 	.dev    = {
 		.platform_data = &lcdc_panel_data,
@@ -533,7 +540,7 @@ static struct platform_device lcdc_ld9040_panel_device = {
 
 #if defined (CONFIG_FB_MSM_LCDC_S6E63M0_WVGA_PANEL)
 static struct platform_device lcdc_S6E63M0_panel_device = {
-	.name   = "lcdc_S6E63M0_wvga",
+	.name   = LCDC_S6E63M0_PANEL_NAME,
 	.id     = 0,
 	.dev    = {
 		.platform_data = &lcdc_panel_data,

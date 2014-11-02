@@ -10,9 +10,11 @@
  * GNU General Public License for more details.
  */
 
+#include <linux/regulator/pmic8058-regulator.h>
 #include <linux/regulator/pmic8901-regulator.h>
 #include <linux/regulator/msm-gpio-regulator.h>
 #include <mach/rpm-regulator.h>
+#include <mach/socinfo.h>
 
 #include "board-celox.h"
 
@@ -198,8 +200,21 @@ VREG_CONSUMERS(PM8901_HDMI_MVS) = {
 	REGULATOR_SUPPLY("8901_mpp0",	NULL),
 };
 
+/* Pin control regulators */
+VREG_CONSUMERS(PM8058_L8_PC) = {
+	REGULATOR_SUPPLY("8058_l8_pc",		NULL),
+};
+VREG_CONSUMERS(PM8058_L20_PC) = {
+	REGULATOR_SUPPLY("8058_l20_pc",		NULL),
+};
+VREG_CONSUMERS(PM8058_L21_PC) = {
+	REGULATOR_SUPPLY("8058_l21_pc",		NULL),
+};
 VREG_CONSUMERS(PM8058_S2_PC) = {
 	REGULATOR_SUPPLY("8058_s2_pc",		NULL),
+};
+VREG_CONSUMERS(PM8901_L0_PC) = {
+	REGULATOR_SUPPLY("8901_l0_pc",		NULL),
 };
 VREG_CONSUMERS(PM8901_S4_PC) = {
 	REGULATOR_SUPPLY("8901_s4_pc",		NULL),

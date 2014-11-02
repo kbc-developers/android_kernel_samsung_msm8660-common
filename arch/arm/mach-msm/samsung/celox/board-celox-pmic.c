@@ -10,30 +10,36 @@
  * GNU General Public License for more details.
  */
 
-#include <linux/init.h>
-#include <linux/ioport.h>
-#include <linux/platform_device.h>
-#include <linux/bootmem.h>
+#include <linux/gpio.h>
+#include <linux/interrupt.h>
 #include <linux/mfd/pmic8058.h>
+#include <linux/leds.h>
 #include <linux/pmic8058-othc.h>
 #include <linux/mfd/pmic8901.h>
-#include <mach/board-msm8660.h>
+#include <linux/regulator/pmic8058-regulator.h>
+#include <linux/regulator/pmic8901-regulator.h>
 #include <linux/leds.h>
-#include <linux/leds-pm8xxx.h>
+#include <linux/msm_ssbi.h>
+#ifdef CONFIG_SAMSUNG_JACK
+#include <linux/sec_jack.h>
+#endif
+#ifdef CONFIG_SAMSUNG_EARJACK
+#include <linux/sec_earjack.h>
+#endif
 #include <linux/msm_adc.h>
 #include <linux/m_adcproc.h>
+#include <linux/msm-charger.h>
+
 #include <asm/mach-types.h>
-#include <asm/mach/mmc.h>
-#include <asm/setup.h>
+
+#include <mach/gpio.h>
 #include <mach/socinfo.h>
 #include <mach/msm_bus_board.h>
-#include <mach/board.h>
-#include <mach/gpio.h>
-#include <mach/mpp.h>
-#include <mach/gpiomux.h>
 #include <mach/restart.h>
+#include <mach/board-msm8660.h>
+#include <mach/devices-lte.h>
 #include "devices.h"
-#include "board-msm8x60.h"
+#include "board-celox.h"
 
 struct pm8xxx_mpp_init_info {
 	unsigned			mpp;
@@ -227,7 +233,15 @@ static struct pm_gpio chg_stat = {
 };
 #endif
 
-int msm8x60_gpio_mpp_init(void)
+/*
+ * The UI_INTx_N lines are pmic gpio lines which connect i2c
+ * gpio expanders to the pm8058.
+ */
+#define UI_INT1_N 25
+#define UI_INT2_N 34
+#define UI_INT3_N 14
+
+int __init msm8x60_gpio_mpp_init(void)
 {
 	int i;
 	int rc;
@@ -1018,6 +1032,103 @@ static int pm8058_pwm_config(struct pwm_device *pwm, int ch, int on)
 
 }
 
+static void pmic8058_xoadc_mpp_config(void)
+{
+	int rc, i;
+	struct pm8xxx_mpp_init_info xoadc_mpps[] = {
+		PM8058_MPP_INIT(XOADC_MPP_3, A_INPUT, PM8XXX_MPP_AIN_AMUX_CH8,
+							AOUT_CTRL_DISABLE),
+		PM8058_MPP_INIT(XOADC_MPP_5, A_INPUT, PM8XXX_MPP_AIN_AMUX_CH9,
+							AOUT_CTRL_DISABLE),
+		PM8058_MPP_INIT(XOADC_MPP_4, A_INPUT, PM8XXX_MPP_AIN_AMUX_CH6,
+							AOUT_CTRL_DISABLE),
+		PM8058_MPP_INIT(XOADC_MPP_8, A_INPUT, PM8XXX_MPP_AIN_AMUX_CH5,
+							AOUT_CTRL_DISABLE),
+		PM8058_MPP_INIT(XOADC_MPP_10, A_INPUT, PM8XXX_MPP_AIN_AMUX_CH7,
+							AOUT_CTRL_DISABLE),
+	};
+
+	for (i = 0; i < ARRAY_SIZE(xoadc_mpps); i++) {
+		rc = pm8xxx_mpp_config(xoadc_mpps[i].mpp,
+					&xoadc_mpps[i].config);
+		if (rc) {
+			pr_err("%s: Config MPP %d of PM8058 failed\n",
+					__func__, xoadc_mpps[i].mpp);
+		}
+	}
+}
+
+static struct regulator *vreg_ldo18_adc;
+
+static int pmic8058_xoadc_vreg_config(int on)
+{
+	int rc;
+
+	if (on) {
+		rc = regulator_enable(vreg_ldo18_adc);
+		if (rc)
+			pr_err("%s: Enable of regulator ldo18_adc "
+						"failed\n", __func__);
+	} else {
+		rc = regulator_disable(vreg_ldo18_adc);
+		if (rc)
+			pr_err("%s: Disable of regulator ldo18_adc "
+						"failed\n", __func__);
+	}
+
+	return rc;
+}
+
+static int pmic8058_xoadc_vreg_setup(void)
+{
+	int rc;
+
+	vreg_ldo18_adc = regulator_get(NULL, "8058_l18");
+	if (IS_ERR(vreg_ldo18_adc)) {
+		printk(KERN_ERR "%s: vreg get failed (%ld)\n",
+			__func__, PTR_ERR(vreg_ldo18_adc));
+		rc = PTR_ERR(vreg_ldo18_adc);
+		goto fail;
+	}
+
+	rc = regulator_set_voltage(vreg_ldo18_adc, 2200000, 2200000);
+	if (rc) {
+		pr_err("%s: unable to set ldo18 voltage to 2.2V\n", __func__);
+		goto fail;
+	}
+
+	return rc;
+fail:
+	regulator_put(vreg_ldo18_adc);
+	return rc;
+}
+
+static void pmic8058_xoadc_vreg_shutdown(void)
+{
+	regulator_put(vreg_ldo18_adc);
+}
+
+/* usec. For this ADC,
+ * this time represents clk rate @ txco w/ 1024 decimation ratio.
+ * Each channel has different configuration, thus at the time of starting
+ * the conversion, xoadc will return actual conversion time
+ * */
+static struct adc_properties pm8058_xoadc_data = {
+	.adc_reference		= 2200, /* milli-voltage for this adc */
+	.bitresolution		= 15,
+	.bipolar		= 0,
+	.conversiontime		= 54,
+};
+
+static struct xoadc_platform_data pm8058_xoadc_pdata = {
+	.xoadc_prop = &pm8058_xoadc_data,
+	.xoadc_mpp_config = pmic8058_xoadc_mpp_config,
+	.xoadc_vreg_set = pmic8058_xoadc_vreg_config,
+	.xoadc_num = XOADC_PMIC_0,
+	.xoadc_vreg_setup = pmic8058_xoadc_vreg_setup,
+	.xoadc_vreg_shutdown = pmic8058_xoadc_vreg_shutdown,
+};
+
 static struct pm8058_pwm_pdata pm8058_pwm_data = {
 	.config		= pm8058_pwm_config,
 };
@@ -1174,6 +1285,7 @@ static struct pm8xxx_mpp_platform_data pm8901_mpp_pdata = {
 static struct pm8901_platform_data pm8901_platform_data = {
 	.irq_pdata		= &pm8901_irq_pdata,
 	.mpp_pdata		= &pm8901_mpp_pdata,
+	.regulator_pdatas	= pm8901_regulator_pdata,
 	.misc_pdata		= &pm8901_misc_pdata,
 };
 

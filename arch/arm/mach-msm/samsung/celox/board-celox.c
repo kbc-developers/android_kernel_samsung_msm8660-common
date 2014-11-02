@@ -209,133 +209,12 @@ static struct platform_device ion_dev;
 int set_two_phase_freq(int cpufreq);
 #endif
 
-enum {
-	GPIO_EXPANDER_IRQ_BASE  = PM8901_IRQ_BASE + NR_PMIC8901_IRQS,
-	GPIO_EXPANDER_GPIO_BASE = PM8901_MPP_BASE + PM8901_MPPS,
-	/* CORE expander */
-	GPIO_CORE_EXPANDER_BASE = GPIO_EXPANDER_GPIO_BASE,
-	GPIO_CLASS_D1_EN        = GPIO_CORE_EXPANDER_BASE,
-	GPIO_WLAN_DEEP_SLEEP_N,
-	GPIO_LVDS_SHUTDOWN_N,
-	GPIO_DISP_RESX_N        = GPIO_LVDS_SHUTDOWN_N,
-	GPIO_MS_SYS_RESET_N,
-	GPIO_CAP_TS_RESOUT_N,
-	GPIO_CAP_GAUGE_BI_TOUT,
-	GPIO_ETHERNET_PME,
-	GPIO_EXT_GPS_LNA_EN,
-	GPIO_MSM_WAKES_BT,
-	GPIO_ETHERNET_RESET_N,
-	GPIO_HEADSET_DET_N,
-	GPIO_USB_UICC_EN,
-	GPIO_BACKLIGHT_EN,
-	GPIO_EXT_CAMIF_PWR_EN,
-	GPIO_BATT_GAUGE_INT_N,
-	GPIO_BATT_GAUGE_EN,
-	/* DOCKING expander */
-	GPIO_DOCKING_EXPANDER_BASE = GPIO_EXPANDER_GPIO_BASE + 16,
-	GPIO_MIPI_DSI_RST_N        = GPIO_DOCKING_EXPANDER_BASE,
-	GPIO_AUX_JTAG_DET_N,
-	GPIO_DONGLE_DET_N,
-	GPIO_SVIDEO_LOAD_DET,
-	GPIO_SVID_AMP_SHUTDOWN1_N,
-	GPIO_SVID_AMP_SHUTDOWN0_N,
-	GPIO_SDC_WP,
-	GPIO_IRDA_PWDN,
-	GPIO_IRDA_RESET_N,
-	GPIO_DONGLE_GPIO0,
-	GPIO_DONGLE_GPIO1,
-	GPIO_DONGLE_GPIO2,
-	GPIO_DONGLE_GPIO3,
-	GPIO_DONGLE_PWR_EN,
-	GPIO_EMMC_RESET_N,
-	GPIO_TP_EXP2_IO15,
-	/* SURF expander */
-	GPIO_SURF_EXPANDER_BASE = GPIO_EXPANDER_GPIO_BASE + (16 * 2),
-	GPIO_SD_CARD_DET_1      = GPIO_SURF_EXPANDER_BASE,
-	GPIO_SD_CARD_DET_2,
-	GPIO_SD_CARD_DET_4,
-	GPIO_SD_CARD_DET_5,
-	GPIO_UIM3_RST,
-	GPIO_SURF_EXPANDER_IO5,
-	GPIO_SURF_EXPANDER_IO6,
-	GPIO_ADC_I2C_EN,
-	GPIO_SURF_EXPANDER_IO8,
-	GPIO_SURF_EXPANDER_IO9,
-	GPIO_SURF_EXPANDER_IO10,
-	GPIO_SURF_EXPANDER_IO11,
-	GPIO_SURF_EXPANDER_IO12,
-	GPIO_SURF_EXPANDER_IO13,
-	GPIO_SURF_EXPANDER_IO14,
-	GPIO_SURF_EXPANDER_IO15,
-	/* LEFT KB IO expander */
-	GPIO_LEFT_KB_EXPANDER_BASE = GPIO_EXPANDER_GPIO_BASE + (16 * 3),
-	GPIO_LEFT_LED_1            = GPIO_LEFT_KB_EXPANDER_BASE,
-	GPIO_LEFT_LED_2,
-	GPIO_LEFT_LED_3,
-	GPIO_LEFT_LED_WLAN,
-	GPIO_JOYSTICK_EN,
-	GPIO_CAP_TS_SLEEP,
-	GPIO_LEFT_KB_IO6,
-	GPIO_LEFT_LED_5,
-	/* RIGHT KB IO expander */
-	GPIO_RIGHT_KB_EXPANDER_BASE = GPIO_EXPANDER_GPIO_BASE + (16 * 3) + 8,
-	GPIO_RIGHT_LED_1            = GPIO_RIGHT_KB_EXPANDER_BASE,
-	GPIO_RIGHT_LED_2,
-	GPIO_RIGHT_LED_3,
-	GPIO_RIGHT_LED_BT,
-	GPIO_WEB_CAMIF_STANDBY,
-	GPIO_COMPASS_RST_N,
-	GPIO_WEB_CAMIF_RESET_N,
-	GPIO_RIGHT_LED_5,
-	GPIO_R_ALTIMETER_RESET_N,
-	/* FLUID S IO expander */
-	GPIO_SOUTH_EXPANDER_BASE,
-	GPIO_MIC2_ANCR_SEL = GPIO_SOUTH_EXPANDER_BASE,
-	GPIO_MIC1_ANCL_SEL,
-	GPIO_HS_MIC4_SEL,
-	GPIO_FML_MIC3_SEL,
-	GPIO_FMR_MIC5_SEL,
-	GPIO_TS_SLEEP,
-	GPIO_HAP_SHIFT_LVL_OE,
-	GPIO_HS_SW_DIR,
-	/* FLUID N IO expander */
-	GPIO_NORTH_EXPANDER_BASE,
-	GPIO_EPM_3_3V_EN = GPIO_NORTH_EXPANDER_BASE,
-	GPIO_EPM_5V_BOOST_EN,
-	GPIO_AUX_CAM_2P7_EN,
-	GPIO_LED_FLASH_EN,
-	GPIO_LED1_GREEN_N,
-	GPIO_LED2_RED_N,
-	GPIO_FRONT_CAM_RESET_N,
-	GPIO_EPM_LVLSFT_EN,
-	GPIO_N_ALTIMETER_RESET_N,
-	/* EPM expander */
-	GPIO_EPM_EXPANDER_BASE,
-	GPIO_PWR_MON_START = GPIO_EPM_EXPANDER_BASE,
-	GPIO_PWR_MON_RESET_N,
-	GPIO_ADC1_PWDN_N,
-	GPIO_ADC2_PWDN_N,
-	GPIO_EPM_EXPANDER_IO4,
-	GPIO_ADC1_MUX_SPI_INT_N_3_3V,
-	GPIO_ADC2_MUX_SPI_INT_N,
-	GPIO_EPM_EXPANDER_IO7,
-	GPIO_PWR_MON_ENABLE,
-	GPIO_EPM_SPI_ADC1_CS_N,
-	GPIO_EPM_SPI_ADC2_CS_N,
-	GPIO_EPM_EXPANDER_IO11,
-	GPIO_EPM_EXPANDER_IO12,
-	GPIO_EPM_EXPANDER_IO13,
-	GPIO_EPM_EXPANDER_IO14,
-	GPIO_EPM_EXPANDER_IO15,
-};
-
 /*
 FM GPIO is GPIO 18 on PMIC 8058.
 As the index starts from 0 in the PMIC driver, and hence 17
 corresponds to GPIO 18 on PMIC 8058.
 */
 #define FM_GPIO 17
-#define REV_GPIO_BASE 34 // 1 based numbering
 
 static void sensor_power_on(void);
 static void sensor_power_off(void);
@@ -6476,7 +6355,7 @@ static struct platform_device msm_charger_device = {
 };
 #endif
 
-static struct platform_device rpm_regulator_early_device = {
+static struct platform_device rpm_regulator_early_device __devinitdata = {
 	.name	= "rpm-regulator",
 	.id	= 0,
 	.dev	= {
@@ -6484,7 +6363,7 @@ static struct platform_device rpm_regulator_early_device = {
 	},
 };
 
-static struct platform_device rpm_regulator_device = {
+static struct platform_device rpm_regulator_device __devinitdata = {
 	.name	= "rpm-regulator",
 	.id	= 1,
 	.dev	= {
@@ -6634,59 +6513,6 @@ static struct i2c_board_info rev1_i2c_a2220_devices[] = {
 #endif /* CONFIG_USE_A2220_B */
 #endif //CONFIG_VP_A2220
 
-#ifdef CONFIG_SENSORS_MSM_ADC
-
-static struct adc_access_fn xoadc_fn = {
-	pm8058_xoadc_select_chan_and_start_conv,
-	pm8058_xoadc_read_adc_code,
-	pm8058_xoadc_get_properties,
-	pm8058_xoadc_slot_request,
-	pm8058_xoadc_restore_slot,
-	pm8058_xoadc_calibrate,
-};
-
-static struct msm_adc_channels msm_adc_channels_data[] = {
-	{"head_set", CHANNEL_ADC_HDSET, 0, &xoadc_fn, CHAN_PATH_TYPE9,
-		ADC_CONFIG_TYPE2, ADC_CALIB_CONFIG_TYPE2, scale_default},
-	{"light_lux", CHANNEL_ADC_LIGHT_LUX, 0, &xoadc_fn, CHAN_PATH_TYPE7,
-		ADC_CONFIG_TYPE2, ADC_CALIB_CONFIG_TYPE2, scale_default},
-	{"vichg", CHANNEL_ADC_CHG_MONITOR, 0, &xoadc_fn, CHAN_PATH_TYPE10,
-		ADC_CONFIG_TYPE2, ADC_CALIB_CONFIG_TYPE2, scale_xtern_chgr_cur},
-	{"batt_id", CHANNEL_ADC_BATT_ID, 0, &xoadc_fn, CHAN_PATH_TYPE6,
-		ADC_CONFIG_TYPE2, ADC_CALIB_CONFIG_TYPE2, scale_default},
-#if defined (CONFIG_TARGET_LOCALE_USA)
-	{"batt_therm", CHANNEL_ADC_BATT_THERM, 0, &xoadc_fn, CHAN_PATH_TYPE8,
-		ADC_CONFIG_TYPE2, ADC_CALIB_CONFIG_TYPE2, scale_default},
-#else
-	{"batt_therm", CHANNEL_ADC_BATT_THERM, 0, &xoadc_fn, CHAN_PATH_TYPE8,
-		ADC_CONFIG_TYPE2, ADC_CALIB_CONFIG_TYPE2, scale_sec_settherm},
-#endif
-	{"pmic_therm", CHANNEL_ADC_PMIC_THERM, 0, &xoadc_fn, CHAN_PATH_TYPE12,
-		ADC_CONFIG_TYPE2, ADC_CALIB_CONFIG_TYPE2, scale_pmic_therm},
-	{"xo_therm", CHANNEL_ADC_XOTHERM, 0, &xoadc_fn, CHAN_PATH_TYPE_NONE,
-		ADC_CONFIG_TYPE2, ADC_CALIB_CONFIG_TYPE2, scale_sec_settherm},
-	{"xo_therm_4K", CHANNEL_ADC_XOTHERM_4K, 0, &xoadc_fn, CHAN_PATH_TYPE_NONE,
-		ADC_CONFIG_TYPE1, ADC_CALIB_CONFIG_TYPE2, scale_sec_settherm}
-};
-
-static char *msm_adc_fluid_device_names[] = {
-	"ADS_ADC1",
-	"ADS_ADC2",
-};
-
-static struct msm_adc_platform_data msm_adc_pdata = {
-	.channel = msm_adc_channels_data,
-	.num_chan_supported = ARRAY_SIZE(msm_adc_channels_data),
-};
-
-static struct platform_device msm_adc_device = {
-	.name   = "msm_adc",
-	.id = -1,
-	.dev = {
-		.platform_data = &msm_adc_pdata,
-	},
-};
-
 #ifdef CONFIG_MSM_RTB
 static struct msm_rtb_platform_data msm_rtb_pdata = {
 	.size = SZ_1M,
@@ -6709,104 +6535,6 @@ static struct platform_device msm_rtb_device = {
 	.dev            = {
 		.platform_data = &msm_rtb_pdata,
 	},
-};
-#endif
-
-static void pmic8058_xoadc_mpp_config(void)
-{
-	int rc, i;
-	struct pm8xxx_mpp_init_info xoadc_mpps[] = {
-		PM8058_MPP_INIT(XOADC_MPP_3, A_INPUT, PM8XXX_MPP_AIN_AMUX_CH8,
-							AOUT_CTRL_DISABLE),
-		PM8058_MPP_INIT(XOADC_MPP_5, A_INPUT, PM8XXX_MPP_AIN_AMUX_CH9,
-							AOUT_CTRL_DISABLE),
-		PM8058_MPP_INIT(XOADC_MPP_4, A_INPUT, PM8XXX_MPP_AIN_AMUX_CH6,
-							AOUT_CTRL_DISABLE),
-		PM8058_MPP_INIT(XOADC_MPP_8, A_INPUT, PM8XXX_MPP_AIN_AMUX_CH5,
-							AOUT_CTRL_DISABLE),
-		PM8058_MPP_INIT(XOADC_MPP_10, A_INPUT, PM8XXX_MPP_AIN_AMUX_CH7,
-							AOUT_CTRL_DISABLE),
-	};
-
-	for (i = 0; i < ARRAY_SIZE(xoadc_mpps); i++) {
-		rc = pm8xxx_mpp_config(xoadc_mpps[i].mpp,
-					&xoadc_mpps[i].config);
-		if (rc) {
-			pr_err("%s: Config MPP %d of PM8058 failed\n",
-					__func__, xoadc_mpps[i].mpp);
-		}
-	}
-}
-
-static struct regulator *vreg_ldo18_adc;
-
-static int pmic8058_xoadc_vreg_config(int on)
-{
-	int rc;
-
-	if (on) {
-		rc = regulator_enable(vreg_ldo18_adc);
-		if (rc)
-			pr_err("%s: Enable of regulator ldo18_adc "
-						"failed\n", __func__);
-	} else {
-		rc = regulator_disable(vreg_ldo18_adc);
-		if (rc)
-			pr_err("%s: Disable of regulator ldo18_adc "
-						"failed\n", __func__);
-	}
-
-	return rc;
-}
-
-static int pmic8058_xoadc_vreg_setup(void)
-{
-	int rc;
-
-	vreg_ldo18_adc = regulator_get(NULL, "8058_l18");
-	if (IS_ERR(vreg_ldo18_adc)) {
-		printk(KERN_ERR "%s: vreg get failed (%ld)\n",
-			__func__, PTR_ERR(vreg_ldo18_adc));
-		rc = PTR_ERR(vreg_ldo18_adc);
-		goto fail;
-	}
-
-	rc = regulator_set_voltage(vreg_ldo18_adc, 2200000, 2200000);
-	if (rc) {
-		pr_err("%s: unable to set ldo18 voltage to 2.2V\n", __func__);
-		goto fail;
-	}
-
-	return rc;
-fail:
-	regulator_put(vreg_ldo18_adc);
-	return rc;
-}
-
-static void pmic8058_xoadc_vreg_shutdown(void)
-{
-	regulator_put(vreg_ldo18_adc);
-}
-
-/* usec. For this ADC,
- * this time represents clk rate @ txco w/ 1024 decimation ratio.
- * Each channel has different configuration, thus at the time of starting
- * the conversion, xoadc will return actual conversion time
- * */
-static struct adc_properties pm8058_xoadc_data = {
-	.adc_reference          = 2200, /* milli-voltage for this adc */
-	.bitresolution         = 15,
-	.bipolar                = 0,
-	.conversiontime         = 54,
-};
-
-static struct xoadc_platform_data pm8058_xoadc_pdata = {
-	.xoadc_prop = &pm8058_xoadc_data,
-	.xoadc_mpp_config = pmic8058_xoadc_mpp_config,
-	.xoadc_vreg_set = pmic8058_xoadc_vreg_config,
-	.xoadc_num = XOADC_PMIC_0,
-	.xoadc_vreg_setup = pmic8058_xoadc_vreg_setup,
-	.xoadc_vreg_shutdown = pmic8058_xoadc_vreg_shutdown,
 };
 #endif
 
@@ -7344,7 +7072,6 @@ static struct platform_device *surf_devices[] __initdata = {
 #ifdef CONFIG_SENSORS_MSM_ADC
 	&msm_adc_device,
 #endif
-	&rpm_regulator_device,
 
 #if defined(CONFIG_CRYPTO_DEV_QCRYPTO) || \
 		defined(CONFIG_CRYPTO_DEV_QCRYPTO_MODULE)
@@ -7641,8 +7368,6 @@ static void __init reserve_pmem_memory(void)
 #endif /*CONFIG_ANDROID_PMEM*/
 }
 
-static void __init reserve_mdp_memory(void);
-
 static void __init reserve_rtb_memory(void)
 {
 #if defined(CONFIG_MSM_RTB)
@@ -7655,7 +7380,6 @@ static void __init msm8x60_calculate_reserve_sizes(void)
 	size_pmem_devices();
 	reserve_pmem_memory();
 	reserve_ion_memory();
-	reserve_mdp_memory();
 	reserve_rtb_memory();
 }
 
@@ -9573,6 +9297,8 @@ static void __init msm8x60_init(struct msm_board_data *board_data)
 
 	/* Initialize regulators needed for clock_init. */
 	platform_add_devices(early_regulators, ARRAY_SIZE(early_regulators));
+	
+	platform_device_register(&rpm_regulator_device);
 
 	msm_clock_init(&msm8x60_clock_init_data);
 

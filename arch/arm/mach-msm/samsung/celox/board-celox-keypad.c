@@ -10,7 +10,10 @@
  * GNU General Public License for more details.
  */
 
+#include <linux/module.h>
 #include <linux/platform_device.h>
+#include <linux/i2c.h>
+#include <linux/i2c-gpio.h>
 #include <linux/input.h>
 #include <linux/interrupt.h>
 #include <linux/gpio_event.h>
@@ -20,6 +23,8 @@
 #include <mach/gpio.h>
 
 #include <linux/moduleparam.h>
+#include <mach/devices-lte.h>
+#include "devices-msm8x60.h"
 #include "board-celox.h"
 
 #include <linux/mfd/pmic8058.h>
@@ -48,7 +53,6 @@ static struct platform_device tkey_i2c_gpio_device = {
 static int __init tkey_device_init(void)
 {
 	struct regulator *TKEY_L12 = NULL;
-	struct regulator *TKEY_L3B = NULL;
 	int rc;       
 #if defined(CONFIG_KOR_MODEL_SHV_E110S) || defined (CONFIG_TARGET_LOCALE_USA)
 	struct regulator *lvs2;
