@@ -7375,11 +7375,14 @@ static void __init reserve_rtb_memory(void)
 #endif
 }
 
+static void __init reserve_mdp_memory(void);
+
 static void __init msm8x60_calculate_reserve_sizes(void)
 {
 	size_pmem_devices();
 	reserve_pmem_memory();
 	reserve_ion_memory();
+	reserve_mdp_memory();
 	reserve_rtb_memory();
 }
 
@@ -8630,6 +8633,11 @@ static void __init msm8x60_map_io(void)
 #ifdef CONFIG_SEC_DEBUG
 	sec_getlog_supply_meminfo(0x40000000, 0x40000000, 0x00, 0x00);
 #endif
+}
+
+static void __init reserve_mdp_memory(void)
+{
+        msm8x60_mdp_writeback(msm8x60_reserve_table);
 }
 
 /*
