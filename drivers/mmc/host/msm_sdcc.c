@@ -1589,19 +1589,22 @@ static void msmsdcc_sg_consumed(struct msmsdcc_host *host,
 				unsigned int length)
 {
 	struct msmsdcc_pio_data *pio = &host->pio;
-
-	if (host->curr.data->flags & MMC_DATA_READ) {
-		if (length > pio->sg_miter.consumed)
-			/*
-			 * consumed 4 bytes, but sgl
-			 * describes < 4 bytes
-			 */
-			_msmsdcc_sg_consume_word(host);
-		else
-			pio->sg_miter.consumed = length;
-	} else
-		if (length < pio->sg_miter.consumed)
-			pio->sg_miter.consumed = length;
+	if(host->curr.data != NULL ) {
+		if (host->curr.data->flags & MMC_DATA_READ) {
+			if (length > pio->sg_miter.consumed)
+				/*
+				 * consumed 4 bytes, but sgl
+				 * describes < 4 bytes
+				 */
+				_msmsdcc_sg_consume_word(host);
+			else
+				pio->sg_miter.consumed = length;
+		} else
+			if (length < pio->sg_miter.consumed)
+				pio->sg_miter.consumed = length;
+	} else {
+		printk(KERN_ERR "%s:host->curr.data is NULL\n",__func__);
+	}
 }
 
 static void msmsdcc_sg_start(struct msmsdcc_host *host)

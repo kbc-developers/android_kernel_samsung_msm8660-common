@@ -172,6 +172,10 @@ static int mmc_decode_csd(struct mmc_card *card)
 		csd->erase_size <<= csd->write_blkbits - 9;
 	}
 
+	if (UNSTUFF_BITS(resp, 13, 1))
+		printk(KERN_ERR "%s: PERM_WRITE_PROTECT was set.\n",
+				mmc_hostname(card->host));
+
 	return 0;
 }
 
@@ -1556,8 +1560,6 @@ static int mmc_suspend(struct mmc_host *host)
 
 	if (mmc_can_poweroff_notify(host->card))
 		err = mmc_poweroff_notify(host->card, EXT_CSD_POWER_OFF_SHORT);
-	else if (mmc_card_can_sleep(host))
-		err = mmc_card_sleep(host);
 	else if (!mmc_host_is_spi(host))
 		mmc_deselect_cards(host);
 	host->card->state &= ~(MMC_STATE_HIGHSPEED | MMC_STATE_HIGHSPEED_200);
