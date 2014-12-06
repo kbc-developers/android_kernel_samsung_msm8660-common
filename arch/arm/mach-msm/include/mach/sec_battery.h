@@ -56,5 +56,6 @@ extern void tsp_set_unknown_charging_cable(bool);
 #endif
 
 int sec_get_batt_level(void);
+int sec_get_batt_volt(void);
 
 #endif /* __MACH_SEC_BATTERY_H */
