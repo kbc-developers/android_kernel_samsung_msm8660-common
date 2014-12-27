@@ -40,10 +40,6 @@
 #include "sd_ops.h"
 #include "sdio_ops.h"
 
-#if defined(CONFIG_BCM4334) || defined(CONFIG_BCM4330)
-#include "../host/msm_sdcc.h"
-#endif
-
 static struct workqueue_struct *workqueue;
 
 /*
@@ -2046,9 +2042,6 @@ int mmc_pm_notify(struct notifier_block *notify_block,
 {
 	struct mmc_host *host = container_of(
 		notify_block, struct mmc_host, pm_notify);
-#if defined(CONFIG_BCM4334) || defined(CONFIG_BCM4330)
-	struct msmsdcc_host *msmhost = mmc_priv(host);
-#endif
 	unsigned long flags;
 
 
@@ -2091,13 +2084,6 @@ int mmc_pm_notify(struct notifier_block *notify_block,
 		}
 		host->rescan_disable = 0;
 		spin_unlock_irqrestore(&host->lock, flags);
-
-#if defined(CONFIG_BCM4334) || defined(CONFIG_BCM4330)
-		if (host->card && msmhost && msmhost->pdev_id == 4)
-			printk(KERN_INFO"%s(): WLAN SKIP DETECT CHANGE\n",
-					__func__);
-		else
-#endif
 		mmc_detect_change(host, 0);
 
 	}
