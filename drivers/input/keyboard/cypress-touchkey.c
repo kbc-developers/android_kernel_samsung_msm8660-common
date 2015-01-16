@@ -2110,14 +2110,25 @@ static ssize_t brightness_level_show(struct device *dev, struct device_attribute
 static ssize_t sec_keypad_enable_show(struct device *dev,
 		struct device_attribute *attr, char *buf)
 {
+	if (touchkey_driver == NULL) {
+		printk(KERN_ERR "[TKEY] touchkey is not enabled.W\n");
+		return sprintf(buf, "%d\n", 1);
+	}
+
 	return sprintf(buf, "%d\n", atomic_read(&touchkey_driver->keypad_enable));
 }
 
 static ssize_t sec_keypad_enable_store(struct device *dev,
 		struct device_attribute *attr, const char *buf, size_t count)
 {
-        int i;
+	int i;
 	unsigned int val = 0;
+
+	if (touchkey_driver == NULL) {
+		printk(KERN_ERR "[TKEY] touchkey is not enabled.W\n");
+		return count;
+	}
+
 	sscanf(buf, "%d", &val);
 	val = (val == 0 ? 0 : 1);
 	atomic_set(&touchkey_driver->keypad_enable, val);
