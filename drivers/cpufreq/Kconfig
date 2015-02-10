@@ -657,6 +657,14 @@ config CPU_FREQ_GOV_HYPER
 	tristate "'HYPER' cpufreq policy governor"
 	depends on CPU_FREQ 
 
+config CPU_FREQ_GOV_LAZY
+	tristate "'lazy' cpufreq governor"
+		depends on CPU_FREQ
+
+config CPU_FREQ_GOV_GAMING
+	tristate "'gaming' cpufreq policy governor"
+	depends on CPU_FREQ
+
 config CPU_FREQ_MIN_TICKS
 	int "Ticks between governor polling interval."
 	default 10
