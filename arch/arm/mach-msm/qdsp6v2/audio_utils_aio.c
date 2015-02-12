@@ -498,7 +498,7 @@ int audio_aio_release(struct inode *inode, struct file *file)
 	return 0;
 }
 
-int audio_aio_fsync(struct file *file, int datasync)
+int audio_aio_fsync(struct file *file, loff_t start, loff_t end, int datasync)
 {
 	int rc = 0;
 	struct q6audio_aio *audio = file->private_data;
