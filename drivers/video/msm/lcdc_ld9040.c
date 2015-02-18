@@ -994,7 +994,14 @@ void ld9040_sleep_in(void)
 
 static int lcdc_ld9040_panel_on(struct platform_device *pdev)
 {
+	struct msm_fb_data_type *mfd = platform_get_drvdata(pdev);
+
 	DPRINT("%s  +  (%d,%d,%d)\n", __func__, ld9040_state.disp_initialized, ld9040_state.disp_powered_up, ld9040_state.display_on);	
+
+	if (!mfd->cont_splash_done) {
+		mfd->cont_splash_done = 1;
+		return 0;
+	}
 	
 	if (!ld9040_state.disp_initialized) {
 		/* Configure reset GPIO that drives DAC */
