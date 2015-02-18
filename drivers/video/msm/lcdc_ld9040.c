@@ -102,7 +102,6 @@ struct ld9040 {
 	unsigned int			ldi_enable;
 	unsigned int 			acl_enable;
 	unsigned int 			cur_acl;
-	struct mutex	lock;
 	struct lcd_device		*ld;
 	struct backlight_device		*bd;
 	struct lcd_platform_data	*lcd_pd;
@@ -991,7 +990,6 @@ void ld9040_sleep_in(void)
 
 static int lcdc_ld9040_panel_on(struct platform_device *pdev)
 {
-	mutex_lock(&lcd.lock);
 	DPRINT("%s  +  (%d,%d,%d)\n", __func__, ld9040_state.disp_initialized, ld9040_state.disp_powered_up, ld9040_state.display_on);	
 	
 	if (!ld9040_state.disp_initialized) {
@@ -1006,7 +1004,6 @@ static int lcdc_ld9040_panel_on(struct platform_device *pdev)
 		        lcdc_ld9040_set_brightness(lcd.current_brightness);
 		}
 	}
-	mutex_unlock(&lcd.lock);
 
 	return 0;
 }
@@ -1015,7 +1012,6 @@ static int lcdc_ld9040_panel_off(struct platform_device *pdev)
 {
 	int i;
 
-	mutex_lock(&lcd.lock);
 	DPRINT("%s +  (%d,%d,%d)\n", __func__,ld9040_state.disp_initialized, ld9040_state.disp_powered_up, ld9040_state.display_on);
 
 	lcd.cur_acl = 0;  // acl set 0 for wakeup set
@@ -1029,7 +1025,6 @@ static int lcdc_ld9040_panel_off(struct platform_device *pdev)
 		ld9040_state.disp_initialized = FALSE;
 		ld9040_disp_powerdown();
 	}
-	mutex_unlock(&lcd.lock);
 
 	return 0;
 }
@@ -1193,8 +1188,6 @@ static void lcdc_ld9040_set_backlight(struct msm_fb_data_type *mfd)
 	int bl_level = mfd->bl_level;
 	int tune_level;
 
-	mutex_lock(&lcd.lock);
-
 	// brightness tuning
 	tune_level = get_gamma_value_from_bl(bl_level);
 
@@ -1209,8 +1202,6 @@ static void lcdc_ld9040_set_backlight(struct msm_fb_data_type *mfd)
 	}
 
 	pre_bl_level = bl_level;
-
-	mutex_unlock(&lcd.lock);
 }
 
 struct class *sysfs_lcd_class;
@@ -1438,10 +1429,8 @@ static ssize_t power_reduce_store(struct device *dev,
 		return rc;
 	} else {
 		if (lcd.acl_enable != value) {
-			mutex_lock(&lcd.lock);
 			lcd.acl_enable = value;
 			ld9040_set_acl(&lcd);
-			mutex_unlock(&lcd.lock);
 		}
 		return size;
 	}
@@ -1506,13 +1495,11 @@ static ssize_t ld9040_sysfs_store_lcd_power(struct device *dev,
 	if (rc < 0)
 		return rc;
 
-	mutex_lock(&lcd->lock);
 	if(lcd_enable) {
 		ld9040_power(lcd, FB_BLANK_UNBLANK);
 	} else {
 		ld9040_power(lcd, FB_BLANK_POWERDOWN);
 	}
-	mutex_unlock(&lcd->lock);
 
 	return len;
 }
@@ -1538,15 +1525,11 @@ static ssize_t lcd_sysfs_store_auto_brightness(struct device *dev,
 	} else {
 		if (lcd.auto_brightness != value) {
 			DPRINT("%s - %d, %d (%d)\n", __func__, lcd.auto_brightness, value, pre_bl_level);
-
-			mutex_lock(&(lcd.lock));
 			last_gamma = get_gamma_value_from_bl(pre_bl_level);
-
 			lcd.auto_brightness = value;
-
 			new_gamma = get_gamma_value_from_bl(pre_bl_level);
-			if( new_gamma != last_gamma ) lcdc_ld9040_set_brightness(new_gamma);;
-			mutex_unlock(&(lcd.lock));
+			if( new_gamma != last_gamma )
+				lcdc_ld9040_set_brightness(new_gamma);
 		}
 	}
 
@@ -1569,8 +1552,6 @@ static int __devinit ld9040_probe(struct platform_device *pdev)
 	if (pdev->id == 0) {
 		lcdc_ld9040_pdata = pdev->dev.platform_data;
 	}
-
-	mutex_init(&lcd.lock);
 
 	msm_fb_add_device(pdev);
 
