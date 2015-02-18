@@ -1531,7 +1531,6 @@ static ssize_t lcd_sysfs_store_auto_brightness(struct device *dev,
 			DPRINT("%s - %d, %d (%d)\n", __func__, lcd.auto_brightness, value, pre_bl_level);
 			last_gamma = get_gamma_value_from_bl(pre_bl_level);
 			lcd.auto_brightness = value;
-
 			new_gamma = get_gamma_value_from_bl(pre_bl_level);
 			if( new_gamma != last_gamma )
 				lcdc_ld9040_set_brightness(new_gamma);
