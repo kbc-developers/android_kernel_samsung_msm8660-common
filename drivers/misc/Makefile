@@ -77,6 +77,7 @@ obj-$(CONFIG_VP_A2220) += a2220.o
 endif
 obj-$(CONFIG_STMPE811_ADC) += stmpe811.o
 obj-$(CONFIG_SEC_MISC) += sec_misc.o sec_level.o sec_param.o
+obj-$(CONFIG_UID_CPUTIME) += uid_cputime.o
 #debug setting
 ifeq ($(CONFIG_SENSORS_CORE),y)
 EXTRA_CFLAGS += -DSENSORS_LOG_DUMP
