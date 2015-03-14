@@ -259,26 +259,24 @@ static int process_mem_print(struct seq_file *s, void *unused)
 
 static int process_mem_open(struct inode *inode, struct file *file)
 {
-	int ret;
-	pid_t pid = (pid_t) (unsigned long) inode->i_private;
-	struct kgsl_process_private *private = NULL;
+	struct kgsl_process_private *private = inode->i_private;
 
-	private = kgsl_process_private_find(pid);
+	/*
+	 * Hold a reference count on the process while open
+	 * in case the process tries to die in the meantime.
+	 * If the process is already dying we cannot get a
+	 * refcount, print nothing.
+	 */
 
-	if (!private)
+	if (!private || !kgsl_process_private_get(private))
 		return -ENODEV;
 
-	ret = single_open(file, process_mem_print, private);
-	if (ret)
-		kgsl_process_private_put(private);
-
-	return ret;
+	return single_open(file, process_mem_print, private);
 }
 
 static int process_mem_release(struct inode *inode, struct file *file)
 {
-	struct kgsl_process_private *private =
-		((struct seq_file *)file->private_data)->private;
+	struct kgsl_process_private *private = inode->i_private;
 
 	if (private)
 		kgsl_process_private_put(private);
@@ -293,40 +291,16 @@ static const struct file_operations process_mem_fops = {
 	.release = process_mem_release,
 };
 
-int
+void
 kgsl_process_init_debugfs(struct kgsl_process_private *private)
 {
 	unsigned char name[16];
-	int ret = 0;
-	struct dentry *dentry;
+
 	snprintf(name, sizeof(name), "%d", private->pid);
 
 	private->debug_root = debugfs_create_dir(name, proc_d_debugfs);
-
-	if (!private->debug_root)
-		return -EINVAL;
-
-	/*
-	 * debugfs_create_dir() and debugfs_create_file() both
-	 * return -ENODEV if debugfs is disabled in the kernel.
-	 * We make a distinction between these two functions
-	 * failing and debugfs being disabled in the kernel.
-	 * In the first case, we abort process private struct
-	 * creation, in the second we continue without any changes.
-	 * So if debugfs is disabled in kernel, return as
-	 * success.
-	 */
-	dentry = debugfs_create_file("mem", 0444, private->debug_root,
-		(void *) ((unsigned long) private->pid), &process_mem_fops);
-
-	if (IS_ERR(dentry)) {
-		ret = PTR_ERR(dentry);
-
-		if (ret == -ENODEV)
-			ret = 0;
-	}
-
-	return ret;
+	debugfs_create_file("mem", 0444, private->debug_root, private,
+			    &process_mem_fops);
 }
 
 void kgsl_core_debugfs_init(void)
