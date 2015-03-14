@@ -104,13 +104,9 @@ void hang_timer(unsigned long data)
 {
 	struct kgsl_device *device = (struct kgsl_device *) data;
 
-	/* check Hang only for 3d device */
-	if (device->id == KGSL_DEVICE_3D0) {
-		if (device->state == KGSL_STATE_ACTIVE) {
-
-			/* Have work run in a non-interrupt context. */
-			queue_work(device->work_queue, &device->hang_check_ws);
-		}
+	if (device->state == KGSL_STATE_ACTIVE) {
+		/* Have work run in a non-interrupt context. */
+		queue_work(device->work_queue, &device->hang_check_ws);
 	}
 }
 
