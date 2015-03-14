@@ -3499,7 +3499,7 @@ unsigned int adreno_ft_detect(struct kgsl_device *device,
 
 		mb();
 
-		for (i = 0; i < FT_DETECT_REGS_COUNT; i++) {
+		for (i = 0; i < ft_detect_regs_count; i++) {
 			if (curr_reg_val[i] != prev_reg_val[i]) {
 				fast_hang_detected = 0;
 
