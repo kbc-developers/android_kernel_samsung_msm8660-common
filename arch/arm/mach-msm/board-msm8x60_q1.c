@@ -17378,7 +17378,7 @@ static void __init msm8x60_init(struct msm_board_data *board_data)
 		acpuclk_init(&acpuclk_8x60_soc_data);
 
 #ifdef CONFIG_CPU_FREQ_GOV_ONDEMAND_2_PHASE
-        set_two_phase_freq(CONFIG_CPU_FREQ_GOV_ONDEMAND_2_PHASE_FREQ);
+	set_two_phase_freq(1512000);
 #endif
 	/*
 	 * Enable EBI2 only for boards which make use of it. Leave
