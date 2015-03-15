@@ -41,6 +41,7 @@
 #include <linux/i2c/isa1200.h>
 #include <linux/dma-mapping.h>
 #include <linux/i2c/bq27520.h>
+#include <linux/fastchg.h> 
 
 #if defined(CONFIG_TOUCHSCREEN_ATMEL_MXT540E)
 #include <linux/i2c/mxt540e_q1.h>
@@ -181,6 +182,11 @@ static struct wacom_g5_callbacks *wacom_callbacks;
 #if defined(CONFIG_TDMB) || defined(CONFIG_TDMB_MODULE)
 #include <mach/tdmb_pdata.h>
 #endif
+
+#ifdef CONFIG_CPU_FREQ_GOV_ONDEMAND_2_PHASE
+	int set_two_phase_freq(int cpufreq);
+#endif
+
 #if defined(CONFIG_ISDBT)
 #include <mach/isdbt_pdata.h>
 #endif
@@ -5005,9 +5011,20 @@ static void fsa9480_usb_cb(bool attached)
 
 #ifdef CONFIG_BATTERY_SEC
 	switch(set_cable_status) {
+#ifdef CONFIG_FORCE_FAST_CHARGE
+    	case CABLE_TYPE_USB:
+	if (force_fast_charge != 0) {
+	value.intval = POWER_SUPPLY_TYPE_MAINS;
+	printk(KERN_ERR "fast charce is enabled, value: %d\n", force_fast_charge);
+	} else {
+	value.intval = POWER_SUPPLY_TYPE_USB;
+	}
+	break;
+#else
 		case CABLE_TYPE_USB:
 			value.intval = POWER_SUPPLY_TYPE_USB;
 			break;
+#endif 
 		case CABLE_TYPE_NONE:
 			value.intval = POWER_SUPPLY_TYPE_BATTERY;
 			break;
@@ -11138,20 +11155,16 @@ static const unsigned int ffa_keymap[] = {
 	KEY(0, 1, KEY_UP),	 /* NAV - UP */
 	KEY(0, 2, KEY_LEFT),	 /* NAV - LEFT */
 	KEY(0, 3, KEY_VOLUMEUP), /* Shuttle SW_UP */
-
 	KEY(1, 0, KEY_FN_F2), 	 /* LS - PUSH2 */
 	KEY(1, 1, KEY_RIGHT),    /* NAV - RIGHT */
 	KEY(1, 2, KEY_DOWN),     /* NAV - DOWN */
 	KEY(1, 3, KEY_VOLUMEDOWN),
-
 	KEY(2, 3, KEY_ENTER),     /* SW_PUSH key */
-
 	KEY(4, 0, KEY_CAMERA_FOCUS), /* RS - PUSH1 */
 	KEY(4, 1, KEY_UP),	  /* USER_UP */
 	KEY(4, 2, KEY_LEFT),	  /* USER_LEFT */
 	KEY(4, 3, KEY_HOME),	  /* Right switch: MIC Bd */
 	KEY(4, 4, KEY_FN_F3),	  /* Reserved MIC */
-
 	KEY(5, 0, KEY_CAMERA), /* RS - PUSH2 */
 	KEY(5, 1, KEY_RIGHT),	  /* USER_RIGHT */
 	KEY(5, 2, KEY_DOWN),	  /* USER_DOWN */
@@ -17364,6 +17377,9 @@ static void __init msm8x60_init(struct msm_board_data *board_data)
 	if (!machine_is_msm8x60_rumi3() && !machine_is_msm8x60_sim())
 		acpuclk_init(&acpuclk_8x60_soc_data);
 
+#ifdef CONFIG_CPU_FREQ_GOV_ONDEMAND_2_PHASE
+        set_two_phase_freq(CONFIG_CPU_FREQ_GOV_ONDEMAND_2_PHASE_FREQ);
+#endif
 	/*
 	 * Enable EBI2 only for boards which make use of it. Leave
 	 * it disabled for all others for additional power savings.
