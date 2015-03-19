@@ -11,9 +11,7 @@
  *
  */
 
-#include <linux/export.h>
 #include <media/msm/vidc_type.h>
-#include <media/msm/vidc_init.h>
 #include "vcd.h"
 
 u32 vcd_init(struct vcd_init_config *config, s32 *driver_handle)
@@ -112,8 +110,7 @@ static int vcd_get_clients_security_info(struct client_security_info *sec_info)
 	return count;
 }
 
-static int is_session_invalid(u32 decoding, u32 flags)
-{
+static int is_session_invalid(u32 decoding, u32 flags) {
 	int is_secure;
 	struct client_security_info sec_info;
 	int client_count = 0;
@@ -142,26 +139,15 @@ u32 vcd_open(s32 driver_handle, u32 decoding,
 		       void *handle, void *const client_data),
 	void *client_data, int flags)
 {
-	u32 rc = 0, num_of_instances = 0;
+	u32 rc = 0;
 	struct vcd_drv_ctxt *drv_ctxt;
 	struct vcd_clnt_ctxt *cctxt;
-	int is_secure = (flags & VCD_CP_SESSION) ? 1 : 0;
+	int is_secure = (flags & VCD_CP_SESSION) ? 1:0;
 	VCD_MSG_MED("vcd_open:");
 
 	if (!callback) {
 		VCD_MSG_ERROR("Bad parameters");
 		return -EINVAL;
-	}
-
-	drv_ctxt = vcd_get_drv_context();
-	cctxt = drv_ctxt->dev_ctxt.cctxt_list_head;
-	while (cctxt) {
-		num_of_instances++;
-		cctxt = cctxt->next;
-	}
-	if (num_of_instances == VIDC_MAX_NUM_CLIENTS) {
-		pr_err(" %s(): Max number of clients reached\n", __func__);
-		return -ENODEV;
 	}
 	rc = is_session_invalid(decoding, flags);
 	if (rc) {
@@ -171,6 +157,7 @@ u32 vcd_open(s32 driver_handle, u32 decoding,
 	}
 	if (is_secure)
 		res_trk_secure_set();
+	drv_ctxt = vcd_get_drv_context();
 	mutex_lock(&drv_ctxt->dev_mutex);
 
 	if (drv_ctxt->dev_state.state_table->ev_hdlr.open) {
@@ -963,6 +950,7 @@ u8 vcd_get_num_of_clients(void)
 	return count;
 }
 EXPORT_SYMBOL(vcd_get_num_of_clients);
+
 
 u32 vcd_get_ion_status(void)
 {

@@ -31,13 +31,22 @@
 #include <linux/regulator/consumer.h>
 
 #include "msm_fb.h"
+#include "mdp4.h"
+
+struct mdp4_overlay_perf {
+	u32 mdp_clk_rate;
+	u32 use_ov0_blt;
+	u32 use_ov1_blt;
+	u32 mdp_bw;
+};
+
+extern struct mdp4_overlay_perf perf_current;
 
 static int lcdc_probe(struct platform_device *pdev);
 static int lcdc_remove(struct platform_device *pdev);
 
 static int lcdc_off(struct platform_device *pdev);
 static int lcdc_on(struct platform_device *pdev);
-static void cont_splash_clk_ctrl(int enable);
 
 static struct platform_device *pdev_list[MSM_FB_MAX_DEV_LIST];
 static int pdev_list_cnt;
@@ -69,8 +78,6 @@ static int lcdc_off(struct platform_device *pdev)
 	clk_disable_unprepare(pixel_mdp_clk);
 	clk_disable_unprepare(pixel_lcdc_clk);
 
-	lcdc_LD9040_panel_power(0);
-
 	if (lcdc_pdata && lcdc_pdata->lcdc_power_save)
 		lcdc_pdata->lcdc_power_save(0);
 
@@ -99,10 +106,7 @@ static int lcdc_on(struct platform_device *pdev)
 #ifndef CONFIG_MSM_BUS_SCALING
 	unsigned long pm_qos_rate;
 #endif
-
 	mfd = platform_get_drvdata(pdev);
-
-	cont_splash_clk_ctrl(0);
 
 	if (lcdc_pdata && lcdc_pdata->lcdc_get_clk)
 		panel_pixclock_freq = lcdc_pdata->lcdc_get_clk();
@@ -142,8 +146,6 @@ static int lcdc_on(struct platform_device *pdev)
 	clk_prepare_enable(pixel_mdp_clk);
 	clk_prepare_enable(pixel_lcdc_clk);
 
-	lcdc_LD9040_panel_power(1);
-
 	if (lcdc_pdata && lcdc_pdata->lcdc_power_save)
 		lcdc_pdata->lcdc_power_save(1);
 	if (lcdc_pdata && lcdc_pdata->lcdc_gpio_config)
@@ -153,20 +155,6 @@ static int lcdc_on(struct platform_device *pdev)
 
 out:
 	return ret;
-}
-
-static void cont_splash_clk_ctrl(int enable)
-{
-	static int cont_splash_clks_enabled;
-	if (enable && !cont_splash_clks_enabled) {
-		clk_prepare_enable(pixel_mdp_clk);
-		clk_prepare_enable(pixel_lcdc_clk);
-		cont_splash_clks_enabled = 1;
-	} else if (!enable && cont_splash_clks_enabled) {
-		clk_disable_unprepare(pixel_mdp_clk);
-		clk_disable_unprepare(pixel_lcdc_clk);
-		cont_splash_clks_enabled = 0;
-	}
 }
 
 static int lcdc_probe(struct platform_device *pdev)
@@ -216,8 +204,6 @@ static int lcdc_probe(struct platform_device *pdev)
 	mdp_dev = platform_device_alloc("mdp", pdev->id);
 	if (!mdp_dev)
 		return -ENOMEM;
-
-	cont_splash_clk_ctrl(1);
 
 	/*
 	 * link to the latest pdev

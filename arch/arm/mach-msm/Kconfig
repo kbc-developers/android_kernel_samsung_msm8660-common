@@ -94,6 +94,7 @@ config ARCH_MSM8X60
 	select MSM_SECURE_IO
 	select MSM_DALRPC
 	select MSM_QDSP6_APR
+	select MSM_QDSP6_CODECS
 	select MSM_NATIVE_RESTART
 	select ARCH_INLINE_SPIN_TRYLOCK
 	select ARCH_INLINE_SPIN_TRYLOCK_BH
@@ -144,6 +145,7 @@ config ARCH_MSM8960
 	select MSM_RPM
 	select MSM_XO
 	select MSM_QDSP6_APR
+	select MSM_QDSP6_CODECS
 	select MSM_PIL
 	select MSM_AUDIO_QDSP6 if SND_SOC
 	select CPU_HAS_L2_PMU
@@ -170,6 +172,7 @@ config ARCH_MSM8960
 	select MSM_PM8X60 if PM
 	select HOLES_IN_ZONE if SPARSEMEM
 	select MSM_KRAIT_WFE_FIXUP
+	select MSM_CPU_PWRCTL
 
 config ARCH_MSM8930
 	bool "MSM8930"
@@ -184,6 +187,7 @@ config ARCH_MSM8930
 	select MSM_RPM
 	select MSM_XO
 	select MSM_QDSP6_APR
+	select MSM_QDSP6_CODECS
 	select MSM_PIL
 	select MSM_AUDIO_QDSP6 if SND_SOC
 	select CPU_HAS_L2_PMU
@@ -208,11 +212,11 @@ config ARCH_MSM8930
 	select MSM_PM8X60 if PM
 	select HOLES_IN_ZONE if SPARSEMEM
 	select MSM_KRAIT_WFE_FIXUP
+	select MSM_CPU_PWRCTL
 
 config ARCH_APQ8064
 	bool "APQ8064"
 	select ARCH_MSM_KRAITMP
-	select MACH_APQ8064_SIM if !MACH_APQ8064_RUMI3
 	select MSM_V2_TLMM
 	select ARM_GIC
 	select CPU_V7
@@ -221,11 +225,13 @@ config ARCH_APQ8064
 	select MSM_REMOTE_SPINLOCK_SFPB
 	select MSM_PIL
 	select MSM_QDSP6_APR
+	select MSM_QDSP6_CODECS
 	select MSM_AUDIO_QDSP6 if SND_SOC
 	select MULTI_IRQ_HANDLER
 	select MSM_PM8X60 if PM
 	select HOLES_IN_ZONE if SPARSEMEM
 	select MSM_KRAIT_WFE_FIXUP
+	select MSM_CPU_PWRCTL
 
 config ARCH_MSMCOPPER
 	bool "MSM Copper"
@@ -251,6 +257,7 @@ config ARCH_FSM9XXX
 config ARCH_MSM9615
 	bool "MSM9615"
 	select ARM_GIC
+	select GIC_SECURE
 	select ARCH_MSM_CORTEX_A5
 	select CPU_V7
 	select MSM_V2_TLMM
@@ -262,7 +269,6 @@ config ARCH_MSM9615
 	select MSM_RPM_REGULATOR
 	select MULTI_IRQ_HANDLER
 	select MSM_PM8X60 if PM
-	select ARM_HAS_SG_CHAIN
 
 endmenu
 
@@ -698,6 +704,29 @@ config MACH_APQ8064_RUMI3
 	help
 	  Support for the Qualcomm APQ8064 RUMI3 emulator.
 
+config MACH_APQ8064_CDP
+	depends on ARCH_APQ8064
+	bool "APQ8064 CDP"
+	help
+	  Support for the Qualcomm APQ8064 CDP device.
+
+config MACH_APQ8064_MTP
+	depends on ARCH_APQ8064
+	bool "APQ8064 MTP"
+	help
+	  Support for the Qualcomm APQ8064 MTP device.
+
+config MACH_APQ8064_LIQUID
+	depends on ARCH_APQ8064
+	bool "APQ8064 LIQUID"
+	help
+	  Support for the Qualcomm APQ8064 LIQUID device.
+
+config MACH_MPQ8064_CDP
+	depends on ARCH_APQ8064
+	bool "MPQ8064 CDP"
+	help
+	  Support for the Qualcomm MPQ8064 CDP device.
 config MACH_FSM9XXX_SURF
 	depends on ARCH_FSM9XXX
 	depends on !MSM_STACKED_MEMORY
@@ -1353,6 +1382,33 @@ config MSM_DALRPC_TEST
 	help
 	  Exercises DAL RPC calls to QDSP6.
 
+config CPU_OVERCLOCK
+	bool "Enable CPU Overclocking option"
+	default n
+
+config GPU_OVERCLOCK
+	bool "Enable GPU Overclocking option"
+	default n
+
+config CPU_VOLTAGE_TABLE
+	bool "Enable CPU Voltage Table via sysfs for adjustements"
+	default n
+
+config MSM_MPDEC
+	bool "Enable kernel based mpdecision"
+	depends on MSM_SMP
+	default n
+	help
+	  This enables kernel based multi core control.
+	  (up/down hotplug based on load)
+
+config MSM_MPDEC_INPUTBOOST_CPUMIN
+	bool "Enable kernel based mpdecision"
+	depends on MSM_MPDEC
+	default n
+	help
+	  This pushes the cpu min speed to predefined values on input events.
+
 if CPU_FREQ_MSM
 
 config MSM_CPU_FREQ_SET_MIN_MAX
@@ -1618,12 +1674,12 @@ choice
 		  Support models of celox series
 
 	config TARGET_SERIES_DALI
-		bool "SERIES_CELOX"
+		bool "SERIES_DALI"
 		help
 		  Support models of dali series
 
 	config TARGET_SERIES_Q1
-		bool "SERIES_CELOX"
+		bool "SERIES_Q1"
 		help
 		  Support models of q1 series		  
 
@@ -1741,6 +1797,7 @@ endchoice
 choice
 		prompt "USA Model Name"
 		depends on TARGET_LOCALE_USA
+		default USA_MODEL_SGH_I727
 
 		config USA_MODEL_SGH_I717
 			bool "USA ATT SGH-I717"
@@ -1781,6 +1838,13 @@ choice
 
 		config JPN_MODEL_SC_01D
 			bool "JPN NTT SC-01D"
+
+		config JPN_MODEL_SC_03D
+			bool "JPN NTT SC-03D"
+
+		config JPN_MODEL_SC_05D
+			bool "JPN NTT SC-05D"
+
 endchoice
 
 config SAMSUNG_8X60_TABLET
@@ -2057,6 +2121,15 @@ config MSM_PM8X60
 	depends on PM
 	bool
 
+config MSM_EVENT_TIMER
+    default y
+	bool "Event timer"
+	help
+		This option enables a modules that manages a list of event timers that
+		need to be monitored by the PM. The enables the PM code to monitor
+		events that require the core to be awake and ready to handle the
+		event.
+
 config MSM_NOPM
 	default y if !PM
 	bool
@@ -2121,11 +2194,6 @@ config CLOCK_MAP
 	  clock gets a unique id. If the bitmap has that bit set the clock
 	  is enabled, otherwise the clock is disabled.
 
-config MSM_SLEEP_STATS
-	bool "Enable exporting of MSM sleep stats to userspace"
-	depends on CPU_IDLE
-	default n
-
 config MSM_SLEEP_STATS_DEVICE
 	bool "Enable exporting of MSM sleep device stats to userspace"
 
@@ -2173,6 +2241,12 @@ config BT_BCM4330
  	help
 	  Adds BCM4330 RFKILL driver for Broadcom BCM4330 chipset
 
+config BT_MGMT
+        bool "Bluetooth Mgmt"
+        default n
+ 	help
+	  This is for bluetooth mgmt
+
 config MSM_FAKE_BATTERY
 		depends on POWER_SUPPLY
 		default n
@@ -2190,6 +2264,15 @@ config MSM_QDSP6_APR
 	  used by audio driver to configure QDSP6's
 	  ASM, ADM and AFE.
 
+config MSM_QDSP6_CODECS
+	bool "Audio Codecs on QDSP6 APR "
+	depends on MSM_SMD
+	default n
+	help
+	  Enable Audio codecs with APR IPC protocol support between
+	  application processor and QDSP6. APR is
+	  used by audio driver to configure QDSP6's
+	  ASM, ADM and AFE.
 
 config MSM_AUDIO_QDSP6
         bool "QDSP6 HW Audio support"
@@ -2295,6 +2378,31 @@ config MSM_L1_ERR_PANIC
 
 	  For production builds, you should probably say 'N' here.
 
+config MSM_L1_RECOV_ERR_PANIC
+	bool "Panic on recoverable L1 cache errors"
+	depends on MSM_CACHE_ERP && MSM_L1_ERR_PANIC
+	help
+	  Certain CPU designs may be able to automatically recover from certain
+	  kinds of L1 cache errors, even though the L1 cache itself may not
+	  support error correction. These errors should not result in any kind
+	  of corruption, but their presence is nevertheless an indication of
+	  poor system health. To cause the kernel to panic whenever a
+	  recoverable L1 cache error is detected, say 'Y' here. This may be
+	  useful as a debugging technique if general system instability is
+	  suspected.
+
+	  For production builds, you should definitely say 'N' here.
+
+config MSM_L1_ERR_LOG
+	bool "Log CPU ERP events to system memory"
+	depends on MSM_CACHE_ERP
+	help
+	  Enable logging CPU ERP events to an area of memory that will be
+	  preserved across a system reset. This may be useful for detecting and
+	  troubleshooting ERP-related system crashes in the field.
+
+	  For production builds, you may want to say 'Y' here.
+
 config MSM_L2_ERP_PRINT_ACCESS_ERRORS
 	bool "Report L2 master port slave/decode errors in kernel log"
 	depends on MSM_CACHE_ERP
@@ -2308,15 +2416,6 @@ config MSM_L2_ERP_PRINT_ACCESS_ERRORS
 	  interrupt rather than as an exception, meaning that the backtrace may
 	  have some skid. This option may help with debugging, though production
 	  builds should probably say 'N' here.
-config MSM_L1_ERR_LOG
-	bool "Log CPU ERP events to system memory"
-	depends on MSM_CACHE_ERP
-	help
-	  Enable logging CPU ERP events to an area of memory that will be
-	  preserved across a system reset. This may be useful for detecting and
-	  troubleshooting ERP-related system crashes in the field.
-
-	  For production builds, you may want to say 'Y' here.
 
 config MSM_L2_ERP_PORT_PANIC
 	bool "Panic on L2 master port errors"
@@ -2368,11 +2467,19 @@ config MSM_DCVS
 	  algorithm and the algorithm returns a frequency for the core which is
 	  passed to the frequency change driver.
 
+config MSM_CPU_PWRCTL
+	bool "Ensures that krait droop detectors are always off"
+	help
+	  Droop detector mechanism can adversely affect krait plls during
+	  stand alone power collapse operation. Selecting this option
+	  ensures that they are always off.
+
+endif
+
 config PMIC8058_XOADC_CAL
 	bool "PMIC8058 adc calibration"
 	help
 	  Support PMIC8058 adc calibration
-endif
 
 config SEC_AUDIO_I2S_DRIVING_CURRENT
 	bool "Sec I2S Driving Current"
@@ -2415,5 +2522,3 @@ config COMPACTION_RETRY
 	  we give one more try to allocate pages with forced compaction.
 	  This might avoid oom-killer invocation.
 	  with many free pages being already there.
-
-source "arch/arm/mach-msm/display/Kconfig"

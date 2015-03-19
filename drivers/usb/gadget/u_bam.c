@@ -1,4 +1,4 @@
-/* Copyright (c) 2011, Code Aurora Forum. All rights reserved.
+/* Copyright (c) 2011, The Linux Foundation. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -1034,6 +1034,8 @@ static void gbam_debugfs_init(void)
 	if (!dfile || IS_ERR(dfile))
 		debugfs_remove(dent);
 }
+#else
+static void gam_debugfs_init(void) { }
 #endif
 
 void gbam_disconnect(struct grmnet *gr, u8 port_num, enum transport_type trans)
@@ -1202,9 +1204,7 @@ int gbam_setup(unsigned int no_bam_port, unsigned int no_bam2bam_port)
 			goto free_bam_ports;
 		}
 	}
-#ifdef CONFIG_DEBUG_FS
 	gbam_debugfs_init();
-#endif
 	return 0;
 
 free_bam_ports:

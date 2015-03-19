@@ -1,6 +1,6 @@
 /* Qualcomm TrustZone communicator driver
  *
- * Copyright (c) 2011-2012, Code Aurora Forum. All rights reserved.
+ * Copyright (c) 2011-2012, The Linux Foundation. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -553,7 +553,7 @@ static int __tzcom_update_with_phy_addr(
 	for (i = 0; i < MAX_ION_FD; i++) {
 		if (req->ifd_data[i].fd != 0) {
 			/* Get the handle of the shared fd */
-			ihandle = ion_import_dma_buf(ion_clnt, req->ifd_data[i].fd);
+			ihandle = ion_import_fd(ion_clnt, req->ifd_data[i].fd);
 			if (ihandle == NULL) {
 				PERR("Ion client can't retrieve the handle\n");
 				return -ENOMEM;

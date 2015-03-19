@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2012, Code Aurora Forum. All rights reserved.
+ * Copyright (c) 2011-2012, The Linux Foundation. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -676,7 +676,7 @@ static void enable_irq_callback(void *info)
 {
 	int irq = *(unsigned int *)info;
 
-	enable_percpu_irq(irq, 0);
+	enable_percpu_irq(irq, IRQ_TYPE_EDGE_RISING);
 }
 
 static void disable_irq_callback(void *info)

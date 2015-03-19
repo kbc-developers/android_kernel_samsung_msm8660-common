@@ -26,7 +26,7 @@
 #include <linux/slab.h>
 #include <linux/dma-buf.h>
 #include <linux/anon_inodes.h>
-#include <linux/export.h>
+#include <linux/module.h>
 
 static inline int is_dma_buf_file(struct file *);
 

@@ -1,7 +1,7 @@
 /*
  *  Copyright (C) 2002 ARM Ltd.
  *  All Rights Reserved
- *  Copyright (c) 2010-2012, Code Aurora Forum. All rights reserved.
+ *  Copyright (c) 2010-2012, The Linux Foundation. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 as
@@ -95,18 +95,23 @@ static int __cpuinit krait_release_secondary(int cpu)
 
 	writel_relaxed(0x109, base_ptr+0x04);
 	writel_relaxed(0x101, base_ptr+0x04);
+
+	mb();
 	ndelay(300);
 
 	writel_relaxed(0x121, base_ptr+0x04);
+	mb();
 	udelay(2);
 
-	writel_relaxed(0x020, base_ptr+0x04);
+	writel_relaxed(0x120, base_ptr+0x04);
+	mb();
 	udelay(2);
 
-	writel_relaxed(0x000, base_ptr+0x04);
+	writel_relaxed(0x100, base_ptr+0x04);
+	mb();
 	udelay(100);
 
-	writel_relaxed(0x080, base_ptr+0x04);
+	writel_relaxed(0x180, base_ptr+0x04);
 	mb();
 	iounmap(base_ptr);
 	return 0;
@@ -173,8 +178,6 @@ int __cpuinit boot_secondary(unsigned int cpu, struct task_struct *idle)
 	pen_release = cpu;
 	dmac_flush_range((void *)&pen_release,
 			 (void *)(&pen_release + sizeof(pen_release)));
-	__asm__("sev");
-	mb();
 
 	/* Use smp_cross_call() to send a soft interrupt to wake up
 	 * the other core.
@@ -202,15 +205,6 @@ void __cpuinit platform_secondary_init(unsigned int cpu)
 	WARN_ON(msm_platform_secondary_init(cpu));
 
 	trace_hardirqs_off();
-
-	/* Edge trigger PPIs except AVS_SVICINT and AVS_SVICINTSWDONE */
-	writel(0xFFFFD7FF, MSM_QGIC_DIST_BASE + GIC_DIST_CONFIG + 4);
-
-	/* RUMI does not adhere to GIC spec by enabling STIs by default.
-	 * Enable/clear is supposed to be RO for STIs, but is RW on RUMI.
-	 */
-	if (!machine_is_msm8x60_sim())
-		writel(0x0000FFFF, MSM_QGIC_DIST_BASE + GIC_DIST_ENABLE_SET);
 
 	gic_secondary_init(0);
 }

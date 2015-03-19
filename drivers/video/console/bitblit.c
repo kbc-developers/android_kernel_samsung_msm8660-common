@@ -384,7 +384,7 @@ static void bit_cursor(struct vc_data *vc, struct fb_info *info, int mode,
 		err = info->fbops->fb_cursor(info, &cursor);
 
 	if (err){
-#if !defined (CONFIG_USA_MODEL_SGH_I727R) && !defined (CONFIG_USA_MODEL_SGH_T989D)
+#if !defined (CONFIG_USA_MODEL_SGH_I727R) && !defined (CONFIG_USA_MODEL_SGH_T989D) && !defined (CONFIG_USA_MODEL_SGH_I717)
 		soft_cursor(info, &cursor);
 #endif
 	}

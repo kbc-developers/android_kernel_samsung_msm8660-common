@@ -1,4 +1,4 @@
-/* Copyright (c) 2010-2011, Code Aurora Forum. All rights reserved.
+/* Copyright (c) 2010-2011, The Linux Foundation. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -35,6 +35,13 @@ enum {
 	MEMTYPE_NONE = -1,
 	MEMTYPE_SMI_KERNEL = 0,
 	MEMTYPE_SMI,
+#ifdef CONFIG_SEC_KERNEL_REBASE_FOR_PMEM_OPTIMIZATION
+	MEMTYPE_PMEM_ADSP,
+#endif
+#if defined (CONFIG_SAMSUNG_MEMORY_LAYOUT_ARRANGE)
+	MEMTYPE_PMEM_MDP,
+	MEMTYPE_PMEM_AUDIO,
+#endif
 	MEMTYPE_EBI0,
 	MEMTYPE_EBI1,
 	MEMTYPE_MAX,

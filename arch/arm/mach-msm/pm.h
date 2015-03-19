@@ -1,7 +1,7 @@
 /* arch/arm/mach-msm/pm.h
  *
  * Copyright (C) 2007 Google, Inc.
- * Copyright (c) 2009-2012, Code Aurora Forum. All rights reserved.
+ * Copyright (c) 2009-2012, The Linux Foundation. All rights reserved.
  * Author: San Mehat <san@android.com>
  *
  * This software is licensed under the terms of the GNU General Public
@@ -39,6 +39,13 @@ enum msm_pm_sleep_mode {
 };
 
 #define MSM_PM_MODE(cpu, mode_nr)  ((cpu) * MSM_PM_SLEEP_MODE_NR + (mode_nr))
+
+struct msm_pm_time_params {
+	uint32_t latency_us;
+	uint32_t sleep_us;
+	uint32_t next_event_us;
+	uint32_t modified_time_us;
+};
 
 struct msm_pm_platform_data {
 	u8 idle_supported;   /* Allow device to enter mode during idle */

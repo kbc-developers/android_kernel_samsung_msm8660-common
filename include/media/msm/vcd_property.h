@@ -52,14 +52,11 @@
 #define VCD_I_DISABLE_DMX_SUPPORT (VCD_START_BASE + 0x24)
 #define VCD_I_ENABLE_SPS_PPS_FOR_IDR (VCD_START_BASE + 0x25)
 #define VCD_REQ_PERF_LEVEL (VCD_START_BASE + 0x26)
-#define VCD_I_SLICE_DELIVERY_MODE (VCD_START_BASE + 0x27)
-#define VCD_I_VOP_TIMING_CONSTANT_DELTA (VCD_START_BASE + 0x28)
+#define VCD_I_VOP_TIMING_CONSTANT_DELTA (VCD_START_BASE + 0x27)
+#define VCD_I_SLICE_DELIVERY_MODE (VCD_START_BASE + 0x28)
 #define VCD_I_SET_TURBO_CLK (VCD_START_BASE + 0x29)
 #define VCD_I_ENABLE_DELIMITER_FLAG (VCD_START_BASE + 0x2A)
 #define VCD_I_ENABLE_VUI_TIMING_INFO (VCD_START_BASE + 0x2B)
-#define VCD_I_SET_EXT_METABUFFER (VCD_START_BASE + 0x2C)
-#define VCD_I_FREE_EXT_METABUFFER (VCD_START_BASE + 0x2D)
-#define VCD_I_ENABLE_SEC_METADATA (VCD_START_BASE + 0x2E)
 #define VCD_I_ENABLE_VUI_BITSTREAM_RESTRICT_FLAG (VCD_START_BASE + 0x2F)
 #define VCD_I_GET_CURR_PERF_LEVEL (VCD_START_BASE + 0x30)
 #define VCD_I_LTR_MODE (VCD_START_BASE + 0x31)
@@ -68,6 +65,10 @@
 #define VCD_I_LTR_USE (VCD_START_BASE + 0x34)
 #define VCD_I_CAPABILITY_LTR_COUNT (VCD_START_BASE + 0x35)
 #define VCD_I_LTR_MARK (VCD_START_BASE + 0x36)
+
+#define VCD_I_SET_EXT_METABUFFER (VCD_START_BASE + 0x2C)
+#define VCD_I_FREE_EXT_METABUFFER (VCD_START_BASE + 0x2D)
+#define VCD_I_ENABLE_SEC_METADATA (VCD_START_BASE + 0x2E)
 
 #define VCD_START_REQ      (VCD_START_BASE + 0x1000)
 #define VCD_I_REQ_IFRAME   (VCD_START_REQ + 0x1)
@@ -323,7 +324,7 @@ struct vcd_property_vop_timing {
 };
 
 struct vcd_property_vop_timing_constant_delta {
-	u32 constant_delta; /*In usecs */
+      u32 constant_delta; /*In usecs */
 };
 
 struct vcd_property_short_header {
@@ -397,6 +398,10 @@ struct vcd_property_vui_timing_info_enable {
 	u32 vui_timing_info;
 };
 
+struct vcd_property_bitstream_restrict_enable {
+	u32 bitstream_restrict_enable_flag;
+};
+
 struct vcd_property_meta_buffer {
 	u8 *kernel_virtual_addr;
 	u8 *physical_addr;
@@ -411,10 +416,6 @@ struct vcd_property_meta_buffer {
 	int pmem_fd_iommu;
 	u8 *dev_addr_iommu;
 	void *client_data_iommu;
-};
-
-struct vcd_property_bitstream_restrict_enable {
-	u32 bitstream_restrict_enable_flag;
 };
 
 struct vcd_property_range_type {

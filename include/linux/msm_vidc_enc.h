@@ -148,7 +148,6 @@
 #define VEN_INPUTFMT_NV12_16M2KA	3/* NV12 Linear */
 #define VEN_INPUTFMT_NV21_16M2KA	4
 
-
 /*Different allowed rotation modes.*/
 #define VEN_ROTATION_0	1/* 0 degrees */
 #define VEN_ROTATION_90	2/* 90 degrees */

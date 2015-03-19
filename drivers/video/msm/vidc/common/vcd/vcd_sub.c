@@ -92,7 +92,7 @@ static int vcd_pmem_alloc(size_t sz, u8 **kernel_vaddr, u8 **phy_addr,
 	} else {
 		map_buffer->alloc_handle = ion_alloc(
 			    cctxt->vcd_ion_client, sz, SZ_4K,
-			    memtype, res_trk_get_ion_flags());
+			    memtype);
 		if (!map_buffer->alloc_handle) {
 			pr_err("%s() ION alloc failed", __func__);
 			goto bailout;
@@ -105,7 +105,8 @@ static int vcd_pmem_alloc(size_t sz, u8 **kernel_vaddr, u8 **phy_addr,
 		}
 		*kernel_vaddr = (u8 *) ion_map_kernel(
 				cctxt->vcd_ion_client,
-				map_buffer->alloc_handle);
+				map_buffer->alloc_handle,
+				ionflag);
 		if (!(*kernel_vaddr)) {
 			pr_err("%s() ION map failed", __func__);
 			goto ion_free_bailout;
@@ -119,7 +120,7 @@ static int vcd_pmem_alloc(size_t sz, u8 **kernel_vaddr, u8 **phy_addr,
 				0,
 				(unsigned long *)&iova,
 				(unsigned long *)&buffer_size,
-				0, 0);
+				UNCACHED, 0);
 			if (ret || !iova) {
 				pr_err(
 				"%s() ION iommu map failed, ret = %d, iova = 0x%lx",
@@ -1258,7 +1259,7 @@ u32 vcd_validate_driver_handle(
 	driver_handle--;
 
 	if (driver_handle < 0 ||
-		driver_handle >= VCD_DRIVER_CLIENTS_MAX ||
+		driver_handle >= VCD_DRIVER_INSTANCE_MAX ||
 		!dev_ctxt->driver_ids[driver_handle]) {
 		return false;
 	} else {
@@ -1863,7 +1864,7 @@ u32 vcd_handle_recvd_eos(
 	} else if (cctxt->decoding && !input_frame->virtual) {
 		cctxt->sched_clnt_hdl->tkns++;
 		VCD_MSG_LOW("%s: decoding & virtual addr is NULL", __func__);
-	} else if (!cctxt->decoding && !cctxt->status.frame_delayed) {
+    } else if (!cctxt->decoding && !cctxt->status.frame_delayed) {
 		if (!cctxt->status.frame_submitted) {
 			vcd_send_frame_done_in_eos(cctxt, input_frame, false);
 			if (cctxt->status.mask & VCD_EOS_WAIT_OP_BUF)
@@ -2499,6 +2500,7 @@ u32 vcd_handle_first_fill_output_buffer_for_enc(
 	struct vcd_sequence_hdr seq_hdr;
 	struct vcd_property_sps_pps_for_idr_enable idr_enable;
 	struct vcd_property_codec codec;
+	unsigned int ionflag = 0;
 	u8 *kernel_vaddr = NULL;
 	*handled = true;
 	prop_hdr.prop_id = DDL_I_SEQHDR_PRESENT;
@@ -2528,9 +2530,16 @@ u32 vcd_handle_first_fill_output_buffer_for_enc(
 				prop_hdr.prop_id = VCD_I_SEQ_HEADER;
 				prop_hdr.sz = sizeof(struct vcd_sequence_hdr);
 				if (vcd_get_ion_status()) {
+					if (ion_handle_get_flags(cctxt->vcd_ion_client,
+							frm_entry->buff_ion_handle,
+							&ionflag)) {
+						pr_err("%s() ION get flag failed", __func__);
+						return VCD_ERR_FAIL;
+					}
+
 					kernel_vaddr = (u8 *)ion_map_kernel(
 						cctxt->vcd_ion_client,
-						frm_entry->buff_ion_handle);
+						frm_entry->buff_ion_handle, ionflag);
 					if (IS_ERR_OR_NULL(kernel_vaddr)) {
 						VCD_MSG_ERROR("%s: 0x%x = "\
 						"ion_map_kernel(0x%x, 0x%x) fail",
@@ -2601,9 +2610,16 @@ u32 vcd_handle_first_fill_output_buffer_for_enc(
 			"rc = 0x%x. Failed: ddl_get_property:VCD_I_CODEC",
 			rc);
 	if (kernel_vaddr) {
+		if (ion_handle_get_flags(cctxt->vcd_ion_client,
+				frm_entry->buff_ion_handle,
+				&ionflag)) {
+			pr_err("%s() ION get flag failed", __func__);
+			rc = VCD_ERR_FAIL;
+		}
+
 		if (!IS_ERR_OR_NULL(frm_entry->buff_ion_handle)) {
 			ion_map_kernel(cctxt->vcd_ion_client,
-				frm_entry->buff_ion_handle);
+				frm_entry->buff_ion_handle, ionflag);
 		} else {
 			VCD_MSG_ERROR("%s: Invalid ion_handle (0x%x)",
 				__func__, (u32)frm_entry->buff_ion_handle);
@@ -3574,8 +3590,7 @@ u32 vcd_set_num_slices(struct vcd_clnt_ctxt *cctxt)
 	struct vcd_property_slice_delivery_info slice_delivery_info;
 	u32 rc = VCD_S_SUCCESS;
 	prop_hdr.prop_id = VCD_I_SLICE_DELIVERY_MODE;
-	prop_hdr.sz =
-		sizeof(struct vcd_property_slice_delivery_info);
+	prop_hdr.sz = sizeof(struct vcd_property_slice_delivery_info);
 	rc = ddl_get_property(cctxt->ddl_handle, &prop_hdr,
 				&slice_delivery_info);
 	VCD_FAILED_RETURN(rc, "Failed: Get VCD_I_SLICE_DELIVERY_MODE");

@@ -375,7 +375,7 @@ void VFP_bounce(u32 trigger, u32 fpexc, struct pt_regs *regs)
 	 * If there isn't a second FP instruction, exit now. Note that
 	 * the FPEXC.FP2V bit is valid only if FPEXC.EX is 1.
 	 */
-	if (fpexc ^ (FPEXC_EX | FPEXC_FP2V))
+	if ((fpexc & (FPEXC_EX | FPEXC_FP2V)) != (FPEXC_EX | FPEXC_FP2V))
 		goto exit;
 
 	/*
@@ -573,6 +573,17 @@ static int __init vfp_init(void)
 	unsigned int vfpsid;
 	unsigned int cpu_arch = cpu_architecture();
 
+#ifdef CONFIG_USA_MODEL_SGH_I757
+	struct cpumask cpus_curr, cpus;
+	sched_getaffinity(current->pid,&cpus_curr);
+	cpumask_clear(&cpus);
+	cpumask_set_cpu(smp_processor_id(), &cpus);
+	if (sched_setaffinity(current->pid, &cpus))
+		pr_err("%s: vfp_init set CPU affinity failed Proceeding on Risk\n",
+				__func__);
+	else
+		pr_err("%s : affinity set to CPU %d\n",__func__,smp_processor_id());
+#endif
 	if (cpu_arch >= CPU_ARCH_ARMv6)
 		vfp_enable(NULL);
 
@@ -620,11 +631,14 @@ static int __init vfp_init(void)
 			elf_hwcap |= HWCAP_VFPv3;
 
 			/*
-			 * Check for VFPv3 D16. CPUs in this configuration
-			 * only have 16 x 64bit registers.
+			 * Check for VFPv3 D16 and VFPv4 D16.  CPUs in
+			 * this configuration only have 16 x 64bit
+			 * registers.
 			 */
 			if (((fmrx(MVFR0) & MVFR0_A_SIMD_MASK)) == 1)
-				elf_hwcap |= HWCAP_VFPv3D16;
+				elf_hwcap |= HWCAP_VFPv3D16; /* also v4-D16 */
+			else
+				elf_hwcap |= HWCAP_VFPD32;
 		}
 #endif
 		/*
@@ -644,6 +658,13 @@ static int __init vfp_init(void)
 				elf_hwcap |= HWCAP_VFPv4;
 		}
 	}
+#ifdef CONFIG_USA_MODEL_SGH_I757
+	if (sched_setaffinity(current->pid, &cpus_curr))
+		pr_err("%s: vfp_init restore CPU affinity failed Proceeding on Risk\n",
+			__func__);
+	else
+		pr_err("%s : affinity restored to %x\n",__func__,*((int *)(cpus_curr.bits)));
+#endif
 	return 0;
 }
 

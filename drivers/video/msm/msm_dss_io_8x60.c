@@ -410,7 +410,7 @@ void cont_splash_clk_ctrl(int enable)
 {
 }
 
-void mipi_dsi_prepare_ahb_clocks(void)
+void mipi_dsi_prepare_clocks(void)
 {
 	clk_prepare(amp_pclk);
 	clk_prepare(dsi_m_pclk);
@@ -419,21 +419,13 @@ void mipi_dsi_prepare_ahb_clocks(void)
 	clk_prepare(dsi_esc_clk);
 }
 
-void mipi_dsi_unprepare_ahb_clocks(void)
+void mipi_dsi_unprepare_clocks(void)
 {
 	clk_unprepare(dsi_esc_clk);
 	clk_unprepare(dsi_byte_div_clk);
 	clk_unprepare(dsi_m_pclk);
 	clk_unprepare(dsi_s_pclk);
 	clk_unprepare(amp_pclk);
-}
-
-void mipi_dsi_unprepare_clocks(void)
-{
-}
-
-void mipi_dsi_configure_fb_divider(u32 fps_level)
-{
 }
 
 void mipi_dsi_ahb_ctrl(u32 enable)
@@ -651,11 +643,20 @@ void hdmi_msm_powerdown_phy(void)
 	udelay(10);
 	/* Disable PLL */
 	HDMI_OUTP_ND(0x030C, 0x00);
+
+#ifdef WORKAROUND_FOR_HDMI_CURRENT_LEAKAGE_FIX
+	HDMI_OUTP_ND(0x02D4, 0x4);	//Assert RESET PHY from controller
+	udelay(10);
+	HDMI_OUTP_ND(0x02D4, 0x0);	//De-assert RESET PHY from controller
+	HDMI_OUTP_ND(0x0308, 0x1F); //Turn off Driver
+	udelay(10);
+#endif
+
 	/* Power down PHY */
 	HDMI_OUTP_ND(0x0308, 0x7F); /*0b01111111*/
 }
 
-void hdmi_frame_ctrl_cfg(const struct hdmi_disp_mode_timing_type *timing)
+void hdmi_frame_ctrl_cfg(const struct msm_hdmi_mode_timing_info *timing)
 {
 	/*  0x02C8 HDMI_FRAME_CTRL
 	 *  31 INTERLACED_EN   Interlaced or progressive enable bit

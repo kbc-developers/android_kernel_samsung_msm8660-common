@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, Code Aurora Forum. All rights reserved.
+ * Copyright (c) 2009, The Linux Foundation. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -15,7 +15,11 @@
 #define AVS_H
 
 #define VOLTAGE_MIN  1000 /* mV */
+#ifdef CONFIG_CPU_OVERCLOCK
+#define VOLTAGE_MAX  1350
+#else
 #define VOLTAGE_MAX  1250
+#endif
 #define VOLTAGE_STEP 25
 
 int __init avs_init(int (*set_vdd)(int), u32 freq_cnt, u32 freq_idx);

@@ -1,7 +1,7 @@
 /* arch/arm/mach-msm/clock.h
  *
  * Copyright (C) 2007 Google, Inc.
- * Copyright (c) 2007-2011, Code Aurora Forum. All rights reserved.
+ * Copyright (c) 2007-2011, The Linux Foundation. All rights reserved.
  *
  * This software is licensed under the terms of the GNU General Public
  * License version 2, as published by the Free Software Foundation, and
@@ -151,7 +151,7 @@ int clock_debug_init(struct clock_init_data *data);
 int clock_debug_add(struct clk *clock);
 void clock_debug_print_enabled(void);
 #else
-static inline int clock_debug_init(struct clock_init_data *data) { return 0; }
+static inline int clock_debug_init(struct clk_init_data *data) { return 0; }
 static inline int clock_debug_add(struct clk *clock) { return 0; }
 static inline void clock_debug_print_enabled(void) { return; }
 #endif

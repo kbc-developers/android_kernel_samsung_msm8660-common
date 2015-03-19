@@ -1,4 +1,4 @@
-/* Copyright (c) 2010-2012, Code Aurora Forum. All rights reserved.
+/* Copyright (c) 2010-2012, The Linux Foundation. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -67,6 +67,8 @@
 #include "timpani_profile_dali_lgt.h"
 #elif defined(CONFIG_KOR_MODEL_SHV_E160S) /* QUINCY-SKT */
 #include "timpani_profile_quincy_skt.h"
+#elif defined(CONFIG_JPN_MODEL_SC_05D) /* QUINCY-JPN */
+#include "timpani_profile_quincy_ntt.h"
 #elif defined(CONFIG_KOR_MODEL_SHV_E160K) /* QUINCY-KT */
 #include "timpani_profile_quincy_kt.h"
 #elif defined(CONFIG_KOR_MODEL_SHV_E160L) /* QUINCY-LGT */

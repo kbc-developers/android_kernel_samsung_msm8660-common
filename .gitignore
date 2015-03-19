@@ -32,8 +32,6 @@ modules.builtin
 *.lzo
 *.patch
 *.gcno
-*.zip
-*.img
 
 #
 # Top-level generic files
@@ -60,6 +58,8 @@ include/config
 include/linux/version.h
 include/generated
 arch/*/include/generated
+arch/arm/boot/compressed/ashldi3.S
+arch/arm/boot/compressed/piggy.xzkern
 
 # stgit generated dirs
 patches-*
@@ -77,6 +77,10 @@ GPATH
 GRTAGS
 GSYMS
 GTAGS
+
+# custom
+out
+*.log
 
 *.orig
 *~

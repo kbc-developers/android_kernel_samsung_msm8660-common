@@ -2,7 +2,7 @@
  *
  * Copyright (C) 2008 Google, Inc.
  * Copyright (C) 2008 HTC Corporation
- * Copyright (c) 2009-2011, Code Aurora Forum. All rights reserved.
+ * Copyright (c) 2009-2013, The Linux Foundation. All rights reserved.
  *
  * This software is licensed under the terms of the GNU General Public
  * License version 2, as published by the Free Software Foundation, and
@@ -45,7 +45,7 @@
 #include <mach/debug_mm.h>
 #include <linux/fs.h>
 
-#define MAX_BUF 3
+#define MAX_BUF 4
 #define BUFSZ (524288)
 
 #define AUDDEC_DEC_PCM 0
@@ -125,8 +125,8 @@ static int audlpa_pause(struct audio *audio);
 static long pcm_ioctl(struct file *file, unsigned int cmd, unsigned long arg);
 static int audlpa_set_pcm_params(void *data);
 
-/* Use msm_set_volume() for stream mute control */
-#define LPA_MUTE_CTRL
+// use msm_set_volume() for stream mute control
+// #define LPA_MUTE_CTRL
 
 #ifdef LPA_MUTE_CTRL
 static int audlpa_mute;
@@ -514,7 +514,7 @@ static int audlpa_ion_add(struct audio *audio,
 		goto client_error;
 	}
 
-	handle = ion_import_dma_buf(client, info->fd);
+	handle = ion_import_fd(client, info->fd);
 	if (IS_ERR_OR_NULL(handle)) {
 		pr_err("%s: could not get handle of the given fd\n", __func__);
 		goto import_error;
@@ -526,7 +526,7 @@ static int audlpa_ion_add(struct audio *audio,
 		goto flag_error;
 	}
 
-	temp_ptr = ion_map_kernel(client, handle);
+	temp_ptr = ion_map_kernel(client, handle, ionflag);
 	if (IS_ERR_OR_NULL(temp_ptr)) {
 		pr_err("%s: could not get virtual address\n", __func__);
 		goto map_error;
@@ -788,8 +788,8 @@ static long audio_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
 
 		pr_debug("%s: AUDIO_GET_STATS cmd\n", __func__);
 		memset(&stats, 0, sizeof(stats));
-		timestamp = q6asm_get_session_time(audio->ac);
-		if (timestamp < 0) {
+		rc = q6asm_get_session_time(audio->ac, &timestamp);
+		if (rc < 0) {
 			pr_err("%s: Get Session Time return value =%lld\n",
 				__func__, timestamp);
 			return -EAGAIN;
@@ -813,8 +813,8 @@ static long audio_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
 		break;
 
 	case AUDIO_SET_VOLUME:
-		/* pr_debug("AUDIO_SET_VOLUME %d, audio->volume=%d", arg, audio->volume); */
-		pr_info("AUDIO_SET_VOLUME %d, audio->volume=%d, mute=%d", (int)arg, audio->volume, audlpa_mute);
+		pr_debug("AUDIO_SET_VOLUME %d, audio->volume=%d", arg, audio->volume);
+		//pr_info("AUDIO_SET_VOLUME %d, audio->volume=%d, mute=%d", (int)arg, audio->volume, audlpa_mute);
 #ifdef LPA_MUTE_CTRL
 		audio->volume = arg;
 #endif
@@ -894,6 +894,10 @@ static long audio_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
 				.step = SOFT_VOLUME_STEP,
 				.rampingcurve = SOFT_VOLUME_CURVE_LINEAR,
 			};
+			if (softpause.rampingcurve == SOFT_PAUSE_CURVE_LINEAR)
+				softpause.step = SOFT_PAUSE_STEP_LINEAR;
+			if (softvol.rampingcurve == SOFT_VOLUME_CURVE_LINEAR)
+				softvol.step = SOFT_VOLUME_STEP_LINEAR;
 			audio->out_enabled = 1;
 			audio->out_needed = 1;
 			rc = q6asm_set_volume(audio->ac, audio->volume);
@@ -1192,12 +1196,13 @@ static int audio_release(struct inode *inode, struct file *file)
 	if (audio->out_enabled)
 		audlpa_async_flush(audio);
 	audio->wflush = 0;
-	audlpa_unmap_ion_region(audio);
 	audio_disable(audio);
+        audlpa_unmap_ion_region(audio);
 	msm_clear_session_id(audio->ac->session);
 	auddev_unregister_evt_listner(AUDDEV_CLNT_DEC, audio->ac->session);
 	q6asm_audio_client_free(audio->ac);
-	audlpa_reset_ion_region(audio);
+        audlpa_reset_ion_region(audio);
+
 #ifdef CONFIG_HAS_EARLYSUSPEND
 	unregister_early_suspend(&audio->suspend_ctl.node);
 #endif

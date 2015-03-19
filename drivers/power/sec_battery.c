@@ -66,7 +66,7 @@
 #endif /* CONFIG_PMIC8058_XOADC_CAL */
 #define RCOMP0_TEMP			20	/* 'C */
 #elif defined(CONFIG_KOR_MODEL_SHV_E160S) || \
-	defined(CONFIG_KOR_MODEL_SHV_E160L)
+	defined(CONFIG_KOR_MODEL_SHV_E160L) || defined (CONFIG_JPN_MODEL_SC_05D)
 #if defined(CONFIG_PMIC8058_XOADC_CAL)
 #define CURRENT_OF_FULL_CHG		2300	/* 170mA */
 #else
@@ -136,7 +136,7 @@
 */
 #if defined(CONFIG_KOR_MODEL_SHV_E160S) || \
 	defined(CONFIG_KOR_MODEL_SHV_E160K) || \
-	defined(CONFIG_KOR_MODEL_SHV_E160L)
+	defined(CONFIG_KOR_MODEL_SHV_E160L) || defined (CONFIG_JPN_MODEL_SC_05D)
 #define FULL_CHARGING_TIME	(8 * 60 * 60 * HZ)	/* 8hr */
 #define RECHARGING_TIME		(2 * 60 * 60 * HZ)	/* 2hr */
 #else
@@ -322,7 +322,7 @@
 #define JPN_CHARGE_CURRENT_DOWN_TEMP		240
 #define JPN_CHARGE_CURRENT_RECOVERY_TEMP	235
 #else
-#if defined(CONFIG_KOR_MODEL_SHV_E160S)
+#if defined(CONFIG_KOR_MODEL_SHV_E160S) || defined (CONFIG_JPN_MODEL_SC_05D)
 #define HIGH_BLOCK_TEMP_ADC_PMICTHERM		727
 #define HIGH_RECOVER_TEMP_ADC_PMICTHERM		667
 #define LOW_BLOCK_TEMP_ADC_PMICTHERM		504
@@ -363,6 +363,11 @@
 #define HIGH_RECOVER_TEMP_ADC_SETTHERM		365
 #define LOW_BLOCK_TEMP_ADC_SETTHERM		227
 #define LOW_RECOVER_TEMP_ADC_SETTHERM		242
+#elif defined (CONFIG_JPN_MODEL_SC_05D)
+#define HIGH_BLOCK_TEMP_ADC_SETTHERM		378
+#define HIGH_RECOVER_TEMP_ADC_SETTHERM		350
+#define LOW_BLOCK_TEMP_ADC_SETTHERM		205
+#define LOW_RECOVER_TEMP_ADC_SETTHERM		223
 
 #else
 #define HIGH_BLOCK_TEMP_ADC_SETTHERM		389
@@ -514,6 +519,7 @@ struct sec_bat_info {
 	struct power_supply psy_usb;
 	struct power_supply psy_ac;
 
+	struct wake_lock vbus_wake_lock;
 	struct wake_lock monitor_wake_lock;
 	struct wake_lock cable_wake_lock;
 	struct wake_lock test_wake_lock;
@@ -632,13 +638,6 @@ static enum power_supply_property sec_power_props[] = {
 
 static int sec_bat_read_adc(struct sec_bat_info *info, int channel,
 		int *adc_data, int *adc_physical);
-
-static int batt_level = 100;
-
-int sec_get_batt_level(void)
-{
-	return batt_level;
-}
 
 #ifdef ADC_QUEUE_FEATURE
 static int sec_bat_get_adc_depot(struct sec_bat_info *info, int channel,
@@ -780,7 +779,7 @@ static int sec_bat_check_detbat(struct sec_bat_info *info)
 
 		pr_info("%s : vf adc : %d\n", __func__, adc_physical);
 
-		if (adc_physical > 500 && adc_physical < 1200)
+		if (adc_physical > 500 && adc_physical < 900)
 			value.intval = BAT_DETECTED;
 		else
 			value.intval = BAT_NOT_DETECTED;
@@ -818,7 +817,7 @@ static int sec_bat_check_detbat(struct sec_bat_info *info)
 	defined(CONFIG_USA_MODEL_SGH_T769) || \
 	defined(CONFIG_USA_MODEL_SGH_I577) || \
 	defined(CONFIG_CAN_MODEL_SGH_I577R)
-	if (adc_physical > 500 && adc_physical < 1200)
+	if (adc_physical > 500 && adc_physical < 900)
 #elif defined(CONFIG_USA_MODEL_SGH_I717)
 	if ((get_hw_rev() == 0x01) &&
 		(adc_physical > 1290 && adc_physical < 1800))
@@ -2129,7 +2128,7 @@ static void check_chgcurrent(struct sec_bat_info *info)
 
 #if defined(CONFIG_KOR_MODEL_SHV_E160S) || \
 	defined(CONFIG_KOR_MODEL_SHV_E160K) || \
-	defined(CONFIG_KOR_MODEL_SHV_E160L)
+	defined(CONFIG_KOR_MODEL_SHV_E160L) || defined (CONFIG_JPN_MODEL_SC_05D)
 	if (info->hw_rev < 0x04)
 		return;
 #endif
@@ -2163,7 +2162,7 @@ static void check_chgcurrent(struct sec_bat_info *info)
 
 #if defined(CONFIG_KOR_MODEL_SHV_E160S) || \
 	defined(CONFIG_KOR_MODEL_SHV_E160K) || \
-	defined(CONFIG_KOR_MODEL_SHV_E160L)
+	defined(CONFIG_KOR_MODEL_SHV_E160L) || defined (CONFIG_JPN_MODEL_SC_05D)
 static void check_chgstop_from_charger(struct sec_bat_info *info)
 {
 	struct power_supply *psy = power_supply_get_by_name(info->charger_name);
@@ -2438,11 +2437,7 @@ static void sec_bat_update_info(struct sec_bat_info *info)
 	info->batt_rcomp = sec_bat_get_fuelgauge_data(info, FG_T_RCOMP);
 	info->batt_full_soc = sec_bat_get_fuelgauge_data(info, FG_T_FSOC);
 	sec_bat_notify_vcell2charger(info);
-
-	batt_level = info->batt_soc;
 }
-
-int cable_type = 0;
 
 static int sec_bat_enable_charging(struct sec_bat_info *info, bool enable)
 {
@@ -2464,17 +2459,16 @@ static int sec_bat_enable_charging(struct sec_bat_info *info, bool enable)
 		switch (info->cable_type) {
 		case CABLE_TYPE_USB:
 			val_type.intval = POWER_SUPPLY_STATUS_CHARGING;
-			val_chg_current.intval = 1200; /* USB 1200 mode */
-			info->full_cond_count = FULL_CHG_COND_COUNT;
+			val_chg_current.intval = 500; /* USB 500 mode */
+			info->full_cond_count = USB_FULL_COND_COUNT;
 			info->full_cond_voltage = USB_FULL_COND_VOLTAGE;
 			break;
 		case CABLE_TYPE_AC:
 		case CABLE_TYPE_CARDOCK:
 		case CABLE_TYPE_UARTOFF:
-		case CABLE_TYPE_UNKNOWN:
 			val_type.intval = POWER_SUPPLY_STATUS_CHARGING;
-			 /* input : 1200mA, output : 1200mA */
-			val_chg_current.intval = 1200;
+			 /* input : 900mA, output : 900mA */
+			val_chg_current.intval = 900;
 			info->full_cond_count = FULL_CHG_COND_COUNT;
 			info->full_cond_voltage = FULL_CHARGE_COND_VOLTAGE;
 			break;
@@ -2485,27 +2479,16 @@ static int sec_bat_enable_charging(struct sec_bat_info *info, bool enable)
 			info->full_cond_count = FULL_CHG_COND_COUNT;
 			info->full_cond_voltage = FULL_CHARGE_COND_VOLTAGE;
 			break;
+		case CABLE_TYPE_UNKNOWN:
+			val_type.intval = POWER_SUPPLY_STATUS_CHARGING;
+			 /* input : 450, output : 500mA */
+			val_chg_current.intval = 450;
+			info->full_cond_count = USB_FULL_COND_COUNT;
+			info->full_cond_voltage = USB_FULL_COND_VOLTAGE;
+			break;
 		default:
 			dev_err(info->dev, "%s: Invalid func use\n", __func__);
 			return -EINVAL;
-		}
-
-		switch (info->cable_type) {
-			case CABLE_TYPE_NONE:
-				cable_type = 0;
-				break;
-			case CABLE_TYPE_USB:
-				cable_type = 1;
-				break;
-			case CABLE_TYPE_AC:
-			case CABLE_TYPE_CARDOCK:
-			case CABLE_TYPE_UARTOFF:
-			case CABLE_TYPE_UNKNOWN:
-				cable_type = 2;
-				break;
-			case CABLE_TYPE_MISC:
-				cable_type = 3;
-				break;
 		}
 
 		/* Set charging current */
@@ -2659,6 +2642,7 @@ static void sec_bat_cable_work(struct work_struct *work)
 			pr_info("cable none : vdcin ok, skip!!!\n");
 			return;
 		}
+		wake_lock_timeout(&info->vbus_wake_lock, 5 * HZ);
 		cancel_delayed_work(&info->measure_work);
 		info->batt_full_status = BATT_NOT_FULL;
 		info->recharging_status = false;
@@ -2693,6 +2677,7 @@ static void sec_bat_cable_work(struct work_struct *work)
 #else
 		if (!info->dcin_intr_triggered && !info->lpm_chg_mode) {
 #endif
+			wake_lock_timeout(&info->vbus_wake_lock, 5 * HZ);
 			pr_info("%s : dock inserted, "
 				"but dcin nok skip charging!\n", __func__);
 			sec_bat_enable_charging(info, true);
@@ -2717,9 +2702,13 @@ static void sec_bat_cable_work(struct work_struct *work)
 		}
 #endif
 	case CABLE_TYPE_UNKNOWN:
+#if defined(CONFIG_TOUCHSCREEN_QT602240) || defined(CONFIG_TOUCHSCREEN_MXT768E)
+		tsp_set_unknown_charging_cable(true);
+#endif
 	case CABLE_TYPE_USB:
 	case CABLE_TYPE_AC:
 		/* TODO : check DCIN state again*/
+		wake_lock(&info->vbus_wake_lock);
 		cancel_delayed_work(&info->measure_work);
 		info->charging_status = POWER_SUPPLY_STATUS_CHARGING;
 #ifdef ADJUST_RCOMP_WITH_CHARGING_STATUS
@@ -2852,7 +2841,7 @@ static void sec_bat_monitor_work(struct work_struct *work)
 	sec_bat_check_vf(info);
 #if defined(CONFIG_KOR_MODEL_SHV_E160S) || \
 	defined(CONFIG_KOR_MODEL_SHV_E160K) || \
-	defined(CONFIG_KOR_MODEL_SHV_E160L)
+	defined(CONFIG_KOR_MODEL_SHV_E160L) || defined (CONFIG_JPN_MODEL_SC_05D)
 	if (info->hw_rev < 0x04)
 		check_chgstop_from_charger(info);
 	else
@@ -3017,7 +3006,7 @@ static void sec_bat_measure_work(struct work_struct *work)
 	defined(CONFIG_KOR_MODEL_SHV_E120L) || \
 	defined(CONFIG_KOR_MODEL_SHV_E160S) || \
 	defined(CONFIG_KOR_MODEL_SHV_E160K) || \
-	defined(CONFIG_KOR_MODEL_SHV_E160L)
+	defined(CONFIG_KOR_MODEL_SHV_E160L) || defined (CONFIG_JPN_MODEL_SC_05D)
 	bool isFirstCheck = false;
 #endif
 
@@ -3149,12 +3138,12 @@ static void sec_bat_measure_work(struct work_struct *work)
 							info, 1000);
 					}
 				} else {
-					if (set_chg_current != 1200) {
+					if (set_chg_current != 900) {
 						pr_info("[SC-03D] %s : "
 							"adjust current to"
 							" 0.9A\n", __func__);
 						sec_bat_adjust_charging_current(
-							info, 1200);
+							info, 900);
 					}
 				}
 			} else {
@@ -3189,11 +3178,11 @@ static void sec_bat_measure_work(struct work_struct *work)
 						info, 1000);
 				}
 			} else {
-				if (set_chg_current != 1200) {
+				if (set_chg_current != 900) {
 					pr_info("%s : adjust curretn to 0.9A\n",
 						__func__);
 					sec_bat_adjust_charging_current(
-						info, 1200);
+						info, 900);
 				}
 			}
 		} else {
@@ -3219,7 +3208,7 @@ static void sec_bat_measure_work(struct work_struct *work)
 	defined(CONFIG_KOR_MODEL_SHV_E120L) || \
 	defined(CONFIG_KOR_MODEL_SHV_E160S) || \
 	defined(CONFIG_KOR_MODEL_SHV_E160K) || \
-	defined(CONFIG_KOR_MODEL_SHV_E160L)
+	defined(CONFIG_KOR_MODEL_SHV_E160L) || defined (CONFIG_JPN_MODEL_SC_05D)
 		if (info->charging_enabled &&
 			(((0 < info->batt_temp_high_cnt) &&
 			(info->batt_temp_high_cnt < TEMP_BLOCK_COUNT))  ||
@@ -3240,7 +3229,7 @@ static void sec_bat_measure_work(struct work_struct *work)
 	defined(CONFIG_KOR_MODEL_SHV_E120L) || \
 	defined(CONFIG_KOR_MODEL_SHV_E160S) || \
 	defined(CONFIG_KOR_MODEL_SHV_E160K) || \
-	defined(CONFIG_KOR_MODEL_SHV_E160L)
+	defined(CONFIG_KOR_MODEL_SHV_E160L) || defined (CONFIG_JPN_MODEL_SC_05D)
 	else if (isFirstCheck) {
 		queue_delayed_work(info->monitor_wqueue, &info->measure_work,
 					  HZ);
@@ -4087,6 +4076,8 @@ static __devinit int sec_bat_probe(struct platform_device *pdev)
 	info->psy_ac.num_properties = ARRAY_SIZE(sec_power_props),
 	info->psy_ac.get_property = sec_ac_get_property;
 
+	wake_lock_init(&info->vbus_wake_lock, WAKE_LOCK_SUSPEND,
+		       "vbus_present");
 	wake_lock_init(&info->monitor_wake_lock, WAKE_LOCK_SUSPEND,
 		       "sec-battery-monitor");
 	wake_lock_init(&info->cable_wake_lock, WAKE_LOCK_SUSPEND,
@@ -4313,6 +4304,7 @@ err_adc_open_1:
 	adc_channel_close(info->batt_adc_chan[0].adc_handle);
 err_adc_open_0:
 #endif
+	wake_lock_destroy(&info->vbus_wake_lock);
 	wake_lock_destroy(&info->monitor_wake_lock);
 	wake_lock_destroy(&info->cable_wake_lock);
 	wake_lock_destroy(&info->test_wake_lock);
@@ -4360,6 +4352,7 @@ static int __devexit sec_bat_remove(struct platform_device *pdev)
 	adc_channel_close(info->batt_adc_chan[0].adc_handle);
 #endif
 
+	wake_lock_destroy(&info->vbus_wake_lock);
 	wake_lock_destroy(&info->monitor_wake_lock);
 	wake_lock_destroy(&info->cable_wake_lock);
 	wake_lock_destroy(&info->test_wake_lock);

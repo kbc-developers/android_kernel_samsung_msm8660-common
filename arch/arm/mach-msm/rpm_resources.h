@@ -1,4 +1,4 @@
-/* Copyright (c) 2010-2011, Code Aurora Forum. All rights reserved.
+/* Copyright (c) 2010-2011, The Linux Foundation. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -104,8 +104,8 @@ static inline int msm_rpmrs_clear_nosleep(
 void msm_rpmrs_show_resources(void);
 
 struct msm_rpmrs_limits *msm_rpmrs_lowest_limits(
-	bool from_idle, enum msm_pm_sleep_mode sleep_mode, uint32_t latency_us,
-	uint32_t sleep_us);
+	bool from_idle, enum msm_pm_sleep_mode sleep_mode,
+    struct msm_pm_time_params *time_param);
 
 int msm_rpmrs_enter_sleep(uint32_t sclk_count, struct msm_rpmrs_limits *limits,
 		bool from_idle, bool notify_rpm);

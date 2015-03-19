@@ -496,7 +496,7 @@ static void __init build_mem_type_table(void)
 	}
 
 	for (i = 0; i < 16; i++) {
-		unsigned long v = pgprot_val(protection_map[i]);
+		pteval_t v = pgprot_val(protection_map[i]);
 		protection_map[i] = __pgprot(v | user_pgprot);
 	}
 
@@ -768,7 +768,7 @@ static void * __initdata vmalloc_min = (void *)(VMALLOC_END - CONFIG_VMALLOC_RES
  */
 static int __init early_vmalloc(char *arg)
 {
-	unsigned long vmalloc_reserve = CONFIG_VMALLOC_RESERVE;
+	unsigned long vmalloc_reserve = memparse(arg, NULL);
 
 	if (vmalloc_reserve < SZ_16M) {
 		vmalloc_reserve = SZ_16M;

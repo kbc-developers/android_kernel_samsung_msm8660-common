@@ -1,4 +1,4 @@
-/* Copyright (c) 2010-2012, Code Aurora Forum. All rights reserved.
+/* Copyright (c) 2010-2012, The Linux Foundation. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -52,6 +52,7 @@
 #include "timer.h"
 #include "qdss.h"
 #include "pm-boot.h"
+#include <mach/event_timer.h>
 
 /******************************************************************************
  * Debug Definitions
@@ -105,6 +106,8 @@ static char *msm_pm_mode_attr_labels[MSM_PM_MODE_ATTR_NR] = {
 	[MSM_PM_MODE_ATTR_SUSPEND] = "suspend_enabled",
 	[MSM_PM_MODE_ATTR_IDLE] = "idle_enabled",
 };
+
+static struct hrtimer pm_hrtimer;
 
 struct msm_pm_kobj_attribute {
 	unsigned int cpu;
@@ -742,12 +745,28 @@ static bool msm_pm_power_collapse(bool from_idle)
 
 	collapsed = msm_pm_spm_power_collapse(cpu, from_idle, true);
 
-	if (MSM_PM_DEBUG_CLOCK & msm_pm_debug_mask)
-		pr_info("CPU%u: %s: restore clock rate to %lu\n",
-			cpu, __func__, saved_acpuclk_rate);
-	if (acpuclk_set_rate(cpu, saved_acpuclk_rate, SETRATE_PC) < 0)
-		pr_err("CPU%u: %s: failed to restore clock rate(%lu)\n",
-			cpu, __func__, saved_acpuclk_rate);
+	if (cpu_online(cpu)) {
+		if (MSM_PM_DEBUG_CLOCK & msm_pm_debug_mask)
+			pr_info("CPU%u: %s: restore clock rate to %lu\n",
+				cpu, __func__, saved_acpuclk_rate);
+		if (acpuclk_set_rate(cpu, saved_acpuclk_rate, SETRATE_PC) < 0)
+			pr_err("CPU%u: %s: failed to restore clock rate(%lu)\n",
+				cpu, __func__, saved_acpuclk_rate);
+	} else {
+		unsigned int gic_dist_enabled;
+		unsigned int gic_dist_pending;
+		gic_dist_enabled = readl_relaxed(
+				MSM_QGIC_DIST_BASE + GIC_DIST_ENABLE_CLEAR);
+		gic_dist_pending = readl_relaxed(
+				MSM_QGIC_DIST_BASE + GIC_DIST_PENDING_SET);
+		mb();
+		gic_dist_pending &= gic_dist_enabled;
+
+		if (gic_dist_pending)
+			pr_err("CPU %d interrupted during hotplug.Pending int 0x%x\n",
+					cpu, gic_dist_pending);
+	}
+
 
 	avs_reset_delays(avsdscr_setting);
 	msm_pm_config_hw_after_power_up();
@@ -767,6 +786,27 @@ static irqreturn_t msm_pm_rpm_wakeup_interrupt(int irq, void *dev_id)
 	return IRQ_HANDLED;
 }
 
+/**
+ * pm_hrtimer_cb() : Callback function for hrtimer created if the
+ *                   core needs to be awake to handle an event.
+ * @hrtimer : Pointer to hrtimer
+ */
+static enum hrtimer_restart pm_hrtimer_cb(struct hrtimer *hrtimer)
+{
+	return HRTIMER_NORESTART;
+}
+
+/**
+ * msm_pm_set_timer() : Set an hrtimer to wakeup the core in time
+ *                      to handle an event.
+ */
+static void msm_pm_set_timer(uint32_t modified_time_us)
+{
+	u64 modified_time_ns = modified_time_us * NSEC_PER_USEC;
+	ktime_t modified_ktime = ns_to_ktime(modified_time_ns);
+	pm_hrtimer.function = pm_hrtimer_cb;
+	hrtimer_start(&pm_hrtimer, modified_ktime, HRTIMER_MODE_ABS);
+}
 
 /******************************************************************************
  * External Idle/Suspend Functions
@@ -779,13 +819,23 @@ void arch_idle(void)
 
 int msm_pm_idle_prepare(struct cpuidle_device *dev)
 {
-	uint32_t latency_us;
-	uint32_t sleep_us;
 	int i;
+	uint32_t modified_time_us = 0;
+	struct msm_pm_time_params time_param;
 
-	latency_us = (uint32_t) pm_qos_request(PM_QOS_CPU_DMA_LATENCY);
-	sleep_us = (uint32_t) ktime_to_ns(tick_nohz_get_sleep_length());
-	sleep_us = DIV_ROUND_UP(sleep_us, 1000);
+	time_param.latency_us =
+			(uint32_t) pm_qos_request(PM_QOS_CPU_DMA_LATENCY);
+	time_param.sleep_us =
+			(uint32_t) (ktime_to_us(tick_nohz_get_sleep_length())
+															& UINT_MAX);
+	time_param.modified_time_us = 0;
+
+	if (!dev->cpu)
+		time_param.next_event_us =
+				(uint32_t) (ktime_to_us(get_next_event_time())
+															& UINT_MAX);
+	else
+		time_param.next_event_us = 0;
 
 	for (i = 0; i < dev->state_count; i++) {
 		struct cpuidle_state *state = &dev->states[i];
@@ -833,13 +883,14 @@ int msm_pm_idle_prepare(struct cpuidle_device *dev)
 				break;
 
 			rs_limits = msm_rpmrs_lowest_limits(true,
-						mode, latency_us, sleep_us);
+						mode, &time_param);
 
 			if (MSM_PM_DEBUG_IDLE & msm_pm_debug_mask)
 				pr_info("CPU%u: %s: %s, latency %uus, "
 					"sleep %uus, limit %p\n",
 					dev->cpu, __func__, state->desc,
-					latency_us, sleep_us, rs_limits);
+					time_param.latency_us,
+					time_param.sleep_us, rs_limits);
 
 			if ((MSM_PM_DEBUG_IDLE_LIMITS & msm_pm_debug_mask) &&
 					rs_limits)
@@ -870,7 +921,7 @@ int msm_pm_idle_prepare(struct cpuidle_device *dev)
 			state->target_residency = 0;
 			state->exit_latency = 0;
 			state->power_usage = rs_limits->power[dev->cpu];
-
+			modified_time_us = time_param.modified_time_us;
 			if (MSM_PM_SLEEP_MODE_POWER_COLLAPSE == mode)
 				msm_pm_idle_rs_limits = rs_limits;
 		} else {
@@ -878,6 +929,8 @@ int msm_pm_idle_prepare(struct cpuidle_device *dev)
 		}
 	}
 
+	if (modified_time_us && !dev->cpu)
+		msm_pm_set_timer(modified_time_us);
 	return 0;
 }
 
@@ -1010,7 +1063,7 @@ void msm_pm_cpu_enter_lowpower(unsigned int cpu)
 		msm_pm_power_collapse_standalone(false);
 	} else if (allow[MSM_PM_SLEEP_MODE_WAIT_FOR_INTERRUPT]) {
 		per_cpu(msm_pm_last_slp_mode, cpu)
-			= MSM_PM_SLEEP_MODE_POWER_COLLAPSE_STANDALONE;
+			= MSM_PM_SLEEP_MODE_WAIT_FOR_INTERRUPT;
 		msm_pm_swfi();
 	} else
 		per_cpu(msm_pm_last_slp_mode, cpu) = MSM_PM_SLEEP_MODE_NR;
@@ -1055,6 +1108,11 @@ static int msm_pm_enter(suspend_state_t state)
 	int64_t period = 0;
 	int64_t time = msm_timer_get_sclk_time(&period);
 #endif
+	struct msm_pm_time_params time_param;
+
+	time_param.latency_us = -1;
+	time_param.sleep_us = -1;
+	time_param.next_event_us = 0;
 
 	if (MSM_PM_DEBUG_SUSPEND & msm_pm_debug_mask)
 		pr_info("%s\n", __func__);
@@ -1094,7 +1152,7 @@ static int msm_pm_enter(suspend_state_t state)
 			msm_rpmrs_show_resources();
 
 		rs_limits = msm_rpmrs_lowest_limits(false,
-				MSM_PM_SLEEP_MODE_POWER_COLLAPSE, -1, -1);
+				MSM_PM_SLEEP_MODE_POWER_COLLAPSE, &time_param);
 
 		if ((MSM_PM_DEBUG_SUSPEND_LIMITS & msm_pm_debug_mask) &&
 				rs_limits)
@@ -1167,8 +1225,8 @@ static int __init msm_pm_init(void)
 	pgd_t *pc_pgd;
 	pmd_t *pmd;
 	unsigned long pmdval;
-#ifdef CONFIG_MSM_IDLE_STATS
 	unsigned int cpu;
+#ifdef CONFIG_MSM_IDLE_STATS
 	struct proc_dir_entry *d_entry;
 #endif
 	int ret;
@@ -1186,6 +1244,17 @@ static int __init msm_pm_init(void)
 	pmd[0] = __pmd(pmdval);
 	pmd[1] = __pmd(pmdval + (1 << (PGDIR_SHIFT - 1)));
 
+	msm_saved_state_phys =
+		allocate_contiguous_ebi_nomap(CPU_SAVED_STATE_SIZE *
+					      num_possible_cpus(), 4);
+	if (!msm_saved_state_phys)
+		return -ENOMEM;
+	msm_saved_state = ioremap_nocache(msm_saved_state_phys,
+					  CPU_SAVED_STATE_SIZE *
+					  num_possible_cpus());
+	if (!msm_saved_state)
+		return -ENOMEM;
+
 	/* It is remotely possible that the code in msm_pm_collapse_exit()
 	 * which turns on the MMU with this mapping is in the
 	 * next even-numbered megabyte beyond the
@@ -1195,6 +1264,8 @@ static int __init msm_pm_init(void)
 	pmd[2] = __pmd(pmdval + (2 << (PGDIR_SHIFT - 1)));
 	flush_pmd_entry(pmd);
 	msm_pm_pc_pgd = virt_to_phys(pc_pgd);
+	clean_caches((unsigned long)&msm_pm_pc_pgd, sizeof(msm_pm_pc_pgd),
+		     virt_to_phys(&msm_pm_pc_pgd));
 
 	ret = request_irq(rpm_cpu0_wakeup_irq,
 			msm_pm_rpm_wakeup_interrupt, IRQF_TRIGGER_RISING,
@@ -1253,6 +1324,7 @@ static int __init msm_pm_init(void)
 	msm_spm_allow_x_cpu_set_vdd(false);
 
 	suspend_set_ops(&msm_pm_ops);
+	hrtimer_init(&pm_hrtimer, CLOCK_MONOTONIC, HRTIMER_MODE_ABS);
 	msm_cpuidle_init();
 
 	return 0;

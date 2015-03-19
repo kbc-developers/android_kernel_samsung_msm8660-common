@@ -13,14 +13,14 @@
 
 #ifndef VIDC_INIT_H
 #define VIDC_INIT_H
-#include <linux/msm_ion.h>
+#include <linux/ion.h>
 #include <media/msm/vidc_type.h>
 #include <media/msm/vcd_property.h>
 
 #define VIDC_MAX_NUM_CLIENTS 4
 #define MAX_VIDEO_NUM_OF_BUFF 100
-#define MAX_META_BUFFERS 32
 #define MAX_MV_BUFFERS 32
+#define MAX_META_BUFFERS 32
 
 enum buffer_dir {
 	BUFFER_TYPE_INPUT,

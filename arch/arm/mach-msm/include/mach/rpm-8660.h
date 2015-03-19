@@ -1,4 +1,4 @@
-/* Copyright (c) 2011, Code Aurora Forum. All rights reserved.
+/* Copyright (c) 2011, The Linux Foundation. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -330,7 +330,11 @@ enum {
 	MSM_RPMRS_VDD_DIG_RET_LOW = 500,
 	MSM_RPMRS_VDD_DIG_RET_HIGH = 750,
 	MSM_RPMRS_VDD_DIG_ACTIVE = 1000,
+#ifdef CONFIG_CPU_OVERCLOCK
+	MSM_RPMRS_VDD_DIG_MAX = 1350,
+#else
 	MSM_RPMRS_VDD_DIG_MAX = 1250,
+#endif
 };
 
 enum {

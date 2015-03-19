@@ -79,7 +79,8 @@ enum {
 	CHG_MODE_NONE,
 	CHG_MODE_AC,
 	CHG_MODE_USB,
-	CHG_MODE_MISC
+	CHG_MODE_MISC,
+	CHG_MODE_UNKNOWN
 };
 
 enum {
@@ -233,7 +234,7 @@ static void smb328a_set_command_reg(struct i2c_client *client)
 			__func__, reg, data);
 		if (chip->chg_mode == CHG_MODE_AC ||
 			chip->chg_mode == CHG_MODE_MISC ||
-			chip->chg_mode == CHG_MODE_USB)
+			chip->chg_mode == CHG_MODE_UNKNOWN)
 			data = 0xad;
 		else
 			data = 0xa9; /* usb */
@@ -272,8 +273,12 @@ static void smb328a_charger_function_conrol(struct i2c_client *client)
 		data = (u8)val;
 		dev_info(&client->dev, "%s : reg (0x%x) = 0x%x\n",
 			__func__, reg, data);
-		if (chip->chg_mode == CHG_MODE_AC || chip->chg_mode == CHG_MODE_USB) {
-			set_data = 0xf7; /* fast 1200mA */
+		if (chip->chg_mode == CHG_MODE_AC) {
+#if defined(CONFIG_USA_MODEL_SGH_I717)
+			set_data = 0xB7; /* fast 1A */
+#else
+			set_data = 0x97; /* fast 900mA */
+#endif
 		} else if (chip->chg_mode == CHG_MODE_MISC) {
 			set_data = 0x57; /* fast 700mA */
 		} else
@@ -299,8 +304,8 @@ static void smb328a_charger_function_conrol(struct i2c_client *client)
 		data = (u8)val;
 		dev_info(&client->dev, "%s : reg (0x%x) = 0x%x\n",
 			__func__, reg, data);
-		if (chip->chg_mode == CHG_MODE_AC || chip->chg_mode == CHG_MODE_USB)
-			set_data = 0xf0; /* input 1200mA */
+		if (chip->chg_mode == CHG_MODE_AC)
+			set_data = 0xb0; /* input 1A */
 		else if (chip->chg_mode == CHG_MODE_MISC)
 			set_data = 0x50; /* input 700mA */
 		else
@@ -787,8 +792,6 @@ static int smb328a_set_top_off(struct i2c_client *client, int top_off)
 	return 0;
 }
 
-extern int cable_type;
-
 static int smb328a_set_charging_current(struct i2c_client *client,
 					int chg_current)
 {
@@ -801,12 +804,14 @@ static int smb328a_set_charging_current(struct i2c_client *client,
 
 	chip->chg_set_current = chg_current;
 
-	if (cable_type == 1) {
+	if (chg_current == 500) {
 		chip->chg_mode = CHG_MODE_USB;
-	} else if (cable_type == 2) {
+	} else if (chg_current == 900) {
 		chip->chg_mode = CHG_MODE_AC;
-	} else if (cable_type == 3) {
+	} else if (chg_current == 700) {
 		chip->chg_mode = CHG_MODE_MISC;
+	} else if (chg_current == 450) {
+		chip->chg_mode = CHG_MODE_UNKNOWN;
 	} else {
 		pr_err("%s : error! invalid setting current (%d)\n",
 			__func__, chg_current);
@@ -1289,8 +1294,10 @@ static int smb328a_enable_charging(struct i2c_client *client)
 					__func__, reg, data);
 		if (chip->chg_mode == CHG_MODE_AC ||
 			chip->chg_mode == CHG_MODE_MISC ||
-			chip->chg_mode == CHG_MODE_USB)
+			chip->chg_mode == CHG_MODE_UNKNOWN)
 			data = 0xad;
+		else if (chip->chg_mode == CHG_MODE_USB)
+			data = 0xa9;
 		else
 			data = 0xb9;
 		if (smb328a_write_reg(client, reg, data) < 0) {
@@ -1382,7 +1389,7 @@ static int smb328a_chg_set_property(struct power_supply *psy,
 			}
 			ret = smb328a_enable_charging(chip->client);
 			smb328a_watchdog_control(chip->client, true);
-#if defined(CONFIG_TARGET_LOCALE_KOR)
+#if defined(CONFIG_TARGET_LOCALE_KOR) || defined(CONFIG_TARGET_LOCALE_JPN)
 #if defined(CONFIG_KOR_MODEL_SHV_E110S) || \
 	defined(CONFIG_KOR_MODEL_SHV_E120L) || \
 	defined(CONFIG_KOR_MODEL_SHV_E120S) || \
@@ -1650,7 +1657,8 @@ static irqreturn_t smb328a_int_work_func(int irq, void *smb_chip)
 	defined(CONFIG_KOR_MODEL_SHV_E120L) || \
 	defined(CONFIG_KOR_MODEL_SHV_E120S) || \
 	defined(CONFIG_KOR_MODEL_SHV_E120K) || \
-	defined(CONFIG_KOR_MODEL_SHV_E110S)
+	defined(CONFIG_KOR_MODEL_SHV_E110S) || \
+	defined (CONFIG_JPN_MODEL_SC_05D)
 	if (intr_c & 0x80) {
 		pr_info("%s : charger watchdog intr triggerd!\n", __func__);
 		/* panic("charger watchdog intr triggerd!"); */
@@ -1680,7 +1688,8 @@ static int __devinit smb328a_probe(struct i2c_client *client,
 
 #if defined(CONFIG_KOR_MODEL_SHV_E160S) || \
 	defined(CONFIG_KOR_MODEL_SHV_E160K) || \
-	defined(CONFIG_KOR_MODEL_SHV_E160L)
+	defined(CONFIG_KOR_MODEL_SHV_E160L) || \
+	defined (CONFIG_JPN_MODEL_SC_05D)
 	if (get_hw_rev() < 0x4) {
 		pr_info("%s: SMB328A driver Loading SKIP!!!\n", __func__);
 		return 0;

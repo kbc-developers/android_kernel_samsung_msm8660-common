@@ -1,4 +1,4 @@
-/* Copyright (c) 2010-2012, Code Aurora Forum. All rights reserved.
+/* Copyright (c) 2010-2012, The Linux Foundation. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -63,7 +63,8 @@ defined(CONFIG_KOR_MODEL_SHV_E160S) ||\
 defined(CONFIG_KOR_MODEL_SHV_E160K) ||\
 defined(CONFIG_JPN_MODEL_SC_03D) ||\
 defined(CONFIG_USA_MODEL_SGH_T769) ||\
-defined(CONFIG_USA_MODEL_SGH_I717)
+defined(CONFIG_USA_MODEL_SGH_I717) ||\
+defined(CONFIG_JPN_MODEL_SC_05D)
 #define CONFIG_VPCM_INTERFACE_ON_CSFB
 #endif
 
@@ -2730,7 +2731,8 @@ defined(CONFIG_KOR_MODEL_SHV_E120K) ||\
 defined(CONFIG_KOR_MODEL_SHV_E120L) ||\
 defined (CONFIG_KOR_MODEL_SHV_E160S) ||\
 defined (CONFIG_KOR_MODEL_SHV_E160K) ||\
-defined(CONFIG_KOR_MODEL_SHV_E160L)
+defined(CONFIG_KOR_MODEL_SHV_E160L) ||\
+defined (CONFIG_JPN_MODEL_SC_05D)
 		/* kks_111020 */
 		/*
 		 * Qualcomm Gon's workaround code to solve the sound mute problem
