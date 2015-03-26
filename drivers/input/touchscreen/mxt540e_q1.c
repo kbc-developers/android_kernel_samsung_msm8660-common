@@ -626,7 +626,7 @@ static int __devinit mxt540e_init_touch_driver(struct mxt540e_data *data)
 {
 	struct object_t *object_table;
 	u32 read_crc = 0;
-	u32 calc_crc;
+	u32 calc_crc = 0;
 	u16 crc_address;
 	u16 dummy;
 	int i, j;
