@@ -59,6 +59,26 @@ $(obj)/zImage:	$(obj)/compressed/vmlinux FORCE
 
 endif
 
+Targets += $(dtb-y)
+ 
+# Rule to build device tree blobs
+$(obj)/%.dtb: $(src)/dts/%.dts FORCE
+       $(call if_changed_dep,dtc)
+ 
+$(obj)/dtbs: $(addprefix $(obj)/, $(dtb-y))
+ 
+clean-files := *.dtb
+ 
+ifneq ($(LOADADDR),)
+  UIMAGE_LOADADDR=$(LOADADDR)
+else
+  ifeq ($(CONFIG_ZBOOT_ROM),y)
+    UIMAGE_LOADADDR=$(CONFIG_ZBOOT_ROM_TEXT)
+  else
+    UIMAGE_LOADADDR=$(ZRELADDR)
+  endif
+endif
+
 quiet_cmd_uimage = UIMAGE  $@
       cmd_uimage = $(CONFIG_SHELL) $(MKIMAGE) -A arm -O linux -T kernel \
 		   -C none -a $(LOADADDR) -e $(STARTADDR) \
@@ -111,4 +131,5 @@ i:
 	$(CONFIG_SHELL) $(srctree)/$(src)/install.sh $(KERNELRELEASE) \
 	$(obj)/Image System.map "$(INSTALL_PATH)"
 
+subdir-	    := bootp compressed
 subdir-	    := bootp compressed
