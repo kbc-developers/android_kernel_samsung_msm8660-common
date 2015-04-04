@@ -167,8 +167,8 @@ static ssize_t blink_control_write(struct device *dev,
 	}
 
 	/* Only happens when BLN is enabled without any initial notification parameters */
-	if(unlikely(!bln_conf.on_ms && !bln_conf.off_ms)){
-		bln_conf.always_on = true;
+	if(unlikely(!ebln_conf.on_ms && !ebln_conf.off_ms)){
+		ebln_conf.always_on = true;
 	}
 
 	set_ebln_state(data ? EBLN_ON : EBLN_OFF);
