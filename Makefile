@@ -376,24 +376,15 @@ KBUILD_CFLAGS   := -Wall -Werror -Wundef -Wstrict-prototypes -Wno-trigraphs \
                    -Wno-error=maybe-uninitialized \
                    -w
 
-ifeq ($(USE_CFLAGS_OPTION),y)
 MODFLAGS  = -fgcse-lm -fgcse-sm -fsched-spec-load -fforce-addr -ffast-math \
-            -fsingle-precision-constant -mcpu=cortex-a8 -mtune=cortex-a8 -marm -mfpu=neon \
+            -fsingle-precision-constant -mcpu=cortex-a15 -mtune=cortex-a15 -marm -mfpu=neon \
             -mfpu=neon-vfpv4
-endif
+
 KBUILD_AFLAGS_KERNEL :=
-ifeq ($(USE_CFLAGS_OPTION),y)
 KBUILD_CFLAGS_KERNEL := $(MODFLAGS)
-else
-KBUILD_CFLAGS_KERNEL :=
-endif
 KBUILD_AFLAGS   := -D__ASSEMBLY__
 KBUILD_AFLAGS_MODULE  := -DMODULE
-ifeq ($(USE_CFLAGS_OPTION),y)
 KBUILD_CFLAGS_MODULE  := -DMODULE $(MODFLAGS)
-else
-KBUILD_CFLAGS_MODULE  := -DMODULE
-endif
 KBUILD_LDFLAGS_MODULE := -T $(srctree)/scripts/module-common.lds
 
 # Read KERNELRELEASE from include/config/kernel.release (if it exists)
