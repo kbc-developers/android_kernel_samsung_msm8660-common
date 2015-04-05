@@ -1127,7 +1127,7 @@ static int __init msm_mpdec_init(void) {
 		per_cpu(msm_mpdec_cpudata, cpu).times_cpu_unplugged = 0;
 		per_cpu(msm_mpdec_cpudata, cpu).times_cpu_hotplugged = 0;
 #ifdef CONFIG_MSM_MPDEC_INPUTBOOST_CPUMIN
-		per_cpu(msm_mpdec_cpudata, cpu).norm_min_freq = 384000;
+		per_cpu(msm_mpdec_cpudata, cpu).norm_min_freq = CONFIG_MSM_CPU_FREQ_MIN;
 		switch (cpu) {
 			case 0:
 			case 1:
