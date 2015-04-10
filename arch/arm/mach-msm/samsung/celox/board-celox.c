@@ -950,6 +950,11 @@ static int msm_hsusb_pmic_id_notif_init(void (*callback)(int online), int init)
 		pr_err("%s: USB_ID is not routed to PMIC\n", __func__);
 		return -ENOTSUPP;
 	}
+#elif defined (CONFIG_JPN_MODEL_SC_03D)
+	if(get_hw_rev() < 0x07) {
+		pr_err("%s: USB_ID is not routed to PMIC\n", __func__);
+		return -ENOTSUPP;
+	}
 #else
 	pr_err("%s: USB_ID is not routed to PMIC\n", __func__);
 	return -ENOTSUPP;
@@ -1574,6 +1579,16 @@ static void config_camera_off_gpios_fluid(void)
 }
 #endif
 
+#if defined (CONFIG_JPN_MODEL_SC_03D)
+static uint32_t camera_off_gpio_table[] = {
+	/* parallel CAMERA interfaces */
+	GPIO_CFG(50,  0, GPIO_CFG_OUTPUT, GPIO_CFG_PULL_DOWN, GPIO_CFG_2MA), /* ISP_RST */
+	GPIO_CFG(37,  0, GPIO_CFG_OUTPUT, GPIO_CFG_PULL_DOWN, GPIO_CFG_2MA), /* CAM_IO_EN */
+	GPIO_CFG(41,  0, GPIO_CFG_OUTPUT, GPIO_CFG_PULL_DOWN, GPIO_CFG_2MA), /* CAM_VGA_RST */
+	GPIO_CFG(42,  0, GPIO_CFG_OUTPUT, GPIO_CFG_PULL_DOWN, GPIO_CFG_2MA), /* CAM_VGA_EN */
+	GPIO_CFG(32,  0, GPIO_CFG_OUTPUT, GPIO_CFG_PULL_DOWN, GPIO_CFG_2MA), /* CAM_MCLK_F */
+};
+#else
 static uint32_t camera_off_gpio_table[] = {
 	/* parallel CAMERA interfaces */
 	GPIO_CFG(50,  0, GPIO_CFG_OUTPUT, GPIO_CFG_PULL_DOWN, GPIO_CFG_2MA), /* ISP_RST */
@@ -1582,6 +1597,7 @@ static uint32_t camera_off_gpio_table[] = {
 	GPIO_CFG(42,  0, GPIO_CFG_OUTPUT, GPIO_CFG_PULL_DOWN, GPIO_CFG_2MA), /* CAM_VGA_EN */	
 	GPIO_CFG(32,  0, GPIO_CFG_OUTPUT, GPIO_CFG_PULL_DOWN, GPIO_CFG_2MA), /* CAM_MCLK_F */
 };
+#endif
 
 static uint32_t camera_on_gpio_table[] = {
 	/* parallel CAMERA interfaces */
@@ -1859,7 +1875,7 @@ static int camera_power_maincam(int onoff)
 #endif
 		
 		//HOST 1.8V
-#if defined (CONFIG_KOR_MODEL_SHV_E110S) // Celox KOR
+#if defined (CONFIG_KOR_MODEL_SHV_E110S) || defined(CONFIG_JPN_MODEL_SC_03D) // Celox KOR
 		if (get_hw_rev() >= 0x04)
 			i_host18 = regulator_get(NULL, "8901_usb_otg");
 		else
@@ -2000,8 +2016,8 @@ static int camera_power_vtcam(int onoff)
 	int enable_io18 = 0; // i2c pullup (0;sensorIO 1.8V  -> 1;host 1.8V)
 	printk("%s :%s\n", __func__, onoff ? "ON" : "OFF");
 
-	
-#if defined (CONFIG_KOR_MODEL_SHV_E110S) 
+
+#if defined (CONFIG_KOR_MODEL_SHV_E110S) || defined(CONFIG_JPN_MODEL_SC_03D)
 	if (get_hw_rev()< 0x5) //celoxS_REV03
 		enable_io18 = 1;
 #elif defined (CONFIG_USA_MODEL_SGH_I727)
@@ -2079,7 +2095,7 @@ static int camera_power_vtcam(int onoff)
 
 		
 		//HOST 1.8V
-#if defined (CONFIG_KOR_MODEL_SHV_E110S) 
+#if defined (CONFIG_KOR_MODEL_SHV_E110S) || defined(CONFIG_JPN_MODEL_SC_03D)
 		if (get_hw_rev() >= 0x04)
 			i_host18 = regulator_get(NULL, "8901_usb_otg");
 		else
@@ -3463,7 +3479,7 @@ static struct sec_bat_platform_data sec_bat_pdata = {
 	.fuel_gauge_name	= "fuelgauge",
 	.charger_name 		= "sec-charger",
 	.get_lpcharging_state	= sec_bat_get_lpcharging_state,
-#if defined(CONFIG_KOR_MODEL_SHV_E110S)
+#if defined(CONFIG_KOR_MODEL_SHV_E110S) || defined(CONFIG_JPN_MODEL_SC_03D)
 	.hwrev_has_2nd_therm	= 0x7,
 #else
 	.hwrev_has_2nd_therm	= -1,
@@ -5092,7 +5108,11 @@ static struct sec_jack_zone jack_zones[] = {
 #else
                 .adc_high       = 3,
 #endif
+#if defined (CONFIG_JPN_MODEL_SC_03D)
+                .delay_ms       = 25,
+#else
                 .delay_ms       = 10,
+#endif
                 .check_count    = 10,
                 .jack_type      = SEC_HEADSET_3POLE,
         },
@@ -5104,13 +5124,21 @@ static struct sec_jack_zone jack_zones[] = {
 #else
                 .adc_high       = 980,
 #endif
+#if defined (CONFIG_JPN_MODEL_SC_03D)
+                .delay_ms       = 25,
+#else
                 .delay_ms       = 10,
+#endif
                 .check_count    = 10,
                 .jack_type      = SEC_HEADSET_3POLE,
         },
         [2] = {
                 .adc_high       = 2780,
+ #if defined (CONFIG_JPN_MODEL_SC_03D)
+                .delay_ms       = 25,
+#else
                 .delay_ms       = 10,
+#endif
                 .check_count    = 10,
                 .jack_type      = SEC_HEADSET_4POLE,
         },
@@ -5145,7 +5173,11 @@ static struct sec_jack_buttons_zone jack_buttons_zones[] = {
 
 int get_sec_det_jack_state(void)
 {
-#if defined (CONFIG_KOR_MODEL_SHV_E110S)
+#if defined (CONFIG_JPN_MODEL_SC_03D)
+	if(get_hw_rev() == 0x04){ // only for JPN_NTT REV03
+			return gpio_get_value_cansleep(PM8058_GPIO_PM_TO_SYS(PMIC_GPIO_EAR_DET));
+	}else
+#elif defined (CONFIG_KOR_MODEL_SHV_E110S)
 	if(get_hw_rev()==0x05) //only for celox_REV05
 		return(gpio_get_value_cansleep(PM8058_GPIO_PM_TO_SYS(PMIC_GPIO_EAR_DET)));
 	else		
@@ -5175,7 +5207,12 @@ static int get_sec_send_key_state(void)
 		gpio_set_value_cansleep(PM8058_GPIO_PM_TO_SYS(PMIC_GPIO_EAR_MICBIAS_EN),1);	
 	}
 
-#if defined(CONFIG_KOR_MODEL_SHV_E110S)
+#if defined(CONFIG_JPN_MODEL_SC_03D)
+	if(get_hw_rev() == 0x04) // only for JPN_NTT REV03
+	{
+		return gpio_get_value_cansleep(PM8058_GPIO_PM_TO_SYS(PMIC_GPIO_SHORT_SENDEND));
+	}else
+#elif defined(CONFIG_KOR_MODEL_SHV_E110S)
 	if(get_hw_rev()==0x05) //only for celox_REV05
 	{
 		return(gpio_get_value_cansleep(PM8058_GPIO_PM_TO_SYS(PMIC_GPIO_SHORT_SENDEND)));
@@ -5384,7 +5421,7 @@ static int max17040_low_batt_cb(void)
 static struct max17040_platform_data max17040_pdata = {
 	.hw_init = max17040_hw_init,
 	.low_batt_cb = max17040_low_batt_cb,
-#if defined(CONFIG_KOR_MODEL_SHV_E110S)
+#if defined(CONFIG_KOR_MODEL_SHV_E110S) || defined(CONFIG_JPN_MODEL_SC_03D)
 	.rcomp_value = 0xf01f,
 #elif defined(CONFIG_EUR_MODEL_GT_I9210)
 	.rcomp_value = 0xf71f,
@@ -5864,6 +5901,34 @@ static struct snd_set_ampgain init_ampgain[] = {
 		.in2_gain = 2,
 		.hp_att = 1,
 		.hp_gainup = 1,
+		.sp_att = 26,
+		.sp_gainup = 1,
+	},
+#elif defined (CONFIG_JPN_MODEL_SC_03D)
+// SPK
+	[0] = {
+		.in1_gain = 2,
+		.in2_gain = 2,
+		.hp_att = 0,
+		.hp_gainup = 0,
+		.sp_att = 26,
+		.sp_gainup = 1,
+	},
+	// HEADSET
+	[1] = {
+		.in1_gain = 3,
+		.in2_gain = 2,
+		.hp_att = 31,
+		.hp_gainup = 0,
+		.sp_att = 0,
+		.sp_gainup = 0,
+	},
+	// SPK + HEADSET
+	[2] = {
+		.in1_gain = 2,
+		.in2_gain = 2,
+		.hp_att = 1,
+		.hp_gainup = 0,
 		.sp_att = 26,
 		.sp_gainup = 1,
 	},
@@ -8714,10 +8779,6 @@ static void tsp_power_init(void)
 	struct regulator *l1;
 	struct regulator *L4;
 #endif
-#if defined(CONFIG_KOR_MODEL_SHV_E120L)
-	struct regulator *l3;
-#endif
-
 #ifdef CONFIG_BATTERY_SEC
 	if(is_lpm_boot){
    	        printk("%s: MXT224 Power On skipped by LPM\n", __func__);
@@ -8727,17 +8788,96 @@ static void tsp_power_init(void)
 
 	printk("[TSP] Power Down S to discharge for unexpected leackage current\n");
 
-#if defined(CONFIG_KOR_MODEL_SHV_E120L)
-	l3 = regulator_get(NULL, "8058_l3");
+#if defined(CONFIG_KOR_MODEL_SHV_E110S) || defined(CONFIG_JPN_MODEL_SC_03D)
+	rc = gpio_request(TOUCHSCREEN_IRQ, "TOUCHSCREEN_IRQ");
+	if (rc) {
+		pr_err("'%s'(%d) gpio_request failed, rc=%d\n",
+			"TOUCHSCREEN_IRQ", TOUCHSCREEN_IRQ, rc);
+		return;
+	}
+	rc = gpio_request(TSP_SDA, "TSP_SDA");
+	if (rc) {
+		pr_err("'%s'(%d) gpio_request failed, rc=%d\n",
+			"TSP_SDA", TSP_SDA, rc);
+		goto error1;
+	}
+	rc = gpio_request(TSP_SCL, "TSP_SCL");
+	if (rc) {
+		pr_err("'%s'(%d) gpio_request failed, rc=%d\n",
+			"TSP_SCL", TSP_SCL, rc);
+		goto error2;
+	}
+	gpio_direction_output(TOUCHSCREEN_IRQ, 0);
+	gpio_direction_output(TSP_SDA, 0);
+	gpio_direction_output(TSP_SCL, 0);
+	
+	gpio_free(TOUCHSCREEN_IRQ);
+	gpio_free(TSP_SDA);
+	gpio_free(TSP_SCL);	
+	L4 = regulator_get(NULL, "8901_l4");
+	if (IS_ERR(L4)) {
+		rc = PTR_ERR(L4);
+		pr_err("%s: L4 get failed (%d)\n",
+			   __func__, rc);
+		return;
+	}
+	rc = regulator_set_voltage(L4, 1800000, 1800000);
+	if (rc) {
+		pr_err("%s: L4 set level failed (%d)\n",
+			   __func__, rc);
+		return;
+	}
+	if (regulator_is_enabled(L4)) {
+		rc = regulator_disable(L4);
+		if (rc) {
+			pr_err("%s: L11 vreg enable failed (%d)\n",
+				   __func__, rc);
+			return;
+		}
+	}
+	regulator_put(L4);
+	l1 = regulator_get(NULL, "8901_l1");
+	if (IS_ERR(l1)) {
+		rc = PTR_ERR(l1);
+		pr_err("%s: l1 get failed (%d)\n",
+			   __func__, rc);
+		return;
+	}
 
-	ret = regulator_set_voltage(l3, 1800000, 1800000);
+	ret = regulator_set_voltage(l1, 3300000, 3300000);
 	if (ret) {
 		printk("%s: error setting voltage\n", __func__);
 	}
 
+	if (regulator_is_enabled(l1)) {
+		ret = regulator_disable(l1);
+		if (ret) {
+			printk("%s: error enabling regulator\n", __func__);
+		}
+	}	
+	printk("[TSP] Power Down E to discharge for unexpected leackage current\n");
+	return;
+	
+error2:
+    gpio_free(TSP_SDA);
+error1:
+    gpio_free(TOUCHSCREEN_IRQ);
+	
+#elif defined(CONFIG_KOR_MODEL_SHV_E120L)
+	struct regulator *l3;
+
+	l3 = regulator_get(NULL, "8058_l3");
+	//		   if (IS_ERR(l17))
+	//			return -1;
+
+	ret = regulator_set_voltage(l3, 1800000, 1800000);
+	if (ret) {
+	printk("%s: error setting voltage\n", __func__);
+	}
+
 	ret = regulator_enable(l3);
 	if (ret) {
-		printk("%s: error enabling regulator\n", __func__);
+	printk("%s: error enabling regulator\n", __func__);
 	}
 	
 	l1 = regulator_get(NULL, "8901_l1");
@@ -8751,7 +8891,8 @@ static void tsp_power_init(void)
 	if (ret) {
 		printk("%s: error enabling regulator\n", __func__);
 	}
-#else
+#elif defined(CONFIG_USA_MODEL_SGH_I727) || defined(CONFIG_USA_MODEL_SGH_T989)
+
 	rc = gpio_request(TOUCHSCREEN_IRQ, "TOUCHSCREEN_IRQ");
 	if (rc) {
 		pr_err("'%s'(%d) gpio_request failed, rc=%d\n",	"TOUCHSCREEN_IRQ", TOUCHSCREEN_IRQ, rc);
@@ -8767,16 +8908,15 @@ static void tsp_power_init(void)
 		pr_err("'%s'(%d) gpio_request failed, rc=%d\n",	"TSP_SCL", TSP_SCL, rc);
 		goto error2;
 	}
-
 	gpio_direction_output(TOUCHSCREEN_IRQ, 0);
 	gpio_direction_output(TSP_SDA, 0);
 	gpio_direction_output(TSP_SCL, 0);
-
+	
 	gpio_free(TOUCHSCREEN_IRQ);
 	gpio_free(TSP_SDA);
-	gpio_free(TSP_SCL);
+	gpio_free(TSP_SCL);	
 
-#if !defined (CONFIG_JPN_MODEL_SC_03D)
+
 	L4 = regulator_get(NULL, "8901_l4");
 	if (IS_ERR(L4)) {
 		rc = PTR_ERR(L4);
@@ -8798,14 +8938,14 @@ static void tsp_power_init(void)
 
 	ret = regulator_set_voltage(l1, 3300000, 3300000);
 	if (ret) {
-		printk("%s: error setting voltage\n", __func__);
+	    printk("%s: error setting voltage\n", __func__);
 	}
 
 	if (regulator_is_enabled(l1)) {
 		ret = regulator_disable(l1);
-		if (ret) {
-			printk("%s: error enabling regulator\n", __func__);
-		}
+	    if (ret) {
+	        printk("%s: error enabling regulator\n", __func__);
+	    }
 	}	
 	if (regulator_is_enabled(L4)) {
 		rc = regulator_disable(L4);
@@ -8814,25 +8954,133 @@ static void tsp_power_init(void)
 			return;
 		}
 	}
-
 	regulator_put(L4);
-#if !defined(CONFIG_KOR_MODEL_SHV_E110S)
 	regulator_put(l1);
-#endif
-#endif
+	return;
 
+
+error2:
+    gpio_free(TSP_SDA);
+error1:
+    gpio_free(TOUCHSCREEN_IRQ);
+    
+#elif defined(CONFIG_USA_MODEL_SGH_I717)
+	rc = gpio_request(TOUCHSCREEN_IRQ, "TOUCHSCREEN_IRQ");
+	if (rc) {
+		pr_err("'%s'(%d) gpio_request failed, rc=%d\n",
+			"TOUCHSCREEN_IRQ", TOUCHSCREEN_IRQ, rc);
+		return;
+	}
+	rc = gpio_request(TSP_SDA, "TSP_SDA");
+	if (rc) {
+		pr_err("'%s'(%d) gpio_request failed, rc=%d\n",
+			"TSP_SDA", TSP_SDA, rc);
+		goto error1;
+	}
+	rc = gpio_request(TSP_SCL, "TSP_SCL");
+	if (rc) {
+		pr_err("'%s'(%d) gpio_request failed, rc=%d\n",
+			"TSP_SCL", TSP_SCL, rc);
+		goto error2;
+	}
+	gpio_direction_output(TOUCHSCREEN_IRQ, 0);
+	gpio_direction_output(TSP_SDA, 0);
+	gpio_direction_output(TSP_SCL, 0);
+	
+	gpio_free(TOUCHSCREEN_IRQ);
+	gpio_free(TSP_SDA);
+	gpio_free(TSP_SCL);	
+
+	L4 = regulator_get(NULL, "8901_l4");
+	if (IS_ERR(L4)) {
+		rc = PTR_ERR(L4);
+		pr_err("%s: L4 get failed (%d)\n",
+			   __func__, rc);
+		return;
+	}
+	rc = regulator_set_voltage(L4, 1800000, 1800000);
+	if (rc) {
+		pr_err("%s: L4 set level failed (%d)\n",
+			   __func__, rc);
+		return;
+	}
+
+	l1 = regulator_get(NULL, "8901_l1");
+	if (IS_ERR(l1)) {
+		rc = PTR_ERR(l1);
+		pr_err("%s: l1 get failed (%d)\n",
+			   __func__, rc);
+		return;
+	}
+
+	ret = regulator_set_voltage(l1, 3300000, 3300000);
+	if (ret) {
+	printk("%s: error setting voltage\n", __func__);
+	}
+
+	if (regulator_is_enabled(l1)) {
+		ret = regulator_disable(l1);
+	if (ret) {
+	printk("%s: error enabling regulator\n", __func__);
+	}
+	}	
+	if (regulator_is_enabled(L4)) {
+		rc = regulator_disable(L4);
+		if (rc) {
+			pr_err("%s: L11 vreg enable failed (%d)\n",
+				   __func__, rc);
+			return;
+		}
+	}
+	regulator_put(L4);
+	regulator_put(l1);
+	return;
+
+error2:
+    gpio_free(TSP_SDA);
+error1:
+    gpio_free(TOUCHSCREEN_IRQ);
+
+#elif defined (CONFIG_JPN_MODEL_SC_03D)
+	rc = gpio_request(TOUCHSCREEN_IRQ, "TOUCHSCREEN_IRQ");
+	if (rc) {
+		pr_err("'%s'(%d) gpio_request failed, rc=%d\n",
+			"TOUCHSCREEN_IRQ", TOUCHSCREEN_IRQ, rc);
+		return;
+	}
+	rc = gpio_request(TSP_SDA, "TSP_SDA");
+	if (rc) {
+		pr_err("'%s'(%d) gpio_request failed, rc=%d\n",
+			"TSP_SDA", TSP_SDA, rc);
+		goto error1;
+	}
+	rc = gpio_request(TSP_SCL, "TSP_SCL");
+	if (rc) {
+		pr_err("'%s'(%d) gpio_request failed, rc=%d\n",
+			"TSP_SCL", TSP_SCL, rc);
+		goto error2;
+	}
+	gpio_direction_output(TOUCHSCREEN_IRQ, 0);
+	gpio_direction_output(TSP_SDA, 0);
+	gpio_direction_output(TSP_SCL, 0);
+
+	gpio_free(TOUCHSCREEN_IRQ);
+	gpio_free(TSP_SDA);
+	gpio_free(TSP_SCL); 
 	return;
 
 error2:
 	gpio_free(TSP_SDA);
 error1:
 	gpio_free(TOUCHSCREEN_IRQ);
-#endif
+#endif	
+
+
 }
 #endif
 
 static struct regulator *vsensor_2p85 = NULL;
-#if defined(CONFIG_KOR_MODEL_SHV_E110S) || defined(CONFIG_EUR_MODEL_GT_I9210)|| defined(CONFIG_USA_MODEL_SGH_I577)|| defined(CONFIG_USA_MODEL_SGH_T769)
+#if defined(CONFIG_KOR_MODEL_SHV_E110S) || defined(CONFIG_JPN_MODEL_SC_03D) || defined(CONFIG_EUR_MODEL_GT_I9210) || defined(CONFIG_USA_MODEL_SGH_I577) || defined(CONFIG_USA_MODEL_SGH_T769)
 static struct regulator *vsensor_2p85_magnetic = NULL;
 #endif
 #if defined(CONFIG_USA_MODEL_SGH_I757) || defined (CONFIG_CAN_MODEL_SGH_I757M)
@@ -8945,7 +9193,7 @@ static void sensor_power_on_vdd(int vdd_2p85_on, int vdd_1p8_on, int vdd_2p4_on,
 	}
 #endif
 
-#if defined(CONFIG_KOR_MODEL_SHV_E110S) || defined(CONFIG_EUR_MODEL_GT_I9210) ||  defined(CONFIG_USA_MODEL_SGH_I577)|| defined(CONFIG_USA_MODEL_SGH_T769)
+#if defined(CONFIG_KOR_MODEL_SHV_E110S) || defined(CONFIG_JPN_MODEL_SC_03D) || defined(CONFIG_EUR_MODEL_GT_I9210) ||  defined(CONFIG_USA_MODEL_SGH_I577) || defined(CONFIG_USA_MODEL_SGH_T769)
 	if(vsensor_2p85_magnetic == NULL) {
 		vsensor_2p85_magnetic = regulator_get(NULL, "8058_l8");
 		if (IS_ERR(vsensor_2p85_magnetic))
@@ -9004,7 +9252,7 @@ static void sensor_power_off_vdd(int vdd_2p85_off, int vdd_1p8_off, int vdd_2p4_
 	}
 #endif
 
-#if defined(CONFIG_KOR_MODEL_SHV_E110S) || defined(CONFIG_EUR_MODEL_GT_I9210)
+#if defined(CONFIG_KOR_MODEL_SHV_E110S) || defined(CONFIG_JPN_MODEL_SC_03D) || defined(CONFIG_EUR_MODEL_GT_I9210)
 		if(vdd_2p85_mag_off) {
 			sensor_power_2p85_mag_cnt--;
 			if(regulator_is_enabled(vsensor_2p85_magnetic)) {
@@ -9101,6 +9349,11 @@ static void sensor_power_on(void)
 		sensor_power_on_vdd(1, 0, 0, 0);
 	else
 		sensor_power_on_vdd(1, 1, 0, 0);
+#elif defined(CONFIG_JPN_MODEL_SC_03D)
+	if(get_hw_rev() >= 0x06)
+		sensor_power_on_vdd(1, 0, 0, 1);
+	else 
+		sensor_power_on_vdd(1, 1, 0, 0);
 #elif defined(CONFIG_USA_MODEL_SGH_I757) || defined (CONFIG_CAN_MODEL_SGH_I757M)
 	sensor_power_on_vdd(1, 0, 0, 0);
 #else
@@ -9117,6 +9370,11 @@ static void sensor_power_off(void)
 		sensor_power_off_vdd(1, 0, 0, 0);
 	else
 		sensor_power_off_vdd(1, 1, 0, 0);
+#elif defined(CONFIG_JPN_MODEL_SC_03D)
+	if(get_hw_rev() >= 0x06)
+		sensor_power_on_vdd(1, 0, 0, 1);
+	else 
+		sensor_power_on_vdd(1, 1, 0, 0);
 #elif defined(CONFIG_USA_MODEL_SGH_I757) || defined (CONFIG_CAN_MODEL_SGH_I757M)
 	sensor_power_off_vdd(1, 0, 0, 0);
 #else

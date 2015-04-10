@@ -39,7 +39,7 @@ struct setting_table {
 
 #if !defined(CONFIG_EUR_MODEL_GT_I9210) \
 	&& !defined (CONFIG_USA_MODEL_SGH_I727) && !defined (CONFIG_USA_MODEL_SGH_T769) \
-	&& !defined (CONFIG_USA_MODEL_SGH_T989)
+	&& !defined (CONFIG_USA_MODEL_SGH_T989) && !defined (CONFIG_JPN_MODEL_SC_03D)
 static struct setting_table TABLE2_GAMMA_22_30_dimming[] = {
  {0xF9, 21,
   { 0x00, 0xD9 ,0xD3, 0xCC   ,0xDA   ,0x00  ,0x46 ,0x00 , 0xB1 ,0xC9, 0xC9 , 0xD9 ,0x00,0x58 ,0x00 , 0xD2 , 0xD0, 0xC9 , 0xD8 ,0x00,0x5E }, 0 },
@@ -159,6 +159,8 @@ static struct setting_table TABLE2_GAMMA_22_300[] = {
   { 0x00  ,0xCA  ,0xC4 ,0xB8  ,0xC6  ,0x00 ,0xAB , 0x00 , 0xC3 , 0xC1, 0xB4 , 0xC0 ,0x00,0xD1 , 0x00 , 0xC6 , 0xC2, 0xB1 , 0xBF ,0x00,0xDF }, 0},
 };
 
+
+/*
 #ifdef MAPPING_TBL_AUTO_BRIGHTNESS
 static struct setting_table *lcd_brightness_table_2[] =  {
 	TABLE2_GAMMA_22_30_dimming,
@@ -215,6 +217,7 @@ static struct setting_table *lcd_brightness_table_2[] =  {
 	TABLE2_GAMMA_22_300,
 };
 #endif
+*/
 #endif
 
 // For 4.5"

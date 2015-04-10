@@ -99,7 +99,7 @@ static int __init tkey_device_init(void)
 	return 0;
 }
 
-#if defined(CONFIG_KOR_MODEL_SHV_E110S) || defined (CONFIG_TARGET_LOCALE_USA)
+#if defined(CONFIG_KOR_MODEL_SHV_E110S) || defined (CONFIG_TARGET_LOCALE_USA) || defined (CONFIG_JPN_MODEL_SC_03D)
 int tkey_vdd_enable(int onoff)
 {
 	struct regulator *lvs2;	

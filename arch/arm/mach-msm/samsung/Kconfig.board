@@ -94,4 +94,8 @@ choice
 
 	config JPN_MODEL_SC_01D
 		bool "JPN NTT SC-01D"
+
+	config JPN_MODEL_SC_03D
+		bool "JPN NTT SC-03D"
+
 endchoice

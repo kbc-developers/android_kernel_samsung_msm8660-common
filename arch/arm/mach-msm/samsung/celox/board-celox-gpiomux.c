@@ -183,7 +183,7 @@ static struct gpiomux_setting sdcc1_suspend_config = {
 };
 
 #if defined(CONFIG_KOR_MODEL_SHV_E110S) || defined(CONFIG_KOR_MODEL_SHV_E120L) \
- || defined(CONFIG_KOR_MODEL_SHV_E120S) || defined(CONFIG_KOR_MODEL_SHV_E120K)
+ || defined(CONFIG_KOR_MODEL_SHV_E120S) || defined(CONFIG_KOR_MODEL_SHV_E120K) || defined(CONFIG_JPN_MODEL_SC_03D)
 static struct gpiomux_setting sdcc2_dat_0_3_cmd_actv_cfg = {
 	.func = GPIOMUX_FUNC_2,
 	.drv = GPIOMUX_DRV_6MA,
@@ -271,7 +271,7 @@ static struct gpiomux_setting sdcc2_suspend_config = {
 	.pull = GPIOMUX_PULL_UP,
 };
 
-#if defined(CONFIG_KOR_MODEL_SHV_E110S) 
+#if defined(CONFIG_KOR_MODEL_SHV_E110S) || defined(CONFIG_JPN_MODEL_SC_03D)
 static struct gpiomux_setting sdcc5_dat_0_3_cmd_actv_cfg = {
 	.func = GPIOMUX_FUNC_2,
 	.drv = GPIOMUX_DRV_6MA,
@@ -490,7 +490,7 @@ static struct gpiomux_setting hdmi_active_3_cfg = {
 static struct gpiomux_setting pmic_suspended_cfg = {
 	.func = GPIOMUX_FUNC_GPIO,
 	.drv = GPIOMUX_DRV_2MA,
-	.pull = GPIOMUX_PULL_NONE,
+	.pull = GPIOMUX_PULL_UP,
 };
 
 static struct gpiomux_setting cam_active_1_cfg = {
@@ -504,7 +504,6 @@ static struct gpiomux_setting cam_active_2_cfg = {
 	.drv = GPIOMUX_DRV_2MA,
 	.pull = GPIOMUX_PULL_NONE,
 };
-
 #if 0//samsung LTE
 static struct gpiomux_setting cam_active_3_cfg = {
 	.func = GPIOMUX_FUNC_1,
@@ -557,7 +556,7 @@ static struct gpiomux_setting gyro_suspend_cfg = {
 	.drv = GPIOMUX_DRV_8MA,
 	.pull = GPIOMUX_PULL_DOWN,
 };
-#if defined(CONFIG_KOR_MODEL_SHV_E110S) \
+#if defined(CONFIG_KOR_MODEL_SHV_E110S) || defined(CONFIG_JPN_MODEL_SC_03D)\
 	||defined(CONFIG_KOR_MODEL_SHV_E120S)||defined(CONFIG_KOR_MODEL_SHV_E120K)||defined(CONFIG_KOR_MODEL_SHV_E120L)
 static struct gpiomux_setting gyro_fifo_int_active_cfg = {
 	.func = GPIOMUX_FUNC_GPIO,
@@ -764,6 +763,31 @@ static struct msm_gpiomux_config msm8x60_gsbi_configs[] __initdata = {
 		.gpio	   = 36,
 		.settings = {
 			[GPIOMUX_SUSPENDED] = &tdmb_suspend_cfg,
+		},
+	},
+#elif  defined(CONFIG_JPN_MODEL_SC_03D)
+	{
+		.gpio      = 33,
+		.settings = {
+			[GPIOMUX_SUSPENDED] = &nc_cfg,
+		},
+	},
+	{
+		.gpio      = 34,
+		.settings = {
+			[GPIOMUX_SUSPENDED] = &nc_cfg,
+		},
+	},
+	{
+		.gpio      = 35,
+		.settings = {
+			[GPIOMUX_SUSPENDED] = &nc_cfg,
+		},
+	},
+	{
+		.gpio      = 36,
+		.settings = {
+			[GPIOMUX_SUSPENDED] = &nc_cfg,
 		},
 	},
 #else
@@ -978,6 +1002,7 @@ static struct msm_gpiomux_config msm8x60_ebi2_configs[] __initdata = {
 			[GPIOMUX_SUSPENDED] = &ebi2_a_d,
 		},
 	},
+#if 0
 	{
 		.gpio      = 138,
 		.settings = {
@@ -990,6 +1015,7 @@ static struct msm_gpiomux_config msm8x60_ebi2_configs[] __initdata = {
 			[GPIOMUX_SUSPENDED] = &ebi2_a_d,
 		},
 	},
+#endif
 	{
 		.gpio      = 140,
 		.settings = {
@@ -1130,7 +1156,7 @@ static struct msm_gpiomux_config msm8x60_gyro_configs[] __initdata = {
 			[GPIOMUX_SUSPENDED] = &gyro_suspend_cfg,
 		},
 	},
-#if defined(CONFIG_KOR_MODEL_SHV_E110S) \
+#if defined(CONFIG_KOR_MODEL_SHV_E110S) || defined(CONFIG_JPN_MODEL_SC_03D) \
 	||defined(CONFIG_KOR_MODEL_SHV_E120S)||defined(CONFIG_KOR_MODEL_SHV_E120K)||defined(CONFIG_KOR_MODEL_SHV_E120L)
 	{
 		.gpio	   = 102,
@@ -2312,6 +2338,15 @@ msm8x60_surf_ffa_gpiomux_cfgs[] __initdata = {
 #ifdef CONFIG_SENSORS_YDA165
 	{msm8x60_amp_configs, ARRAY_SIZE(msm8x60_amp_configs)},
 #endif
+#ifdef CONFIG_SENSORS_K3DH
+	{msm8x60_accel_configs, ARRAY_SIZE(msm8x60_accel_configs)},
+#endif
+#ifdef CONFIG_GYRO_K3G
+	{msm8x60_gyro_configs, ARRAY_SIZE(msm8x60_gyro_configs)},
+#endif
+#ifdef CONFIG_OPTICAL_GP2A
+	{msm8x60_opt_configs, ARRAY_SIZE(msm8x60_opt_configs)},
+#endif
 	{msm8x60_tmg200_configs, ARRAY_SIZE(msm8x60_tmg200_configs)},
 	{NULL, 0},
 };
@@ -2335,6 +2370,15 @@ msm8x60_fluid_gpiomux_cfgs[] __initdata = {
 	{msm8x60_cam_configs, ARRAY_SIZE(msm8x60_cam_configs)},
 #ifdef CONFIG_SENSORS_YDA165
 	{msm8x60_amp_configs, ARRAY_SIZE(msm8x60_amp_configs)},
+#endif
+#ifdef CONFIG_SENSORS_K3DH
+	{msm8x60_accel_configs, ARRAY_SIZE(msm8x60_accel_configs)},
+#endif
+#ifdef CONFIG_GYRO_K3G
+	{msm8x60_gyro_configs, ARRAY_SIZE(msm8x60_gyro_configs)},
+#endif
+#ifdef CONFIG_OPTICAL_GP2A
+	{msm8x60_opt_configs, ARRAY_SIZE(msm8x60_opt_configs)},
 #endif
 	{msm8x60_tma300_configs, ARRAY_SIZE(msm8x60_tma300_configs)},
 	{NULL, 0},
