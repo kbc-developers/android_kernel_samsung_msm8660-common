@@ -4081,7 +4081,7 @@ static void *cfq_init_queue(struct request_queue *q)
 	cfqd->cfq_slice[0] = cfq_slice_async;
 	cfqd->cfq_slice[1] = cfq_slice_sync;
 	cfqd->cfq_slice_async_rq = cfq_slice_async_rq;
-	cfqd->cfq_slice_idle = blk_queue_nonrot(q) ? 0 : cfq_slice_idle;
+	cfqd->cfq_slice_idle = cfq_slice_idle;
 	cfqd->cfq_group_idle = cfq_group_idle;
 	cfqd->cfq_latency = 1;
 	cfqd->hw_tag = -1;
@@ -4119,6 +4119,18 @@ static int __init cfq_slab_setup(void)
 fail:
 	cfq_slab_kill();
 	return -ENOMEM;
+}
+
+static void cfq_registered_queue(struct request_queue *q)
+{
+	struct elevator_queue *e = q->elevator;
+	struct cfq_data *cfqd = e->elevator_data;
+
+	/*
+	 * Default to IOPS mode with no idling for SSDs
+	 */
+	if (blk_queue_nonrot(q))
+		cfqd->cfq_slice_idle = 0;
 }
 
 /*
@@ -4231,6 +4243,7 @@ static struct elevator_type iosched_cfq = {
 		.elevator_may_queue_fn =	cfq_may_queue,
 		.elevator_init_fn =		cfq_init_queue,
 		.elevator_exit_fn =		cfq_exit_queue,
+		.elevator_registered_fn =	cfq_registered_queue,
 		.trim =				cfq_free_io_context,
 	},
 	.elevator_attrs =	cfq_attrs,
