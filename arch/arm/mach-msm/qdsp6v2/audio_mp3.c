@@ -17,24 +17,6 @@
 
 #include "audio_utils_aio.h"
 
-static void q6_audio_mp3_cb(uint32_t opcode, uint32_t token,
-		uint32_t *payload, void *priv)
-{
-	struct q6audio_aio *audio = (struct q6audio_aio *)priv;
-
-	pr_debug("%s:opcde = %d token = 0x%x\n", __func__, opcode, token);
-	switch (opcode) {
-	case ASM_DATA_EVENT_WRITE_DONE:
-	case ASM_DATA_EVENT_READ_DONE:
-	case ASM_DATA_CMDRSP_EOS:
-		audio_aio_cb(opcode, token, payload, audio);
-		break;
-	default:
-		pr_debug("%s:Unhandled event = 0x%8x\n", __func__, opcode);
-		break;
-	}
-}
-
 #ifdef CONFIG_DEBUG_FS
 static const struct file_operations audio_mp3_debug_fops = {
 	.read = audio_aio_debug_read,
@@ -103,7 +85,7 @@ static int audio_open(struct inode *inode, struct file *file)
 
 	audio->pcm_cfg.buffer_size = PCM_BUFSZ_MIN;
 
-	audio->ac = q6asm_audio_client_alloc((app_cb) q6_audio_mp3_cb,
+	audio->ac = q6asm_audio_client_alloc((app_cb) q6_audio_cb,
 					     (void *)audio);
 
 	if (!audio->ac) {
@@ -127,8 +109,14 @@ static int audio_open(struct inode *inode, struct file *file)
 		audio->buf_cfg.meta_info_enable = 0x01;
 	} else if ((file->f_mode & FMODE_WRITE) &&
 			!(file->f_mode & FMODE_READ)) {
-		pr_err("%s: Tunnel Mode not supported\n", __func__);
-		return -EACCES;
+		rc = q6asm_open_write(audio->ac, FORMAT_MP3);
+		if (rc < 0) {
+			pr_err("T mode Open failed rc=%d\n", rc);
+			rc = -ENODEV;
+			goto fail;
+		}
+		audio->feedback = TUNNEL_MODE;
+		audio->buf_cfg.meta_info_enable = 0x00;
 	} else {
 		pr_err("Not supported mode\n");
 		rc = -EACCES;

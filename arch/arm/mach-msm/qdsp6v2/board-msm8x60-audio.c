@@ -9,6 +9,11 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
+ * 02110-1301, USA.
+ *
  */
 
 #include <linux/kernel.h>
@@ -61,6 +66,8 @@
 #elif defined(CONFIG_KOR_MODEL_SHV_E120L) /* DALI-LGT */
 #include "timpani_profile_dali_lgt.h"
 #elif defined(CONFIG_KOR_MODEL_SHV_E160S) /* QUINCY-SKT */
+#include "timpani_profile_quincy_skt.h"
+#elif defined(CONFIG_JPN_MODEL_SC_05D) /* QUINCY-DCM */
 #include "timpani_profile_quincy_skt.h"
 #elif defined(CONFIG_KOR_MODEL_SHV_E160K) /* QUINCY-KT */
 #include "timpani_profile_quincy_kt.h"
@@ -468,7 +475,7 @@ static int config_class_d0_gpio(int enable)
 
 		if (rc) {
 			pr_err("%s: spkr pamp gpio pm8901 mpp3 request"
-			"failed\n", __func__);
+				"failed\n", __func__);
 			class_d0_mpp.control = PM8XXX_MPP_DOUT_CTRL_LOW;
 			pm8xxx_mpp_config(PM8901_MPP_PM_TO_SYS(PM8901_MPP_3),
 						&class_d0_mpp);
@@ -494,7 +501,6 @@ static int config_class_d1_gpio(int enable)
 
 	if (enable) {
 		rc = gpio_request(SNDDEV_GPIO_CLASS_D1_EN, "CLASSD1_EN");
-
 		if (rc) {
 			pr_err("%s: Right Channel spkr gpio request"
 				" failed\n", __func__);
@@ -503,7 +509,6 @@ static int config_class_d1_gpio(int enable)
 
 		gpio_direction_output(SNDDEV_GPIO_CLASS_D1_EN, 1);
 		gpio_set_value_cansleep(SNDDEV_GPIO_CLASS_D1_EN, 1);
-
 	} else {
 		gpio_set_value_cansleep(SNDDEV_GPIO_CLASS_D1_EN, 0);
 		gpio_free(SNDDEV_GPIO_CLASS_D1_EN);
@@ -1352,7 +1357,6 @@ static int msm_snddev_enable_amic_power(void)
 #ifdef CONFIG_PMIC8058_OTHC
 
 	if (machine_is_msm8x60_fluid()) {
-
 		ret = pm8058_micbias_enable(OTHC_MICBIAS_0,
 				OTHC_SIGNAL_ALWAYS_ON);
 		if (ret)
@@ -1510,7 +1514,6 @@ static int msm_snddev_enable_anc_power(void)
 		pr_err("%s: Enabling anc micbias 2 failed\n", __func__);
 
 	if (machine_is_msm8x60_fluid()) {
-
 		ret = pm8058_micbias_enable(OTHC_MICBIAS_0,
 				OTHC_SIGNAL_ALWAYS_ON);
 		if (ret)
@@ -1532,7 +1535,6 @@ static int msm_snddev_enable_anc_power(void)
 			return ret;
 		}
 		gpio_direction_output(SNDDEV_GPIO_MIC1_ANCL_SEL, 1);
-
 	}
 #endif
 	return ret;
@@ -7100,7 +7102,6 @@ static struct platform_device *snd_devices_ftm[] __initdata = {
 static struct platform_device *snd_devices_ftm[] __initdata = {};
 #endif
 
-
 void __init msm_snddev_init(void)
 {
 	int i;
@@ -7109,11 +7110,13 @@ void __init msm_snddev_init(void)
 	atomic_set(&pamp_ref_cnt, 0);
 	atomic_set(&preg_ref_cnt, 0);
 
+	pr_err("%s \n",	__func__);
+
 	for (i = 0, dev_id = 0; i < ARRAY_SIZE(snd_devices_common); i++)
 		snd_devices_common[i]->id = dev_id++;
 
 	platform_add_devices(snd_devices_common,
-		ARRAY_SIZE(snd_devices_common));
+			ARRAY_SIZE(snd_devices_common));
 
 	/* Auto detect device base on machine info */
 	if (machine_is_msm8x60_surf() || machine_is_msm8x60_fusion()) {
@@ -7121,7 +7124,7 @@ void __init msm_snddev_init(void)
 			snd_devices_surf[i]->id = dev_id++;
 
 		platform_add_devices(snd_devices_surf,
-		ARRAY_SIZE(snd_devices_surf));
+				ARRAY_SIZE(snd_devices_surf));
 	} else if (machine_is_msm8x60_ffa() ||
 			machine_is_msm8x60_fusn_ffa()) {
 #ifdef SEC_AUDIO_DEVICE
@@ -7137,14 +7140,14 @@ void __init msm_snddev_init(void)
 			snd_devices_ffa[i]->id = dev_id++;
 
 		platform_add_devices(snd_devices_ffa,
-		ARRAY_SIZE(snd_devices_ffa));
+				ARRAY_SIZE(snd_devices_ffa));
 #endif
 	} else if (machine_is_msm8x60_fluid()) {
 		for (i = 0; i < ARRAY_SIZE(snd_devices_fluid); i++)
 			snd_devices_fluid[i]->id = dev_id++;
 
 		platform_add_devices(snd_devices_fluid,
-		ARRAY_SIZE(snd_devices_fluid));
+				ARRAY_SIZE(snd_devices_fluid));
 	}
 	if (machine_is_msm8x60_surf() || machine_is_msm8x60_ffa()
 		|| machine_is_msm8x60_fusion()
