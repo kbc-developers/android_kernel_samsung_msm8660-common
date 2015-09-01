@@ -324,10 +324,10 @@ enum vdd_dig_levels {
 };
 
 static int vdd_uv[] = {
-	[VDD_DIG_NONE]    =  500000,
-	[VDD_DIG_LOW]     = 1000000,
-	[VDD_DIG_NOMINAL] = 1100000,
-	[VDD_DIG_HIGH]    = 1200000
+	[VDD_DIG_NONE]    =       0,
+	[VDD_DIG_LOW]     =  945000,
+	[VDD_DIG_NOMINAL] = 1050000,
+	[VDD_DIG_HIGH]    = 1150000
 };
 
 #ifdef CONFIG_GPU_VOLTAGE_TABLE
