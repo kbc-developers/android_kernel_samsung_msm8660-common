@@ -363,7 +363,7 @@ void touchkey_work_func(struct work_struct *p)
 
 		if ((data[0] & ESD_STATE_BIT) || (ret != 0)) {
 			printk("[TKEY] ESD_STATE_BIT set or I2C fail: data: %d, retry: %d\n", data[0], retry);
-			if  (scr_suspended == false) {
+			if  (!s2w_switch || (s2w_switch && scr_suspended == false)) {
 				//releae key
 				input_report_key(touchkey_driver->input_dev, touchkey_keycode[1], 0);
 				input_report_key(touchkey_driver->input_dev, touchkey_keycode[2], 0);
@@ -393,7 +393,7 @@ void touchkey_work_func(struct work_struct *p)
 		}
 
 		if (data[0] & UPDOWN_EVENT_BIT) {
-			if  (scr_suspended == false) {
+			if  (!s2w_switch || (s2w_switch && scr_suspended == false)) {
 				input_report_key(touchkey_driver->input_dev, touchkey_keycode[data[0] & KEYCODE_BIT], 0);
 				input_sync(touchkey_driver->input_dev);
 				#ifndef CONFIG_USA_MODEL_SGH_T989
@@ -407,7 +407,7 @@ void touchkey_work_func(struct work_struct *p)
 			} else {
 				if ((data[0] & KEYCODE_BIT) == 2) {	// if back key is pressed, release multitouch
 				}
-				if  (scr_suspended == false) {
+				if  (!s2w_switch || (s2w_switch && scr_suspended == false)) {
 					input_report_key(touchkey_driver->input_dev, touchkey_keycode[data[0] & KEYCODE_BIT], 1);
 					input_sync(touchkey_driver->input_dev);
 					#ifndef CONFIG_USA_MODEL_SGH_T989
@@ -510,7 +510,7 @@ static irqreturn_t touchkey_interrupt(int irq, void *dummy)  // ks 79 - threaded
 	if ((data[0] & ESD_STATE_BIT) || (ret != 0)) {
 		printk("[TKEY] ESD_STATE_BIT set or I2C fail: data: %d, retry: %d\n", data[0], retry);
 
-		if  (scr_suspended == false) {
+		if  (!s2w_switch || (s2w_switch && scr_suspended == false)) {
 			//releae key
 			input_report_key(touchkey_driver->input_dev, touchkey_keycode[1], 0);
 			input_report_key(touchkey_driver->input_dev, touchkey_keycode[2], 0);
@@ -573,7 +573,7 @@ static irqreturn_t touchkey_interrupt(int irq, void *dummy)  // ks 79 - threaded
 	}
 #else
 	if (data[0] & UPDOWN_EVENT_BIT) {
-		if  (scr_suspended == false) {
+		if  (!s2w_switch || (s2w_switch && scr_suspended == false)) {
 			input_report_key(touchkey_driver->input_dev, touchkey_keycode[data[0] & KEYCODE_BIT], 0);
 			touchkey_pressed &= ~(1 << (data[0] & KEYCODE_BIT));
 			input_sync(touchkey_driver->input_dev);
@@ -648,7 +648,7 @@ static irqreturn_t touchkey_interrupt(int irq, void *dummy)  // ks 79 - threaded
 		} else {
 			if ((data[0] & KEYCODE_BIT) == 2) {	// if back key is pressed, release multitouch
 			}
-			if  (scr_suspended == false) {
+			if  (!s2w_switch || (s2w_switch && scr_suspended == false)) {
 				input_report_key(touchkey_driver->input_dev, touchkey_keycode[data[0] & KEYCODE_BIT], 1);
 				touchkey_pressed |= (1 << (data[0] & KEYCODE_BIT));
 				input_sync(touchkey_driver->input_dev);
@@ -847,7 +847,7 @@ static void sec_touchkey_early_suspend(struct early_suspend *h)
 	{
 		if(touchkey_pressed & (1<<index))
 		{
-			if  (scr_suspended == false) {
+			if  (!s2w_switch || (s2w_switch && scr_suspended == false)) {
 				input_report_key(touchkey_driver->input_dev, touchkey_keycode[index], 0);
 				input_sync(touchkey_driver->input_dev);
 				printk ("[TEKY] suspend: release unreleased keycode: [%d]\n", touchkey_keycode[index]);
