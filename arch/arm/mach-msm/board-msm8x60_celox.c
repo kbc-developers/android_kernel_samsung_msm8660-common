@@ -16590,7 +16590,7 @@ static void __init msm8x60_init(struct msm_board_data *board_data)
 	set_two_phase_freq(1134000);
 #endif
 #ifdef CONFIG_CPU_FREQ_GOV_UBERDEMAND
-	set_second_phase_freq(1134000);
+	set_second_phase_freq(CONFIG_CPU_FREQ_GOV_UBERDEMAND_SECOND_PHASE_FREQ);
 #endif
 	msm8x60_init_tlmm();
 #ifdef CONFIG_BATTERY_SEC
