@@ -2357,9 +2357,6 @@ error_attach:
 		break;
 	}
 error:
-	/* Clear gpuaddr here so userspace doesn't get any wrong ideas */
-	param->gpuaddr = 0;
-
 	kfree(entry);
 	return result;
 }
@@ -3208,7 +3205,7 @@ static int kgsl_mmap(struct file *file, struct vm_area_struct *vma)
 	if (ret)
 		return ret;
 
-	vma->vm_flags |= entry->memdesc.ops->vmflags;
+	vma->vm_flags |= entry->memdesc.ops->vmflags(&entry->memdesc);
 
 	vma->vm_private_data = entry;
 
