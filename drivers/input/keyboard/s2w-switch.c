@@ -30,11 +30,41 @@ sscanf(buf, "%du", &s2w_switch);
 return count;
 }
 
+static ssize_t dt2w_switch_show(struct kobject *kobj, struct kobj_attribute *attr, char *buf)
+{
+return sprintf(buf, "%d\n", dt2w_switch);
+}
+
+static ssize_t dt2w_switch_store(struct kobject *kobj, struct kobj_attribute *attr, const char *buf, size_t count)
+{
+sscanf(buf, "%du", &dt2w_switch);
+return count;
+}
+
+static ssize_t dt2s_switch_show(struct kobject *kobj, struct kobj_attribute *attr, char *buf)
+{
+return sprintf(buf, "%d\n", dt2s_switch);
+}
+
+static ssize_t dt2s_switch_store(struct kobject *kobj, struct kobj_attribute *attr, const char *buf, size_t count)
+{
+sscanf(buf, "%du", &dt2s_switch);
+return count;
+}
+
 static struct kobj_attribute s2w_switch_attribute =
 __ATTR(sweep2wake, 0666, s2w_switch_show, s2w_switch_store);
 
+static struct kobj_attribute dt2w_switch_attribute =
+__ATTR(doubletap2wake, 0666, dt2w_switch_show, dt2w_switch_store);
+
+static struct kobj_attribute dt2s_switch_attribute =
+__ATTR(doubletap2sleep, 0666, dt2s_switch_show, dt2s_switch_store);
+
 static struct attribute *attrs[] = {
 &s2w_switch_attribute.attr,
+&dt2w_switch_attribute.attr,
+&dt2s_switch_attribute.attr,
 NULL,
 };
 
