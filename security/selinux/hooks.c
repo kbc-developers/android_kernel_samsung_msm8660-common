@@ -3296,7 +3296,18 @@ static int selinux_file_mprotect(struct vm_area_struct *vma,
 			 * modified content.  This typically should only
 			 * occur for text relocations.
 			 */
-			rc = file_has_perm(cred, vma->vm_file, FILE__EXECMOD);
+			 /* STARGO: Hack for Samsung blobs */
+			if (strcmp(current->comm, "ks") &&
+			    strcmp(current->comm, "mpdecision") &&
+			    strcmp(current->comm, "netmgrd") &&
+			    strcmp(current->comm, "qcks") &&
+			    strcmp(current->comm, "qmiproxy") &&
+			    strcmp(current->comm, "qmuxd") &&
+			    strcmp(current->comm, "rild") &&
+			    strcmp(current->comm, "rmt_storage") &&
+			    strcmp(current->comm, "sec-ril") &&
+			    strcmp(current->comm, "thermald"))
+				rc = file_has_perm(cred, vma->vm_file, FILE__EXECMOD);
 		}
 		if (rc)
 			return rc;
