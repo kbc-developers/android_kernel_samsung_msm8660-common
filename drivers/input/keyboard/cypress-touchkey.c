@@ -4,7 +4,6 @@
  * Copyright 2005 Phil Blundell
  * Copyright 2011 Michael Richter (alias neldar)
  * Copyright 2012 Jeffrey Clark <h0tw1r3@gmail.com>
- * Copyright 2014 Emmanuel Utomi <emmanuelutomi@gmail.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 as
@@ -153,14 +152,27 @@ static u8 firm_version = 0;
 
 #ifdef CONFIG_TOUCH_CYPRESS_SWEEP2WAKE
 int s2w_switch = 0;
-int s2s_switch = 0;
-int s2w_sensitive = 0;
-int s2w_start = 0;
 int s2w_count = 0;
 bool scr_suspended = false, exec_count = true;
 bool scr_on_touch = false, barrier[2] = {false, false};
 static struct input_dev * sweep2wake_pwrdev;
 static DEFINE_MUTEX(pwrkeyworklock);
+
+static int __init read_s2w_cmdline(char *s2w)
+{
+	if (strcmp(s2w, "1") == 0) {
+		printk(KERN_INFO "[cmdline_s2w]: Sweep2Wake enabled. | s2w='%s'", s2w);
+		s2w_switch = 1;
+	} else if (strcmp(s2w, "0") == 0) {
+		printk(KERN_INFO "[cmdline_s2w]: Sweep2Wake disabled. | s2w='%s'", s2w);
+		s2w_switch = 0;
+	} else {
+		printk(KERN_INFO "[cmdline_s2w]: No valid input found. Sweep2Wake disabled. | s2w='%s'", s2w);
+		s2w_switch = 0;
+	}
+	return 1;
+}
+__setup("s2w=", read_s2w_cmdline);
 
 extern void sweep2wake_setdev(struct input_dev * input_device) {
 	sweep2wake_pwrdev = input_device;
@@ -363,11 +375,9 @@ void touchkey_work_func(struct work_struct *p)
 
 		if ((data[0] & ESD_STATE_BIT) || (ret != 0)) {
 			printk("[TKEY] ESD_STATE_BIT set or I2C fail: data: %d, retry: %d\n", data[0], retry);
-			if  (!s2w_switch || (s2w_switch && scr_suspended == false)) {
-				//releae key
-				input_report_key(touchkey_driver->input_dev, touchkey_keycode[1], 0);
-				input_report_key(touchkey_driver->input_dev, touchkey_keycode[2], 0);
-			}
+			//releae key
+			input_report_key(touchkey_driver->input_dev, touchkey_keycode[1], 0);
+			input_report_key(touchkey_driver->input_dev, touchkey_keycode[2], 0);
 			retry = 10;
 
 			while (retry--) {
@@ -393,13 +403,11 @@ void touchkey_work_func(struct work_struct *p)
 		}
 
 		if (data[0] & UPDOWN_EVENT_BIT) {
-			if  (!s2w_switch || (s2w_switch && scr_suspended == false)) {
-				input_report_key(touchkey_driver->input_dev, touchkey_keycode[data[0] & KEYCODE_BIT], 0);
-				input_sync(touchkey_driver->input_dev);
-				#ifndef CONFIG_USA_MODEL_SGH_T989
-				printk(KERN_DEBUG "[TKEY] touchkey release keycode:%d \n", touchkey_keycode[data[0] & KEYCODE_BIT]);
-				#endif
-			}
+			input_report_key(touchkey_driver->input_dev, touchkey_keycode[data[0] & KEYCODE_BIT], 0);
+			input_sync(touchkey_driver->input_dev);
+			#ifndef CONFIG_USA_MODEL_SGH_T989
+			printk(KERN_DEBUG "[TKEY] touchkey release keycode:%d \n", touchkey_keycode[data[0] & KEYCODE_BIT]);
+			#endif
 		} else {
 			if (touch_is_pressed) {
 				printk(KERN_DEBUG "[TKEY] touchkey pressed but don't send event because touch is pressed. \n");
@@ -407,13 +415,11 @@ void touchkey_work_func(struct work_struct *p)
 			} else {
 				if ((data[0] & KEYCODE_BIT) == 2) {	// if back key is pressed, release multitouch
 				}
-				if  (!s2w_switch || (s2w_switch && scr_suspended == false)) {
-					input_report_key(touchkey_driver->input_dev, touchkey_keycode[data[0] & KEYCODE_BIT], 1);
-					input_sync(touchkey_driver->input_dev);
-					#ifndef CONFIG_USA_MODEL_SGH_T989
-					printk(KERN_DEBUG "[TKEY] touchkey press keycode:%d \n", touchkey_keycode[data[0] & KEYCODE_BIT]);
-					#endif
-				}
+				input_report_key(touchkey_driver->input_dev, touchkey_keycode[data[0] & KEYCODE_BIT], 1);
+				input_sync(touchkey_driver->input_dev);
+				#ifndef CONFIG_USA_MODEL_SGH_T989
+				printk(KERN_DEBUG "[TKEY] touchkey press keycode:%d \n", touchkey_keycode[data[0] & KEYCODE_BIT]);
+				#endif
 			}
 		}
 
@@ -430,7 +436,7 @@ void touchkey_resume_func(struct work_struct *p)
 //	int rc = 0;
 
 #ifdef CONFIG_TOUCH_CYPRESS_SWEEP2WAKE
-	if (s2w_switch) {
+	if (s2w_switch > 0) {
 		disable_irq_wake(IRQ_TOUCHKEY_INT);		
 	} else {
 #endif
@@ -510,11 +516,9 @@ static irqreturn_t touchkey_interrupt(int irq, void *dummy)  // ks 79 - threaded
 	if ((data[0] & ESD_STATE_BIT) || (ret != 0)) {
 		printk("[TKEY] ESD_STATE_BIT set or I2C fail: data: %d, retry: %d\n", data[0], retry);
 
-		if  (!s2w_switch || (s2w_switch && scr_suspended == false)) {
-			//releae key
-			input_report_key(touchkey_driver->input_dev, touchkey_keycode[1], 0);
-			input_report_key(touchkey_driver->input_dev, touchkey_keycode[2], 0);
-		}
+		//releae key
+		input_report_key(touchkey_driver->input_dev, touchkey_keycode[1], 0);
+		input_report_key(touchkey_driver->input_dev, touchkey_keycode[2], 0);
 		retry = 10;
 
 		while (retry--) {
@@ -573,11 +577,10 @@ static irqreturn_t touchkey_interrupt(int irq, void *dummy)  // ks 79 - threaded
 	}
 #else
 	if (data[0] & UPDOWN_EVENT_BIT) {
-		if  (!s2w_switch || (s2w_switch && scr_suspended == false)) {
-			input_report_key(touchkey_driver->input_dev, touchkey_keycode[data[0] & KEYCODE_BIT], 0);
-			touchkey_pressed &= ~(1 << (data[0] & KEYCODE_BIT));
-			input_sync(touchkey_driver->input_dev);
-		}
+		input_report_key(touchkey_driver->input_dev, touchkey_keycode[data[0] & KEYCODE_BIT], 0);
+		touchkey_pressed &= ~(1 << (data[0] & KEYCODE_BIT));
+		input_sync(touchkey_driver->input_dev);
+
 //		if(g_debug_switch)
 #ifndef CONFIG_USA_MODEL_SGH_T989
 			printk(KERN_DEBUG "touchkey release keycode:%d \n", touchkey_keycode[data[0] & KEYCODE_BIT]);
@@ -590,51 +593,34 @@ static irqreturn_t touchkey_interrupt(int irq, void *dummy)  // ks 79 - threaded
 	#endif
 
 #ifdef CONFIG_TOUCH_CYPRESS_SWEEP2WAKE
-
-		if((s2w_count > 0) && ((jiffies_to_msecs(jiffies) - s2w_start) > 1500)) s2w_count = 0; //timeout after 1.5 seconds
-		else if(s2w_start > 0 && s2w_count == 0) s2w_start = 0;
-		if ((!touch_is_pressed) && (scr_suspended == true) && (s2w_switch)) { //s2w
+		if ((!touch_is_pressed) && (scr_suspended == true) && (s2w_switch > 0)) {
 			int key = data[0] & KEYCODE_BIT;
 			switch (key) {
 			case 1:
 				s2w_count = 1;
-				s2w_start = jiffies_to_msecs(jiffies);
 				break;
 			case 2:
 				pr_debug(KERN_ERR "[TKEY] count: %d and key: %d\n",s2w_count,key);
-				if (s2w_count == 1) s2w_count++;
-				break;
-			case 3:
-				pr_debug(KERN_ERR "[TKEY] count: %d and key: %d\n",s2w_count,key);
-				if (s2w_count == 2) s2w_count++;
-				break;
-			case 4:
-				pr_debug(KERN_ERR "[TKEY] count: %d and key: %d\n",s2w_count,key);
-				if (s2w_count == 3 || (s2w_sensitive && s2w_count > 0)) {
-					sweep2wake_pwrtrigger();
+				if (s2w_count == 1) {
+					s2w_count++;
+				} else {
 					s2w_count = 0;
 				}
 				break;
-			}
-		} else if ((!touch_is_pressed) && (scr_suspended == false) && (s2w_switch == 2)) { //s2s
-			int key = data[0] & KEYCODE_BIT;
-			switch (key) {
-			case 4:
-				s2w_count = 1;
-				s2w_start = jiffies_to_msecs(jiffies);
-				break;
 			case 3:
 				pr_debug(KERN_ERR "[TKEY] count: %d and key: %d\n",s2w_count,key);
-				if (s2w_count == 1) s2w_count++;
+				if (s2w_count == 2) {
+					s2w_count++;
+				} else {
+					s2w_count = 0;
+				}
 				break;
-			case 2:
+			case 4:
 				pr_debug(KERN_ERR "[TKEY] count: %d and key: %d\n",s2w_count,key);
-				if (s2w_count == 2) s2w_count++;
-				break;
-			case 1:
-				pr_debug(KERN_ERR "[TKEY] count: %d and key: %d\n",s2w_count,key);
-				if (s2w_count == 3 || (s2w_sensitive && s2w_count > 0)) {
+				if (s2w_count == 3) {
 					sweep2wake_pwrtrigger();
+					s2w_count = 0;
+				} else {
 					s2w_count = 0;
 				}
 				break;
@@ -648,11 +634,9 @@ static irqreturn_t touchkey_interrupt(int irq, void *dummy)  // ks 79 - threaded
 		} else {
 			if ((data[0] & KEYCODE_BIT) == 2) {	// if back key is pressed, release multitouch
 			}
-			if  (!s2w_switch || (s2w_switch && scr_suspended == false)) {
-				input_report_key(touchkey_driver->input_dev, touchkey_keycode[data[0] & KEYCODE_BIT], 1);
-				touchkey_pressed |= (1 << (data[0] & KEYCODE_BIT));
-				input_sync(touchkey_driver->input_dev);
-			}
+			input_report_key(touchkey_driver->input_dev, touchkey_keycode[data[0] & KEYCODE_BIT], 1);
+			touchkey_pressed |= (1 << (data[0] & KEYCODE_BIT));
+			input_sync(touchkey_driver->input_dev);
 
 //			if(g_debug_switch)
                                 #ifndef CONFIG_USA_MODEL_SGH_T989 
@@ -758,7 +742,7 @@ static void sec_touchkey_early_suspend(struct early_suspend *h)
     printk(KERN_DEBUG "sec_touchkey_early_suspend\n");
 
 #ifdef CONFIG_TOUCH_CYPRESS_SWEEP2WAKE
-	if (s2w_switch) {
+	if (s2w_switch > 0) {
 		scr_suspended = true;
 		enable_irq_wake(IRQ_TOUCHKEY_INT);
 	} else {
@@ -847,11 +831,9 @@ static void sec_touchkey_early_suspend(struct early_suspend *h)
 	{
 		if(touchkey_pressed & (1<<index))
 		{
-			if  (!s2w_switch || (s2w_switch && scr_suspended == false)) {
-				input_report_key(touchkey_driver->input_dev, touchkey_keycode[index], 0);
-				input_sync(touchkey_driver->input_dev);
-				printk ("[TEKY] suspend: release unreleased keycode: [%d]\n", touchkey_keycode[index]);
-			}
+			input_report_key(touchkey_driver->input_dev, touchkey_keycode[index], 0);
+			input_sync(touchkey_driver->input_dev);
+			printk ("[TEKY] suspend: release unreleased keycode: [%d]\n", touchkey_keycode[index]);
 		}
 	}
 	touchkey_pressed = 0;
@@ -878,7 +860,7 @@ static void sec_touchkey_early_resume(struct early_suspend *h)
 	}
 
 #ifdef CONFIG_TOUCH_CYPRESS_SWEEP2WAKE
-	if (s2w_switch) {
+	if (s2w_switch > 0) {
 		scr_suspended = false;
 	}
 #endif
@@ -1037,7 +1019,7 @@ if(touchled_cmd_reversed) {
 	|| defined (CONFIG_USA_MODEL_SGH_T769)|| defined(CONFIG_USA_MODEL_SGH_I577)|| defined(CONFIG_CAN_MODEL_SGH_I577R)\
 	|| defined(CONFIG_USA_MODEL_SGH_I757) || defined(CONFIG_CAN_MODEL_SGH_I757M)
 #ifdef CONFIG_TOUCH_CYPRESS_SWEEP2WAKE
-	if (s2w_switch) {
+	if (s2w_switch > 0) {
 		disable_irq_wake(IRQ_TOUCHKEY_INT);
 	} else {
 #endif
