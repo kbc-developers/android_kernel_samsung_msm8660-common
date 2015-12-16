@@ -52,7 +52,7 @@ static struct workqueue_struct *workqueue;
  * So we allow it it to be disabled.
  */
 int use_spi_crc = 0;
-module_param(use_spi_crc, bool, 0);
+module_param(use_spi_crc, bool, 0755);
 
 /*
  * We normally treat cards as removed during suspend if they are not
