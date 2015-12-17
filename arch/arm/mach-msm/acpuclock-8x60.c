@@ -29,6 +29,7 @@
 #include <mach/msm_bus_board.h>
 #include <mach/socinfo.h>
 #include <mach/rpm-regulator.h>
+#include <linux/moduleparam.h>
 
 #include "acpuclock.h"
 #include "avs.h"
@@ -86,6 +87,9 @@
 #define QFPROM_PTE_EFUSE_ADDR		(MSM_QFPROM_BASE + 0x00C0)
 
 #define FREQ_TABLE_SIZE			38
+
+int pvs_num = 0;
+module_param(pvs_num, int, 0444);
 
 static const void * const clk_ctl_addr[] = {SPSS0_CLK_CTL_ADDR,
 			SPSS1_CLK_CTL_ADDR};
@@ -821,11 +825,46 @@ static struct notifier_block __cpuinitdata acpuclock_cpu_notifier = {
 
 static unsigned int __init select_freq_plan(void)
 {
-	uint32_t max_khz;
+	uint32_t pte_efuse, speed_bin, pvs, max_khz;
 	struct clkctl_acpu_speed *f;
 
-    max_khz = 1944000;
-    acpu_freq_tbl = acpu_freq_tbl_oc;
+	pte_efuse = readl_relaxed(QFPROM_PTE_EFUSE_ADDR);
+
+	speed_bin = pte_efuse & 0xF;
+	if (speed_bin == 0xF)
+		speed_bin = (pte_efuse >> 4) & 0xF;
+
+	if (speed_bin == 0x1) {
+		pvs = (pte_efuse >> 10) & 0x7;
+		if (pvs == 0x7)
+			pvs = (pte_efuse >> 13) & 0x7;
+
+		switch (pvs) {
+		case 0x0:
+		case 0x7:
+			pvs_num = 0;
+			pr_info("ACPU PVS: Slow\n");
+			break;
+		case 0x1:
+			pvs_num = 1;
+			pr_info("ACPU PVS: Nominal\n");
+			break;
+		case 0x3:
+			pvs_num = 2;
+			pr_info("ACPU PVS: Fast\n");
+			break;
+		default:
+			pvs_num = 0;
+			pr_warn("ACPU PVS: Unknown. Defaulting to slow.\n");
+			break;
+		}
+	} else {
+		pvs_num = 3;
+		pr_warn("ACPU PVS: 1188 MHz\n");
+	}
+
+	max_khz = 1944000;
+	acpu_freq_tbl = acpu_freq_tbl_oc;
 
 	/* Truncate the table based to max_khz. */
 	for (f = acpu_freq_tbl; f->acpuclk_khz != 0; f++) {
