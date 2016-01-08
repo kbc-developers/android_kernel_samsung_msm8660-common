@@ -56,7 +56,6 @@ struct thermal_config {
 	unsigned int reset_low_degC;
 	unsigned int sampling_ms;
 	unsigned int enabled;
-	unsigned int user_maxfreq;
 };
 
 static struct thermal_config *t_conf;
@@ -157,7 +156,7 @@ static int cpu_do_throttle(struct notifier_block *nb, unsigned long val, void *d
 {
 	struct cpufreq_policy *policy = data;
 	struct throttle_policy *t = &per_cpu(throttle_info, policy->cpu);
-	unsigned int user_max = t_conf->user_maxfreq;
+	unsigned int user_max = policy->user_policy.max;
 
 	if (val != CPUFREQ_ADJUST)
 		return NOTIFY_OK;
@@ -272,20 +271,6 @@ static ssize_t enabled_write(struct device *dev,
 	return size;
 }
 
-static ssize_t user_maxfreq_write(struct device *dev,
-		struct device_attribute *attr, const char *buf, size_t size)
-{
-	unsigned int data;
-	int ret = sscanf(buf, "%u", &data);
-
-	if (ret != 1)
-		return -EINVAL;
-
-	t_conf->user_maxfreq = data;
-
-	return size;
-}
-
 static ssize_t high_thresh_read(struct device *dev,
 		struct device_attribute *attr, char *buf)
 {
@@ -319,18 +304,11 @@ static ssize_t enabled_read(struct device *dev,
 	return snprintf(buf, PAGE_SIZE, "%u\n", t_conf->enabled);
 }
 
-static ssize_t user_maxfreq_read(struct device *dev,
-		struct device_attribute *attr, char *buf)
-{
-	return snprintf(buf, PAGE_SIZE, "%u\n", t_conf->user_maxfreq);
-}
-
 static DEVICE_ATTR(high_thresh, 0644, high_thresh_read, high_thresh_write);
 static DEVICE_ATTR(mid_thresh, 0644, mid_thresh_read, mid_thresh_write);
 static DEVICE_ATTR(low_thresh, 0644, low_thresh_read, low_thresh_write);
 static DEVICE_ATTR(sampling_ms, 0644, sampling_ms_read, sampling_ms_write);
 static DEVICE_ATTR(enabled, 0644, enabled_read, enabled_write);
-static DEVICE_ATTR(user_maxfreq, 0644, user_maxfreq_read, user_maxfreq_write);
 
 static struct attribute *msm_thermal_attr[] = {
 	&dev_attr_high_thresh.attr,
@@ -338,7 +316,6 @@ static struct attribute *msm_thermal_attr[] = {
 	&dev_attr_low_thresh.attr,
 	&dev_attr_sampling_ms.attr,
 	&dev_attr_enabled.attr,
-	&dev_attr_user_maxfreq.attr,
 	NULL
 };
 
