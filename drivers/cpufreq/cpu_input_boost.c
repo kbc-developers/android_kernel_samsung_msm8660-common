@@ -189,7 +189,7 @@ static int do_cpu_boost(struct notifier_block *nb, unsigned long val, void *data
 	struct cpufreq_policy *policy = data;
 	struct boost_policy *b = &per_cpu(boost_info, policy->cpu);
 
-	if (!enabled && policy->min == policy->cpuinfo.min_freq)
+	if (!enabled && policy->min == policy->user_policy.min)
 		return NOTIFY_OK;
 
 	if (val != CPUFREQ_ADJUST)
@@ -216,7 +216,7 @@ static int do_cpu_boost(struct notifier_block *nb, unsigned long val, void *data
 	if (b->boost_state)
 		policy->min = min(policy->max, ib_freq[policy->cpu ? 1 : 0]);
 	else
-		policy->min = policy->cpuinfo.min_freq;
+		policy->min = policy->user_policy.min;
 
 	return NOTIFY_OK;
 }
