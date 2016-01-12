@@ -35,7 +35,7 @@ static ssize_t mode_store(struct device *dev,struct device_attribute *attr,
 	{
 		set_mode = reg;	
 		
-#if defined (CONFIG_TARGET_LOCALE_KOR)
+#if defined (CONFIG_TARGET_LOCALE_KOR) || defined (CONFIG_TARGET_LOCALE_JPN)
 		temp.in1_gain = g_ampgain[set_mode].in1_gain;
 		temp.in2_gain = g_ampgain[set_mode].in2_gain;
 		temp.hp_att = g_ampgain[set_mode].hp_att;
@@ -1491,11 +1491,11 @@ void yda165_differential_speaker_onoff(int onoff) /* speaker path amp onoff */
 		
 		/* input */
 		stInfo.bLine1Gain = g_ampgain[cur_mode].in1_gain;		/* LINE1 Gain Amp */
-		stInfo.bLine2Gain = 1;		/* LINE2 Gain Amp */ // g_ampgain[cur_mode].in2_gain -> WIFI¿¬°á½Ã ³ëÀÌÁî°³¼± Æ©´×°ª; -1.5dB(1)
+		stInfo.bLine2Gain = 1;		/* LINE2 Gain Amp */ // g_ampgain[cur_mode].in2_gain -> WIFIÂ¿Â¬Â°Ã¡Å“Ãƒ Â³Ã«Ã€ÃŒÃÃ®Â°Â³Å’Â± Ã†Â©Å½Ã—Â°Âª; -1.5dB(1)
 
 		stInfo.bLine1Balance = 0;	/* LINE1 Single-ended(0) or Differential(1) */
 		pr_info(MODULE_NAME ": Differential Speaker mode setting! \n");
-		stInfo.bLine2Balance = 1;	/* LINE2 Single-ended(0) or Differential(1) */ // 0->1 WIFI¿¬°á½Ã ³ëÀÌÁî°³¼± Æ©´×°ª; stereo -> differential 
+		stInfo.bLine2Balance = 1;	/* LINE2 Single-ended(0) or Differential(1) */ // 0->1 WIFIÂ¿Â¬Â°Ã¡Å“Ãƒ Â³Ã«Ã€ÃŒÃÃ®Â°Â³Å’Â± Ã†Â©Å½Ã—Â°Âª; stereo -> differential 
 
 		/* HP */
 		stInfo.bHpCpMode = 0;			/* HP charge pump mode setting, 3stage mode(0) / 2stage mode(1) */
@@ -1532,7 +1532,7 @@ void yda165_differential_speaker_onoff(int onoff) /* speaker path amp onoff */
 
 
 		/* SP */
-		stInfo.bSpAtt = 25; 				/* SP attenuator */ // g_ampgain[cur_mode].sp_att -> WIFI¿¬°á½Ã ³ëÀÌÁî°³¼± Æ©´×°ª; 28 -> 25:(-3dB)
+		stInfo.bSpAtt = 25; 				/* SP attenuator */ // g_ampgain[cur_mode].sp_att -> WIFIÂ¿Â¬Â°Ã¡Å“Ãƒ Â³Ã«Ã€ÃŒÃÃ®Â°Â³Å’Â± Ã†Â©Å½Ã—Â°Âª; 28 -> 25:(-3dB)
 		stInfo.bSpGainUp = g_ampgain[cur_mode].sp_gainup;			/* SP gain up */
 		stInfo.bSpSvol = 0;				/* SP soft volume setting, on(0) / off(1) */
 		stInfo.bSpZcs = 0;				/* SP zero cross mute setting, on(0) / off(1) */

@@ -95,7 +95,6 @@ int load_565rle_image(char *filename, bool bf_supported)
 			count -= 4;
 		}
 	}
-
 err_logo_free_data:
 	kfree(data);
 err_logo_close_file:

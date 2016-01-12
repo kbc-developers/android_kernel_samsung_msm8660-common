@@ -52,6 +52,28 @@ static const struct adc_map_pt adcmap_msmtherm[] = {
 	{107,	120}
 };
 
+#if defined (CONFIG_JPN_MODEL_SC_03D)
+static const struct adc_map_pt adcmap_sec_settherm[] = {
+	{328,  650},
+	{317,  600},
+	{300,  550},
+	{281,  500},
+	{260,  450},
+	{235,  400},
+	{208,  350},
+	{179,  300},
+	{149,  250},
+	{118,  200},
+	{86,   150},
+	{59,   100},
+	{30,    50},
+	{7,     0},
+	{-14,  -50},
+	{-32, -100},
+	{-46, -150},
+	{-59, -200}
+};
+#else
 static const struct adc_map_pt adcmap_sec_settherm[] = {
 	{386,	 650},
 	{381,	 600},
@@ -72,6 +94,7 @@ static const struct adc_map_pt adcmap_sec_settherm[] = {
 	{180,	-150},
 	{165,	-200}
 };
+#endif
 
 static const struct adc_map_pt adcmap_ntcg104ef104fb[] = {
 	{696483,	-40960},

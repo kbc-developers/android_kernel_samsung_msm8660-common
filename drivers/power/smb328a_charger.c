@@ -1386,7 +1386,7 @@ static int smb328a_chg_set_property(struct power_supply *psy,
 #if defined(CONFIG_KOR_MODEL_SHV_E110S) || \
 	defined(CONFIG_KOR_MODEL_SHV_E120L) || \
 	defined(CONFIG_KOR_MODEL_SHV_E120S) || \
-	defined(CONFIG_KOR_MODEL_SHV_E120K)
+	defined(CONFIG_KOR_MODEL_SHV_E120K) || defined(CONFIG_TARGET_LOCALE_JPN)
 			/* W/A for hw_rev00(celox-kor), default value issue */
 			/* celox-kor, dali-lgt, dali-skt, dali-kt */
 			if (get_hw_rev() <= 0x03) {
