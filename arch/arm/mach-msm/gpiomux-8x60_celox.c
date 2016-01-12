@@ -182,7 +182,7 @@ static struct gpiomux_setting sdcc1_suspend_config = {
 };
 
 #if defined(CONFIG_KOR_MODEL_SHV_E110S) || defined(CONFIG_KOR_MODEL_SHV_E120L) \
- || defined(CONFIG_KOR_MODEL_SHV_E120S) || defined(CONFIG_KOR_MODEL_SHV_E120K)
+ || defined(CONFIG_KOR_MODEL_SHV_E120S) || defined(CONFIG_KOR_MODEL_SHV_E120K) || defined(CONFIG_JPN_MODEL_SC_03D)
 static struct gpiomux_setting sdcc2_dat_0_3_cmd_actv_cfg = {
 	.func = GPIOMUX_FUNC_2,
 	.drv = GPIOMUX_DRV_6MA,
@@ -270,7 +270,7 @@ static struct gpiomux_setting sdcc2_suspend_config = {
 	.pull = GPIOMUX_PULL_UP,
 };
 
-#if defined(CONFIG_KOR_MODEL_SHV_E110S) 
+#if defined(CONFIG_KOR_MODEL_SHV_E110S) || defined(CONFIG_JPN_MODEL_SC_03D)
 static struct gpiomux_setting sdcc5_dat_0_3_cmd_actv_cfg = {
 	.func = GPIOMUX_FUNC_2,
 	.drv = GPIOMUX_DRV_6MA,
@@ -557,7 +557,7 @@ static struct gpiomux_setting gyro_suspend_cfg = {
 	.pull = GPIOMUX_PULL_DOWN,
 };
 #if defined(CONFIG_KOR_MODEL_SHV_E110S) \
-	||defined(CONFIG_KOR_MODEL_SHV_E120S)||defined(CONFIG_KOR_MODEL_SHV_E120K)||defined(CONFIG_KOR_MODEL_SHV_E120L)
+	||defined(CONFIG_KOR_MODEL_SHV_E120S)||defined(CONFIG_KOR_MODEL_SHV_E120K)||defined(CONFIG_KOR_MODEL_SHV_E120L) || defined(CONFIG_JPN_MODEL_SC_03D)
 static struct gpiomux_setting gyro_fifo_int_active_cfg = {
 	.func = GPIOMUX_FUNC_GPIO,
 	.drv = GPIOMUX_DRV_8MA,
@@ -715,7 +715,32 @@ static struct gpiomux_setting boot_config_cfg = {
 };
 
 static struct msm_gpiomux_config msm8x60_gsbi_configs[] __initdata = {
-#if defined(CONFIG_VP_A2220)
+#if defined(CONFIG_USA_MODEL_SGH_T769) || defined(CONFIG_JPN_MODEL_SC_03D)
+	{
+		.gpio      = 33,
+		.settings = {
+			[GPIOMUX_SUSPENDED] = &nc_cfg,
+		},
+	},
+	{
+		.gpio      = 34,
+		.settings = {
+			[GPIOMUX_SUSPENDED] = &nc_cfg,
+		},
+	},
+	{
+		.gpio      = 35,
+		.settings = {
+			[GPIOMUX_SUSPENDED] = &nc_cfg,
+		},
+	},
+	{
+		.gpio      = 36,
+		.settings = {
+			[GPIOMUX_SUSPENDED] = &nc_cfg,
+		},
+	},
+#elif defined(CONFIG_VP_A2220)
 	{
 		.gpio      = 33,
 		.settings = {
@@ -1130,7 +1155,7 @@ static struct msm_gpiomux_config msm8x60_gyro_configs[] __initdata = {
 		},
 	},
 #if defined(CONFIG_KOR_MODEL_SHV_E110S) \
-	||defined(CONFIG_KOR_MODEL_SHV_E120S)||defined(CONFIG_KOR_MODEL_SHV_E120K)||defined(CONFIG_KOR_MODEL_SHV_E120L)
+	||defined(CONFIG_KOR_MODEL_SHV_E120S)||defined(CONFIG_KOR_MODEL_SHV_E120K)||defined(CONFIG_KOR_MODEL_SHV_E120L) || defined(CONFIG_JPN_MODEL_SC_03D)
 	{
 		.gpio	   = 102,
 		.settings = {

@@ -1655,6 +1655,15 @@ config USA_MODEL_SGH_T989
 	depends on TARGET_SERIES_CELOX
 	bool "USA ATT SGH-T989"
 
+config TARGET_LOCALE_JPN
+	bool "Locale JPN "
+	help
+	  Support JPN Board
+
+config JPN_MODEL_SC_03D
+	depends on TARGET_SERIES_CELOX
+	bool "JPN NTT SC-03D"
+
 config SEC_AUDIO_DEVICE
 	bool "Sec AUDIO DEVICE"
 	help

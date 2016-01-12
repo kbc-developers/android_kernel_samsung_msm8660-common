@@ -40,7 +40,7 @@ struct setting_table {
 // Gamma Code //////////////////////////////////////////////
 #if !defined(CONFIG_EUR_MODEL_GT_I9210) \
   && !defined (CONFIG_USA_MODEL_SGH_I727) && !defined (CONFIG_USA_MODEL_SGH_T769) \
-  && !defined (CONFIG_USA_MODEL_SGH_T989)
+  && !defined (CONFIG_USA_MODEL_SGH_T989) && !defined (CONFIG_JPN_MODEL_SC_03D)
 
 static struct setting_table TABLE2_GAMMA_22_30_dimming[] = {
  {0xF9, 21,

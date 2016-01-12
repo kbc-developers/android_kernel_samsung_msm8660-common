@@ -28,7 +28,10 @@
 #include <linux/mfd/wm8994/pdata.h>
 #include <linux/mfd/wm8994/gpio.h>
 
-
+#if defined(CONFIG_TARGET_SERIES_P8LTE) && (defined(CONFIG_TARGET_LOCALE_KOR) || defined(CONFIG_TARGET_LOCALE_JPN)) //kks_111030 beacause of amp off while speaker call / Kenel suspend
+#include <linux/wakelock.h>
+static struct wake_lock wm8994_wake_lock;
+#endif
 
 
 //------------------------------------------------
@@ -867,6 +870,7 @@ void wm8994_set_spk_cradle(int onoff)
 
 		// Line AMP Enable
 		wm8994_reg_write(amp, 0x1E, 0x60); // Check schematic
+
 
 		wm8994_reg_write(amp, 0x22, 0x0000); // Check schematic
 		wm8994_reg_write(amp, 0x23, 0x0000); // Check schematic
@@ -4161,6 +4165,7 @@ static struct {
 	{ 0x0000, 0x0000, 0x0000 }, /* R816 */
 	{ 0x0000, 0x0000, 0x0000 }, /* R817 */
 	{ 0x0000, 0x0000, 0x0000 }, /* R818 */
+
 	{ 0x0000, 0x0000, 0x0000 }, /* R819 */
 	{ 0x0000, 0x0000, 0x0000 }, /* R820 */
 	{ 0x0000, 0x0000, 0x0000 }, /* R821 */
