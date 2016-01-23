@@ -302,7 +302,6 @@ struct mdp4_overlay_pipe {
 	uint32 src_format;
 	uint32 src_width;	/* source img width */
 	uint32 src_height;	/* source img height */
-	uint32 frame_size;	/* TILE frame size */
 	uint32 is_3d;
 	uint32 src_width_3d;	/* source img width */
 	uint32 src_height_3d;	/* source img height */
@@ -464,6 +463,7 @@ void mdp_pipe_ctrl(MDP_BLOCK_TYPE block, MDP_BLOCK_POWER_STATE state,
 void mdp4_pipe_kickoff(uint32 pipe, struct msm_fb_data_type *mfd);
 int mdp4_lcdc_on(struct platform_device *pdev);
 int mdp4_lcdc_off(struct platform_device *pdev);
+int mdp4_lcdc_splash_done(void);
 void mdp4_lcdc_update(struct msm_fb_data_type *mfd);
 void mdp4_intr_clear_set(ulong clear, ulong set);
 void mdp4_dma_p_cfg(void);
@@ -578,7 +578,7 @@ void mdp4_overlay0_done_dsi_cmd(int cndx);
 void mdp4_primary_rdptr(void);
 void mdp4_dsi_cmd_overlay(struct msm_fb_data_type *mfd);
 void mdp4_overlay_commit_finish(struct fb_info *info);
-int mdp4_lcdc_pipe_commit(int cndx, int wait);
+int mdp4_lcdc_pipe_commit(int cndx, int wait, u32 *release_busy);
 int mdp4_dtv_pipe_commit(int cndx, int wait);
 int mdp4_dsi_cmd_update_cnt(int cndx);
 void mdp4_dsi_rdptr_init(int cndx);

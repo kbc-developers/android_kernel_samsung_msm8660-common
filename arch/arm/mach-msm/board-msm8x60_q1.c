@@ -790,12 +790,9 @@ static struct regulator_init_data saw_s0_init_data = {
 			.name = "8901_s0",
 			.valid_ops_mask = REGULATOR_CHANGE_VOLTAGE,
 			.min_uV = 800000,
-<<<<<<< HEAD
 #if defined(CONFIG_JPN_MODEL_SC_05D)
 			.max_uV = 1325000,
 #else
-=======
->>>>>>> parent of da13ad3... overclocking: Add Kconfig option
 			.max_uV = 1250000,
 		},
 		.consumer_supplies = vreg_consumers_8901_S0,
@@ -807,11 +804,7 @@ static struct regulator_init_data saw_s1_init_data = {
 			.name = "8901_s1",
 			.valid_ops_mask = REGULATOR_CHANGE_VOLTAGE,
 			.min_uV = 800000,
-#if defined(CONFIG_JPN_MODEL_SC_05D)
 			.max_uV = 1325000,
-#else
-			.max_uV = 1250000,
-#endif
 		},
 		.consumer_supplies = vreg_consumers_8901_S1,
 		.num_consumer_supplies = ARRAY_SIZE(vreg_consumers_8901_S1),
@@ -8422,15 +8415,11 @@ static struct regulator_consumer_supply vreg_consumers_PM8901_S4_PC[] = {
 /* RPM early regulator constraints */
 static struct rpm_regulator_init_data rpm_regulator_early_init_data[] = {
 	/*	 ID       a_on pd ss min_uV   max_uV   init_ip    freq */
-<<<<<<< HEAD
 #if defined(CONFIG_JPN_MODEL_SC_05D)
 	RPM_SMPS(PM8058_S0, 0, 1, 1,  500000, 1325000, SMPS_HMIN, 1p60),
 #else
 	RPM_SMPS(PM8058_S0, 0, 1, 1,  500000, 1250000, SMPS_HMIN, 1p60),
 #endif
-=======
-	RPM_SMPS(PM8058_S0, 0, 1, 1,  500000, 1250000, SMPS_HMIN, 1p60),
->>>>>>> parent of da13ad3... overclocking: Add Kconfig option
 	RPM_SMPS(PM8058_S1, 0, 1, 1,  500000, 1250000, SMPS_HMIN, 1p60),
 };
 

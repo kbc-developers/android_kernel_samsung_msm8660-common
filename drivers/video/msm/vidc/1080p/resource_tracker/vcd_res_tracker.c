@@ -371,7 +371,6 @@ static u32 res_trk_sel_clk_rate(unsigned long hclk_rate)
 	mutex_lock(&resource_context.lock);
 	if (clk_set_rate(resource_context.vcodec_clk,
 		hclk_rate)) {
-		VCDRES_MSG_ERROR("vidc hclk set rate failed\n");
 		status = false;
 	} else
 		resource_context.vcodec_clk_rate = hclk_rate;
@@ -658,6 +657,8 @@ u32 res_trk_set_perf_level(u32 req_perf_lvl, u32 *pn_set_perf_lvl,
 			__func__, vidc_freq);
 		if (!res_trk_sel_clk_rate(vidc_freq)) {
 			if (vidc_freq == vidc_clk_table[4]) {
+				VCDRES_MSG_MED("%s(): Setting vidc freq "\
+					"to %u\n", __func__, (u32)vidc_clk_table[3]);
 				if (res_trk_sel_clk_rate(vidc_clk_table[3]))
 					goto ret;
 			}
@@ -888,6 +889,10 @@ struct ion_client *res_trk_get_ion_client(void)
 
 u32 res_trk_get_disable_dmx(void){
 	return resource_context.disable_dmx;
+}
+
+u32 res_trk_get_min_dpb_count(void){
+	return resource_context.vidc_platform_data->cont_mode_dpb_count;
 }
 
 void res_trk_set_mem_type(enum ddl_mem_area mem_type)

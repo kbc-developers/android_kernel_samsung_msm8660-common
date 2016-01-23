@@ -716,35 +716,41 @@ static void mdp4_scale_setup(struct mdp4_overlay_pipe *pipe)
 void mdp4_overlay_solidfill_init(struct mdp4_overlay_pipe *pipe)
 {
 	char *base;
+	u32 off;
 	uint32 src_size, src_xy, dst_size, dst_xy;
 	uint32 format;
-	uint32 off;
-	int i;
+
+	if (!pipe)
+		return;
+
+	off = pipe->pipe_num * MDP4_VIDEO_OFF;
+	if (pipe->pipe_type == OVERLAY_TYPE_RGB)
+		base = MDP_BASE + MDP4_RGB_BASE + off;
+	else if (pipe->pipe_type == OVERLAY_TYPE_VIDEO)
+		base = MDP_BASE + MDP4_VIDEO_BASE + off;
+	else
+		base = NULL;
+
+	if (!base)
+		return;
 
 	src_size = ((pipe->src_h << 16) | pipe->src_w);
 	src_xy = ((pipe->src_y << 16) | pipe->src_x);
 	dst_size = ((pipe->dst_h << 16) | pipe->dst_w);
 	dst_xy = ((pipe->dst_y << 16) | pipe->dst_x);
 
-	base = MDP_BASE + MDP4_VIDEO_BASE;
-	off = MDP4_VIDEO_OFF;	/* 0x10000 */
 	mdp_clk_ctrl(1);
-	for(i = 0; i < 4; i++) {	/* 4 pipes */
-		format = inpdw(base + 0x50);
-		format |= MDP4_FORMAT_SOLID_FILL;
-		outpdw(base + 0x0000, src_size);/* MDP_RGB_SRC_SIZE */
-		outpdw(base + 0x0004, src_xy);	/* MDP_RGB_SRC_XY */
-		outpdw(base + 0x0008, dst_size);/* MDP_RGB_DST_SIZE */
-		outpdw(base + 0x000c, dst_xy);	/* MDP_RGB_DST_XY */
-		outpdw(base + 0x0050, format);/* MDP_RGB_SRC_FORMAT */
-		outpdw(base + 0x1008, 0x0);/* Black */
-		base += off;
-	}
-	/*
-	 * keep it at primary
-	 * will be picked up at first commit
-	 */
-	ctrl->flush[MDP4_MIXER0] = 0x3c; /* all pipes */
+
+	format = inpdw(base + 0x50);
+	format |= MDP4_FORMAT_SOLID_FILL;
+	outpdw(base + 0x0000, src_size);/* MDP_RGB_SRC_SIZE */
+	outpdw(base + 0x0004, src_xy);	/* MDP_RGB_SRC_XY */
+	outpdw(base + 0x0008, dst_size);/* MDP_RGB_DST_SIZE */
+	outpdw(base + 0x000c, dst_xy);	/* MDP_RGB_DST_XY */
+	outpdw(base + 0x0050, format);/* MDP_RGB_SRC_FORMAT */
+	outpdw(base + 0x1008, 0x0);/* Black */
+
+	mdp4_overlay_reg_flush(pipe, 0);
 	mdp_clk_ctrl(0);
 }
 
@@ -995,14 +1001,8 @@ void mdp4_overlay_vg_setup(struct mdp4_overlay_pipe *pipe)
 	outpdw(vg_base + 0x0008, dst_size);	/* MDP_RGB_DST_SIZE */
 	outpdw(vg_base + 0x000c, dst_xy);	/* MDP_RGB_DST_XY */
 
-	/* TILE frame size */
-	if (pipe->frame_format != MDP4_FRAME_FORMAT_LINEAR) {
-		if ((ctrl->panel_mode & MDP4_PANEL_DSI_CMD && pipe->mixer_num == 0) ||
-			(ctrl->panel_mode & MDP4_PANEL_WRITEBACK && pipe->mixer_num == 2))
-			outpdw(vg_base + 0x0048, frame_size);
-		else
-			pipe->frame_size = frame_size;
-	}
+	if (pipe->frame_format != MDP4_FRAME_FORMAT_LINEAR)
+		outpdw(vg_base + 0x0048, frame_size);	/* TILE frame size */
 
 	/*
 	 * Adjust src X offset to avoid MDP from overfetching pixels
@@ -2611,8 +2611,8 @@ static int mdp4_overlay_req2pipe(struct mdp_overlay *req, int mixer,
 		int xres;
 		int yres;
 
-		xres = mfd->panel_info.xres;
-		yres = mfd->panel_info.yres;
+		xres = mfd->var_xres;
+		yres = mfd->var_yres;
 
 		if (((req->dst_rect.x + req->dst_rect.w) > xres) ||
 			((req->dst_rect.y + req->dst_rect.h) > yres)) {
@@ -2805,16 +2805,13 @@ static int mdp4_calc_req_mdp_clk(struct msm_fb_data_type *mfd,
 	pr_debug("%s: the right %d shifted xscale is %d.\n",
 		 __func__, shift, xscale);
 
-	if (src_h > dst_h) {
-		yscale = src_h;
-		yscale <<= shift;
-		yscale /= dst_h;
-	} else {		/* upscale */
-		yscale = dst_h;
-		yscale <<= shift;
-		yscale /= src_h;
-	}
+	if (src_h > dst_h)
+	        yscale = src_h;
+	else
+                yscale = dst_h;
 
+        yscale <<= shift;
+        yscale /= dst_h;
 	yscale *= src_w;
 	yscale /= hsync;
 
@@ -3832,24 +3829,6 @@ void mdp4_overlay_dma_commit(int mixer)
 	* non double buffer register update here
 	* perf level, new clock rate should be done here
 	*/
-	struct mdp4_overlay_pipe *pipe;
-	char *vg_base;
-	int i, pnum;
-	for (i = 0; i < OVERLAY_PIPE_MAX; i++, pipe++) {
-		pipe = ctrl->stage[mixer][i];
-		if (pipe) {
-			if (pipe->pipe_type == OVERLAY_TYPE_VIDEO &&
-						(pipe->frame_format !=
-						MDP4_FRAME_FORMAT_LINEAR) &&
-						pipe->frame_size) {
-				pnum = pipe->pipe_num - OVERLAY_PIPE_VG1;
-				vg_base = MDP_BASE + MDP4_VIDEO_BASE;
-				vg_base += (MDP4_VIDEO_OFF * pnum);
-				outpdw(vg_base + 0x0048, pipe->frame_size);
-				pipe->frame_size = 0;
-			}
-		}
-	}
 }
 
 /*
@@ -4073,7 +4052,7 @@ int mdp4_overlay_commit(struct fb_info *info)
 		mdp4_dsi_video_pipe_commit(0, 1);
 		break;
 	case LCDC_PANEL:
-		mdp4_lcdc_pipe_commit(0, 1);
+		mdp4_lcdc_pipe_commit(0, 1, &release_busy);
 		break;
 	case DTV_PANEL:
 		mdp4_dtv_pipe_commit(0, 1);

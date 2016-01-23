@@ -692,6 +692,7 @@ wl_set_status_all(struct wl_priv *wl, s32 status, u32 op)
 			}
 		}
 }
+
 static inline void
 wl_set_status_by_netdev(struct wl_priv *wl, s32 status,
 	struct net_device *ndev, u32 op)
