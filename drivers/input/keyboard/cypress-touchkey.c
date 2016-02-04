@@ -188,6 +188,10 @@ extern void sweep2wake_setdev(struct input_dev * input_device) {
 EXPORT_SYMBOL(sweep2wake_setdev);
 
 static void sweep2wake_presspwr(struct work_struct * sweep2wake_presspwr_work) {
+	if (scr_suspended && pocket_detect)
+		if (gp2a_in_pocket())
+			return;
+
 	input_event(sweep2wake_pwrdev, EV_KEY, KEY_POWER, 1);
 	input_event(sweep2wake_pwrdev, EV_SYN, 0, 0);
 	msleep(100);
@@ -199,18 +203,11 @@ static void sweep2wake_presspwr(struct work_struct * sweep2wake_presspwr_work) {
 static DECLARE_WORK(sweep2wake_presspwr_work, sweep2wake_presspwr);
 
 void sweep2wake_pwrtrigger(void) {
-	bool in_pocket = false;
-
-	if (scr_suspended && pocket_detect)
-		in_pocket = gp2a_in_pocket();
-
-	if (!in_pocket) {
-		if (mutex_trylock(&pwrkeyworklock)) {
-			schedule_work(&sweep2wake_presspwr_work);
-			mutex_unlock(&pwrkeyworklock);
-		}
-		return;
+	if (mutex_trylock(&pwrkeyworklock)) {
+		schedule_work(&sweep2wake_presspwr_work);
+		mutex_unlock(&pwrkeyworklock);
 	}
+	return;
 }
 #endif
 
