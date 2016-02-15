@@ -16571,7 +16571,7 @@ static void __init msm8x60_init(struct msm_board_data *board_data)
 
 #ifdef CONFIG_CPU_FREQ_GOV_ONDEMAND_2_PHASE
 #ifdef CONFIG_CPU_FREQ_GOV_INTELLIDEMAND
-	id_set_two_phase_freq(CONFIG_CPU_FREQ_GOV_ONDEMAND_2_PHASE_FREQ);
+	id_set_two_phase_freq(1134000);
 #endif
 #endif 
 
