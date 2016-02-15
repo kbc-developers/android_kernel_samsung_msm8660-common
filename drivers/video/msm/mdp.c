@@ -2493,9 +2493,8 @@ static int mdp_on(struct platform_device *pdev)
 
 	mdp_histogram_ctrl_all(TRUE);
 
-        if (mdp_pdata->mdp_gamma && mdp_gamma_cooler_colors) {
-                mdp_pdata->mdp_gamma();
-        }
+	if (mdp_pdata->mdp_gamma && mdp_gamma_cooler_colors)
+		mdp_pdata->mdp_gamma();
 
 	if (ret == 0)
 		ret = panel_next_late_init(pdev);
