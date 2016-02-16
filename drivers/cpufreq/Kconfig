@@ -123,7 +123,6 @@ config CPU_FREQ_DEFAULT_GOV_SMARTASS
 	help
 	  Use the CPUFreq governor 'smartass' as default.
 
-
 config CPU_FREQ_DEFAULT_GOV_SMARTASS2
         bool "smartass2"
         select CPU_FREQ_GOV_SMARTASS2
@@ -143,12 +142,6 @@ config CPU_FREQ_DEFAULT_GOV_LIONHEART
 	help
 	  Use the CPUFreq governor 'lionheart' as default.
 
-config CPU_FREQ_DEFAULT_GOV_ASSWAX
- 	 bool "asswax"
-  	 select CPU_FREQ_GOV_ASSWAX
-  	 help
-	  Use as default governor
-
 config CPU_FREQ_DEFAULT_GOV_INTERACTIVEX
   	bool "interactiveX"
   	select CPU_FREQ_GOV_INTERACTIVEX
@@ -165,13 +158,6 @@ config CPU_FREQ_DEFAULT_GOV_ADAPTIVE
 	  'adaptive' governor for latency-sensitive workloads and demanding
 	  performance.
 
-config CPU_FREQ_DEFAULT_GOV_SAVAGEDZEN
-	bool "savagedzen"
-	select CPU_FREQ_GOV_SAVAGEDZEN
-	select CPU_FREQ_GOV_PERFORMANCE
-	help
-	 use the CPUFreq governor 'savagedzen'
-
 config CPU_FREQ_DEFAULT_GOV_ABYSSPLUG
 	bool "abyssplug"
 	select CPU_FREQ_GOV_ABYSSPLUG
@@ -186,14 +172,17 @@ config CPU_FREQ_DEFAULT_GOV_ABYSSPLUG
 	  performance governor.
 
 config CPU_FREQ_DEFAULT_GOV_SCARY
-	bool "lulzactive"
-	select CPU_FREQ_GOV_SCARY
-
-config CPU_FREQ_DEFAULT_GOV_SCARY
 	bool "scary"
 	select CPU_FREQ_GOV_SCARY
 	help
 	A modified ondemand governor.
+
+config CPU_FREQ_DEFAULT_GOV_LAZY
+    bool "lazy"
+	select CPU_FREQ_GOV_LAZY
+	select CPU_FREQ_GOV_PERFORMANCE
+	help
+	  Use the CPUFreq governor 'lazy' as default.
 
 config CPU_FREQ_DEFAULT_GOV_SAVAGEDZEN
 	bool "savagedzen"
@@ -201,12 +190,6 @@ config CPU_FREQ_DEFAULT_GOV_SAVAGEDZEN
 	select CPU_FREQ_GOV_PERFORMANCE
 	help
 	  Use the CPUFreq governor 'savagedzen' as default.
-
-config CPU_FREQ_DEFAULT_GOV_SCARY
-	bool "scary"
-	select CPU_FREQ_GOV_SCARY
-	help
-	A modified ondemand governor.
 
 config CPU_FREQ_DEFAULT_GOV_ASSWAX
  	 bool "asswax"
@@ -235,20 +218,6 @@ config CPU_FREQ_DEFAULT_GOV_LAGFREE
 	  governor. If unsure have a look at the help section of the
 	  driver. Fallback governor will be the performance governor.
 
-config CPU_FREQ_DEFAULT_GOV_SMARTASS2
-	bool "smartass2"
-	select CPU_FREQ_GOV_SMARTASS2
-	select CPU_FREQ_GOV_PERFORMANCE
-	help
-		Use the CPUFreq governor 'smartass2' as default.
-
-config CPU_FREQ_DEFAULT_GOV_VIRTUOUS
-	bool "virtuous"
-	select CPU_FREQ_GOV_VIRTUOUS
-	select CPU_FREQ_GOV_PERFORMANCE
-	help
-	  Use the CPUFreq governor 'virtuous' as default.
-
 config CPU_FREQ_DEFAULT_GOV_FANTASY
 	bool "fantasy"
 	select CPU_FREQ_GOV_FANTASY
@@ -269,13 +238,6 @@ config CPU_FREQ_DEFAULT_GOV_BADASS
 	  Be aware that not all cpufreq drivers support the badass
 	  governor. If unsure have a look at the help section of the
 	  driver. Fallback governor will be the performance governor.
-
-
-config CPU_FREQ_DEFAULT_GOV_LAGFREE
-	bool "lagfree"
-	select CPU_FREQ_GOV_LAGFREE
-	help
-	  Use the CPUFreq governor 'lagfree' as default.
 
 config CPU_FREQ_DEFAULT_GOV_SAKURACTIVE
 	bool "sakuractive"
@@ -479,13 +441,6 @@ config CPU_FREQ_GOV_SAKURACTIVE
 
 	  If in doubt, say N.
 
-config CPU_FREQ_GOV_SCARY
-	tristate "'scary' governor"
-  depends on CPU_FREQ
-	help
-	  'scary' - this governor is a modified ondemand.
-	   If in doubt, say N.
-
 config CPU_FREQ_GOV_ABYSSPLUG
 	tristate "'abyssplug' cpufreq governor"
 	depends on CPU_FREQ && NO_HZ && HOTPLUG_CPU
@@ -505,10 +460,6 @@ config CPU_FREQ_GOV_ABYSSPLUG
 	  'ondemand' instead.
 
 	  If in doubt, say N.
-
-config CPU_FREQ_GOV_SAVAGEDZEN
-	tristate "'savagedzen' cpufreq governor"
-	depends on CPU_FREQ
 
 config CPU_FREQ_GOV_BADASS
 	tristate "'badass' cpufreq policy governor"
@@ -630,7 +581,6 @@ config CPU_FREQ_GOV_ADAPTIVE
 
 config CPU_FREQ_GOV_SCARY
 	bool "scary"
-	select CPU_FREQ_GOV_SCARY
 	help
 	A modified ondemand governor.
 
@@ -664,34 +614,6 @@ config CPU_FREQ_GOV_LAZY
 config CPU_FREQ_GOV_GAMING
 	tristate "'gaming' cpufreq policy governor"
 	depends on CPU_FREQ
-
-config CPU_FREQ_MIN_TICKS
-	int "Ticks between governor polling interval."
-	default 10
-	help
-	  Minimum number of ticks between polling interval for governors.
-
-config CPU_FREQ_SAMPLING_LATENCY_MULTIPLIER
-	int "Sampling rate multiplier for governors."
-	default 1000
-	help
-	  Sampling latency rate multiplied by the cpu switch latency.
-	  Affects governor polling.
-
-config SEC_DVFS
-	bool "DVFS job"
-	default n
-	depends on CPU_FREQ
-
-config SEC_DVFS_UNI
-	bool "DVFS job for Uni Processer"
-	default n
-	depends on SEC_DVFS
-
-config SEC_LIMIT_LCD_OFF_CPU_MAX_FREQ
-	bool
-	default y
-	depends on CPU_FREQ_GOV_ONDEMAND
 
 menu "x86 CPU frequency scaling drivers"
 depends on X86
