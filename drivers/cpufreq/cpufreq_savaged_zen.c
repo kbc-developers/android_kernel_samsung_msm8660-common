@@ -155,7 +155,7 @@ static int cpufreq_governor_savagedzen(struct cpufreq_policy *policy,
 static
 #endif
 struct cpufreq_governor cpufreq_gov_savagedzen = {
-        .name = "SavagedZen",
+        .name = "savagedzen",
         .governor = cpufreq_governor_savagedzen,
         .max_transition_latency = 9000000,
         .owner = THIS_MODULE,

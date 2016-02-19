@@ -94,7 +94,7 @@ unsigned int event);
 static
 #endif
 struct cpufreq_governor cpufreq_gov_badass = {
-       .name = "Badass",
+       .name = "badass",
        .governor = cpufreq_governor_bds,
        .max_transition_latency = TRANSITION_LATENCY_LIMIT,
        .owner = THIS_MODULE,

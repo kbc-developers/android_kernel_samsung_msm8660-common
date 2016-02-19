@@ -194,7 +194,7 @@ static int cpufreq_governor_asswax(struct cpufreq_policy *policy,
 static
 #endif
 struct cpufreq_governor cpufreq_gov_asswax = {
-	.name = "AssWax",
+	.name = "asswax",
 	.governor = cpufreq_governor_asswax,
 	.max_transition_latency = 9000000,
 	.owner = THIS_MODULE,
@@ -689,7 +689,7 @@ static struct attribute * asswax_attributes[] = {
 
 static struct attribute_group asswax_attr_group = {
 	.attrs = asswax_attributes,
-	.name = "AssWax",
+	.name = "asswax",
 };
 
 static int cpufreq_governor_asswax(struct cpufreq_policy *new_policy,
