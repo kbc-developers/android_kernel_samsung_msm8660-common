@@ -159,7 +159,7 @@ int dt2w_switch = 0;
 int dt2s_switch = 0;
 int dt2w_start = 0;
 int dt2w_count = 0;
-int pocket_detect = 1;
+int pocket_detect = 0;
 bool scr_suspended = false, exec_count = true;
 bool scr_on_touch = false, barrier[2] = {false, false};
 static struct input_dev * sweep2wake_pwrdev;
