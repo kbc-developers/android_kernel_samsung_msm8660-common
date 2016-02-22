@@ -45,6 +45,7 @@
 #ifdef CONFIG_TOUCH_CYPRESS_SWEEP2WAKE
 #include <linux/input/sweep2wake.h>
 #include <linux/s2w-switch.h>
+#include <linux/i2c/gp2a.h>
 #endif
 
 /*
@@ -158,6 +159,7 @@ int dt2w_switch = 0;
 int dt2s_switch = 0;
 int dt2w_start = 0;
 int dt2w_count = 0;
+int pocket_detect = 0;
 bool scr_suspended = false, exec_count = true;
 bool scr_on_touch = false, barrier[2] = {false, false};
 static struct input_dev * sweep2wake_pwrdev;
@@ -186,6 +188,10 @@ extern void sweep2wake_setdev(struct input_dev * input_device) {
 EXPORT_SYMBOL(sweep2wake_setdev);
 
 static void sweep2wake_presspwr(struct work_struct * sweep2wake_presspwr_work) {
+	if (scr_suspended && pocket_detect)
+		if (gp2a_in_pocket())
+			return;
+
 	input_event(sweep2wake_pwrdev, EV_KEY, KEY_POWER, 1);
 	input_event(sweep2wake_pwrdev, EV_SYN, 0, 0);
 	msleep(100);

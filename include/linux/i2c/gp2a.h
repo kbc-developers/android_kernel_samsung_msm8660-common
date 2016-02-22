@@ -112,5 +112,7 @@ int opt_i2c_write( u8 reg, u8 *val );
 void lightsensor_adjust_brightness(int level);
 int lightsensor_get_adcvalue(void);
 
+/* Pocket Detection */
+extern bool gp2a_in_pocket(void);
 
 #endif

@@ -68,6 +68,11 @@
 #define MSM_LIGHTSENSOR_ADC_READ
 #endif
 
+bool gp2a_in_pocket(void)
+{
+	return (lightsensor_get_adcvalue() <= 25);
+}
+
 struct sensor_data {
 	struct mutex mutex;
 	struct delayed_work work;
