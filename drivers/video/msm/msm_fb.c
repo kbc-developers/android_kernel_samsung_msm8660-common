@@ -46,6 +46,7 @@
 #include <linux/sync.h>
 #include <linux/sw_sync.h>
 #include <linux/file.h>
+#include <mach/board.h>
 
 #define MSM_FB_C
 #include "msm_fb.h"
@@ -61,9 +62,6 @@
 #ifdef CONFIG_HAS_EARLYSUSPEND
 #undef CONFIG_HAS_EARLYSUSPEND
 #endif
-
-int backlight_dimmer = 0;
-module_param(backlight_dimmer, int, 0755);
 
 static unsigned char *fbram;
 static unsigned char *fbram_phys;
@@ -190,11 +188,24 @@ static int msm_fb_resource_initialized;
 #ifndef CONFIG_FB_BACKLIGHT
 static int lcd_backlight_registered;
 
+static int calc_backlight_dimmer(int panel_uv)
+{
+	int backlight_dimmer = 0;
+
+	if (panel_uv % 5 == 0)
+		backlight_dimmer = panel_uv / 5;
+	else
+		backlight_dimmer = 0;
+
+	return backlight_dimmer;
+}
+
 static void msm_fb_set_bl_brightness(struct led_classdev *led_cdev,
 					enum led_brightness value)
 {
 	struct msm_fb_data_type *mfd = dev_get_drvdata(led_cdev->dev->parent);
 	int bl_lvl;
+	int backlight_dimmer = calc_backlight_dimmer(panel_uv);
 
 	/* This maps android backlight level 1 to 255 into
 	   driver backlight level bl_min to bl_max with rounding
@@ -203,7 +214,7 @@ static void msm_fb_set_bl_brightness(struct led_classdev *led_cdev,
 		bl_lvl = 0;
 	else if (value >= MAX_BACKLIGHT_BRIGHTNESS)
 		bl_lvl = mfd->panel_info.bl_max;
-	else if (backlight_dimmer > 0) {
+	else if (panel_uv > 0 && panel_uv <= 500) {
 		if (value <= backlight_dimmer) {
 			bl_lvl = 1;
 		} else {
