@@ -863,7 +863,7 @@ static unsigned int __init select_freq_plan(void)
 		pr_warn("ACPU PVS: 1188 MHz\n");
 	}
 
-	max_khz = 1944000;
+	max_khz = 1836000;
 	acpu_freq_tbl = acpu_freq_tbl_oc;
 
 	/* Truncate the table based to max_khz. */
