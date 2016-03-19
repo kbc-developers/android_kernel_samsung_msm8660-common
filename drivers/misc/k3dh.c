@@ -117,6 +117,58 @@ static int k3dh_read_accel_raw_xyz(struct k3dh_data *k3dh, struct k3dh_acc *acc)
 extern unsigned int get_hw_rev(void);
 #endif
 
+#ifdef CONFIG_TARGET_SERIES_CELOX
+#define MODEL_FILE_PATH	"/system/variant.prop"
+
+enum {
+	SGH_I727,
+	SGH_T989,
+	XXX_XXXX,
+};
+
+static int model;
+
+static int k3dh_get_hw_model(void)
+{
+	struct file *mod_filp = NULL;
+	char data[10];
+	int err = 0;
+	mm_segment_t old_fs;
+
+	old_fs = get_fs();
+	set_fs(KERNEL_DS);
+
+	mod_filp = filp_open(MODEL_FILE_PATH, O_RDONLY, 0666);
+	if (IS_ERR(mod_filp)) {
+		pr_err("[ACC] %s: Can't open model file\n", __func__);
+		set_fs(old_fs);
+		err = PTR_ERR(mod_filp);
+		return err;
+	}
+
+	err = mod_filp->f_op->read(mod_filp, (char *)data, sizeof(data), &mod_filp->f_pos);
+	if (err != sizeof(data)) {
+		pr_err("[ACC] %s: Can't read the data from file\n", __func__);
+		err = -EIO;
+	}
+
+	k3dh_dbgmsg("[ACC] %s: (%s)\n", __func__, data);
+	filp_close(mod_filp, current->files);
+	set_fs(old_fs);
+
+	/* Here we found the proper platform model of our phones */
+	if (strncmp(data, "SGH-I727", 8) == 0) {
+		model = SGH_I727;
+	} else if (strncmp(data, "SGH-T989", 8) == 0) {
+		model = SGH_T989;
+	} else {
+		model = XXX_XXXX;
+	}
+
+	return err;
+}
+#endif
+
 static int k3dh_read_accel_xyz(struct k3dh_data *k3dh, struct k3dh_acc *acc)
 {
 	int err = 0;
@@ -204,12 +256,6 @@ static int k3dh_read_accel_xyz(struct k3dh_data *k3dh, struct k3dh_acc *acc)
 		acc->x = -(acc->x);
 		acc->y = -(acc->y);
 	}
-#elif defined (CONFIG_USA_MODEL_SGH_I727)
-	if (get_hw_rev() >= 0x04 ) 
-	{
-		acc->x = -(acc->x);
-		acc->z = -(acc->z);
-	}
 #elif defined (CONFIG_USA_MODEL_SGH_I717)
 	if (true) 
 	{
@@ -230,19 +276,22 @@ static int k3dh_read_accel_xyz(struct k3dh_data *k3dh, struct k3dh_acc *acc)
 	{
 		acc->x = -(acc->x);
 		acc->y = -(acc->y);
-	}    
-#elif defined (CONFIG_USA_MODEL_SGH_T989)
+	}
+#endif
+
+#ifdef CONFIG_TARGET_SERIES_CELOX
+	if (model == SGH_I727)
 	{
-	#if defined(CONFIG_USA_MODEL_SGH_T989D)
-		acc->x = -(acc->x);
-		acc->y = acc->y;
-                acc->z = -(acc->z);
-	#else
-                s16 temp = acc->x;
-                acc->x = -(acc->y);
-                acc->y = (temp);
-                acc->z = (acc->z);	
-	#endif
+		if (get_hw_rev() >= 0x04)
+		{
+			acc->x = -(acc->x);
+			acc->z = -(acc->z);
+		}
+	} else if (model == SGH_T989) {
+		s16 temp = acc->x;
+		acc->x = -(acc->y);
+		acc->y = (temp);
+		acc->z = (acc->z);
 	}
 #endif
 
@@ -352,7 +401,9 @@ static int k3dh_open(struct inode *inode, struct file *file)
 {
 	int err = 0;
 	struct k3dh_data *k3dh = container_of(file->private_data, struct k3dh_data, k3dh_device);
-	
+
+	k3dh_get_hw_model();
+
 	file->private_data = k3dh;
 	if (atomic_read(&k3dh->opened) == 0) {
 		err = k3dh_open_calibration(k3dh);
