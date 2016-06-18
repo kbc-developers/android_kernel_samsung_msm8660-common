@@ -368,9 +368,6 @@ extern struct cpufreq_governor cpufreq_gov_userspace;
 #elif defined(CONFIG_CPU_FREQ_DEFAULT_GOV_ONDEMAND)
 extern struct cpufreq_governor cpufreq_gov_ondemand;
 #define CPUFREQ_DEFAULT_GOVERNOR	(&cpufreq_gov_ondemand)
-#elif defined(CONFIG_CPU_FREQ_DEFAULT_GOV_UBERDEMAND)
-extern struct cpufreq_governor cpufreq_gov_uberdemand;
-#define CPUFREQ_DEFAULT_GOVERNOR	(&cpufreq_gov_uberdemand)
 #elif defined(CONFIG_CPU_FREQ_DEFAULT_GOV_CONSERVATIVE)
 extern struct cpufreq_governor cpufreq_gov_conservative;
 #define CPUFREQ_DEFAULT_GOVERNOR	(&cpufreq_gov_conservative)
@@ -383,39 +380,9 @@ extern struct cpufreq_governor cpufreq_gov_smartass2;
 #elif defined(CONFIG_CPU_FREQ_DEFAULT_GOV_BADASS)
 extern struct cpufreq_governor cpufreq_gov_badass;
 #define CPUFREQ_DEFAULT_GOVERNOR	(&cpufreq_gov_badass)
-#elif defined(CONFIG_CPU_FREQ_DEFAULT_GOV_MINMAX)
-extern struct cpufreq_governor cpufreq_gov_minmax;
-#define CPUFREQ_DEFAULT_GOVERNOR 	(&cpufreq_gov_minmax)
-#elif defined(CONFIG_CPU_FREQ_DEFAULT_GOV_SCARY)
-extern struct cpufreq_governor cpufreq_gov_scary;
-#define CPUFREQ_DEFAULT_GOVERNOR 	(&cpufreq_gov_scary)
-#elif defined(CONFIG_CPU_FREQ_DEFAULT_GOV_VIRTUOUS)
-extern struct cpufreq_governor cpufreq_gov_virtuous;
-#define CPUFREQ_DEFAULT_GOVERNOR 	(&cpufreq_gov_virtuous)
-#elif defined(CONFIG_CPU_FREQ_DEFAULT_GOV_WHEATLEY)
-extern struct cpufreq_governor cpufreq_gov_wheatley;
-#define CPUFREQ_DEFAULT_GOVERNOR 	(&cpufreq_gov_wheatley)
-#elif defined(CONFIG_CPU_FREQ_DEFAULT_GOV_INTERACTIVEX)
-extern struct cpufreq_governor cpufreq_gov_interactivex;
-#define CPUFREQ_DEFAULT_GOVERNOR  	(&cpufreq_gov_interactivex)
-#elif defined(CONFIG_CPU_FREQ_DEFAULG_GOV_LIONHEART)
-extern struct cpufreq_governor cpufreq_gov_lionheart;
-#define CPUFREQ_DEFAULT_GOVERNOR 	(&cpufreq_gov_lionheart)
-#elif defined(CONFIG_CPU_FREQ_DEFAULT_GOV_SAKURACTIVE)
-extern struct cpufreq_governor cpufreq_gov_sakuractive;
-#define CPUFREQ_DEFAULT_GOVERNOR 	(&cpufreq_gov_sakuractive)
-#elif defined(CONFIG_CPU_FREQ_DEFAULT_GOV_SAMSUNG)
-extern struct cpufreq_governor cpufreq_gov_samsung;
-#define CPUFREQ_DEFAULT_GOVERNOR	(&cpufreq_gov_samsung)
 #elif defined(CONFIG_CPU_FREQ_DEFAULT_GOV_HYPER)
 extern struct cpufreq_governor cpufreq_gov_hyper;
 #define CPUFREQ_DEFAULT_GOVERNOR	(&cpufreq_gov_hyper)
-#elif defined(CONFIG_CPU_FREQ_DEFAULT_GOV_LAZY)
-extern struct cpufreq_governor cpufreq_gov_lazy;
-#define CPUFREQ_DEFAULT_GOVERNOR 	(&cpufreq_gov_lazy)
-#elif defined(CONFIG_CPU_FREQ_DEFAULT_GOV_GAMING)
-extern struct cpufreq_governor cpufreq_gov_gaming;
-#define CPUFREQ_DEFAULT_GOVERNOR 	(&cpufreq_gov_gaming)
 #endif
 
 
