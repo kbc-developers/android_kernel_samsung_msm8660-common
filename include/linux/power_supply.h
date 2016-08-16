@@ -139,6 +139,7 @@ enum power_supply_type {
 	POWER_SUPPLY_TYPE_MISC,
 	POWER_SUPPLY_TYPE_CARDOCK,
 	POWER_SUPPLY_TYPE_UARTOFF,
+	POWER_SUPPLY_TYPE_UNKNOWN,
 };
 
 union power_supply_propval {
