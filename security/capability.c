@@ -201,7 +201,7 @@ static int cap_inode_follow_link(struct dentry *dentry,
 	return 0;
 }
 
-static int cap_inode_permission(struct inode *inode, int mask)
+static int cap_inode_permission(struct inode *inode, int mask, unsigned flags)
 {
 	return 0;
 }
@@ -1023,6 +1023,7 @@ void __init security_fixup_ops(struct security_operations *ops)
 	set_to_cap_if_null(ops, sem_semctl);
 	set_to_cap_if_null(ops, sem_semop);
 	set_to_cap_if_null(ops, netlink_send);
+	set_to_cap_if_null(ops, netlink_recv);
 	set_to_cap_if_null(ops, d_instantiate);
 	set_to_cap_if_null(ops, getprocattr);
 	set_to_cap_if_null(ops, setprocattr);

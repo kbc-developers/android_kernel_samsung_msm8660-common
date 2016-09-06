@@ -54,8 +54,8 @@ struct user_namespace;
  * These functions are in security/capability.c and are used
  * as the default capabilities functions
  */
-extern int cap_capable(const struct cred *cred, struct user_namespace *ns,
-		       int cap, int audit);
+extern int cap_capable(struct task_struct *tsk, const struct cred *cred,
+		       struct user_namespace *ns, int cap, int audit);
 extern int cap_settime(const struct timespec *ts, const struct timezone *tz);
 extern int cap_ptrace_access_check(struct task_struct *child, unsigned int mode);
 extern int cap_ptrace_traceme(struct task_struct *parent);
@@ -96,6 +96,7 @@ struct xfrm_user_sec_ctx;
 struct seq_file;
 
 extern int cap_netlink_send(struct sock *sk, struct sk_buff *skb);
+extern int cap_netlink_recv(struct sk_buff *skb, int cap);
 
 void reset_security_ops(void);
 
@@ -796,6 +797,12 @@ static inline void security_free_mnt_opts(struct security_mnt_opts *opts)
  *	@skb contains the sk_buff structure for the netlink message.
  *	Return 0 if the information was successfully saved and message
  *	is allowed to be transmitted.
+ * @netlink_recv:
+ *	Check permission before processing the received netlink message in
+ *	@skb.
+ *	@skb contains the sk_buff structure for the netlink message.
+ *	@cap indicates the capability required
+ *	Return 0 if permission is granted.
  *
  * Security hooks for Unix domain networking.
  *
@@ -1259,6 +1266,7 @@ static inline void security_free_mnt_opts(struct security_mnt_opts *opts)
  * @capable:
  *	Check whether the @tsk process has the @cap capability in the indicated
  *	credentials.
+ *	@tsk contains the task_struct for the process.
  *	@cred contains the credentials to use.
  *      @ns contains the user namespace we want the capability in
  *	@cap contains the capability <include/linux/capability.h>.
@@ -1387,8 +1395,8 @@ struct security_operations {
 		       const kernel_cap_t *effective,
 		       const kernel_cap_t *inheritable,
 		       const kernel_cap_t *permitted);
-	int (*capable) (const struct cred *cred, struct user_namespace *ns,
-			int cap, int audit);
+	int (*capable) (struct task_struct *tsk, const struct cred *cred,
+			struct user_namespace *ns, int cap, int audit);
 	int (*quotactl) (int cmds, int type, int id, struct super_block *sb);
 	int (*quota_on) (struct dentry *dentry);
 	int (*syslog) (int type);
@@ -1458,7 +1466,7 @@ struct security_operations {
 			     struct inode *new_dir, struct dentry *new_dentry);
 	int (*inode_readlink) (struct dentry *dentry);
 	int (*inode_follow_link) (struct dentry *dentry, struct nameidata *nd);
-	int (*inode_permission) (struct inode *inode, int mask);
+	int (*inode_permission) (struct inode *inode, int mask, unsigned flags);
 	int (*inode_setattr)	(struct dentry *dentry, struct iattr *attr);
 	int (*inode_getattr) (struct vfsmount *mnt, struct dentry *dentry);
 	int (*inode_setxattr) (struct dentry *dentry, const char *name,
@@ -1559,6 +1567,7 @@ struct security_operations {
 			  struct sembuf *sops, unsigned nsops, int alter);
 
 	int (*netlink_send) (struct sock *sk, struct sk_buff *skb);
+	int (*netlink_recv) (struct sk_buff *skb, int cap);
 
 	void (*d_instantiate) (struct dentry *dentry, struct inode *inode);
 
@@ -1815,6 +1824,7 @@ void security_d_instantiate(struct dentry *dentry, struct inode *inode);
 int security_getprocattr(struct task_struct *p, char *name, char **value);
 int security_setprocattr(struct task_struct *p, char *name, void *value, size_t size);
 int security_netlink_send(struct sock *sk, struct sk_buff *skb);
+int security_netlink_recv(struct sk_buff *skb, int cap);
 int security_secid_to_secctx(u32 secid, char **secdata, u32 *seclen);
 int security_secctx_to_secid(const char *secdata, u32 seclen, u32 *secid);
 void security_release_secctx(char *secdata, u32 seclen);
@@ -1895,7 +1905,7 @@ static inline int security_capset(struct cred *new,
 static inline int security_capable(struct user_namespace *ns,
 				   const struct cred *cred, int cap)
 {
-	return cap_capable(cred, ns, cap, SECURITY_CAP_AUDIT);
+	return cap_capable(current, cred, ns, cap, SECURITY_CAP_AUDIT);
 }
 
 static inline int security_real_capable(struct task_struct *tsk, struct user_namespace *ns, int cap)
@@ -1903,7 +1913,7 @@ static inline int security_real_capable(struct task_struct *tsk, struct user_nam
 	int ret;
 
 	rcu_read_lock();
-	ret = cap_capable(__task_cred(tsk), ns, cap, SECURITY_CAP_AUDIT);
+	ret = cap_capable(tsk, __task_cred(tsk), ns, cap, SECURITY_CAP_AUDIT);
 	rcu_read_unlock();
 	return ret;
 }
@@ -1914,7 +1924,8 @@ int security_real_capable_noaudit(struct task_struct *tsk, struct user_namespace
 	int ret;
 
 	rcu_read_lock();
-	ret = cap_capable(__task_cred(tsk), ns, cap, SECURITY_CAP_NOAUDIT);
+	ret = cap_capable(tsk, __task_cred(tsk), ns, cap,
+			       SECURITY_CAP_NOAUDIT);
 	rcu_read_unlock();
 	return ret;
 }
@@ -2538,6 +2549,11 @@ static inline int security_setprocattr(struct task_struct *p, char *name, void *
 static inline int security_netlink_send(struct sock *sk, struct sk_buff *skb)
 {
 	return cap_netlink_send(sk, skb);
+}
+
+static inline int security_netlink_recv(struct sk_buff *skb, int cap)
+{
+	return cap_netlink_recv(skb, cap);
 }
 
 static inline int security_secid_to_secctx(u32 secid, char **secdata, u32 *seclen)
