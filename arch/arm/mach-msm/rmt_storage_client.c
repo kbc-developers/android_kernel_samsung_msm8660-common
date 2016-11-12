@@ -1651,10 +1651,14 @@ static int rmt_storage_probe(struct platform_device *pdev)
 	/* For targets that poll SMEM, set status to ready */
 	rmt_storage_set_client_status(rmt_srv, 1);
 
-	ret = register_reboot_notifier(&rmt_storage_reboot_notifier);
-	if (ret) {
-		pr_err("%s: Failed to register reboot notifier", __func__);
-		goto unregister_client;
+	if (dev->prog != MDM_RMT_STORAGE_APIPROG)
+	{
+		pr_info("%s: Registering reboot notifier...", __func__);
+		ret = register_reboot_notifier(&rmt_storage_reboot_notifier);
+		if (ret) {
+			pr_err("%s: Failed to register reboot notifier", __func__);
+			goto unregister_client;
+		}
 	}
 
 	ret = sysfs_create_group(&pdev->dev.kobj, &dev_attr_grp);
