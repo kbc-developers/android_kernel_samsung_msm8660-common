@@ -7971,7 +7971,7 @@ static struct tsens_platform_data msm_tsens_pdata  = {
 		.slope 			= {702, 702, 702, 702, 702},
 		.tsens_factor		= 1000,
 		.hw_type		= MSM_8660,
-		.tsens_num_sensor	= 6,
+		.tsens_num_sensor	= 1,
 };
 
 #ifdef CONFIG_VP_A2220
