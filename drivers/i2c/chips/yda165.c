@@ -1491,11 +1491,11 @@ void yda165_differential_speaker_onoff(int onoff) /* speaker path amp onoff */
 		
 		/* input */
 		stInfo.bLine1Gain = g_ampgain[cur_mode].in1_gain;		/* LINE1 Gain Amp */
-		stInfo.bLine2Gain = 1;		/* LINE2 Gain Amp */ // g_ampgain[cur_mode].in2_gain -> WIFI연결시 노이즈개선 튜닝값; -1.5dB(1)
+		stInfo.bLine2Gain = 1;		/* LINE2 Gain Amp */
 
 		stInfo.bLine1Balance = 0;	/* LINE1 Single-ended(0) or Differential(1) */
 		pr_info(MODULE_NAME ": Differential Speaker mode setting! \n");
-		stInfo.bLine2Balance = 1;	/* LINE2 Single-ended(0) or Differential(1) */ // 0->1 WIFI연결시 노이즈개선 튜닝값; stereo -> differential 
+		stInfo.bLine2Balance = 1;	/* LINE2 Single-ended(0) or Differential(1) */
 
 		/* HP */
 		stInfo.bHpCpMode = 0;			/* HP charge pump mode setting, 3stage mode(0) / 2stage mode(1) */
@@ -1532,7 +1532,7 @@ void yda165_differential_speaker_onoff(int onoff) /* speaker path amp onoff */
 
 
 		/* SP */
-		stInfo.bSpAtt = 25; 				/* SP attenuator */ // g_ampgain[cur_mode].sp_att -> WIFI연결시 노이즈개선 튜닝값; 28 -> 25:(-3dB)
+		stInfo.bSpAtt = 25; 				/* SP attenuator */
 		stInfo.bSpGainUp = g_ampgain[cur_mode].sp_gainup;			/* SP gain up */
 		stInfo.bSpSvol = 0;				/* SP soft volume setting, on(0) / off(1) */
 		stInfo.bSpZcs = 0;				/* SP zero cross mute setting, on(0) / off(1) */
