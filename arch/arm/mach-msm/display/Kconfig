@@ -9,3 +9,25 @@ config FB_MSM_LCDC_LD9040_WVGA_PANEL
 	select FB_MSM_LCDC_LD9040_WVGA
 	---help---
 	  Support for LCDC LD9040 WVGA (480x800) panel
+
+config FB_MSM_MIPI_DSI_S6E8AA0_WXGA_Q1
+        bool 
+        select FB_MSM_MIPI_DSI
+        select FB_MSM_MIPI_DSI_ESD_REFRESH
+        default n
+
+config FB_MSM_MIPI_DSI_ESD_REFRESH
+        bool 
+        select FB_MSM_MIPI_DSI
+        default n
+
+config FB_MSM_MIPI_S6E8AA0_WXGA_Q1_PT
+        bool
+        select FB_MSM_MIPI_DSI_S6E8AA0_WXGA_Q1
+        default n
+
+config FB_MSM_MIPI_S6E8AA0_WXGA_Q1_PANEL
+        bool "MIPI S6E8AA0)WXGA_Q1 Panel"
+        select FB_MSM_MIPI_S6E8AA0_WXGA_Q1_PT
+
+

@@ -57,7 +57,8 @@
 #define ABS_WAKE                        (ABS_MISC)
 #define ABS_CONTROL_REPORT              (ABS_THROTTLE)
 
-#if defined(CONFIG_KOR_MODEL_SHV_E160S) || defined(CONFIG_KOR_MODEL_SHV_E160K) || defined(CONFIG_KOR_MODEL_SHV_E160L)
+#if defined(CONFIG_KOR_MODEL_SHV_E160S) || defined(CONFIG_KOR_MODEL_SHV_E160K) || defined(CONFIG_KOR_MODEL_SHV_E160L) \
+	|| defined (CONFIG_JPN_MODEL_SC_05D) 
 #define LIGHT_BUFFER_NUM	7
 #else
 #define LIGHT_BUFFER_UP	5
@@ -89,7 +90,8 @@ struct sensor_data {
 	int testmode;
 	int light_buffer;
 	int light_count;
-#if !defined(CONFIG_KOR_MODEL_SHV_E160S) && !defined(CONFIG_KOR_MODEL_SHV_E160K) && !defined(CONFIG_KOR_MODEL_SHV_E160L)
+#if !defined(CONFIG_KOR_MODEL_SHV_E160S) && !defined(CONFIG_KOR_MODEL_SHV_E160K) && !defined(CONFIG_KOR_MODEL_SHV_E160L) \
+	&& !defined (CONFIG_JPN_MODEL_SC_05D)
 	int light_level_state;
 	bool light_first_level;
 #endif
@@ -526,7 +528,8 @@ lightsensor_resume(struct platform_device *pdev)
 
 	data->light_count = 0;
 	data->light_buffer = 0;
-#if !defined(CONFIG_KOR_MODEL_SHV_E160S) && !defined(CONFIG_KOR_MODEL_SHV_E160K) && !defined(CONFIG_KOR_MODEL_SHV_E160L)
+#if !defined(CONFIG_KOR_MODEL_SHV_E160S) && !defined(CONFIG_KOR_MODEL_SHV_E160K) && !defined(CONFIG_KOR_MODEL_SHV_E160L) \
+	&& !defined (CONFIG_JPN_MODEL_SC_05D) 
 	data->light_first_level =true;
 #endif
 
@@ -594,17 +597,24 @@ static void gp2a_work_func_light(struct work_struct *work)
 	struct sensor_data *data = container_of((struct delayed_work *)work,
 							struct sensor_data, work);
 
+#if !defined(CONFIG_JPN_MODEL_SC_05D)
 	int i;
+#endif
 	int adc = 0;
 
 	adc = lightsensor_get_adcvalue();
 
+#if defined(CONFIG_JPN_MODEL_SC_05D)
+	input_report_abs(this_data, ABS_MISC, adc);
+	input_sync(this_data);
+#else
 	for (i = 0; ARRAY_SIZE(adc_table); i++)
 		if (adc <= adc_table[i])
 			break;
 
 	if (data->light_buffer == i) {
-#if defined(CONFIG_KOR_MODEL_SHV_E160S) || defined(CONFIG_KOR_MODEL_SHV_E160K) || defined(CONFIG_KOR_MODEL_SHV_E160L)
+#if defined(CONFIG_KOR_MODEL_SHV_E160S) || defined(CONFIG_KOR_MODEL_SHV_E160K) || defined(CONFIG_KOR_MODEL_SHV_E160L) \
+	|| defined (CONFIG_JPN_MODEL_SC_05D) 
 		if (data->light_count++ == LIGHT_BUFFER_NUM) {
 			input_report_abs(this_data, ABS_MISC, adc);
 			input_sync(this_data);
@@ -648,7 +658,7 @@ static void gp2a_work_func_light(struct work_struct *work)
 		data->light_buffer = i;
 		data->light_count = 0;
 }
-
+#endif
 	if(data->enabled)
 		queue_delayed_work(light_workqueue,&data->work, msecs_to_jiffies(data->delay));
 }
@@ -672,7 +682,7 @@ lightsensor_probe(struct platform_device *pdev)
 	data->enabled = 0;
 	data->delay = SENSOR_DEFAULT_DELAY;
 	data->testmode = 0;
-#if !defined(CONFIG_KOR_MODEL_SHV_E160S) && !defined(CONFIG_KOR_MODEL_SHV_E160K) && !defined(CONFIG_KOR_MODEL_SHV_E160L)
+#if !defined(CONFIG_KOR_MODEL_SHV_E160S) && !defined(CONFIG_KOR_MODEL_SHV_E160K) && !defined(CONFIG_KOR_MODEL_SHV_E160L) && !defined(CONFIG_JPN_MODEL_SC_05D)
 	data->light_level_state =0;
 #endif
 

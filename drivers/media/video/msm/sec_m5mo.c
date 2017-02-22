@@ -1910,7 +1910,7 @@ static int m5mo_start(void)
 
 	cam_info("set antibanding");
 
-#if defined (CONFIG_JPN_MODEL_SC_03D)
+#if defined(CONFIG_JPN_MODEL_SC_03D) || defined(CONFIG_JPN_MODEL_SC_05D)
 	/* set auto flicker - 50Hz */
 	err = m5mo_writeb(M5MO_CATEGORY_AE, M5MO_AE_FLICKER, 0x01);
 #else

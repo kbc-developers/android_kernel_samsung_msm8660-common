@@ -45,6 +45,9 @@ static int mipi_dsi_remove(struct platform_device *pdev);
 
 static int mipi_dsi_off(struct platform_device *pdev);
 static int mipi_dsi_on(struct platform_device *pdev);
+#if defined (CONFIG_JPN_MODEL_SC_05D)
+static void mipi_dsi_shutdown(struct platform_device *pdev);
+#endif
 static int mipi_dsi_fps_level_change(struct platform_device *pdev,
 					u32 fps_level);
 
@@ -57,7 +60,11 @@ static int vsync_gpio = -1;
 static struct platform_driver mipi_dsi_driver = {
 	.probe = mipi_dsi_probe,
 	.remove = mipi_dsi_remove,
+#if defined (CONFIG_JPN_MODEL_SC_05D)
+	.shutdown = mipi_dsi_shutdown,
+#else
 	.shutdown = NULL,
+#endif
 	.driver = {
 		   .name = "mipi_dsi",
 		   },
@@ -116,6 +123,12 @@ static int mipi_dsi_off(struct platform_device *pdev)
 
 	ret = panel_next_off(pdev);
 
+#if defined(CONFIG_FB_MSM_MIPI_S6E8AA0_HD720_PANEL) || \
+	defined(CONFIG_FB_MSM_MIPI_S6E8AA0_WXGA_Q1_PANEL)
+
+	MIPI_OUTP(MIPI_DSI_BASE + 0xA8, 0x00000000); // for LCD-on when wakeup
+#endif
+
 	spin_lock_bh(&dsi_clk_lock);
 
 	mipi_dsi_clk_disable();
@@ -130,6 +143,9 @@ static int mipi_dsi_off(struct platform_device *pdev)
 
 	mipi_dsi_unprepare_clocks();
 	mipi_dsi_unprepare_ahb_clocks();
+
+	mipi_S6E8AA0_panel_power(0);
+
 	if (mipi_dsi_pdata && mipi_dsi_pdata->dsi_power_save)
 		mipi_dsi_pdata->dsi_power_save(0);
 
@@ -163,6 +179,8 @@ static int mipi_dsi_on(struct platform_device *pdev)
 	fbi = mfd->fbi;
 	var = &fbi->var;
 	pinfo = &mfd->panel_info;
+
+	mipi_S6E8AA0_panel_power(1);
 
 	if (mipi_dsi_pdata && mipi_dsi_pdata->dsi_power_save)
 		mipi_dsi_pdata->dsi_power_save(1);
@@ -333,6 +351,21 @@ static int mipi_dsi_on(struct platform_device *pdev)
 	return ret;
 }
 
+#if defined (CONFIG_JPN_MODEL_SC_05D)
+static void mipi_dsi_shutdown(struct platform_device *pdev)
+{
+	//int ret = 0;
+	printk("%s:+\n", __func__);
+
+	msleep(200);
+	if (mipi_dsi_pdata && mipi_dsi_pdata->dsi_power_save)
+		mipi_dsi_pdata->dsi_power_save(0x10);
+
+	printk("%s:-\n", __func__);
+
+	//return ret;
+}
+#endif
 static int mipi_dsi_early_off(struct platform_device *pdev)
 {
 	return panel_next_early_off(pdev);

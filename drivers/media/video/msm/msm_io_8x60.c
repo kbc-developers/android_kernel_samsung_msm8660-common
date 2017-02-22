@@ -726,7 +726,6 @@ int msm_camio_sensor_clk_on(struct platform_device *pdev)
 		gpio_set_value_cansleep(sinfo->sensor_platform_info->sensor_reset, 1);
 		msleep(5);
 	}
-	pr_info("%s : X\n", __func__);
 	return rc;
 
 #else
@@ -766,7 +765,6 @@ int msm_camio_sensor_clk_off(struct platform_device *pdev)
 	msm_camera_vreg_disable();
 	camdev->camera_gpio_off();
 	rc = msm_camio_clk_disable(CAMIO_CAM_MCLK_CLK);
-	pr_info("%s : X\n", __func__);
 	return rc;
 
 #else
@@ -865,7 +863,7 @@ int msm_camio_csi_config(struct msm_camera_csi_params *csi_params)
 	uint32_t val = 0;
 	int i;
 
-	pr_err("msm_camio_csi_config : E\n");
+	CDBG("msm_camio_csi_config\n");
 	if (csibase != NULL) {
 		/* SOT_ECC_EN enable error correction for SYNC (data-lane) */
 		msm_io_w(0x4, csibase + MIPI_PHY_CONTROL);
@@ -882,7 +880,7 @@ int msm_camio_csi_config(struct msm_camera_csi_params *csi_params)
 			MIPI_PROTOCOL_CONTROL_DATA_FORMAT_SHFT;
 		val |= csi_params->dpcm_scheme <<
 			MIPI_PROTOCOL_CONTROL_DPCM_SCHEME_SHFT;
-		pr_err("%s MIPI_PROTOCOL_CONTROL val=0x%x\n", __func__, val);
+		CDBG("%s MIPI_PROTOCOL_CONTROL val=0x%x\n", __func__, val);
 		msm_io_w(val, csibase + MIPI_PROTOCOL_CONTROL);
 
 		/* settle_cnt is very sensitive to speed!
@@ -892,13 +890,13 @@ int msm_camio_csi_config(struct msm_camera_csi_params *csi_params)
 			(0x0F << MIPI_PHY_D0_CONTROL2_HS_TERM_IMP_SHFT) |
 			(0x1 << MIPI_PHY_D0_CONTROL2_LP_REC_EN_SHFT) |
 			(0x1 << MIPI_PHY_D0_CONTROL2_ERR_SOT_HS_EN_SHFT);
-		pr_err("%s MIPI_PHY_D0_CONTROL2 val=0x%x\n", __func__, val);
+		CDBG("%s MIPI_PHY_D0_CONTROL2 val=0x%x\n", __func__, val);
 		for (i = 0; i < csi_params->lane_cnt; i++)
 			msm_io_w(val, csibase + MIPI_PHY_D0_CONTROL2 + i * 4);
 
 		val = (0x0F << MIPI_PHY_CL_CONTROL_HS_TERM_IMP_SHFT) |
 			(0x1 << MIPI_PHY_CL_CONTROL_LP_REC_EN_SHFT);
-		pr_err("%s MIPI_PHY_CL_CONTROL val=0x%x\n", __func__, val);
+		CDBG("%s MIPI_PHY_CL_CONTROL val=0x%x\n", __func__, val);
 		msm_io_w(val, csibase + MIPI_PHY_CL_CONTROL);
 
 		val = 0 << MIPI_PHY_D0_CONTROL_HS_REC_EQ_SHFT;
@@ -907,7 +905,7 @@ int msm_camio_csi_config(struct msm_camera_csi_params *csi_params)
 		val =
 		(0x1 << MIPI_PHY_D1_CONTROL_MIPI_CLK_PHY_SHUTDOWNB_SHFT)
 		|(0x1 << MIPI_PHY_D1_CONTROL_MIPI_DATA_PHY_SHUTDOWNB_SHFT);
-		pr_err("%s MIPI_PHY_D1_CONTROL val=0x%x\n", __func__, val);
+		CDBG("%s MIPI_PHY_D1_CONTROL val=0x%x\n", __func__, val);
 		msm_io_w(val, csibase + MIPI_PHY_D1_CONTROL);
 
 		msm_io_w(0x00000000, csibase + MIPI_PHY_D2_CONTROL);
@@ -939,9 +937,9 @@ int msm_camio_csi_config(struct msm_camera_csi_params *csi_params)
 		/*clear IRQ bits*/
 		msm_io_w(0xF017F3C0, csibase + MIPI_INTERRUPT_STATUS);
 	} else {
-		pr_err("CSIBASE is NULL");
+		pr_info("CSIBASE is NULL");
 	}
-	pr_err("msm_camio_csi_config : X\n");
+
 	return rc;
 }
 

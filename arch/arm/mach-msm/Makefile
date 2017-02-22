@@ -10,6 +10,11 @@ BOARD_OBJ_NAME:=board-msm8x60_celox.o
 GPIOMUX_OBJ_NAME:=gpiomux-8x60_celox.o
 endif
 
+ifdef CONFIG_TARGET_SERIES_Q1
+BOARD_OBJ_NAME:=board-msm8x60_q1.o
+GPIOMUX_OBJ_NAME:=gpiomux-8x60_q1.o
+endif
+
 obj-y += io.o dma.o memory.o
 ifndef CONFIG_ARM_ARCH_TIMER
 obj-y += timer.o

@@ -69,6 +69,10 @@ obj-$(CONFIG_TZCOM) += tzcom.o
 obj-$(CONFIG_QSEECOM) += qseecom.o
 obj-$(CONFIG_QFP_FUSE) += qfp_fuse.o
 obj-$(CONFIG_VIBETONZ) += vibetonz/
+ifeq ($(CONFIG_USE_A2220_B),y)
+obj-$(CONFIG_VP_A2220) += a2220b.o
+else
 obj-$(CONFIG_VP_A2220) += a2220.o
+endif
 obj-$(CONFIG_SEC_MISC) += sec_misc.o sec_level.o sec_param.o
 obj-$(CONFIG_UID_CPUTIME) += uid_cputime.o

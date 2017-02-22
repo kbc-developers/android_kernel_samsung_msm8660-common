@@ -1027,7 +1027,7 @@ void msm_snddev_poweramp_off_lineout_I9210(void)
 }
 #endif
 
-#if defined (CONFIG_TARGET_LOCALE_KOR) || defined (CONFIG_TARGET_LOCALE_JPN)
+#if defined(CONFIG_TARGET_LOCALE_KOR) || defined (CONFIG_TARGET_LOCALE_JPN)
 static struct regulator *snddev_reg_l1;
 
 int msm_snddev_poweramp_on_lineout(void)
@@ -1706,8 +1706,7 @@ ADIE_HEADSET_RX_48000_256;
 static struct adie_codec_action_unit headset_tx_48KHz_osr256_actions[] =
 ADIE_HEADSET_TX_48000_256;
 
-
-// ------- DEFINITION OF VT CALL PAIRED DEVICES ------ 
+// ------- DEFINITION OF VT CALL PAIRED DEVICES ------
 #if defined(CONFIG_TARGET_LOCALE_KOR) || defined(CONFIG_TARGET_LOCALE_JPN)
 static struct adie_codec_action_unit handset_vt_rx_48KHz_osr256_actions[] =
 ADIE_HANDSET_VT_RX_48000_256;
@@ -1815,19 +1814,6 @@ static struct adie_codec_action_unit headset_voip3_rx_48KHz_osr256_actions[] =
 ADIE_HEADSET_VOIP3_RX_48000_256;
 static struct adie_codec_action_unit headset_voip3_tx_48KHz_osr256_actions[] =
 ADIE_HEADSET_VOIP3_TX_48000_256;
-#else
-static struct adie_codec_action_unit handset_voip3_rx_48KHz_osr256_actions[] =
-ADIE_HANDSET_RX_48000_256;
-static struct adie_codec_action_unit handset_voip3_tx_48KHz_osr256_actions[] =
-ADIE_HANDSET_TX_48000_256;
-static struct adie_codec_action_unit speaker_voip3_rx_48KHz_osr256_actions[] =
-ADIE_SPEAKER_RX_48000_256;
-static struct adie_codec_action_unit speaker_voip3_tx_48KHz_osr256_actions[] =
-ADIE_SPEAKER_TX_48000_256;
-static struct adie_codec_action_unit headset_voip3_rx_48KHz_osr256_actions[] =
-ADIE_HEADSET_RX_48000_256;
-static struct adie_codec_action_unit headset_voip3_tx_48KHz_osr256_actions[] =
-ADIE_HEADSET_TX_48000_256;
 #endif
 
 // ------- DEFINITION OF CALL PAIRED DEVICES ------
@@ -1908,8 +1894,8 @@ ADIE_HEADSET_RX_48000_256;
 static struct adie_codec_action_unit fm_radio_speaker_rx_48KHz_osr256_actions[] =
 ADIE_SPEAKER_RX_48000_256;
 
-// ------- DEFINITION OF EXTERNAL DEVICES ------ 
-#if defined (CONFIG_TARGET_LOCALE_KOR) || defined(CONFIG_EUR_MODEL_GT_I9210) || defined (CONFIG_TARGET_LOCALE_JPN)
+// ------- DEFINITION OF EXTERNAL DEVICES ------
+#if defined(CONFIG_TARGET_LOCALE_KOR) || defined(CONFIG_EUR_MODEL_GT_I9210) || defined (CONFIG_TARGET_LOCALE_JPN)
 static struct adie_codec_action_unit lineout_rx_48KHz_osr256_actions[] =
 ADIE_LINEOUT_RX_48000_256;
 #else
@@ -2167,7 +2153,7 @@ static struct adie_codec_hwsetting_entry headset_voip2_tx_settings[] = {
 
 // ------- DEFINITION OF VOIP CALL3 PAIRED DEVICES ------
 #if defined(CONFIG_KOR_MODEL_SHV_E120S) || defined(CONFIG_KOR_MODEL_SHV_E120K)\
-|| defined(CONFIG_KOR_MODEL_SHV_E120L) || defined(CONFIG_Q1_KOR_AUDIO)|| defined(CONFIG_JPN_MODEL_SC_03D)
+|| defined(CONFIG_KOR_MODEL_SHV_E120L) || defined(CONFIG_Q1_KOR_AUDIO)
 static struct adie_codec_hwsetting_entry handset_voip3_rx_settings[] = {
 	{
 		.freq_plan = 48000,
@@ -2543,11 +2529,14 @@ static struct adie_codec_dev_profile headset_voip2_tx_profile = {
 };
 
 // ------- DEFINITION OF VOIP CALL3 PAIRED DEVICES ------
+#if defined(CONFIG_KOR_MODEL_SHV_E120S) || defined(CONFIG_KOR_MODEL_SHV_E120K)\
+|| defined(CONFIG_KOR_MODEL_SHV_E120L) || defined(CONFIG_Q1_KOR_AUDIO)
 static struct adie_codec_dev_profile handset_voip3_rx_profile = {
 	.path_type = ADIE_CODEC_RX,
 	.settings = handset_voip3_rx_settings,
 	.setting_sz = ARRAY_SIZE(handset_voip3_rx_settings),
 };
+
 static struct adie_codec_dev_profile handset_voip3_tx_profile = {
 	.path_type = ADIE_CODEC_TX,
 	.settings = handset_voip3_tx_settings,
@@ -2573,6 +2562,7 @@ static struct adie_codec_dev_profile headset_voip3_tx_profile = {
 	.settings = headset_voip3_tx_settings,
 	.setting_sz = ARRAY_SIZE(headset_voip3_tx_settings),
 };
+#endif
 
 // ------- DEFINITION OF CALL PAIRED DEVICES ------
 static struct adie_codec_dev_profile handset_call_rx_profile = {
@@ -4050,7 +4040,9 @@ static struct snddev_icodec_data deskdock_voip2_tx_data = {
 };
 
 
-// ------- DEFINITION OF VOIP CALL3 PAIRED DEVICES ------ 
+// ------- DEFINITION OF VOIP CALL3 PAIRED DEVICES ------
+#if defined(CONFIG_KOR_MODEL_SHV_E120S) || defined(CONFIG_KOR_MODEL_SHV_E120K)\
+|| defined(CONFIG_KOR_MODEL_SHV_E120L) || defined(CONFIG_Q1_KOR_AUDIO)
 static struct snddev_icodec_data handset_voip3_rx_data = {
 	.capability = (SNDDEV_CAP_RX | SNDDEV_CAP_VOICE),
 	.name = "handset_voip3_rx",
@@ -4228,6 +4220,7 @@ static struct snddev_icodec_data deskdock_voip3_tx_data = {
 	.pamp_off = msm_snddev_disable_submic_power,
 #endif
 };
+#endif
 
 // ------- DEFINITION OF LOOPBACK PAIRED DEVICES ------
 static struct snddev_icodec_data handset_loopback_rx_data = {
@@ -4801,11 +4794,14 @@ static struct platform_device device_deskdock_voip2_tx = {
 	.dev = { .platform_data = &deskdock_voip2_tx_data },
 };
 
-// ------- DEFINITION OF VOIP CALL3 PAIRED DEVICES ------ 
+// ------- DEFINITION OF VOIP CALL3 PAIRED DEVICES ------
+#if defined(CONFIG_KOR_MODEL_SHV_E120S) || defined(CONFIG_KOR_MODEL_SHV_E120K)\
+|| defined(CONFIG_KOR_MODEL_SHV_E120L) || defined(CONFIG_Q1_KOR_AUDIO)
 static struct platform_device device_handset_voip3_rx = {
 	.name = "snddev_icodec",
 	.dev = { .platform_data = &handset_voip3_rx_data },
 };
+
 static struct platform_device device_handset_voip3_tx = {
 	.name = "snddev_icodec",
 	.dev = { .platform_data = &handset_voip3_tx_data },
@@ -4868,6 +4864,7 @@ static struct platform_device device_deskdock_voip3_tx = {
 	.name = "snddev_icodec",
 	.dev = { .platform_data = &deskdock_voip3_tx_data },
 };
+#endif
 
 // ------- DEFINITION OF LOOPBACK PAIRED DEVICES ------
 static struct platform_device device_handset_loopback_rx = {
@@ -5034,7 +5031,7 @@ static struct platform_device *snd_devices_celox[] __initdata = {
 
 	// ------- DEFINITION OF VOIP CALL3 PAIRED DEVICES ------
 #if defined(CONFIG_KOR_MODEL_SHV_E120S) || defined(CONFIG_KOR_MODEL_SHV_E120K)\
-|| defined(CONFIG_KOR_MODEL_SHV_E120L) || defined(CONFIG_Q1_KOR_AUDIO) || defined(CONFIG_JPN_MODEL_SC_03D)
+|| defined(CONFIG_KOR_MODEL_SHV_E120L) || defined(CONFIG_Q1_KOR_AUDIO)
 	&device_handset_voip3_rx,
 	&device_handset_voip3_tx,
 	&device_speaker_voip3_rx,
@@ -5285,6 +5282,7 @@ static struct platform_device msm_ispkr_mic_device = {
 	.name = "snddev_icodec",
 	.dev = { .platform_data = &snddev_ispkr_mic_data },
 };
+
 #ifndef SEC_AUDIO_DEVICE
 static struct adie_codec_action_unit iearpiece_ffa_48KHz_osr256_actions[] =
 	EAR_PRI_MONO_8000_OSR_256;

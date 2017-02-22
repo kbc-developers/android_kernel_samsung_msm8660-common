@@ -1382,11 +1382,11 @@ static int smb328a_chg_set_property(struct power_supply *psy,
 			}
 			ret = smb328a_enable_charging(chip->client);
 			smb328a_watchdog_control(chip->client, true);
-#if defined(CONFIG_TARGET_LOCALE_KOR)
+#if defined(CONFIG_TARGET_LOCALE_KOR) || defined(CONFIG_TARGET_LOCALE_JPN)
 #if defined(CONFIG_KOR_MODEL_SHV_E110S) || \
 	defined(CONFIG_KOR_MODEL_SHV_E120L) || \
 	defined(CONFIG_KOR_MODEL_SHV_E120S) || \
-	defined(CONFIG_KOR_MODEL_SHV_E120K) || defined(CONFIG_TARGET_LOCALE_JPN)
+	defined(CONFIG_KOR_MODEL_SHV_E120K)
 			/* W/A for hw_rev00(celox-kor), default value issue */
 			/* celox-kor, dali-lgt, dali-skt, dali-kt */
 			if (get_hw_rev() <= 0x03) {
@@ -1650,7 +1650,7 @@ static irqreturn_t smb328a_int_work_func(int irq, void *smb_chip)
 	defined(CONFIG_KOR_MODEL_SHV_E120L) || \
 	defined(CONFIG_KOR_MODEL_SHV_E120S) || \
 	defined(CONFIG_KOR_MODEL_SHV_E120K) || \
-	defined(CONFIG_KOR_MODEL_SHV_E110S)
+	defined(CONFIG_KOR_MODEL_SHV_E110S)  || defined (CONFIG_JPN_MODEL_SC_05D)
 	if (intr_c & 0x80) {
 		pr_info("%s : charger watchdog intr triggerd!\n", __func__);
 		/* panic("charger watchdog intr triggerd!"); */
@@ -1678,9 +1678,10 @@ static int __devinit smb328a_probe(struct i2c_client *client,
 
 	pr_info("%s: SMB328A driver Loading!\n", __func__);
 
-#if defined(CONFIG_KOR_MODEL_SHV_E160S) || \
-	defined(CONFIG_KOR_MODEL_SHV_E160K) || \
-	defined(CONFIG_KOR_MODEL_SHV_E160L)
+#if defined (CONFIG_KOR_MODEL_SHV_E160S) || \
+	defined (CONFIG_KOR_MODEL_SHV_E160K) || \
+	defined (CONFIG_KOR_MODEL_SHV_E160L) || \
+	defined (CONFIG_JPN_MODEL_SC_05D)
 	if (get_hw_rev() < 0x4) {
 		pr_info("%s: SMB328A driver Loading SKIP!!!\n", __func__);
 		return 0;

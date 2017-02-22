@@ -212,12 +212,18 @@ proximity_enable_store(struct device *dev, struct device_attribute *attr, const 
     struct gp2a_data *data = input_get_drvdata(input_data);
     int value = simple_strtoul(buf, NULL, 10);
 	char input;
+#ifndef CONFIG_JPN_MODEL_SC_05D
 	unsigned long flags;
+#endif
 
     if (value != 0 && value != 1) {
         return count;
     }
 
+#if defined(CONFIG_JPN_MODEL_SC_05D)
+    if (data)
+        mutex_lock(&data->enable_mutex);
+#endif
     if (data->enabled && !value) { 			/* Proximity power off */
         disable_irq(data->gp2a_irq);
 
@@ -245,14 +251,22 @@ proximity_enable_store(struct device *dev, struct device_attribute *attr, const 
 		input_report_abs(data->input_dev, ABS_DISTANCE,  input);
 		input_sync(data->input_dev);
 		gprintk("[PROX] Start proximity = %d\n",input); //Temp
+#ifndef CONFIG_JPN_MODEL_SC_05D
 		spin_lock_irqsave(&prox_lock, flags);
+#endif
 		input = 0x03;
 		opt_i2c_write((u8)(REGS_OPMOD),&input);
 
         enable_irq(data->gp2a_irq);
+#ifndef CONFIG_JPN_MODEL_SC_05D
 		spin_unlock_irqrestore(&prox_lock, flags);
+#endif
     }
 
+#if defined(CONFIG_JPN_MODEL_SC_05D)
+    if (data)
+        mutex_unlock(&data->enable_mutex);
+#endif
 	data->enabled = value;
     input_report_abs(input_data, ABS_CONTROL_REPORT, (value<<16) | data->delay);
     return count;

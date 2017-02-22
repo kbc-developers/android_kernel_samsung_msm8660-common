@@ -3674,7 +3674,11 @@ static struct clk_lookup msm_clocks_8x60[] = {
 #else
 	CLK_LOOKUP("core_clk",		gsbi10_qup_clk.c,	"spi_qsd.1"),
 #endif
+#if defined (CONFIG_EPEN_WACOM_G5SP)
+    CLK_LOOKUP("core_clk",    gsbi11_qup_clk.c, "qup_i2c.18"),
+#else
 	CLK_LOOKUP("core_clk",		gsbi11_qup_clk.c,	NULL),
+#endif	
 	CLK_LOOKUP("gsbi_qup_clk",	gsbi12_qup_clk.c,	"msm_dsps"),
 	CLK_LOOKUP("core_clk",		gsbi12_qup_clk.c,	"qup_i2c.5"),
 	CLK_LOOKUP("core_clk",		pdm_clk.c,		NULL),
@@ -3718,7 +3722,11 @@ static struct clk_lookup msm_clocks_8x60[] = {
 #else
 	CLK_LOOKUP("iface_clk",		gsbi10_p_clk.c,		"spi_qsd.1"),
 #endif
+#if defined (CONFIG_EPEN_WACOM_G5SP)
+    CLK_LOOKUP("iface_clk",     gsbi11_p_clk.c,    "qup_i2c.18"),
+#else
 	CLK_LOOKUP("iface_clk",		gsbi11_p_clk.c,		NULL),
+#endif	
 	CLK_LOOKUP("iface_clk",		gsbi12_p_clk.c,		NULL),
 	CLK_LOOKUP("iface_clk",		gsbi12_p_clk.c, "msm_serial_hsl.0"),
 	CLK_LOOKUP("iface_clk",		gsbi12_p_clk.c,		"qup_i2c.5"),

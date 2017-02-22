@@ -113,7 +113,7 @@ static int k3dh_read_accel_raw_xyz(struct k3dh_data *k3dh, struct k3dh_acc *acc)
 
 #if defined (CONFIG_TARGET_LOCALE_KOR) || defined (CONFIG_JPN_MODEL_SC_03D)|| defined(CONFIG_USA_MODEL_SGH_I727)|| defined(CONFIG_USA_MODEL_SGH_T989) \
  || defined(CONFIG_USA_MODEL_SGH_I717) || defined(CONFIG_EUR_MODEL_GT_I9210) || defined(CONFIG_USA_MODEL_SGH_I957) \
- || defined(CONFIG_USA_MODEL_SGH_I757)|| defined (CONFIG_USA_MODEL_SGH_T769) || defined(CONFIG_USA_MODEL_SGH_I577)
+ || defined(CONFIG_USA_MODEL_SGH_I757)|| defined (CONFIG_USA_MODEL_SGH_T769) || defined(CONFIG_USA_MODEL_SGH_I577) || defined (CONFIG_TARGET_LOCALE_JPN)
 extern unsigned int get_hw_rev(void);
 #endif
 
@@ -127,46 +127,6 @@ enum {
 };
 
 static int model;
-
-static int k3dh_get_hw_model(void)
-{
-	struct file *mod_filp = NULL;
-	char data[10];
-	int err = 0;
-	mm_segment_t old_fs;
-
-	old_fs = get_fs();
-	set_fs(KERNEL_DS);
-
-	mod_filp = filp_open(MODEL_FILE_PATH, O_RDONLY, 0666);
-	if (IS_ERR(mod_filp)) {
-		pr_err("[ACC] %s: Can't open model file\n", __func__);
-		set_fs(old_fs);
-		err = PTR_ERR(mod_filp);
-		return err;
-	}
-
-	err = mod_filp->f_op->read(mod_filp, (char *)data, sizeof(data), &mod_filp->f_pos);
-	if (err != sizeof(data)) {
-		pr_err("[ACC] %s: Can't read the data from file\n", __func__);
-		err = -EIO;
-	}
-
-	k3dh_dbgmsg("[ACC] %s: (%s)\n", __func__, data);
-	filp_close(mod_filp, current->files);
-	set_fs(old_fs);
-
-	/* Here we found the proper platform model of our phones */
-	if (strncmp(data, "SGH-I727", 8) == 0) {
-		model = SGH_I727;
-	} else if (strncmp(data, "SGH-T989", 8) == 0) {
-		model = SGH_T989;
-	} else {
-		model = XXX_XXXX;
-	}
-
-	return err;
-}
 #endif
 
 static int k3dh_read_accel_xyz(struct k3dh_data *k3dh, struct k3dh_acc *acc)
@@ -223,7 +183,7 @@ static int k3dh_read_accel_xyz(struct k3dh_data *k3dh, struct k3dh_acc *acc)
 	}
 #endif
 
-#if !defined(CONFIG_KOR_MODEL_SHV_E160S) && !defined (CONFIG_KOR_MODEL_SHV_E160K) && !defined(CONFIG_KOR_MODEL_SHV_E160L)
+#if !defined(CONFIG_KOR_MODEL_SHV_E160S) && !defined (CONFIG_KOR_MODEL_SHV_E160K) && !defined(CONFIG_KOR_MODEL_SHV_E160L) && !defined (CONFIG_JPN_MODEL_SC_05D)
 	if (get_hw_rev() >= 0x04 )
 	{
 		s16 temp = acc->x;
@@ -244,6 +204,12 @@ static int k3dh_read_accel_xyz(struct k3dh_data *k3dh, struct k3dh_acc *acc)
 		acc->y = (acc->y);
 		acc->z = -(acc->z);
 	}
+#elif defined (CONFIG_JPN_MODEL_SC_05D)
+	if (get_hw_rev() >= 0x02 )
+	{
+		acc->x = -(acc->x);
+		acc->y = -(acc->y);
+	}
 #elif defined(CONFIG_EUR_MODEL_GT_I9210)
 	{
 		s16 temp = acc->x;
@@ -255,6 +221,12 @@ static int k3dh_read_accel_xyz(struct k3dh_data *k3dh, struct k3dh_acc *acc)
 	{
 		acc->x = -(acc->x);
 		acc->y = -(acc->y);
+	}
+#elif defined (CONFIG_USA_MODEL_SGH_I727)
+	if (get_hw_rev() >= 0x04 ) 
+	{
+		acc->x = -(acc->x);
+		acc->z = -(acc->z);
 	}
 #elif defined (CONFIG_USA_MODEL_SGH_I717)
 	if (true) 
@@ -401,9 +373,7 @@ static int k3dh_open(struct inode *inode, struct file *file)
 {
 	int err = 0;
 	struct k3dh_data *k3dh = container_of(file->private_data, struct k3dh_data, k3dh_device);
-
-	k3dh_get_hw_model();
-
+	
 	file->private_data = k3dh;
 	if (atomic_read(&k3dh->opened) == 0) {
 		err = k3dh_open_calibration(k3dh);

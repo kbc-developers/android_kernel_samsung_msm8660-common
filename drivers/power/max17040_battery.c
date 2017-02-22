@@ -71,7 +71,8 @@
 #define FULL_KEEP_SOC		30
 #elif defined(CONFIG_KOR_MODEL_SHV_E160S) || \
 	defined(CONFIG_KOR_MODEL_SHV_E160K) || \
-	defined(CONFIG_KOR_MODEL_SHV_E160L)
+	defined(CONFIG_KOR_MODEL_SHV_E160L) || \
+	defined (CONFIG_JPN_MODEL_SC_05D)
 #define EMPTY_COND_SOC		100
 #define EMPTY_SOC		20
 /* #define FULL_SOC		9450 */
@@ -126,7 +127,8 @@
 #endif
 
 #if defined(CONFIG_KOR_MODEL_SHV_E160S) || \
-	defined(CONFIG_KOR_MODEL_SHV_E160K)
+	defined(CONFIG_KOR_MODEL_SHV_E160K) || \
+	defined (CONFIG_JPN_MODEL_SC_05D)
 #define ADJUST_SOC_OFFSET
 #endif
 
@@ -760,7 +762,7 @@ static int __devinit max17040_probe(struct i2c_client *client,
 	chip->rcomp = max17040_get_rcomp(client);
 
 	chip->battery.name		= "fuelgauge",
-	chip->battery.type		= POWER_SUPPLY_TYPE_UNKNOWN,
+	chip->battery.type		= POWER_SUPPLY_TYPE_BATTERY,
 	chip->battery.get_property	= max17040_get_property,
 	chip->battery.set_property	= max17040_set_property,
 	chip->battery.properties	= max17040_battery_props,

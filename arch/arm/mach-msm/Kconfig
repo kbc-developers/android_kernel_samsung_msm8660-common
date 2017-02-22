@@ -747,6 +747,12 @@ config MSM_STACKED_MEMORY
 	  memory.  When present this memory bank is used for a high speed
 	  shared memory interface.  When not present regular RAM is used.
 
+config SEC_KERNEL_REBASE_FOR_PMEM_OPTIMIZATION
+	bool "Kernel Rebase for PMEM Optimization"
+	default n
+	help
+	  This option is used to place kernel base to 0x48000000 instead of 0x40400000.
+
 config PHYS_OFFSET
 	hex
 	default "0x40800000" if ARCH_MSM9615
@@ -758,6 +764,7 @@ config PHYS_OFFSET
 	default "0x00200000" if !MSM_STACKED_MEMORY
 	default "0x00000000" if ARCH_QSD8X50 && MSM_SOC_REV_A
 	default "0x20000000" if ARCH_QSD8X50
+	default "0x48000000" if SEC_KERNEL_REBASE_FOR_PMEM_OPTIMIZATION
 	default "0x40400000" if ARCH_MSM8X60
 	default "0x10000000"
 
@@ -1637,10 +1644,20 @@ choice
 		bool "Reset the entire chip"
 endchoice
 
-config TARGET_SERIES_CELOX
-	bool "SERIES_CELOX"
-	help
-	  Support models of celox series
+choice
+	prompt "TARGET SERIES"
+	default TARGET_SERIES_CELOX
+
+	config TARGET_SERIES_CELOX
+		bool "SERIES_CELOX"
+		help
+		  Support models of celox series
+
+	config TARGET_SERIES_Q1
+		bool "SERIES_CELOX"
+		help
+		  Support models of q1 series  
+endchoice
 
 config TARGET_LOCALE_USA
 	bool "Locale USA"
@@ -1660,9 +1677,15 @@ config TARGET_LOCALE_JPN
 	help
 	  Support JPN Board
 
-config JPN_MODEL_SC_03D
-	depends on TARGET_SERIES_CELOX
-	bool "JPN NTT SC-03D"
+choice
+	prompt "JPN Model Name"
+	depends on TARGET_LOCALE_JPN
+	config JPN_MODEL_SC_03D
+		bool "JPN NTT SC-03D"
+
+	config JPN_MODEL_SC_05D
+		bool "JPN NTT SC-05D"
+endchoice
 
 config SEC_AUDIO_DEVICE
 	bool "Sec AUDIO DEVICE"
@@ -2252,6 +2275,12 @@ config PMIC8058_XOADC_CAL
 	help
 	  Support PMIC8058 adc calibration
 endif
+
+config Q1_KOR_AUDIO
+	bool "Q1 KOR AUDIO"
+	default n
+	help
+	  Support Q1 KOR AUDIO
 
 config SEC_LOG_LAST_KMSG
 	default n

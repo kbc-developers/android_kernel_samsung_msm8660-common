@@ -200,7 +200,7 @@ static int HWversion=0;
 static int gv_intr2=0;
 static int isDeskdockconnected=0;
 static int Dockconnected = 0;
-#if defined(CONFIG_USA_MODEL_SGH_I717) || defined(CONFIG_USA_MODEL_SGH_T989) || defined(CONFIG_USA_MODEL_SGH_I757)
+#if defined(CONFIG_USA_MODEL_SGH_I717) || defined(CONFIG_USA_MODEL_SGH_T989) || defined(CONFIG_USA_MODEL_SGH_I757) || defined(CONFIG_JPN_MODEL_SC_05D)
 static int isDockaudioenable = 0;
 #endif
 static int initial_check=0;
@@ -301,7 +301,7 @@ void FSA9480_CheckAndHookAudioDock(int value, int onoff)
 			if (pdata->deskdock_cb)
 				pdata->deskdock_cb(FSA9480_ATTACHED);
 
-#if defined(CONFIG_USA_MODEL_SGH_I717)
+#if defined(CONFIG_USA_MODEL_SGH_I717) || defined(CONFIG_JPN_MODEL_SC_05D)
 			if (!get_sec_det_jack_state()) {
 #endif
 #if !defined (CONFIG_USA_MODEL_SGH_I757)
@@ -318,7 +318,7 @@ void FSA9480_CheckAndHookAudioDock(int value, int onoff)
 					dev_err(&client->dev,"%s: err %d\n", __func__, ret);
 					
 #endif					
-#if defined(CONFIG_USA_MODEL_SGH_I717)
+#if defined(CONFIG_USA_MODEL_SGH_I717) || defined(CONFIG_JPN_MODEL_SC_05D)
 			}
 			else
 				printk("%s: Earjack exist..\n", __func__);
@@ -399,7 +399,7 @@ void FSA9480_CheckAndHookAudioDock(int value, int onoff)
 			dev_info(&client->dev, "FSA9480_CheckAndHookAudioDock On ctrl reg: 0x%x\n", ret);
 
 
-#if defined(CONFIG_USA_MODEL_SGH_I717)
+#if defined(CONFIG_USA_MODEL_SGH_I717) || defined(CONFIG_JPN_MODEL_SC_05D)
 			if (!get_sec_det_jack_state()) {
 #endif
 #if !defined (CONFIG_USA_MODEL_SGH_I757)
@@ -415,7 +415,7 @@ void FSA9480_CheckAndHookAudioDock(int value, int onoff)
 				if (ret < 0)
 					dev_err(&client->dev,"%s: err %d\n", __func__, ret);
 #endif
-#if defined(CONFIG_USA_MODEL_SGH_I717)
+#if defined(CONFIG_USA_MODEL_SGH_I717) || defined(CONFIG_JPN_MODEL_SC_05D)
 			}
 			else
 				printk("%s: Earjack exist..\n", __func__);
@@ -760,7 +760,7 @@ void fsa9480_audiopath_control(int enable)
 {
 	struct i2c_client *client = local_usbsw->client;
 	dev_info(&client->dev, "%s(%d)\n", __func__, enable);
-#if defined(CONFIG_USA_MODEL_SGH_I717)|| defined (CONFIG_USA_MODEL_SGH_T989)  || defined(CONFIG_USA_MODEL_SGH_I757)
+#if defined(CONFIG_USA_MODEL_SGH_I717)|| defined (CONFIG_USA_MODEL_SGH_T989)  || defined(CONFIG_USA_MODEL_SGH_I757) || defined(CONFIG_JPN_MODEL_SC_05D)
 	if(enable) {
 		if(Dockconnected && !get_sec_det_jack_state()) {
 			fsa9480_manual_switching(SWITCH_PORT_AUDIO); /* dock audio path On */
@@ -769,7 +769,7 @@ void fsa9480_audiopath_control(int enable)
 		else
 			dev_info(&client->dev, "%s: does not On dock audio (dock=%d, earjack=%d)\n", __func__, Dockconnected, get_sec_det_jack_state());
 	} else {
-#if defined(CONFIG_USA_MODEL_SGH_I717)
+#if defined(CONFIG_USA_MODEL_SGH_I717) || defined(CONFIG_JPN_MODEL_SC_05D)
 		if(!Dockconnected || (Dockconnected && get_sec_det_jack_state())) {
 #else
 		if((!Dockconnected || (Dockconnected && get_sec_det_jack_state())) && isDockaudioenable) {
@@ -807,7 +807,7 @@ void fsa9480_manual_switching(int path)
 	value = i2c_smbus_read_byte_data(client, FSA9480_REG_CTRL);
 	if (value < 0)
 		dev_err(&client->dev, "%s: err %d\n", __func__, value);
-#if defined(CONFIG_USA_MODEL_SGH_I717)|| defined (CONFIG_USA_MODEL_SGH_T989) || defined(CONFIG_USA_MODEL_SGH_I757)
+#if defined(CONFIG_USA_MODEL_SGH_I717)|| defined (CONFIG_USA_MODEL_SGH_T989) || defined(CONFIG_USA_MODEL_SGH_I757) || defined(CONFIG_JPN_MODEL_SC_05D)
 	if (Dockconnected) {
 		if ((value & ~CON_MANUAL_SW & ~CON_RAW_DATA) !=
 				(CON_SWITCH_OPEN |  CON_WAIT)) {

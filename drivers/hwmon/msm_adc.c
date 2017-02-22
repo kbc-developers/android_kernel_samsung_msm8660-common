@@ -1440,7 +1440,9 @@ static int msm_adc_probe(struct platform_device *pdev)
 		else
 			msm_rpc_adc_init(pdev);
 	}
+#if !defined(CONFIG_JPN_MODEL_SC_05D)
 	conv_first_request = true;
+#endif
 
 	pr_info("msm_adc successfully registered\n");
 

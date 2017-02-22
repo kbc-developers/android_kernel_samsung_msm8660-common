@@ -452,6 +452,7 @@ config FB_MSM_WRITEBACK_MSM_PANEL
 	  Support for MDP4 OVERLAY write back mode
 
 if !FB_MSM_LCDC_LD9040_WVGA_PANEL
+if !FB_MSM_MIPI_S6E8AA0_WXGA_Q1_PANEL
 choice
 	prompt "LCD Panel"
 	default FB_MSM_MDDI_AUTO_DETECT
@@ -783,6 +784,7 @@ config FB_MSM_PANEL_NONE
 	---help---
 	  This will disable LCD panel
 endchoice
+endif # FB_MSM_MIPI_S6E8AA0_WXGA_Q1_PANEL
 endif # FB_MSM_LCDC_LD9040_WVGA_PANEL
 
 config LGIT_VIDEO_WXGA_CABC

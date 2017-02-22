@@ -3142,7 +3142,6 @@ static void hdmi_msm_video_setup(int video_format)
 		HDMI_OUTP(0x02BC, 0);
 	}
 
-	hdmi_frame_ctrl_cfg(timing);
 }
 
 struct hdmi_msm_audio_acr {

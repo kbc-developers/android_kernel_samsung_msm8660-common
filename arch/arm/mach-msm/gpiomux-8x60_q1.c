@@ -1,4 +1,4 @@
-/* Copyright (c) 2010-2011, The Linux Foundation. All rights reserved.
+/* Copyright (c) 2010-2011, Code Aurora Forum. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -532,7 +532,7 @@ static struct gpiomux_setting cam_active_5_cfg = {
 	.pull = GPIOMUX_PULL_NONE,
 };
 
-#if defined (CONFIG_USA_MODEL_SGH_I717) || defined (CONFIG_KOR_MODEL_SHV_E160S) || defined (CONFIG_KOR_MODEL_SHV_E160K) || defined (CONFIG_KOR_MODEL_SHV_E160L)
+#if defined (CONFIG_USA_MODEL_SGH_I717) || defined (CONFIG_KOR_MODEL_SHV_E160S) || defined (CONFIG_KOR_MODEL_SHV_E160K) || defined (CONFIG_KOR_MODEL_SHV_E160L) || defined(CONFIG_JPN_MODEL_SC_05D)
 static struct gpiomux_setting torch_active_cfg = {
     .func = GPIOMUX_FUNC_GPIO,
     .drv = GPIOMUX_DRV_2MA,
@@ -566,7 +566,11 @@ static struct gpiomux_setting accel_active_cfg = {
 static struct gpiomux_setting accel_suspend_cfg = {
 	.func = GPIOMUX_FUNC_GPIO,
 	.drv = GPIOMUX_DRV_8MA,
+#if defined(CONFIG_JPN_MODEL_SC_05D)
+	.pull = GPIOMUX_PULL_UP,
+#else
 	.pull = GPIOMUX_PULL_DOWN,
+#endif
 };
 #endif
 
@@ -577,7 +581,7 @@ static struct gpiomux_setting gyro_active_cfg = {
 	.drv = GPIOMUX_DRV_8MA,
 	.pull = GPIOMUX_PULL_UP,
 };
-#if defined(CONFIG_KOR_MODEL_SHV_E160S) || defined(CONFIG_KOR_MODEL_SHV_E160K)  || defined(CONFIG_KOR_MODEL_SHV_E160L) 
+#if defined(CONFIG_KOR_MODEL_SHV_E160S) || defined(CONFIG_KOR_MODEL_SHV_E160K)  || defined(CONFIG_KOR_MODEL_SHV_E160L)  || defined(CONFIG_JPN_MODEL_SC_05D)
 static struct gpiomux_setting gyro_suspend_cfg = {
 	.func = GPIOMUX_FUNC_GPIO,
 	.drv = GPIOMUX_DRV_8MA,
@@ -599,6 +603,14 @@ static struct gpiomux_setting opt_active_cfg = {
 	.drv = GPIOMUX_DRV_8MA,
 	.pull = GPIOMUX_PULL_UP,
 };
+
+#if defined(CONFIG_JPN_MODEL_SC_05D)
+static struct gpiomux_setting opt_suspend_cfg = {
+      .func = GPIOMUX_FUNC_GPIO,
+      .drv = GPIOMUX_DRV_8MA,
+      .pull = GPIOMUX_PULL_DOWN,
+  };
+#endif
 #endif
 
 #ifdef CONFIG_KEYPAD_CYPRESS_TOUCH
@@ -924,12 +936,21 @@ static struct msm_gpiomux_config msm8x60_ebi2_configs[] __initdata = {
 			[GPIOMUX_SUSPENDED] = &ebi2_a_d,
 		},
 	},
+#if defined (CONFIG_JPN_MODEL_SC_05D)
+	{
+		.gpio      = 124,
+		.settings = {
+			[GPIOMUX_SUSPENDED] = &nc_cfg,
+		},
+	},
+#else
 	{
 		.gpio      = 124,
 		.settings = {
 			[GPIOMUX_SUSPENDED] = &ebi2_a_d,
 		},
 	},
+#endif
 	{
 		.gpio      = 125,
 		.settings = {
@@ -1165,7 +1186,7 @@ static struct msm_gpiomux_config msm8x60_gyro_configs[] __initdata = {
 };
 #endif
 
-#if defined (CONFIG_USA_MODEL_SGH_I717) || defined (CONFIG_KOR_MODEL_SHV_E160S) || defined (CONFIG_KOR_MODEL_SHV_E160K) || defined (CONFIG_KOR_MODEL_SHV_E160L)
+#if defined (CONFIG_USA_MODEL_SGH_I717) || defined (CONFIG_KOR_MODEL_SHV_E160S) || defined (CONFIG_KOR_MODEL_SHV_E160K) || defined (CONFIG_KOR_MODEL_SHV_E160L) || defined(CONFIG_JPN_MODEL_SC_05D)
 static struct msm_gpiomux_config msm8x60_torch_configs[] __initdata = {
 	{
 		.gpio      = 62,
@@ -1191,14 +1212,22 @@ static struct msm_gpiomux_config msm8x60_opt_configs[] __initdata = {
 		.gpio      = 138,
 		.settings = {
 			[GPIOMUX_ACTIVE]    = &opt_active_cfg,
+#if defined(CONFIG_JPN_MODEL_SC_05D)
+			[GPIOMUX_SUSPENDED] = &opt_suspend_cfg,
+#else
 			[GPIOMUX_SUSPENDED] = &opt_active_cfg,
+#endif
 		},
 	},
 	{
 		.gpio      = 139,
 		.settings = {
 			[GPIOMUX_ACTIVE]    = &opt_active_cfg,
+#if defined(CONFIG_JPN_MODEL_SC_05D)
+			[GPIOMUX_SUSPENDED] = &opt_suspend_cfg,
+#else
 			[GPIOMUX_SUSPENDED] = &opt_active_cfg,
+#endif
 		},
 	},
 };
@@ -1832,6 +1861,26 @@ static struct msm_gpiomux_config msm8x60_lcdc_configs[] __initdata = {
 			[GPIOMUX_SUSPENDED] = &lcdc_suspend_cfg,
 		},
 	},
+
+#if defined(CONFIG_JPN_MODEL_SC_05D)
+	/* lcdc_grn2 */
+	{
+		.gpio = 17,
+		.settings = {
+			[GPIOMUX_ACTIVE]    = &nc_cfg,
+			[GPIOMUX_SUSPENDED] = &nc_cfg,
+		},
+	},
+	/* lcdc_grn1 */
+	{
+		.gpio = 18,
+		.settings = {
+			[GPIOMUX_ACTIVE]    = &nc_cfg,
+			[GPIOMUX_SUSPENDED] = &nc_cfg,
+		},
+	},
+
+#else
 	/* lcdc_grn2 */
 	{
 		.gpio = 17,
@@ -1848,6 +1897,7 @@ static struct msm_gpiomux_config msm8x60_lcdc_configs[] __initdata = {
 			[GPIOMUX_SUSPENDED] = &lcdc_suspend_cfg,
 		},
 	},
+#endif
 	/* lcdc_grn0 */
 	{
 		.gpio = 19,
@@ -2468,7 +2518,7 @@ msm8x60_charm_gpiomux_cfgs[] __initdata = {
 	{msm8x60_motor_configs, ARRAY_SIZE(msm8x60_motor_configs)},
 	{msm8x60_boot_configs, ARRAY_SIZE(msm8x60_boot_configs)},
 	{msm8x60_nc_configs, ARRAY_SIZE(msm8x60_nc_configs)},
-#if defined (CONFIG_USA_MODEL_SGH_I717) || defined (CONFIG_KOR_MODEL_SHV_E160S) || defined (CONFIG_KOR_MODEL_SHV_E160K) || defined (CONFIG_KOR_MODEL_SHV_E160L)
+#if defined (CONFIG_USA_MODEL_SGH_I717) || defined (CONFIG_KOR_MODEL_SHV_E160S) || defined (CONFIG_KOR_MODEL_SHV_E160K) || defined (CONFIG_KOR_MODEL_SHV_E160L) || defined (CONFIG_JPN_MODEL_SC_05D)
 	{msm8x60_torch_configs, ARRAY_SIZE(msm8x60_torch_configs)},
 #endif 
 	{NULL, 0},
