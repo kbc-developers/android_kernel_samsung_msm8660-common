@@ -448,7 +448,9 @@ enum cable_type_t {
 	CABLE_TYPE_MISC,
 	CABLE_TYPE_CARDOCK,
 	CABLE_TYPE_UARTOFF,
+	CABLE_TYPE_CDP,
 	CABLE_TYPE_UNKNOWN,
+
 };
 
 enum batt_full_t {
@@ -1244,6 +1246,9 @@ static int sec_bat_set_property(struct power_supply *ps,
 			info->cable_uart_off = true;
 #endif
 			break;
+		case POWER_SUPPLY_TYPE_USB_CDP:
+			info->cable_type = CABLE_TYPE_CDP;
+			break;
 		default:
 			return -EINVAL;
 		}
@@ -1274,7 +1279,11 @@ static int sec_usb_get_property(struct power_supply *ps,
 		return -EINVAL;
 
 	/* Set enable=1 only if the USB charger is connected */
-	val->intval = (info->cable_type == CABLE_TYPE_USB);
+	if (info->cable_type == CABLE_TYPE_USB ||
+			info->cable_type == CABLE_TYPE_CDP)
+			val->intval = 1;
+	else
+			val->intval = 0;
 
 	return 0;
 }
@@ -2483,10 +2492,10 @@ static int sec_bat_enable_charging(struct sec_bat_info *info, bool enable)
 		case CABLE_TYPE_AC:
 		case CABLE_TYPE_CARDOCK:
 		case CABLE_TYPE_UARTOFF:
-		case CABLE_TYPE_UNKNOWN:
+		case CABLE_TYPE_CDP:
 			val_type.intval = POWER_SUPPLY_STATUS_CHARGING;
-			 /* input : 1200mA, output : 1200mA */
-			val_chg_current.intval = 1200;
+			 /* input : 900mA, output : 900mA */
+			val_chg_current.intval = 900;
 			info->full_cond_count = FULL_CHG_COND_COUNT;
 			info->full_cond_voltage = FULL_CHARGE_COND_VOLTAGE;
 			break;
@@ -2497,27 +2506,16 @@ static int sec_bat_enable_charging(struct sec_bat_info *info, bool enable)
 			info->full_cond_count = FULL_CHG_COND_COUNT;
 			info->full_cond_voltage = FULL_CHARGE_COND_VOLTAGE;
 			break;
+		case CABLE_TYPE_UNKNOWN:
+			val_type.intval = POWER_SUPPLY_STATUS_CHARGING;
+			 /* input : 450, output : 500mA */
+			val_chg_current.intval = 450;
+			info->full_cond_count = USB_FULL_COND_COUNT;
+			info->full_cond_voltage = USB_FULL_COND_VOLTAGE;
+			break;
 		default:
 			dev_err(info->dev, "%s: Invalid func use\n", __func__);
 			return -EINVAL;
-		}
-
-		switch (info->cable_type) {
-			case CABLE_TYPE_NONE:
-				cable_type = 0;
-				break;
-			case CABLE_TYPE_USB:
-				cable_type = 1;
-				break;
-			case CABLE_TYPE_AC:
-			case CABLE_TYPE_CARDOCK:
-			case CABLE_TYPE_UARTOFF:
-			case CABLE_TYPE_UNKNOWN:
-				cable_type = 2;
-				break;
-			case CABLE_TYPE_MISC:
-				cable_type = 3;
-				break;
 		}
 
 		/* Set charging current */
@@ -2731,6 +2729,7 @@ static void sec_bat_cable_work(struct work_struct *work)
 	case CABLE_TYPE_UNKNOWN:
 	case CABLE_TYPE_USB:
 	case CABLE_TYPE_AC:
+	case CABLE_TYPE_CDP:
 		/* TODO : check DCIN state again*/
 		cancel_delayed_work(&info->measure_work);
 		info->charging_status = POWER_SUPPLY_STATUS_CHARGING;

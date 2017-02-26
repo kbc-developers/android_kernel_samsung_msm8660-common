@@ -566,5 +566,4 @@ int mipi_S6E8AA0_panel_power (int enable);
 
 /* Panel Undervolting */
 extern int panel_uv;
-
 #endif

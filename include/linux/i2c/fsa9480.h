@@ -46,6 +46,7 @@ struct fsa9480_platform_data {
 	void (*mhl_cb) (bool attached);
 	void (*reset_cb) (void);
 	void (*set_init_flag) (void);
+	void (*usb_cdp_cb) (bool attached);
 };
 
 enum {

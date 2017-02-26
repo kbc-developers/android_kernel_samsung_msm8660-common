@@ -4157,6 +4157,8 @@ void disable_charging_before_reset(void)
 }
 #endif /* CONFIG_BATTERY_SEC */
 
+#define MSM_FB_DSUB_PMEM_ADDER (0)
+
 /* Sensors DSPS platform data */
 #ifdef CONFIG_MSM_DSPS
 
@@ -4218,14 +4220,20 @@ static void __init msm8x60_init_dsps(void)
 #define MSM_ION_HEAP_NUM	7
 
 #ifdef CONFIG_FB_MSM_HDMI_MSM_PANEL
-#define MSM_FB_SIZE roundup((roundup((800 * 480 * 4), 4096) * 3) + \
+#define MSM_FB_SIZE roundup((roundup((1280 * 800 * 4), 4096) * 3) + \
 				(roundup((1920 * 1080 * 2), 4096) * 2), 4096)
 #else
-#define MSM_FB_SIZE roundup((roundup((800 * 480 * 4), 4096) * 3), 4096)
+#define MSM_FB_SIZE roundup((roundup((1280 * 800 * 4), 4096) * 3), 4096)
 #endif
 
 #define MSM_SMI_BASE            0x38000000
 #define MSM_SMI_SIZE            0x4000000
+
+#define KERNEL_SMI_BASE		(MSM_SMI_BASE)
+#define KERNEL_SMI_SIZE		0x600000
+
+#define MSM_PMEM_SF_SIZE 0x4000000 /* 64 Mbytes */
+#define MSM_HDMI_PRIM_PMEM_SF_SIZE 0x4000000 /* 64 Mbytes */
 
 #define MSM_RAM_CONSOLE_BASE    0x77800000
 #define MSM_RAM_CONSOLE_SIZE    SZ_1M
@@ -4235,17 +4243,89 @@ static void __init msm8x60_init_dsps(void)
 #define MSM_ION_MM_FW_SIZE	0x200000
 #define MSM_ION_MM_SIZE		0x3D00000
 #define MSM_ION_MFC_SIZE	0x100000
+
+unsigned char hdmi_is_primary;
+
+#define MSM_FB_OVERLAY0_WRITEBACK_SIZE (0)
+#define MSM_FB_OVERLAY1_WRITEBACK_SIZE (0)
+
+#define MSM_PMEM_KERNEL_EBI1_SIZE  0x0 //  0x600000 -> 0x0 Not used region
+
+#define MSM_PMEM_ADSP_BASE         0x40400000
+#define MSM_PMEM_ADSP_SIZE         0x02A00000 /* 42MB */
+
+#define MSM_PMEM_AUDIO_SIZE        0x28B000
+
+#define USER_SMI_BASE         (KERNEL_SMI_BASE + KERNEL_SMI_SIZE)
+#define USER_SMI_SIZE         (MSM_SMI_SIZE - KERNEL_SMI_SIZE)
+#define MSM_PMEM_SMIPOOL_SIZE USER_SMI_SIZE
+
+#if defined (CONFIG_SEC_KERNEL_REBASE_FOR_PMEM_OPTIMIZATION) && defined(CONFIG_USA_MODEL_SGH_I717)
+#define MSM_ION_SF_BASE		0x7a000000
+#endif
+#if defined(CONFIG_JPN_MODEL_SC_05D)
+#define MSM_ION_SF_BASE		0x7b000000
+#endif
+
+#define MSM_ION_WB_SIZE		(MSM_PMEM_ADSP_SIZE-MSM_ION_CAMERA_SIZE) /* 24MB, ICS : 30MB */
+#define MSM_ION_QSECOM_SIZE	0x600000 /* (6MB) */
 #define MSM_ION_AUDIO_SIZE	0x4CF000
 
 #define MSM_ION_MM_FW_BASE	MSM_SMI_BASE
 #define MSM_ION_MM_BASE		0x38200000
 #define MSM_ION_MFC_BASE	0x3BF00000
 
+static unsigned fb_size;
+static int __init fb_size_setup(char *p)
+{
+	fb_size = memparse(p, NULL);
+	return 0;
+}
+early_param("fb_size", fb_size_setup);
+
+static unsigned pmem_kernel_ebi1_size = MSM_PMEM_KERNEL_EBI1_SIZE;
+static int __init pmem_kernel_ebi1_size_setup(char *p)
+{
+	pmem_kernel_ebi1_size = memparse(p, NULL);
+	return 0;
+}
+early_param("pmem_kernel_ebi1_size", pmem_kernel_ebi1_size_setup);
+
+#ifdef CONFIG_ANDROID_PMEM
+static unsigned pmem_sf_size = MSM_PMEM_SF_SIZE;
+static int __init pmem_sf_size_setup(char *p)
+{
+	pmem_sf_size = memparse(p, NULL);
+	return 0;
+}
+early_param("pmem_sf_size", pmem_sf_size_setup);
+
+static unsigned pmem_adsp_size = MSM_PMEM_ADSP_SIZE;
+
+static int __init pmem_adsp_size_setup(char *p)
+{
+	pmem_adsp_size = memparse(p, NULL);
+	return 0;
+}
+early_param("pmem_adsp_size", pmem_adsp_size_setup);
+
+static unsigned pmem_audio_size = MSM_PMEM_AUDIO_SIZE;
+
+static int __init pmem_audio_size_setup(char *p)
+{
+	pmem_audio_size = memparse(p, NULL);
+	return 0;
+}
+early_param("pmem_audio_size", pmem_audio_size_setup);
+#endif
+
 static struct resource msm_fb_resources[] = {
 	{
 		.flags  = IORESOURCE_DMA,
 	}
 };
+
+static void set_mdp_clocks_for_wuxga(void);
 
 static int msm_fb_detect_panel(const char *name)
 {
@@ -4311,6 +4391,8 @@ static int msm_fb_detect_panel(const char *name)
 	if (!strncmp(name, HDMI_PANEL_NAME,
 			strnlen(HDMI_PANEL_NAME,
 				PANEL_NAME_MAX_LEN))) {
+		if (hdmi_is_primary)
+			set_mdp_clocks_for_wuxga();
 		return 0;
 	}
 
@@ -4334,6 +4416,21 @@ static struct platform_device msm_fb_device = {
 	.resource          = msm_fb_resources,
 	.dev.platform_data = &msm_fb_pdata,
 };
+
+#if defined (CONFIG_USA_MODEL_SGH_I717) || !defined (CONFIG_MSM_MULTIMEDIA_USE_ION)
+static struct android_pmem_platform_data android_pmem_audio_pdata = {
+	.name = "pmem_audio",
+	.allocator_type = PMEM_ALLOCATORTYPE_BITMAP,
+	.cached = 0,
+	.memory_type = MEMTYPE_EBI1,
+};
+
+static struct platform_device android_pmem_audio_device = {
+	.name = "android_pmem",
+	.id = 4,
+	.dev = { .platform_data = &android_pmem_audio_pdata },
+};
+#endif
 
 #define PMEM_BUS_WIDTH(_bw) \
 	{ \
@@ -4949,6 +5046,67 @@ static void fsa9480_reset_cb(void)
 		pr_err("Failed to register dock switch. %d\n", ret);
 }
 
+static void fsa9480_usb_cdp_cb(bool attached)
+{
+#ifdef CONFIG_BATTERY_SEC
+	union power_supply_propval value;
+	int ret = 0;
+#endif
+	struct power_supply *psy = power_supply_get_by_name("battery");
+	struct usb_gadget *gadget = platform_get_drvdata(&msm_device_gadget_peripheral);
+	printk(KERN_ERR "fsa9485_usb_cdp_cb attached %d\n", attached);
+
+	if(!psy) {
+		pr_err("%s: fail to get battery ps\n", __func__);
+		return;
+	}
+
+	if (gadget) {
+		if (!usb_access_lock) {
+			if (attached)
+				usb_gadget_vbus_connect(gadget);
+			else
+				usb_gadget_vbus_disconnect(gadget);
+		}
+		else  // for usb lock
+		{
+			usb_gadget_vbus_disconnect(gadget);
+		}
+	}
+	device_attached = attached ? DEV_TYPE_USB : DEV_TYPE_NONE;
+	set_cable_status = attached ? CABLE_TYPE_CDP : CABLE_TYPE_NONE;
+
+#ifdef CONFIG_BATTERY_SEC
+	switch(set_cable_status) {
+		case CABLE_TYPE_CDP:
+			value.intval = POWER_SUPPLY_TYPE_USB_CDP;
+			break;
+		case CABLE_TYPE_NONE:
+			value.intval = POWER_SUPPLY_TYPE_BATTERY;
+			break;
+		default:
+			pr_err("%s: invalid cable status:%d\n", __func__, set_cable_status);
+			return;
+	}
+	if (charging_cbs.tsp_set_charging_cable)
+		charging_cbs.tsp_set_charging_cable(set_cable_status);
+	if(set_cable_status)
+		is_cable_attached = true;
+	else
+		is_cable_attached =false;
+
+	if (psy) {
+		ret = psy->set_property(psy, POWER_SUPPLY_PROP_ONLINE, &value);
+		if (ret) {
+			pr_err("%s: fail to set power_suppy ONLINE property(%d)\n",
+				__func__, ret);
+		}
+	} else {
+		pr_err("%s : psy is null!\n", __func__);
+	}
+#endif
+}
+
 static void fsa9480_set_init_flag(void)
 {
 	fsa9480_init_flag = 1;
@@ -4964,6 +5122,7 @@ static struct fsa9480_platform_data fsa9480_pdata = {
 	.reset_cb = fsa9480_reset_cb,
 	.set_init_flag = fsa9480_set_init_flag,
 	.mhl_cb = fsa9480_mhl_cb,
+	.usb_cdp_cb = fsa9480_usb_cdp_cb,
 };
 
 static struct i2c_board_info micro_usb_i2c_devices_info[] __initdata = {
@@ -5188,7 +5347,10 @@ static void __init msm8x60_allocate_memory_regions(void)
 	void *addr;
 	unsigned long size;
 
-	size = MSM_FB_SIZE;
+	if (hdmi_is_primary)
+		size = roundup((1920 * 1088 * 4 * 2), 4096);
+	else
+		size = MSM_FB_SIZE;
 
 	addr = alloc_bootmem_align(size, 0x1000);
 	msm_fb_resources[0].start = __pa(addr);
@@ -5204,8 +5366,16 @@ void __init msm8x60_set_display_params(char *prim_panel, char *ext_panel)
 			PANEL_NAME_MAX_LEN);
 		pr_debug("msm_fb_pdata.prim_panel_name %s\n",
 			msm_fb_pdata.prim_panel_name);
-	}
 
+		if (!strncmp((char *)msm_fb_pdata.prim_panel_name,
+			HDMI_PANEL_NAME, strnlen(HDMI_PANEL_NAME,
+				PANEL_NAME_MAX_LEN))) {
+			pr_debug("HDMI is the primary display by"
+				" boot parameter\n");
+			hdmi_is_primary = 1;
+			set_mdp_clocks_for_wuxga();
+		}
+	}
 	if (strnlen(ext_panel, PANEL_NAME_MAX_LEN)) {
 		strlcpy(msm_fb_pdata.ext_panel_name, ext_panel,
 			PANEL_NAME_MAX_LEN);
@@ -9310,6 +9480,11 @@ static struct platform_device *surf_devices[] __initdata = {
 #endif
 	&sec_device_switch,  // samsung switch driver
 #endif
+#ifdef CONFIG_ANDROID_PMEM
+#if !defined(CONFIG_MSM_MULTIMEDIA_USE_ION) || defined(CONFIG_USA_MODEL_SGH_I717)
+	&android_pmem_audio_device,
+#endif
+#endif /*CONFIG_ANDROID_PMEM*/
 #ifdef CONFIG_MSM_ROTATOR
 	&msm_rotator_device,
 #endif
@@ -9557,11 +9732,31 @@ static struct platform_device ion_dev = {
 
 
 static struct memtype_reserve msm8x60_reserve_table[] __initdata = {
+	/* Kernel SMI memory pool for video core, used for firmware */
+	/* and encoder, decoder scratch buffers */
+	/* Kernel SMI memory pool should always precede the user space */
+	/* SMI memory pool, as the video core will use offset address */
+	/* from the Firmware base */
+	[MEMTYPE_SMI_KERNEL] = {
+		.start	=	KERNEL_SMI_BASE,
+		.limit	=	KERNEL_SMI_SIZE,
+		.size	=	KERNEL_SMI_SIZE,
+		.flags	=	MEMTYPE_FLAGS_FIXED,
+	},
+	/* User space SMI memory pool for video core */
+	/* used for encoder, decoder input & output buffers  */
 	[MEMTYPE_SMI] = {
 		.start	=	MSM_SMI_BASE,
 		.limit	=	MSM_SMI_SIZE,
 		.flags	=	MEMTYPE_FLAGS_FIXED,
 	},
+#ifdef CONFIG_SEC_KERNEL_REBASE_FOR_PMEM_OPTIMIZATION
+	[MEMTYPE_PMEM_ADSP] = {
+		.start	=	MSM_PMEM_ADSP_BASE,
+		.limit	=	MSM_PMEM_ADSP_SIZE,
+		.flags	=	MEMTYPE_FLAGS_FIXED,
+	},
+#endif
 	[MEMTYPE_EBI0] = {
 		.flags	=	MEMTYPE_FLAGS_1M_ALIGN,
 	},
@@ -9572,19 +9767,57 @@ static struct memtype_reserve msm8x60_reserve_table[] __initdata = {
 
 static void reserve_ion_memory(void)
 {
-	msm8x60_reserve_table[MEMTYPE_EBI1].size += MSM_ION_CAMERA_SIZE;
-	msm8x60_reserve_table[MEMTYPE_EBI1].size += MSM_ION_SF_SIZE;
+#if defined(CONFIG_ION_MSM) && defined(CONFIG_MSM_MULTIMEDIA_USE_ION)
+	msm8x60_reserve_table[MEMTYPE_SMI].size += MSM_ION_MM_FW_SIZE;
+	msm8x60_reserve_table[MEMTYPE_SMI].size += MSM_ION_MM_SIZE;
+	msm8x60_reserve_table[MEMTYPE_SMI].size += MSM_ION_MFC_SIZE;
+	msm8x60_reserve_table[MEMTYPE_PMEM_ADSP].size += MSM_ION_CAMERA_SIZE;
+	msm8x60_reserve_table[MEMTYPE_PMEM_ADSP].size += MSM_ION_WB_SIZE;
 	msm8x60_reserve_table[MEMTYPE_EBI1].size += MSM_ION_AUDIO_SIZE;
+#endif
 }
+
+static void __init size_pmem_devices(void)
+{
+#ifdef CONFIG_ANDROID_PMEM
+#if !defined (CONFIG_MSM_MULTIMEDIA_USE_ION) || defined (CONFIG_USA_MODEL_SGH_I717)
+	android_pmem_audio_pdata.size = MSM_PMEM_AUDIO_SIZE;
+#endif
+#endif /*CONFIG_ANDROID_PMEM*/
+}
+
+#if defined (CONFIG_ANDROID_PMEM) || defined (CONFIG_USA_MODEL_SGH_I717)
+#if !defined (CONFIG_MSM_MULTIMEDIA_USE_ION) || defined (CONFIG_USA_MODEL_SGH_I717)
+static void __init reserve_memory_for(struct android_pmem_platform_data *p)
+{
+	msm8x60_reserve_table[p->memory_type].size += p->size;
+}
+#endif /*CONFIG_MSM_MULTIMEDIA_USE_ION*/
+#endif /*CONFIG_ANDROID_PMEM*/
+
+static void __init reserve_pmem_memory(void)
+{
+#ifdef CONFIG_ANDROID_PMEM
+#if !defined (CONFIG_MSM_MULTIMEDIA_USE_ION) || defined (CONFIG_USA_MODEL_SGH_I717)
+	reserve_memory_for(&android_pmem_audio_pdata);
+#endif
+	msm8x60_reserve_table[MEMTYPE_EBI1].size += pmem_kernel_ebi1_size;
+#endif
+}
+
+static void __init reserve_mdp_memory(void);
 
 static void __init msm8x60_calculate_reserve_sizes(void)
 {
+	size_pmem_devices();
+	reserve_pmem_memory();
 	reserve_ion_memory();
+	reserve_mdp_memory();
 }
 
 static int msm8x60_paddr_to_memtype(unsigned int paddr)
 {
-	if (paddr >= 0x40000000 && paddr < 0x60000000)
+	if (paddr >= 0x40000000 && paddr < 0x80000000)
 		return MEMTYPE_EBI1;
 	if (paddr >= 0x38000000 && paddr < 0x40000000)
 		return MEMTYPE_SMI;
@@ -15604,7 +15837,7 @@ static struct msm_bus_scale_pdata mdp_bus_scale_pdata = {
 };
 
 #endif
-#ifdef CONFIG_FB_MSM_DTV
+#ifdef CONFIG_MSM_BUS_SCALING
 static struct msm_bus_vectors dtv_bus_init_vectors[] = {
 	/* For now, 0th array entry is reserved.
 	 * Please leave 0 as is and don't use it
@@ -15643,6 +15876,25 @@ static struct msm_bus_vectors dtv_bus_def_vectors[] = {
 	},
 };
 
+static struct msm_bus_vectors dtv_bus_hdmi_prim_vectors[] = {
+	/* For now, 0th array entry is reserved.
+	 * Please leave 0 as is and don't use it
+	 */
+	{
+		.src = MSM_BUS_MASTER_MDP_PORT0,
+		.dst = MSM_BUS_SLAVE_SMI,
+		.ab = 2000000000,
+		.ib = 2000000000,
+	},
+	/* Master and slaves can be from different fabrics */
+	{
+		.src = MSM_BUS_MASTER_MDP_PORT0,
+		.dst = MSM_BUS_SLAVE_EBI_CH0,
+		.ab = 2000000000,
+		.ib = 2000000000,
+	},
+};
+
 static struct msm_bus_paths dtv_bus_scale_usecases[] = {
 	{
 		ARRAY_SIZE(dtv_bus_init_vectors),
@@ -15667,6 +15919,26 @@ static struct lcdc_platform_data dtv_pdata = {
 #endif
 };
 
+static struct msm_bus_paths dtv_hdmi_prim_bus_scale_usecases[] = {
+	{
+		ARRAY_SIZE(dtv_bus_init_vectors),
+		dtv_bus_init_vectors,
+	},
+	{
+		ARRAY_SIZE(dtv_bus_hdmi_prim_vectors),
+		dtv_bus_hdmi_prim_vectors,
+	},
+};
+
+static struct msm_bus_scale_pdata dtv_hdmi_prim_bus_scale_pdata = {
+	dtv_hdmi_prim_bus_scale_usecases,
+	ARRAY_SIZE(dtv_hdmi_prim_bus_scale_usecases),
+	.name = "dtv",
+};
+
+static struct lcdc_platform_data dtv_hdmi_prim_pdata = {
+	.bus_scale_table = &dtv_hdmi_prim_bus_scale_pdata,
+};
 #endif
 
 
@@ -16083,6 +16355,18 @@ static struct msm_panel_common_pdata mdp_pdata = {
 	.mdp_iommu_split_domain = 0,
 };
 
+static void __init reserve_mdp_memory(void)
+{
+	mdp_pdata.ov0_wb_size = MSM_FB_OVERLAY0_WRITEBACK_SIZE;
+	mdp_pdata.ov1_wb_size = MSM_FB_OVERLAY1_WRITEBACK_SIZE;
+#if defined(CONFIG_ANDROID_PMEM) && !defined(CONFIG_MSM_MULTIMEDIA_USE_ION)
+	msm8x60_reserve_table[mdp_pdata.mem_hid].size +=
+		mdp_pdata.ov0_wb_size;
+	msm8x60_reserve_table[mdp_pdata.mem_hid].size +=
+		mdp_pdata.ov1_wb_size;
+#endif
+}
+
 #ifdef CONFIG_FB_MSM_TVOUT
 
 #ifdef CONFIG_MSM_BUS_SCALING
@@ -16160,13 +16444,50 @@ static void __init msm_fb_add_devices(void)
 
 //	msm_fb_register_device("lcdc", &lcdc_pdata);
 	msm_fb_register_device("mipi_dsi", &mipi_dsi_pdata);
-#ifdef CONFIG_FB_MSM_DTV
-	msm_fb_register_device("dtv", &dtv_pdata);
+#ifdef CONFIG_MSM_BUS_SCALING
+	if (hdmi_is_primary)
+		msm_fb_register_device("dtv", &dtv_hdmi_prim_pdata);
+	else
+		msm_fb_register_device("dtv", &dtv_pdata);
 #endif
 #ifdef CONFIG_FB_MSM_TVOUT
 	msm_fb_register_device("tvenc", &atv_pdata);
 	msm_fb_register_device("tvout_device", NULL);
 #endif
+}
+
+/**
+ * Set MDP clocks to high frequency to avoid underflow when
+ * using high resolution 1200x1920 WUXGA/HDMI as primary panels
+ */
+static void set_mdp_clocks_for_wuxga(void)
+{
+	mdp_sd_smi_vectors[0].ab = 2000000000;
+	mdp_sd_smi_vectors[0].ib = 2000000000;
+	mdp_sd_smi_vectors[1].ab = 2000000000;
+	mdp_sd_smi_vectors[1].ib = 2000000000;
+
+	mdp_sd_ebi_vectors[0].ab = 2000000000;
+	mdp_sd_ebi_vectors[0].ib = 2000000000;
+	mdp_sd_ebi_vectors[1].ab = 2000000000;
+	mdp_sd_ebi_vectors[1].ib = 2000000000;
+
+	mdp_vga_vectors[0].ab = 2000000000;
+	mdp_vga_vectors[0].ib = 2000000000;
+	mdp_vga_vectors[1].ab = 2000000000;
+	mdp_vga_vectors[1].ib = 2000000000;
+
+	mdp_720p_vectors[0].ab = 2000000000;
+	mdp_720p_vectors[0].ib = 2000000000;
+	mdp_720p_vectors[1].ab = 2000000000;
+	mdp_720p_vectors[1].ib = 2000000000;
+
+	mdp_1080p_vectors[0].ab = 2000000000;
+	mdp_1080p_vectors[0].ib = 2000000000;
+	mdp_1080p_vectors[1].ab = 2000000000;
+	mdp_1080p_vectors[1].ib = 2000000000;
+
+	mdp_pdata.mdp_max_clk = 200000000;
 }
 
 #if 0 // (defined(CONFIG_MARIMBA_CORE)) && (defined(CONFIG_MSM_BT_POWER) || defined(CONFIG_MSM_BT_POWER_MODULE))
