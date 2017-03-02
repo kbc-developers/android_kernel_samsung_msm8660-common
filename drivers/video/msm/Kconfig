@@ -126,6 +126,10 @@ config FB_MSM_OVERLAY
 	bool "MDP4 overlay support"
 	default n
 
+config FB_MSM_MDP_ADDITIONAL_BUS_SCALING
+	bool "MDP4 additional bus scaling"
+	default n
+
 config FB_MSM_DTV
 	depends on FB_MSM_OVERLAY
 	bool
