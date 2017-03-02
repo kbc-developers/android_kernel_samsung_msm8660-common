@@ -4246,7 +4246,11 @@ static void __init msm8x60_init_dsps(void)
 
 unsigned char hdmi_is_primary;
 
+#ifdef CONFIG_FB_MSM_OVERLAY0_WRITEBACK
+#define MSM_FB_OVERLAY0_WRITEBACK_SIZE roundup((1376 * 768 * 3 * 2), 4096)
+#else
 #define MSM_FB_OVERLAY0_WRITEBACK_SIZE (0)
+#endif  /* CONFIG_FB_MSM_OVERLAY0_WRITEBACK */
 #define MSM_FB_OVERLAY1_WRITEBACK_SIZE (0)
 
 #define MSM_PMEM_KERNEL_EBI1_SIZE  0x0 //  0x600000 -> 0x0 Not used region
