@@ -20,7 +20,7 @@
 #include "mipi_dsi.h"
 #include "mipi_s6e8aa0_wxga_q1.h"
 #include "mipi_s6e8aa0_wxga_q1_seq.h"
-#include "mdp4_video_enhance.h"
+#include "../../../../drivers/video/msm/mdp4_video_enhance.h"
 #include "smart_dimming.h"
 
 #include <linux/gpio.h>
