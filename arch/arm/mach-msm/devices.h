@@ -32,6 +32,17 @@ void __init msm_rotator_set_split_iommu_domain(void);
 extern struct platform_device asoc_msm_pcm;
 extern struct platform_device asoc_msm_dai0;
 extern struct platform_device asoc_msm_dai1;
+#ifdef CONFIG_SND_SOC_MSM8X60
+extern struct platform_device msm_pcm_dsp1;
+extern struct platform_device msm_cpu_dai1;
+extern struct platform_device msm_codec_dai1;
+extern struct platform_device msm_pcm_dsp2;
+extern struct platform_device msm_cpu_dai2;
+extern struct platform_device msm_codec_dai2;
+extern struct platform_device msm_pcm_voice;
+extern struct platform_device msm_cpu_dai3;
+extern struct platform_device msm_codec_dai3;
+#endif
 #if defined (CONFIG_SND_MSM_MVS_DAI_SOC)
 extern struct platform_device asoc_msm_mvs;
 extern struct platform_device asoc_mvs_dai0;

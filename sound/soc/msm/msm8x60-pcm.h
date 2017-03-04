@@ -45,10 +45,7 @@ struct audio_locks {
 	wait_queue_head_t read_wait;
 	wait_queue_head_t write_wait;
 	wait_queue_head_t eos_wait;
-	wait_queue_head_t enable_wait;
 };
-
-extern struct audio_locks the_locks;
 
 struct msm_audio {
 	struct snd_pcm_substream *substream;
@@ -78,15 +75,12 @@ struct msm_audio {
 	atomic_t out_needed;
 	int periods;
 	int mmap_flag;
-};
 
-struct pcm_session {
-	unsigned short playback_session[MAX_PLAYBACK_SESSIONS][MAX_COPP];
-	unsigned short capture_session[MAX_CAPTURE_SESSIONS][MAX_COPP];
+	struct audio_locks the_locks;
+	uint32_t in_frame_info[8][2];
 };
 
 /* platform data */
 extern struct snd_soc_platform_driver msm_soc_platform;
-extern struct pcm_session session_route;
 
 #endif /*_MSM_PCM_H*/

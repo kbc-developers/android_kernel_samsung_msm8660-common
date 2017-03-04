@@ -35,15 +35,12 @@
 #define LOOPBACK_ENABLE		0x1
 #define LOOPBACK_DISABLE	0x0
 
+#include "msm8x60.h"
 #include "msm8x60-pcm.h"
 
 static struct platform_device *msm_audio_snd_device;
-struct audio_locks the_locks;
-EXPORT_SYMBOL(the_locks);
 struct msm_volume msm_vol_ctl;
 EXPORT_SYMBOL(msm_vol_ctl);
-struct pcm_session session_route;
-EXPORT_SYMBOL(session_route);
 
 #if defined (CONFIG_TARGET_LOCALE_USA)
 bool dualmic_enabled = true;
@@ -60,7 +57,7 @@ extern int voice_set_extra_volume_mode(int mode);
 char snddev_name[AUDIO_DEV_CTL_MAX_DEV][44];
 #define MSM_MAX_VOLUME 0x2000
 #define MSM_VOLUME_STEP ((MSM_MAX_VOLUME+17)/100) /* 17 added to avoid
-						      more deviation */
+							  more deviation */
 static int device_index; /* Count of Device controls */
 static int simple_control; /* Count of simple controls*/
 static int src_dev;
@@ -70,6 +67,167 @@ static u32 opened_dev1 = -1;
 static u32 opened_dev2 = -1;
 static int last_active_rx_opened_dev = -1;
 static int last_active_tx_opened_dev = -1;
+
+static unsigned short copp_device[AFE_MAX_PORTS];
+
+struct route_info {
+	unsigned char playback[SESSION_DSP_COUNT][(AFE_MAX_PORTS + 7) / 8];
+	unsigned char capture[SESSION_DSP_COUNT][(AFE_MAX_PORTS + 7) / 8];
+	struct audio_client *audio_client[SESSION_DSP_COUNT][2];
+	unsigned volume[SESSION_DSP_COUNT][2];
+	int voice_rx, voice_tx;
+	int voice_enable;
+};
+
+static struct route_info msm_route;
+
+static void msm_route_init(void)
+{
+	int i;
+
+	for (i = 0; i < AFE_MAX_PORTS; i++)
+		copp_device[i] = DEVICE_IGNORE;
+
+	memset(&msm_route, 0, sizeof(msm_route));
+	for (i = 0; i < SESSION_DSP_COUNT; i++) {
+		msm_route.volume[i][0] =
+		msm_route.volume[i][1] = MSM_MAX_VOLUME;
+	}
+	msm_route.voice_rx = 0;
+	msm_route.voice_tx = 0;
+	msm_route.voice_enable = 0;
+}
+
+static int msm_route_get_dec(int session_id, int copp_id)
+{
+	return (msm_route.playback[session_id][copp_id / 8] & (1 << (copp_id & 7)));
+}
+
+static int msm_route_get_enc(int session_id, int copp_id)
+{
+	return (msm_route.capture[session_id][copp_id / 8] & (1 << (copp_id & 7)));
+}
+
+static int msm_route_put_dec(int session_id, int copp_id, int set)
+{
+	if (set)
+		msm_route.playback[session_id][copp_id / 8] |= 1 << (copp_id & 7);
+	else
+		msm_route.playback[session_id][copp_id / 8] &= ~(1 << (copp_id & 7));
+
+	return 0;
+}
+
+static int msm_route_put_enc(int session_id, int copp_id, int set)
+{
+	if (set)
+		msm_route.capture[session_id][copp_id / 8] |= 1 << (copp_id & 7);
+	else
+		msm_route.capture[session_id][copp_id / 8] &= ~(1 << (copp_id & 7));
+
+	return 0;
+}
+
+static int msm_set_volume(struct audio_client *audio_client,
+					unsigned volume_l, unsigned volume_r)
+{
+	int rc = 0;
+	
+	if (audio_client) {
+		if (volume_l != volume_r) {
+			pr_debug("%s: call q6asm_set_lrgain\n", __func__);
+			rc = q6asm_set_lrgain(audio_client,	volume_l, volume_r);
+		} else {
+			pr_debug("%s: call q6asm_set_volume\n", __func__);
+			rc = q6asm_set_volume(audio_client, volume_l);
+		}
+		if (rc < 0) {
+			pr_err("%s: Send Volume command failed"
+					" rc=%d\n", __func__, rc);
+		}
+	}
+
+	return rc;
+}
+
+static int msm_session_update(int dev_id, int set)
+{
+	struct msm_snddev_info *dev_info;
+	int i;
+
+	dev_info = audio_dev_ctrl_find_dev(dev_id);
+	if (IS_ERR(dev_info))
+		return PTR_ERR(dev_info);
+
+	if (dev_info->capability & SNDDEV_CAP_RX) {
+		for (i = 0; i < SESSION_DSP_COUNT; i++) {
+			if (msm_route.audio_client[i][0] && msm_route_get_dec(i, dev_info->copp_id)) {
+				msm_snddev_set_dec(msm_route.audio_client[i][0]->session,
+					dev_info->copp_id, set, dev_info->sample_rate, dev_info->channel_mode);
+			}
+		}
+	} else {
+		for (i = 0; i < SESSION_DSP_COUNT; i++) {
+			if (msm_route.audio_client[i][1] && msm_route_get_enc(i, dev_info->copp_id)) {
+				msm_snddev_set_enc(msm_route.audio_client[i][1]->session,
+					dev_info->copp_id, set, dev_info->sample_rate, dev_info->channel_mode);
+			}
+		}
+	}
+
+	return 0;
+}
+
+int msm_session_open(int session_id, int stream, struct audio_client *audio_client)
+{
+	struct msm_snddev_info *dev_info;
+	int i;
+
+	if (msm_route.audio_client[session_id][stream])
+		return -EFAULT;
+
+	msm_route.audio_client[session_id][stream] = audio_client;
+
+	if (stream == SNDRV_PCM_STREAM_PLAYBACK) {
+		msm_set_volume(audio_client,
+			msm_route.volume[session_id][0],
+			msm_route.volume[session_id][1]);
+		for (i = 0; i < AFE_MAX_PORTS; i++) {
+			if (msm_route_get_dec(session_id, i)) {
+				dev_info = audio_dev_ctrl_find_dev(copp_device[i]);
+				if (IS_ERR(dev_info))
+					continue;
+				msm_snddev_set_dec(audio_client->session, i, 1,
+					dev_info->sample_rate, dev_info->channel_mode);
+			}
+		}
+	} else {
+		for (i = 0; i < AFE_MAX_PORTS; i++) {
+			if (msm_route_get_enc(session_id, i)) {
+				dev_info = audio_dev_ctrl_find_dev(copp_device[i]);
+				if (IS_ERR(dev_info))
+					continue;
+				msm_snddev_set_enc(audio_client->session, i, 1,
+					dev_info->sample_rate, dev_info->channel_mode);
+			}
+		}
+	}
+	
+	return 0;
+}
+
+int msm_session_close(int session_id, int stream)
+{
+	if (!msm_route.audio_client[session_id][stream])
+		return -EFAULT;
+
+	msm_clear_session_id(
+		msm_route.audio_client[session_id][stream]->session);
+
+	msm_route.audio_client[session_id][stream] = NULL;
+
+	return 0;
+}
 
 static int msm_scontrol_count_info(struct snd_kcontrol *kcontrol,
 				struct snd_ctl_elem_info *uinfo)
@@ -111,8 +269,8 @@ static int msm_v_call_put(struct snd_kcontrol *kcontrol,
 	u32 session_id = ucontrol->value.integer.value[1];
 
 	if ((session_id != 0) &&
-	    ((session_id < SESSION_ID_BASE) ||
-	     (session_id >= SESSION_ID_BASE + MAX_VOC_SESSIONS))) {
+		((session_id < SESSION_ID_BASE) ||
+		 (session_id >= SESSION_ID_BASE + MAX_VOC_SESSIONS))) {
 		pr_err("%s: Invalid session_id 0x%x\n", __func__, session_id);
 
 		return -EINVAL;
@@ -154,8 +312,8 @@ static int msm_v_mute_put(struct snd_kcontrol *kcontrol,
 	u32 session_id = ucontrol->value.integer.value[2];
 
 	if ((session_id != 0) &&
-	    ((session_id < SESSION_ID_BASE) ||
-	     (session_id >= SESSION_ID_BASE + MAX_VOC_SESSIONS))) {
+		((session_id < SESSION_ID_BASE) ||
+		 (session_id >= SESSION_ID_BASE + MAX_VOC_SESSIONS))) {
 		pr_err("%s: Invalid session_id 0x%x\n", __func__, session_id);
 
 		return -EINVAL;
@@ -191,8 +349,8 @@ static int msm_v_volume_put(struct snd_kcontrol *kcontrol,
 	u32 session_id = ucontrol->value.integer.value[2];
 
 	if ((session_id != 0) &&
-	    ((session_id < SESSION_ID_BASE) ||
-	     (session_id >= SESSION_ID_BASE + MAX_VOC_SESSIONS))) {
+		((session_id < SESSION_ID_BASE) ||
+		 (session_id >= SESSION_ID_BASE + MAX_VOC_SESSIONS))) {
 		pr_err("%s: Invalid session_id 0x%x\n", __func__, session_id);
 
 		return -EINVAL;
@@ -254,32 +412,17 @@ static int msm_volume_put(struct snd_kcontrol *kcontrol,
 	return ret;
 }
 
-static int msm_voice_info(struct snd_kcontrol *kcontrol,
-				struct snd_ctl_elem_info *uinfo)
-{
-	uinfo->type = SNDRV_CTL_ELEM_TYPE_INTEGER;
-	uinfo->count = 3; /* Device */
-
-	uinfo->value.integer.min = 0;
-	uinfo->value.integer.max = msm_snddev_devcount();
-	return 0;
-}
-
-static int msm_voice_put(struct snd_kcontrol *kcontrol,
-			struct snd_ctl_elem_value *ucontrol)
+static int msm_voice_route(int rx_dev_id, int tx_dev_id, int set)
 {
 	int rc = 0;
-	uint32_t rx_dev_id;
-	uint32_t tx_dev_id;
 	struct msm_snddev_info *rx_dev_info;
 	struct msm_snddev_info *tx_dev_info;
-	int set = ucontrol->value.integer.value[2];
 	u64 session_mask;
 
 	if (!set)
 		return -EPERM;
+
 	/* Rx Device Routing */
-	rx_dev_id = ucontrol->value.integer.value[0];
 	rx_dev_info = audio_dev_ctrl_find_dev(rx_dev_id);
 
 	if (IS_ERR(rx_dev_info)) {
@@ -306,7 +449,6 @@ static int msm_voice_put(struct snd_kcontrol *kcontrol,
 
 
 	/* Tx Device Routing */
-	tx_dev_id = ucontrol->value.integer.value[1];
 	tx_dev_info = audio_dev_ctrl_find_dev(tx_dev_id);
 
 	if (IS_ERR(tx_dev_info)) {
@@ -337,6 +479,26 @@ static int msm_voice_put(struct snd_kcontrol *kcontrol,
 	return rc;
 }
 
+static int msm_voice_info(struct snd_kcontrol *kcontrol,
+				struct snd_ctl_elem_info *uinfo)
+{
+	uinfo->type = SNDRV_CTL_ELEM_TYPE_INTEGER;
+	uinfo->count = 3; /* Device */
+
+	uinfo->value.integer.min = 0;
+	uinfo->value.integer.max = msm_snddev_devcount();
+	return 0;
+}
+
+static int msm_voice_put(struct snd_kcontrol *kcontrol,
+			struct snd_ctl_elem_value *ucontrol)
+{
+	return msm_voice_route(
+			ucontrol->value.integer.value[0],
+			ucontrol->value.integer.value[1],
+			ucontrol->value.integer.value[2]);
+}
+
 static int msm_voice_get(struct snd_kcontrol *kcontrol,
 				struct snd_ctl_elem_value *ucontrol)
 {
@@ -345,23 +507,9 @@ static int msm_voice_get(struct snd_kcontrol *kcontrol,
 	return 0;
 }
 
-static int msm_device_info(struct snd_kcontrol *kcontrol,
-				struct snd_ctl_elem_info *uinfo)
-{
-	uinfo->type = SNDRV_CTL_ELEM_TYPE_INTEGER;
-	uinfo->count = 1; /* Device */
-
-	uinfo->value.integer.min = 0;
-	uinfo->value.integer.max = msm_snddev_devcount();
-	return 0;
-}
-
-static int msm_device_put(struct snd_kcontrol *kcontrol,
-			struct snd_ctl_elem_value *ucontrol)
+static int msm_device_enable(int dev_id, int set)
 {
 	int rc = 0;
-	int set = 0;
-	struct msm_audio_route_config route_cfg;
 	struct msm_snddev_info *dev_info;
 	struct msm_snddev_info *dst_dev_info;
 	struct msm_snddev_info *src_dev_info;
@@ -369,9 +517,7 @@ static int msm_device_put(struct snd_kcontrol *kcontrol,
 	int rx_freq = 0;
 	u32 set_freq = 0;
 
-	set = ucontrol->value.integer.value[0];
-	route_cfg.dev_id = ucontrol->id.numid - device_index;
-	dev_info = audio_dev_ctrl_find_dev(route_cfg.dev_id);
+	dev_info = audio_dev_ctrl_find_dev(dev_id);
 	if (IS_ERR(dev_info)) {
 		pr_err("%s:pass invalid dev_id\n", __func__);
 		rc = PTR_ERR(dev_info);
@@ -380,7 +526,7 @@ static int msm_device_put(struct snd_kcontrol *kcontrol,
 	pr_info("%s:device %s set %d\n", __func__, dev_info->name, set);
 
 	if (set) {
-	        #ifndef CONFIG_USA_MODEL_SGH_T989
+			#ifndef CONFIG_USA_MODEL_SGH_T989
 		pr_info("Device %s Opened = %d\n", dev_info->name, dev_info->opened);
 		#endif
 		if (!dev_info->opened) {
@@ -392,7 +538,7 @@ static int msm_device_put(struct snd_kcontrol *kcontrol,
 			}
 #endif
 			set_freq = dev_info->sample_rate;
-			if (!msm_device_is_voice(route_cfg.dev_id)) {
+			if (!msm_device_is_voice(dev_id)) {
 				msm_get_voc_freq(&tx_freq, &rx_freq);
 				if (dev_info->capability & SNDDEV_CAP_TX)
 					set_freq = tx_freq;
@@ -415,11 +561,11 @@ static int msm_device_put(struct snd_kcontrol *kcontrol,
 			rc = dev_info->dev_ops.open(dev_info);
 			if (rc < 0) {
 /*[[Safeguard code for device open issue -START //balaji.k
-     This fix would work incase of EBUSY error when device is being opened & previous instance of device is not closed */
+	 This fix would work incase of EBUSY error when device is being opened & previous instance of device is not closed */
 				if(rc == -EBUSY) {
 					struct msm_snddev_info * last_dev_info = NULL;
 					int closing_dev = -1;
-					pr_err("DEV_BUSY: Ebusy Error %s : route_cfg.dev_id 1: %d\n", __func__, route_cfg.dev_id);
+					pr_err("DEV_BUSY: Ebusy Error %s : route_cfg.dev_id 1: %d\n", __func__, dev_id);
 
 					//Closing the last active device after sending the broadcast
 					if (dev_info->capability & SNDDEV_CAP_TX) {
@@ -443,7 +589,7 @@ static int msm_device_put(struct snd_kcontrol *kcontrol,
 						SESSION_IGNORE);
 					pr_err("DEV_BUSY:closing Last active Open dev (%d)\n", closing_dev);
 					rc = dev_info->dev_ops.close(last_dev_info);
-					pr_err("DEV_BUSY: %s : route_cfg.dev_id 2: %d\n", __func__, route_cfg.dev_id);
+					pr_err("DEV_BUSY: %s : route_cfg.dev_id 2: %d\n", __func__, dev_id);
 
 					if (rc < 0) {
 						pr_err("DEV_BUSY  : %s:Snd device failed close!\n", __func__);
@@ -451,9 +597,9 @@ static int msm_device_put(struct snd_kcontrol *kcontrol,
 					} else {
 						// Device close is successful, so broadcasting release event.
 						// Commented these as here we are closing the previous device
-						//if(opened_dev1 == route_cfg.dev_id)
+						//if(opened_dev1 == dev_id)
 							opened_dev1 = -1;
-						//else if(opened_dev2 == route_cfg.dev_id)
+						//else if(opened_dev2 == dev_id)
 							opened_dev2 = -1;
 						last_dev_info->opened= 0;
 						broadcast_event(AUDDEV_EVT_DEV_RLS,
@@ -461,14 +607,14 @@ static int msm_device_put(struct snd_kcontrol *kcontrol,
 							SESSION_IGNORE);
 					}
 
-					dev_info = audio_dev_ctrl_find_dev(route_cfg.dev_id);
+					dev_info = audio_dev_ctrl_find_dev(dev_id);
 					if (IS_ERR(dev_info)) {
 						pr_err("DEV_BUSY: %s:pass invalid dev_id\n", __func__);
 						rc = PTR_ERR(dev_info);
 						return rc;
 					}
 
-					pr_err("DEV_BUSY: Opening the Device Now %s : route_cfg.dev_id : %d\n", __func__, route_cfg.dev_id);
+					pr_err("DEV_BUSY: Opening the Device Now %s : route_cfg.dev_id : %d\n", __func__, dev_id);
 
 					// Opening the intended device
 					rc = dev_info->dev_ops.open(dev_info);
@@ -479,9 +625,9 @@ static int msm_device_put(struct snd_kcontrol *kcontrol,
 					} else {
 						// Maintaining the last Opened device- reqd for closing if EBUSY is encountered.
 						if (dev_info->capability & SNDDEV_CAP_TX)
-							last_active_tx_opened_dev = route_cfg.dev_id;
+							last_active_tx_opened_dev = dev_id;
 						else if(dev_info->capability & SNDDEV_CAP_RX)
-							last_active_rx_opened_dev =  route_cfg.dev_id;
+							last_active_rx_opened_dev =  dev_id;
 
 						printk("Last active Open Txdev (%d) and Rxdev(%d)\n", last_active_tx_opened_dev,  last_active_rx_opened_dev);
 					}
@@ -493,17 +639,17 @@ static int msm_device_put(struct snd_kcontrol *kcontrol,
 		} else {
 			// Maintaining the last Opened device- reqd for closing if EBUSY is encountered.
 			if (dev_info->capability & SNDDEV_CAP_TX)
-				last_active_tx_opened_dev = route_cfg.dev_id;
+				last_active_tx_opened_dev = dev_id;
 			else if(dev_info->capability & SNDDEV_CAP_RX)
-			 	last_active_rx_opened_dev =  route_cfg.dev_id;
+			 	last_active_rx_opened_dev =  dev_id;
 			printk("Last active Open Txdev (%d) and Rxdev(%d)\n", last_active_tx_opened_dev,  last_active_rx_opened_dev);
 		}
 //Safeguard code for device open issue -END]] //balaji.k
 			dev_info->opened = 1;
-			broadcast_event(AUDDEV_EVT_DEV_RDY, route_cfg.dev_id,
+			broadcast_event(AUDDEV_EVT_DEV_RDY, dev_id,
 							SESSION_IGNORE);
-			if ((route_cfg.dev_id == src_dev) ||
-				(route_cfg.dev_id == dst_dev)) {
+			if ((dev_id == src_dev) ||
+				(dev_id == dst_dev)) {
 				dst_dev_info = audio_dev_ctrl_find_dev(
 							dst_dev);
 				if (IS_ERR(dst_dev_info)) {
@@ -525,8 +671,8 @@ static int msm_device_put(struct snd_kcontrol *kcontrol,
 					pr_debug("%d: Enable afe_loopback\n",
 							__LINE__);
 					afe_loopback(LOOPBACK_ENABLE,
-					       dst_dev_info->copp_id,
-					       src_dev_info->copp_id);
+						   dst_dev_info->copp_id,
+						   src_dev_info->copp_id);
 					loopback_status = 1;
 				}
 			}
@@ -541,7 +687,7 @@ static int msm_device_put(struct snd_kcontrol *kcontrol,
 			}
 #endif
 			broadcast_event(AUDDEV_EVT_REL_PENDING,
-						route_cfg.dev_id,
+						dev_id,
 						SESSION_IGNORE);
 			rc = dev_info->dev_ops.close(dev_info);
 			if (rc < 0) {
@@ -551,12 +697,12 @@ static int msm_device_put(struct snd_kcontrol *kcontrol,
 			} else {
 				dev_info->opened = 0;
 				broadcast_event(AUDDEV_EVT_DEV_RLS,
-					route_cfg.dev_id,
+					dev_id,
 					SESSION_IGNORE);
 			}
 			if (loopback_status == 1) {
-				if ((route_cfg.dev_id == src_dev) ||
-					(route_cfg.dev_id == dst_dev)) {
+				if ((dev_id == src_dev) ||
+					(dev_id == dst_dev)) {
 					dst_dev_info = audio_dev_ctrl_find_dev(
 								dst_dev);
 					if (IS_ERR(dst_dev_info)) {
@@ -576,8 +722,8 @@ static int msm_device_put(struct snd_kcontrol *kcontrol,
 					pr_debug("%d: Disable afe_loopback\n",
 						__LINE__);
 					afe_loopback(LOOPBACK_DISABLE,
-					       dst_dev_info->copp_id,
-					       src_dev_info->copp_id);
+						   dst_dev_info->copp_id,
+						   src_dev_info->copp_id);
 					loopback_status = 0;
 				}
 			}
@@ -587,24 +733,76 @@ static int msm_device_put(struct snd_kcontrol *kcontrol,
 	return rc;
 }
 
+static int msm_device_info(struct snd_kcontrol *kcontrol,
+				struct snd_ctl_elem_info *uinfo)
+{
+	uinfo->type = SNDRV_CTL_ELEM_TYPE_INTEGER;
+	uinfo->count = 1; /* Device */
+
+	uinfo->value.integer.min = 0;
+	uinfo->value.integer.max = 1;
+	return 0;
+}
+
+static int msm_device_put(struct snd_kcontrol *kcontrol,
+			struct snd_ctl_elem_value *ucontrol)
+{
+	int dev_id, copp_id, set, rc;
+	struct msm_snddev_info *dev_info;
+
+	dev_id = ucontrol->id.numid - device_index;
+	dev_info = audio_dev_ctrl_find_dev(dev_id);
+	if (IS_ERR(dev_info)) {
+		pr_err("%s:pass invalid dev_id\n", __func__);
+		return PTR_ERR(dev_info);
+	}
+	
+	copp_id = dev_info->copp_id;
+	set = ucontrol->value.integer.value[0];
+	
+	if (set) {
+		if (copp_device[copp_id] != dev_id) {
+			if (copp_device[copp_id] != DEVICE_IGNORE) {
+				msm_session_update(copp_device[copp_id], 0);
+				rc = msm_device_enable(copp_device[copp_id], 0);
+				if (rc < 0)
+					return rc;
+				copp_device[copp_id] = DEVICE_IGNORE;
+			}
+			rc = msm_device_enable(dev_id, 1);
+			if (rc < 0)
+				return rc;
+			copp_device[copp_id] = dev_id;
+			msm_session_update(dev_id, 1);
+		}
+	} else {
+		if (copp_device[copp_id] == dev_id) {
+			msm_session_update(dev_id, 0);
+			rc = msm_device_enable(dev_id, 0);
+			if (rc < 0)
+				return rc;
+			copp_device[copp_id] = DEVICE_IGNORE;
+		}
+	}
+
+	return 0;
+}
+
 static int msm_device_get(struct snd_kcontrol *kcontrol,
 				struct snd_ctl_elem_value *ucontrol)
 {
-	int rc = 0;
-	struct msm_audio_route_config route_cfg;
+	int dev_id;
 	struct msm_snddev_info *dev_info;
 
-	route_cfg.dev_id = ucontrol->id.numid - device_index;
-	dev_info = audio_dev_ctrl_find_dev(route_cfg.dev_id);
+	dev_id = ucontrol->id.numid - device_index;
+	dev_info = audio_dev_ctrl_find_dev(dev_id);
 
 	if (IS_ERR(dev_info)) {
 		pr_err("%s:pass invalid dev_id\n", __func__);
-		rc = PTR_ERR(dev_info);
-		return rc;
+		return PTR_ERR(dev_info);
 	}
 
-	ucontrol->value.integer.value[0] = dev_info->copp_id;
-	ucontrol->value.integer.value[1] = dev_info->capability;
+	ucontrol->value.integer.value[0] = dev_info->opened ? 1 : 0;
 
 	return 0;
 }
@@ -853,140 +1051,6 @@ static int msm_anc_put(struct snd_kcontrol *kcontrol,
 	return rc;
 }
 
-static int pcm_route_info(struct snd_kcontrol *kcontrol,
-			struct snd_ctl_elem_info *uinfo)
-{
-	uinfo->type = SNDRV_CTL_ELEM_TYPE_INTEGER;
-	/*
-	 * First parameter is session id ~ subdevice number
-	 * Second parameter is device id.
-	 */
-	uinfo->count = 3;
-	uinfo->value.integer.min = 0;
-	uinfo->value.integer.max = msm_snddev_devcount();
-	return 0;
-}
-
-static int pcm_route_get_rx(struct snd_kcontrol *kcontrol,
-			struct snd_ctl_elem_value *ucontrol)
-{
-	return 0;
-}
-
-static int pcm_route_get_tx(struct snd_kcontrol *kcontrol,
-			struct snd_ctl_elem_value *ucontrol)
-{
-	return 0;
-}
-
-static int pcm_route_put_rx(struct snd_kcontrol *kcontrol,
-			struct snd_ctl_elem_value *ucontrol)
-{
-	int session_id = 0;
-	int set = 0;
-	struct msm_audio_route_config route_cfg;
-	struct msm_snddev_info *dev_info;
-	u64 session_mask = 0;
-
-	/*
-	 * session id is incremented by one and stored as session id 0
-	 * is being used by dsp currently. whereas user space would use
-	 * subdevice number as session id.
-	 */
-	session_id = ucontrol->value.integer.value[0];
-	route_cfg.dev_id = ucontrol->value.integer.value[1];
-	set = ucontrol->value.integer.value[2];
-
-	dev_info = audio_dev_ctrl_find_dev(route_cfg.dev_id);
-	if (IS_ERR(dev_info)) {
-		pr_err("pass invalid dev_id %d\n", route_cfg.dev_id);
-		return PTR_ERR(dev_info);
-	}
-	if (!(dev_info->capability & SNDDEV_CAP_RX))
-			return -EINVAL;
-	session_mask =
-		(((u64)0x1) << session_id) << (MAX_BIT_PER_CLIENT * \
-			((int)AUDDEV_CLNT_DEC-1));
-	if (!set) {
-		session_route.playback_session[session_id][dev_info->copp_id]
-			= DEVICE_IGNORE;
-		broadcast_event(AUDDEV_EVT_DEV_RLS,
-				route_cfg.dev_id,
-				session_mask);
-		dev_info->sessions &= ~(session_mask);
-		return 0;
-	}
-	pr_debug("%s:Routing playback session %d to %s\n",
-				 __func__, (session_id),
-				dev_info->name);
-	session_route.playback_session[session_id][dev_info->copp_id] =
-							 dev_info->copp_id;
-	if (dev_info->opened) {
-		dev_info->sessions = dev_info->sessions | session_mask;
-		broadcast_event(AUDDEV_EVT_DEV_RDY,
-				route_cfg.dev_id,
-				session_mask);
-	} else {
-		broadcast_event(AUDDEV_EVT_DEV_RLS,
-				route_cfg.dev_id,
-				session_mask);
-		dev_info->sessions &= ~(session_mask);
-	}
-	return 0;
-}
-
-static int pcm_route_put_tx(struct snd_kcontrol *kcontrol,
-			struct snd_ctl_elem_value *ucontrol)
-{
-	int session_id = 0;
-	int set = 0;
-	struct msm_audio_route_config route_cfg;
-	struct msm_snddev_info *dev_info;
-	u64 session_mask = 0;
-
-	session_id = ucontrol->value.integer.value[0];
-	route_cfg.dev_id = ucontrol->value.integer.value[1];
-	set = ucontrol->value.integer.value[2];
-
-	dev_info = audio_dev_ctrl_find_dev(route_cfg.dev_id);
-	if (IS_ERR(dev_info)) {
-		pr_err("pass invalid dev_id %d\n", route_cfg.dev_id);
-		return PTR_ERR(dev_info);
-	}
-	pr_debug("%s:Routing capture session %d to %s\n", __func__,
-					session_id,
-					dev_info->name);
-	if (!(dev_info->capability & SNDDEV_CAP_TX))
-			return -EINVAL;
-	session_mask =
-		(((u64)0x1) << session_id) << (MAX_BIT_PER_CLIENT * \
-			((int)AUDDEV_CLNT_ENC-1));
-	if (!set) {
-		session_route.capture_session[session_id][dev_info->copp_id]
-			= DEVICE_IGNORE;
-		broadcast_event(AUDDEV_EVT_DEV_RLS,
-				route_cfg.dev_id,
-				session_mask);
-		dev_info->sessions &= ~(session_mask);
-		return 0;
-	}
-
-	session_route.capture_session[session_id][dev_info->copp_id] =
-							dev_info->copp_id;
-	if (dev_info->opened) {
-		dev_info->sessions = dev_info->sessions | session_mask;
-		broadcast_event(AUDDEV_EVT_DEV_RDY,
-				route_cfg.dev_id,
-				session_mask);
-	} else {
-		broadcast_event(AUDDEV_EVT_DEV_RLS,
-				route_cfg.dev_id,
-				session_mask);
-		dev_info->sessions &= ~(session_mask);
-	}
-	return 0;
-}
-
 static int msm_loopback_info(struct snd_kcontrol *kcontrol,
 				struct snd_ctl_elem_info *uinfo)
 {
@@ -1015,7 +1079,7 @@ static int msm_loopback_put(struct snd_kcontrol *kcontrol,
 	int set = ucontrol->value.integer.value[2];
 
 	pr_debug("%s: dst=%d :src=%d set=%d\n", __func__,
-	       dst_dev_id, src_dev_id, set);
+		   dst_dev_id, src_dev_id, set);
 
 	dst_dev_info = audio_dev_ctrl_find_dev(dst_dev_id);
 	if (IS_ERR(dst_dev_info)) {
@@ -1047,16 +1111,16 @@ static int msm_loopback_put(struct snd_kcontrol *kcontrol,
 		loopback_status = 1;
 		if ((dst_dev_info->opened) && (src_dev_info->opened))
 			rc = afe_loopback(LOOPBACK_ENABLE,
-				       dst_dev_info->copp_id,
-				       src_dev_info->copp_id);
+					   dst_dev_info->copp_id,
+					   src_dev_info->copp_id);
 	} else {
 		pr_debug("%s:%d:Disabling AFE_Loopback\n", __func__, __LINE__);
 		src_dev = DEVICE_IGNORE;
 		dst_dev = DEVICE_IGNORE;
 		loopback_status = 0;
 		rc = afe_loopback(LOOPBACK_DISABLE,
-			       dst_dev_info->copp_id,
-			       src_dev_info->copp_id);
+				   dst_dev_info->copp_id,
+				   src_dev_info->copp_id);
 	}
 	return rc;
 }
@@ -1267,14 +1331,10 @@ static struct snd_kcontrol_new snd_msm_controls[] = {
 };
 
 static struct snd_kcontrol_new snd_msm_secondary_controls[] = {
-	MSM_EXT("PCM Playback Sink",
-			pcm_route_info, pcm_route_get_rx, pcm_route_put_rx, 0),
-	MSM_EXT("PCM Capture Source",
-			pcm_route_info, pcm_route_get_tx, pcm_route_put_tx, 0),
 	MSM_EXT("Sound Device Loopback", msm_loopback_info,
 			msm_loopback_get, msm_loopback_put, 0),
 	MSM_EXT("VoiceVolume Ext",
-		      msm_v_volume_info, msm_v_volume_get, msm_v_volume_put, 0),
+			  msm_v_volume_info, msm_v_volume_get, msm_v_volume_put, 0),
 	MSM_EXT("VoiceMute Ext",
 			msm_v_mute_info, msm_v_mute_get, msm_v_mute_put, 0),
 	MSM_EXT("Voice Call Ext",
@@ -1291,11 +1351,236 @@ static struct snd_kcontrol_new snd_msm_secondary_controls[] = {
 #endif
 };
 
+static int msm_s_volume_info(struct snd_kcontrol *kcontrol,
+			struct snd_ctl_elem_info *uinfo)
+{
+	uinfo->type = SNDRV_CTL_ELEM_TYPE_INTEGER;
+	uinfo->count = 2;
+	uinfo->value.integer.min = 0;
+	uinfo->value.integer.max = MSM_MAX_VOLUME;
+	return 0;
+}
+
+static int msm_s_volume_get(struct snd_kcontrol *kcontrol,
+				struct snd_ctl_elem_value *ucontrol)
+{
+	int session_id = kcontrol->private_value;
+
+	ucontrol->value.integer.value[0] =
+		msm_route.volume[session_id][0];
+	ucontrol->value.integer.value[1] =
+		msm_route.volume[session_id][1];
+	return 0;
+}
+
+static int msm_s_volume_put(struct snd_kcontrol *kcontrol,
+			struct snd_ctl_elem_value *ucontrol)
+{
+	int session_id = kcontrol->private_value;
+	int rc = 0;
+
+	if ((msm_route.volume[session_id][0] !=
+			ucontrol->value.integer.value[0]) ||
+		(msm_route.volume[session_id][1] !=
+			ucontrol->value.integer.value[1])) {
+		if (msm_route.audio_client[session_id][SNDRV_PCM_STREAM_PLAYBACK]) {
+			rc = msm_set_volume(
+				msm_route.audio_client[session_id][SNDRV_PCM_STREAM_PLAYBACK],
+				ucontrol->value.integer.value[0],
+				ucontrol->value.integer.value[1]);
+		}
+		msm_route.volume[session_id][0] =
+			ucontrol->value.integer.value[0];
+		msm_route.volume[session_id][1] =
+			ucontrol->value.integer.value[1];
+	}
+
+	return rc;
+}
+
+#define ROUTE_ELEM_ENCODE(session_id, copp_id) ((session_id) << 16 | (copp_id))
+#define ROUTE_ELEM_DECODE_SESSION_ID(value) (((value) >> 16) & 0xffff)
+#define ROUTE_ELEM_DECODE_COPP_ID(value) ((value) & 0xffff)
+
+static int msm_s_route_info(struct snd_kcontrol *kcontrol,
+			struct snd_ctl_elem_info *uinfo)
+{
+	uinfo->type = SNDRV_CTL_ELEM_TYPE_INTEGER;
+	uinfo->count = 1;
+	uinfo->value.integer.min = 0;
+	uinfo->value.integer.max = 1;
+	return 0;
+}
+
+static int msm_s_route_get_rx(struct snd_kcontrol *kcontrol,
+				struct snd_ctl_elem_value *ucontrol)
+{
+	ucontrol->value.integer.value[0] = msm_route_get_dec(
+		ROUTE_ELEM_DECODE_SESSION_ID(kcontrol->private_value),
+		ROUTE_ELEM_DECODE_COPP_ID(kcontrol->private_value));
+	return 0;
+}
+
+static int msm_s_route_get_tx(struct snd_kcontrol *kcontrol,
+				struct snd_ctl_elem_value *ucontrol)
+{
+	ucontrol->value.integer.value[0] = msm_route_get_enc(
+		ROUTE_ELEM_DECODE_SESSION_ID(kcontrol->private_value),
+		ROUTE_ELEM_DECODE_COPP_ID(kcontrol->private_value));
+	return 0;
+}
+
+static int msm_s_route_put_rx(struct snd_kcontrol *kcontrol,
+			struct snd_ctl_elem_value *ucontrol)
+{
+	return msm_route_put_dec(
+				ROUTE_ELEM_DECODE_SESSION_ID(kcontrol->private_value),
+				ROUTE_ELEM_DECODE_COPP_ID(kcontrol->private_value),
+				ucontrol->value.integer.value[0]);
+}
+
+static int msm_s_route_put_tx(struct snd_kcontrol *kcontrol,
+			struct snd_ctl_elem_value *ucontrol)
+{
+	return msm_route_put_enc(
+				ROUTE_ELEM_DECODE_SESSION_ID(kcontrol->private_value),
+				ROUTE_ELEM_DECODE_COPP_ID(kcontrol->private_value),
+				ucontrol->value.integer.value[0]);
+}
+
+static const char * const voice_rx[] = {
+	"handset",
+	"speaker",
+	"headset",
+	"speaker-and-headset",
+	"bt-sco-headset",
+	"tty-headset",
+};
+static const char * const voice_tx[] = {
+	"handset-mic",
+	"speaker-mic",
+	"headset-mic",
+	"bt-sco-mic",
+	"tty-headset-mic",
+};
+static int voice_rx_dev_id[] = { 0, 2, 6, 8, };
+static int voice_tx_dev_id[] = { 1, 5, 4, 7, };
+
+static int msm_voice_get_rx(struct snd_kcontrol *kcontrol,
+			struct snd_ctl_elem_value *ucontrol)
+{
+	ucontrol->value.enumerated.item[0] = msm_route.voice_rx;
+	return 0;
+}
+
+static int msm_voice_get_tx(struct snd_kcontrol *kcontrol,
+			struct snd_ctl_elem_value *ucontrol)
+{
+	ucontrol->value.enumerated.item[0] = msm_route.voice_tx;
+	return 0;
+}
+
+static int msm_voice_put_rx(struct snd_kcontrol *kcontrol,
+			struct snd_ctl_elem_value *ucontrol)
+{
+	msm_route.voice_rx = ucontrol->value.enumerated.item[0];
+	return 0;
+}
+
+static int msm_voice_put_tx(struct snd_kcontrol *kcontrol,
+			struct snd_ctl_elem_value *ucontrol)
+{
+	msm_route.voice_tx = ucontrol->value.enumerated.item[0];
+	return 0;
+}
+
+static int msm_voice_route_get(struct snd_kcontrol *kcontrol,
+			struct snd_ctl_elem_value *ucontrol)
+{
+	ucontrol->value.integer.value[0] = msm_route.voice_enable;
+	return 0;
+}
+
+static int msm_voice_route_put(struct snd_kcontrol *kcontrol,
+			struct snd_ctl_elem_value *ucontrol)
+{
+	int enable = !!ucontrol->value.integer.value[0];
+
+	if (msm_route.voice_enable != enable) {
+		if (enable) {
+			int rc = msm_voice_route(voice_rx_dev_id[msm_route.voice_rx],
+									 voice_tx_dev_id[msm_route.voice_tx], 1);
+			if (rc < 0)
+				return rc;
+		}
+		msm_route.voice_enable = enable;
+	}
+	return 0;
+}
+
+static const struct soc_enum snd_msm_extend_enum[] = {
+	SOC_ENUM_SINGLE_EXT(ARRAY_SIZE(voice_rx), voice_rx),
+	SOC_ENUM_SINGLE_EXT(ARRAY_SIZE(voice_tx), voice_tx),
+};
+
+static struct snd_kcontrol_new snd_msm_extend_controls[] = {
+	MSM_EXT("DSP Audio 0 Playback Volume",
+			msm_s_volume_info, msm_s_volume_get, msm_s_volume_put,
+			SESSION_DSP_AUDIO_0),
+	MSM_EXT("DSP Audio 1 Playback Volume",
+			msm_s_volume_info, msm_s_volume_get, msm_s_volume_put,
+			SESSION_DSP_AUDIO_1),
+	MSM_EXT("DSP Audio 2 Playback Volume",
+			msm_s_volume_info, msm_s_volume_get, msm_s_volume_put,
+			SESSION_DSP_AUDIO_2),
+	MSM_EXT("deep-buffer-playback",
+			msm_s_route_info, msm_s_route_get_rx, msm_s_route_put_rx,
+			ROUTE_ELEM_ENCODE(SESSION_DSP_AUDIO_0, IDX_PRIMARY_I2S_RX)),
+	MSM_EXT("deep-buffer-playback bt-sco",
+			msm_s_route_info, msm_s_route_get_rx, msm_s_route_put_rx,
+			ROUTE_ELEM_ENCODE(SESSION_DSP_AUDIO_0, IDX_PCM_RX)),
+	MSM_EXT("deep-buffer-playback hdmi",
+			msm_s_route_info, msm_s_route_get_rx, msm_s_route_put_rx,
+			ROUTE_ELEM_ENCODE(SESSION_DSP_AUDIO_0, IDX_HDMI_RX)),
+	MSM_EXT("low-latency-playback",
+			msm_s_route_info, msm_s_route_get_rx, msm_s_route_put_rx,
+			ROUTE_ELEM_ENCODE(SESSION_DSP_AUDIO_1, IDX_PRIMARY_I2S_RX)),
+	MSM_EXT("low-latency-playback bt-sco",
+			msm_s_route_info, msm_s_route_get_rx, msm_s_route_put_rx,
+			ROUTE_ELEM_ENCODE(SESSION_DSP_AUDIO_1, IDX_PCM_RX)),
+	MSM_EXT("low-latency-playback hdmi",
+			msm_s_route_info, msm_s_route_get_rx, msm_s_route_put_rx,
+			ROUTE_ELEM_ENCODE(SESSION_DSP_AUDIO_1, IDX_HDMI_RX)),
+	MSM_EXT("multi-channel-playback hdmi",
+			msm_s_route_info, msm_s_route_get_rx, msm_s_route_put_rx,
+			ROUTE_ELEM_ENCODE(SESSION_DSP_AUDIO_2, IDX_HDMI_RX)),
+	MSM_EXT("audio-record",
+			msm_s_route_info, msm_s_route_get_tx, msm_s_route_put_tx,
+			ROUTE_ELEM_ENCODE(SESSION_DSP_AUDIO_0, IDX_PRIMARY_I2S_TX)),
+	MSM_EXT("audio-record bt-sco",
+			msm_s_route_info, msm_s_route_get_tx, msm_s_route_put_tx,
+			ROUTE_ELEM_ENCODE(SESSION_DSP_AUDIO_0, IDX_PCM_TX)),
+	MSM_EXT("low-latency-record",
+			msm_s_route_info, msm_s_route_get_tx, msm_s_route_put_tx,
+			ROUTE_ELEM_ENCODE(SESSION_DSP_AUDIO_1, IDX_PRIMARY_I2S_TX)),
+	MSM_EXT("low-latency-record bt-sco",
+			msm_s_route_info, msm_s_route_get_tx, msm_s_route_put_tx,
+			ROUTE_ELEM_ENCODE(SESSION_DSP_AUDIO_1, IDX_PCM_TX)),
+	SOC_ENUM_EXT("voice-rx", snd_msm_extend_enum[0],
+			msm_voice_get_rx, msm_voice_put_rx),
+	SOC_ENUM_EXT("voice-tx", snd_msm_extend_enum[1],
+			msm_voice_get_tx, msm_voice_put_tx),
+	MSM_EXT("voice-call",
+			msm_s_route_info, msm_voice_route_get, msm_voice_route_put, 0),
+};
+
 static int msm_new_mixer(struct snd_soc_codec *codec)
 {
 	unsigned int idx;
 	int err;
 	int dev_cnt;
+
+	msm_route_init();
 
 	strcpy(codec->card->snd_card->mixername, "MSM Mixer");
 	for (idx = 0; idx < ARRAY_SIZE(snd_msm_controls); idx++) {
@@ -1328,6 +1613,15 @@ static int msm_new_mixer(struct snd_soc_codec *codec)
 	simple_control = ARRAY_SIZE(snd_msm_controls)
 			+ ARRAY_SIZE(snd_msm_secondary_controls);
 	device_index = simple_control + 1;
+
+	for (idx = 0; idx < ARRAY_SIZE(snd_msm_extend_controls); idx++) {
+		err = snd_ctl_add(codec->card->snd_card,
+			snd_ctl_new1(&snd_msm_extend_controls[idx],
+			NULL));
+		if (err < 0)
+			pr_err("%s:ERR adding extended ctl\n", __func__);
+	}
+
 	return 0;
 }
 
@@ -1338,12 +1632,6 @@ static int msm_soc_dai_init(
 	int ret = 0;
 	struct snd_soc_codec *codec = rtd->codec;
 
-	init_waitqueue_head(&the_locks.enable_wait);
-	init_waitqueue_head(&the_locks.eos_wait);
-	init_waitqueue_head(&the_locks.write_wait);
-	init_waitqueue_head(&the_locks.read_wait);
-	memset(&session_route, DEVICE_IGNORE, sizeof(struct pcm_session));
-
 	ret = msm_new_mixer(codec);
 	if (ret < 0)
 		pr_err("%s: ALSA MSM Mixer Fail\n", __func__);
@@ -1353,13 +1641,37 @@ static int msm_soc_dai_init(
 
 static struct snd_soc_dai_link msm_dai[] = {
 {
-	.name = "MSM Primary I2S",
-	.stream_name = "DSP 1",
+	.name = "MSM DSP Audio 0",
+	.stream_name = "DSP Audio 0",
 	.cpu_dai_name = "msm-cpu-dai.0",
 	.platform_name = "msm-dsp-audio.0",
 	.codec_name = "msm-codec-dai.0",
 	.codec_dai_name = "msm-codec-dai",
 	.init   = &msm_soc_dai_init,
+},
+{
+	.name = "MSM DSP Audio 1",
+	.stream_name = "DSP Audio 1",
+	.cpu_dai_name = "msm-cpu-dai.1",
+	.platform_name = "msm-dsp-audio.1",
+	.codec_name = "msm-codec-dai.1",
+	.codec_dai_name = "msm-codec-dai",
+},
+{
+	.name = "MSM DSP Audio 2",
+	.stream_name = "DSP Audio 2",
+	.cpu_dai_name = "msm-cpu-dai.2",
+	.platform_name = "msm-dsp-audio.2",
+	.codec_name = "msm-codec-dai.2",
+	.codec_dai_name = "msm-codec-dai",
+},
+{
+	.name = "MSM Voice Call",
+	.stream_name = "Voice Call",
+	.cpu_dai_name = "msm-cpu-dai.3",
+	.platform_name = "msm-pcm-voice",
+	.codec_name = "msm-codec-dai.3",
+	.codec_dai_name = "msm-codec-dai",
 },
 #ifdef CONFIG_MSM_8x60_VOIP
 {

@@ -2603,6 +2603,45 @@ struct platform_device msm_pcm_hostless = {
 };
 #endif
 
+#ifdef CONFIG_SND_SOC_MSM8X60
+struct platform_device msm_pcm_dsp1 = {
+	.name   = "msm-dsp-audio",
+	.id     = 1,
+};
+struct platform_device msm_cpu_dai1 = {
+	.name   = "msm-cpu-dai",
+	.id     = 1,
+};
+struct platform_device msm_codec_dai1 = {
+	.name   = "msm-codec-dai",
+	.id     = 1,
+};
+struct platform_device msm_pcm_dsp2 = {
+	.name   = "msm-dsp-audio",
+	.id     = 2,
+};
+struct platform_device msm_cpu_dai2 = {
+	.name   = "msm-cpu-dai",
+	.id     = 2,
+};
+struct platform_device msm_codec_dai2 = {
+	.name   = "msm-codec-dai",
+	.id     = 2,
+};
+struct platform_device msm_pcm_voice = {
+	.name	= "msm-pcm-voice",
+	.id	= -1,
+};
+struct platform_device msm_cpu_dai3 = {
+	.name   = "msm-cpu-dai",
+	.id     = 3,
+};
+struct platform_device msm_codec_dai3 = {
+	.name   = "msm-codec-dai",
+	.id     = 3,
+};
+#endif
+
 struct platform_device asoc_msm_pcm = {
 	.name   = "msm-dsp-audio",
 	.id     = 0,
