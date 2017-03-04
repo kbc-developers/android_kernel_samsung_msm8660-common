@@ -75,7 +75,6 @@ struct route_info {
 	unsigned char capture[SESSION_DSP_COUNT][(AFE_MAX_PORTS + 7) / 8];
 	struct audio_client *audio_client[SESSION_DSP_COUNT][2];
 	unsigned volume[SESSION_DSP_COUNT][2];
-	int voice_rx, voice_tx;
 	int voice_enable;
 };
 
@@ -93,8 +92,6 @@ static void msm_route_init(void)
 		msm_route.volume[i][0] =
 		msm_route.volume[i][1] = MSM_MAX_VOLUME;
 	}
-	msm_route.voice_rx = 0;
-	msm_route.voice_tx = 0;
 	msm_route.voice_enable = 0;
 }
 
@@ -1448,52 +1445,6 @@ static int msm_s_route_put_tx(struct snd_kcontrol *kcontrol,
 				ucontrol->value.integer.value[0]);
 }
 
-static const char * const voice_rx[] = {
-	"handset",
-	"speaker",
-	"headset",
-	"speaker-and-headset",
-	"bt-sco-headset",
-	"tty-headset",
-};
-static const char * const voice_tx[] = {
-	"handset-mic",
-	"speaker-mic",
-	"headset-mic",
-	"bt-sco-mic",
-	"tty-headset-mic",
-};
-static int voice_rx_dev_id[] = { 0, 2, 6, 8, };
-static int voice_tx_dev_id[] = { 1, 5, 4, 7, };
-
-static int msm_voice_get_rx(struct snd_kcontrol *kcontrol,
-			struct snd_ctl_elem_value *ucontrol)
-{
-	ucontrol->value.enumerated.item[0] = msm_route.voice_rx;
-	return 0;
-}
-
-static int msm_voice_get_tx(struct snd_kcontrol *kcontrol,
-			struct snd_ctl_elem_value *ucontrol)
-{
-	ucontrol->value.enumerated.item[0] = msm_route.voice_tx;
-	return 0;
-}
-
-static int msm_voice_put_rx(struct snd_kcontrol *kcontrol,
-			struct snd_ctl_elem_value *ucontrol)
-{
-	msm_route.voice_rx = ucontrol->value.enumerated.item[0];
-	return 0;
-}
-
-static int msm_voice_put_tx(struct snd_kcontrol *kcontrol,
-			struct snd_ctl_elem_value *ucontrol)
-{
-	msm_route.voice_tx = ucontrol->value.enumerated.item[0];
-	return 0;
-}
-
 static int msm_voice_route_get(struct snd_kcontrol *kcontrol,
 			struct snd_ctl_elem_value *ucontrol)
 {
@@ -1507,21 +1458,10 @@ static int msm_voice_route_put(struct snd_kcontrol *kcontrol,
 	int enable = !!ucontrol->value.integer.value[0];
 
 	if (msm_route.voice_enable != enable) {
-		if (enable) {
-			int rc = msm_voice_route(voice_rx_dev_id[msm_route.voice_rx],
-									 voice_tx_dev_id[msm_route.voice_tx], 1);
-			if (rc < 0)
-				return rc;
-		}
 		msm_route.voice_enable = enable;
 	}
 	return 0;
 }
-
-static const struct soc_enum snd_msm_extend_enum[] = {
-	SOC_ENUM_SINGLE_EXT(ARRAY_SIZE(voice_rx), voice_rx),
-	SOC_ENUM_SINGLE_EXT(ARRAY_SIZE(voice_tx), voice_tx),
-};
 
 static struct snd_kcontrol_new snd_msm_extend_controls[] = {
 	MSM_EXT("DSP Audio 0 Playback Volume",
@@ -1566,10 +1506,6 @@ static struct snd_kcontrol_new snd_msm_extend_controls[] = {
 	MSM_EXT("low-latency-record bt-sco",
 			msm_s_route_info, msm_s_route_get_tx, msm_s_route_put_tx,
 			ROUTE_ELEM_ENCODE(SESSION_DSP_AUDIO_1, IDX_PCM_TX)),
-	SOC_ENUM_EXT("voice-rx", snd_msm_extend_enum[0],
-			msm_voice_get_rx, msm_voice_put_rx),
-	SOC_ENUM_EXT("voice-tx", snd_msm_extend_enum[1],
-			msm_voice_get_tx, msm_voice_put_tx),
 	MSM_EXT("voice-call",
 			msm_s_route_info, msm_voice_route_get, msm_voice_route_put, 0),
 };
