@@ -1,4 +1,4 @@
-/* Copyright (c) 2011-2012, The Linux Foundation. All rights reserved.
+/* Copyright (c) 2011,2012 The Linux Foundation. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -9,24 +9,24 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  */
-#ifndef _MSM_8X60_H
-#define _MSM_8X60_H
+#ifndef _MSM_8X60_VOICE_CELOX_H
+#define _MSM_8X60_VOICE_CELOX_H
 
 #include <sound/apr_audio.h>
-#include <sound/q6asm.h>
 
-enum {
-    SESSION_DSP_AUDIO_0 = 0,
-    SESSION_DSP_AUDIO_1,
-    SESSION_DSP_AUDIO_2,
-    SESSION_DSP_COUNT,
-    SESSION_VOICE = SESSION_DSP_COUNT,
-    SESSION_COUNT
+struct msm_voice {
+	struct snd_pcm_substream *playback_substream;
+	struct snd_pcm_substream *capture_substream;
+
+	int instance;
+
+	struct mutex lock;
+
+	uint32_t samp_rate;
+	uint32_t channel_mode;
+
+	int playback_start;
+	int capture_start;
 };
 
-extern int msm_session_open(int session_id, int stream, 
-        struct audio_client *audio_client);
-extern int msm_session_close(int session_id, int stream);
-
-
-#endif /*_MSM_8X60_H*/
+#endif /*_MSM_8X60_VOICE_CELOX_H*/

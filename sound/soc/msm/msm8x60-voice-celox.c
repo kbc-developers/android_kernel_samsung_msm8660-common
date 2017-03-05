@@ -28,7 +28,7 @@
 #include <mach/qdsp6v2/audio_dev_ctl.h>
 #include <mach/qdsp6v2/q6voice.h>
 
-#include "msm8x60-voice.h"
+#include "msm8x60-voice-celox.h"
 
 static struct msm_voice voice_info;
 

@@ -9247,7 +9247,7 @@ static struct platform_device *asoc_devices[] __initdata = {
 	&asoc_msm_pcm,
 	&asoc_msm_dai0,
 	&asoc_msm_dai1,
-#ifdef CONFIG_SND_SOC_MSM8X60
+#ifdef CONFIG_SND_SOC_MSM8X60_CELOX
 	&msm_pcm_dsp1,
 	&msm_cpu_dai1,
 	&msm_codec_dai1,

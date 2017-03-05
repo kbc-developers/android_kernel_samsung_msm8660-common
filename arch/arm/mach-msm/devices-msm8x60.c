@@ -2603,7 +2603,7 @@ struct platform_device msm_pcm_hostless = {
 };
 #endif
 
-#ifdef CONFIG_SND_SOC_MSM8X60
+#ifdef CONFIG_SND_SOC_MSM8X60_CELOX
 struct platform_device msm_pcm_dsp1 = {
 	.name   = "msm-dsp-audio",
 	.id     = 1,

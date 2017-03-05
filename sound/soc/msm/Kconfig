@@ -56,7 +56,7 @@ config SND_SOC_MSM8X60_DAI
 
 config SND_SOC_MSM8X60
 	tristate "SoC Audio over DSP support for MSM8660"
-	depends on ARCH_MSM8X60 && SND_SOC && MSM8X60_AUDIO
+	depends on ARCH_MSM8X60 && SND_SOC && MSM8X60_AUDIO && !SND_SOC_MSM8X60_CELOX
 	select SND_SOC_MSM8X60_PCM
 	select SND_SOC_MSM8X60_DAI
 	select SND_SOC_MSM_QDSP6_INTF
@@ -67,6 +67,19 @@ config SND_SOC_MSM8X60
 	 to do device switch/routing and volume control support for all
 	 audio sessions. The kcontols also does sesion management for
 	 voice calls
+
+config SND_SOC_MSM8X60_PCM_CELOX
+	tristate
+
+config SND_SOC_MSM8X60_CELOX
+	tristate "SoC Audio over DSP support for MSM8660 celox board"
+	depends on ARCH_MSM8X60 && SND_SOC && MSM8X60_AUDIO && TARGET_SERIES_CELOX
+	select SND_SOC_MSM8X60_PCM_CELOX
+	select SND_SOC_MSM8X60_DAI
+	select SND_SOC_MSM_QDSP6_INTF
+	default y
+	help
+	 To add support for SoC audio on MSM8X60 celox board.
 
 config SND_SOC_MSM_HOSTLESS_PCM
 	tristate
