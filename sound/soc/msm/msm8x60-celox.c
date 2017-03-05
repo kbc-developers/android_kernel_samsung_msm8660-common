@@ -75,6 +75,7 @@ struct route_info {
 	unsigned char capture[SESSION_DSP_COUNT][(AFE_MAX_PORTS + 7) / 8];
 	struct audio_client *audio_client[SESSION_DSP_COUNT][2];
 	unsigned volume[SESSION_DSP_COUNT][2];
+	int voice_rx, voice_tx;
 	int voice_enable;
 };
 
@@ -92,6 +93,8 @@ static void msm_route_init(void)
 		msm_route.volume[i][0] =
 		msm_route.volume[i][1] = MSM_MAX_VOLUME;
 	}
+	msm_route.voice_rx = 0;
+	msm_route.voice_tx = 0;
 	msm_route.voice_enable = 0;
 }
 
@@ -1445,6 +1448,45 @@ static int msm_s_route_put_tx(struct snd_kcontrol *kcontrol,
 				ucontrol->value.integer.value[0]);
 }
 
+static int msm_voice_get_rx(struct snd_kcontrol *kcontrol,
+			struct snd_ctl_elem_value *ucontrol)
+{
+	ucontrol->value.integer.value[0] = msm_route.voice_rx;
+	return 0;
+}
+
+static int msm_voice_get_tx(struct snd_kcontrol *kcontrol,
+			struct snd_ctl_elem_value *ucontrol)
+{
+	ucontrol->value.integer.value[0] = msm_route.voice_tx;
+	return 0;
+}
+
+static int msm_voice_put_rx(struct snd_kcontrol *kcontrol,
+			struct snd_ctl_elem_value *ucontrol)
+{
+	msm_route.voice_rx = ucontrol->value.integer.value[0];
+	return 0;
+}
+
+static int msm_voice_put_tx(struct snd_kcontrol *kcontrol,
+			struct snd_ctl_elem_value *ucontrol)
+{
+	msm_route.voice_tx = ucontrol->value.integer.value[0];
+	return 0;
+}
+
+static int msm_voice_rxtx_info(struct snd_kcontrol *kcontrol,
+				struct snd_ctl_elem_info *uinfo)
+{
+	uinfo->type = SNDRV_CTL_ELEM_TYPE_INTEGER;
+	uinfo->count = 1; /* Device */
+
+	uinfo->value.integer.min = 0;
+	uinfo->value.integer.max = msm_snddev_devcount();
+	return 0;
+}
+
 static int msm_voice_route_get(struct snd_kcontrol *kcontrol,
 			struct snd_ctl_elem_value *ucontrol)
 {
@@ -1458,6 +1500,12 @@ static int msm_voice_route_put(struct snd_kcontrol *kcontrol,
 	int enable = !!ucontrol->value.integer.value[0];
 
 	if (msm_route.voice_enable != enable) {
+		if (enable) {
+			int rc = msm_voice_route(msm_route.voice_rx,
+									 msm_route.voice_tx, 1);
+			if (rc < 0)
+				return rc;
+		}
 		msm_route.voice_enable = enable;
 	}
 	return 0;
@@ -1508,6 +1556,10 @@ static struct snd_kcontrol_new snd_msm_extend_controls[] = {
 			ROUTE_ELEM_ENCODE(SESSION_DSP_AUDIO_1, IDX_PCM_TX)),
 	MSM_EXT("voice-call",
 			msm_s_route_info, msm_voice_route_get, msm_voice_route_put, 0),
+	MSM_EXT("voice-rx",
+			msm_voice_rxtx_info, msm_voice_get_rx, msm_voice_put_rx, 0),
+	MSM_EXT("voice-tx",
+			msm_voice_rxtx_info, msm_voice_get_tx, msm_voice_put_tx, 0),
 };
 
 static int msm_new_mixer(struct snd_soc_codec *codec)
