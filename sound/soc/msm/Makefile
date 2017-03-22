@@ -23,7 +23,7 @@ obj-$(CONFIG_SND_MSM_SOC_MSM7KV2) += snd-soc-msm7kv2.o
 snd-soc-msm8x60-dai-objs := msm8x60-dai.o
 obj-$(CONFIG_SND_SOC_MSM8X60_DAI) += snd-soc-msm8x60-dai.o
 
-snd-soc-msm8x60-pcm-objs := msm8x60-pcm.o
+snd-soc-msm8x60-pcm-objs := msm8x60-pcm.o msm8x60-voice.o
 obj-$(CONFIG_SND_SOC_MSM8X60_PCM) += snd-soc-msm8x60-pcm.o
 
 snd-soc-msm8x60-objs := msm8x60.o
@@ -51,6 +51,14 @@ obj-$(CONFIG_SND_VOIP_PCM) += snd-soc-msm-voip.o
 
 snd-soc-lpass-dma-objs := lpass-dma.o
 obj-$(CONFIG_SND_SOC_MSM8X60) += snd-soc-lpass-dma.o
+
+# 8660 Celox ALSA Support
+snd-soc-msm8x60-pcm-celox-objs := msm8x60-pcm-celox.o msm8x60-voice-celox.o
+obj-$(CONFIG_SND_SOC_MSM8X60_PCM_CELOX) += snd-soc-msm8x60-pcm-celox.o
+
+snd-soc-msm8x60-celox-objs := msm8x60-celox.o
+obj-$(CONFIG_SND_SOC_MSM8X60_CELOX) += snd-soc-msm8x60-celox.o
+obj-$(CONFIG_SND_SOC_MSM8X60_CELOX) += snd-soc-lpass-dma.o
 
 # for MSM 8960 sound card driver
 

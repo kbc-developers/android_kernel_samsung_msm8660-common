@@ -9321,6 +9321,22 @@ static struct platform_device *asoc_devices[] __initdata = {
 	&asoc_msm_pcm,
 	&asoc_msm_dai0,
 	&asoc_msm_dai1,
+#ifdef CONFIG_SND_SOC_MSM8X60_CELOX
+	&msm_pcm_dsp1,
+	&msm_cpu_dai1,
+	&msm_codec_dai1,
+	&msm_pcm_dsp2,
+	&msm_cpu_dai2,
+	&msm_codec_dai2,
+	&msm_pcm_voice,
+	&msm_cpu_dai3,
+	&msm_codec_dai3,
+#endif
+#if defined (CONFIG_MSM_8x60_VOIP)
+	&asoc_msm_mvs,
+	&asoc_mvs_dai0,
+	&asoc_mvs_dai1,
+#endif
 };
 
 static struct platform_device *surf_devices[] __initdata = {
@@ -9363,11 +9379,6 @@ static struct platform_device *surf_devices[] __initdata = {
 #endif
 #if defined(CONFIG_BATTERY_MAX17040) || defined(CONFIG_CHARGER_SMB328A)
 	&fg_smb_i2c_gpio_device,
-#endif
-#if defined (CONFIG_MSM_8x60_VOIP)
-	&asoc_msm_mvs,
-	&asoc_mvs_dai0,
-	&asoc_mvs_dai1,
 #endif
 #ifdef CONFIG_BATTERY_SEC
 	&sec_device_battery,
